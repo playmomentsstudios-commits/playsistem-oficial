@@ -18,7 +18,9 @@ function getCover(product: PublicCatalogProduct) {
   return (
     product.product_images.find(image => image.is_cover)?.public_url ??
     product.product_images[0]?.public_url ??
-    null
+    (typeof product.specifications?.cover_asset === 'string'
+      ? product.specifications.cover_asset
+      : null)
   )
 }
 
@@ -71,11 +73,11 @@ export function ProductsPage() {
             className="text-4xl font-bold mb-4"
             style={{ color: '#f0f0f2' }}
           >
-            Equipamentos & Produtos
+            Produtos & Serviços
           </h1>
 
           <p className="text-sm" style={{ color: '#6b6b78' }}>
-            Produtos e equipamentos disponíveis na Play Moments
+            Design, audiovisual, tecnologia, web e soluções criativas da Play Moments
           </p>
         </div>
 
@@ -175,9 +177,11 @@ export function ProductsPage() {
                       className="text-xs mb-1"
                       style={{ color: '#6b6b78' }}
                     >
-                      {product.product_type === 'equipment'
-                        ? 'Equipamento'
-                        : 'Produto'}
+                      {product.specifications?.catalog_kind === 'service'
+                        ? 'Serviço'
+                        : product.product_type === 'equipment'
+                          ? 'Equipamento'
+                          : 'Produto'}
                     </p>
 
                     <p
