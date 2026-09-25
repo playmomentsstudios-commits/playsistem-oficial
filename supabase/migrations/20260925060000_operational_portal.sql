@@ -551,3 +551,97 @@ begin
 end $$;
 revoke all on function public.decide_quote(uuid,text) from public;
 grant execute on function public.decide_quote(uuid,text) to authenticated;
+
+-- Cross-module customer notifications.
+create or replace function public.notify_order_change()
+returns trigger language plpgsql security definer set search_path=public
+as $$
+begin
+  if tg_op='UPDATE' and (old.status is distinct from new.status or old.payment_status is distinct from new.payment_status) then
+    insert into public.notifications(user_id,type,title,message,link,metadata)
+    values(new.customer_id,'order_updated','Pedido atualizado',
+      'O pedido '||new.order_number||' foi atualizado para '||new.status||'.',
+      '/app/pedidos',jsonb_build_object('order_id',new.id,'status',new.status,'payment_status',new.payment_status));
+  end if;
+  return new;
+end $$;
+drop trigger if exists orders_notify_change on public.orders;
+create trigger orders_notify_change after update on public.orders for each row execute function public.notify_order_change();
+
+create or replace function public.notify_quote_change()
+returns trigger language plpgsql security definer set search_path=public
+as $$
+begin
+  if new.status in ('sent','viewed') and old.status is distinct from new.status then
+    insert into public.notifications(user_id,type,title,message,link,metadata)
+    values(new.customer_id,'quote_received','Novo orçamento disponível',
+      'O orçamento '||new.quote_number||' está disponível para revisão.',
+      '/app/orcamentos',jsonb_build_object('quote_id',new.id));
+  end if;
+  return new;
+end $$;
+drop trigger if exists quotes_notify_change on public.quotes;
+create trigger quotes_notify_change after update on public.quotes for each row execute function public.notify_quote_change();
+
+create or replace function public.notify_project_change()
+returns trigger language plpgsql security definer set search_path=public
+as $$
+begin
+  if new.customer_id is not null and (old.status is distinct from new.status or old.due_date is distinct from new.due_date) then
+    insert into public.notifications(user_id,type,title,message,link,metadata)
+    values(new.customer_id,'project_updated','Projeto atualizado',
+      'O projeto "'||new.title||'" foi atualizado.',
+      '/app/projetos/'||new.id::text,jsonb_build_object('project_id',new.id,'status',new.status));
+  end if;
+  return new;
+end $$;
+drop trigger if exists projects_notify_change on public.projects;
+create trigger projects_notify_change after update on public.projects for each row execute function public.notify_project_change();
+
+create or replace function public.notify_task_change()
+returns trigger language plpgsql security definer set search_path=public
+as $$
+declare cid uuid; pname text;
+begin
+  if new.client_visible and old.status is distinct from new.status then
+    select customer_id,title into cid,pname from public.projects where id=new.project_id;
+    if cid is not null then
+      insert into public.notifications(user_id,type,title,message,link,metadata)
+      values(cid,'project_task','Etapa de trabalho atualizada',
+        '"'||new.title||'" agora está em '||new.status||'.',
+        '/app/projetos/'||new.project_id::text,jsonb_build_object('project_id',new.project_id,'task_id',new.id));
+    end if;
+  end if;
+  return new;
+end $$;
+drop trigger if exists tasks_notify_change on public.tasks;
+create trigger tasks_notify_change after update on public.tasks for each row execute function public.notify_task_change();
+
+create or replace function public.notify_client_file()
+returns trigger language plpgsql security definer set search_path=public
+as $$
+begin
+  if new.client_visible then
+    insert into public.notifications(user_id,type,title,message,link,metadata)
+    values(new.customer_id,'file_received','Novo arquivo disponível',
+      'A Play Moments disponibilizou "'||new.name||'".',
+      '/app/arquivos',jsonb_build_object('file_id',new.id));
+  end if;
+  return new;
+end $$;
+drop trigger if exists client_files_notify on public.client_files;
+create trigger client_files_notify after insert on public.client_files for each row execute function public.notify_client_file();
+
+create or replace function public.notify_announcement()
+returns trigger language plpgsql security definer set search_path=public
+as $$
+begin
+  if new.active and new.audience in ('all','customers') then
+    insert into public.notifications(user_id,type,title,message,link,metadata)
+      select id,'announcement',new.title,left(new.content,240),'/app/comunicados',jsonb_build_object('announcement_id',new.id)
+      from public.profiles where role='customer' and status='active';
+  end if;
+  return new;
+end $$;
+drop trigger if exists announcements_notify on public.announcements;
+create trigger announcements_notify after insert on public.announcements for each row execute function public.notify_announcement();
