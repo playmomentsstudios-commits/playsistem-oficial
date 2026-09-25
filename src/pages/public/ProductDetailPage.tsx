@@ -127,7 +127,7 @@ export function ProductDetailPage() {
                   <img
                     src={getCover(product) ?? ''}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    className={'w-full h-full '+(product.product_images.length ? 'object-cover' : 'object-contain p-8')}
                     style={{ maxHeight: 520 }}
                   />
                 ) : (
@@ -160,6 +160,8 @@ export function ProductDetailPage() {
                       : 'Disponível'}
                   </Badge>
                 </div>
+
+                {product.category?.name && <p className="text-xs uppercase tracking-wider mb-2" style={{color:'#E30613'}}>{product.category.name}</p>}
 
                 <h1
                   className="text-4xl font-bold mb-3"
