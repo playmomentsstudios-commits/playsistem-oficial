@@ -12,6 +12,9 @@ import { HomePage } from './pages/public/HomePage'
 import { LoginPage } from './pages/public/LoginPage'
 import { RegisterPage } from './pages/public/RegisterPage'
 import { EmailConfirmedPage } from './pages/public/EmailConfirmedPage'
+import { ForgotPasswordPage } from './pages/public/ForgotPasswordPage'
+import { ResetPasswordPage } from './pages/public/ResetPasswordPage'
+import { CartPage } from './pages/public/CartPage'
 import { CommunityPage } from './pages/public/CommunityPage'
 import { ProductsPage } from './pages/public/ProductsPage'
 import { ProductDetailPage } from './pages/public/ProductDetailPage'
@@ -32,6 +35,8 @@ import { PaymentsPage } from './pages/customer/PaymentsPage'
 import { ProjectsPage } from './pages/customer/ProjectsPage'
 import { CustomerServicesPage } from './pages/customer/CustomerServicesPage'
 import { AnnouncementsPage } from './pages/customer/AnnouncementsPage'
+import { OrderDetailPage } from './pages/customer/OrderDetailPage'
+import { QuoteDetailPage } from './pages/customer/QuoteDetailPage'
 
 // Admin panel
 import { AdminDashboard } from './pages/admin/AdminDashboard'
@@ -47,6 +52,9 @@ import { AdminServices } from './pages/admin/AdminServices'
 import { AdminQuotes } from './pages/admin/AdminQuotes'
 import { AdminAnnouncements } from './pages/admin/AdminAnnouncements'
 import { AdminCustomerDetail } from './pages/admin/AdminCustomerDetail'
+import { AdminOrderDetail } from './pages/admin/AdminOrderDetail'
+import { AdminCategories } from './pages/admin/AdminCategories'
+import { AdminFiles } from './pages/admin/AdminFiles'
 
 // Placeholder for unbuilt pages
 function PlaceholderPage({ title }: { title: string }) {
@@ -71,7 +79,8 @@ export default function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/cadastro" element={<RegisterPage />} />
               <Route path="/email-confirmado" element={<EmailConfirmedPage />} />
-              <Route path="/esqueci-senha" element={<PlaceholderPage title="Recuperar Senha" />} />
+              <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
+              <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
               <Route path="/produtos" element={<ProductsPage />} />
               <Route path="/produtos/:slug" element={<ProductDetailPage />} />
               <Route path="/servicos" element={<ServicesPage />} />
@@ -84,7 +93,7 @@ export default function App() {
               <Route path="/comunidade" element={<CommunityPage />} />
               <Route path="/sobre" element={<PlaceholderPage title="Sobre a Play Moments" />} />
               <Route path="/contato" element={<PlaceholderPage title="Contato" />} />
-              <Route path="/carrinho" element={<PlaceholderPage title="Carrinho" />} />
+              <Route path="/carrinho" element={<CartPage />} />
 
               {/* Customer portal */}
               <Route path="/app" element={<CustomerLayout />}>
@@ -92,10 +101,10 @@ export default function App() {
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="perfil" element={<ProfilePage />} />
                 <Route path="pedidos" element={<OrdersPage />} />
-                <Route path="pedidos/:id" element={<PlaceholderPage title="Detalhe do Pedido" />} />
+                <Route path="pedidos/:id" element={<OrderDetailPage />} />
                 <Route path="servicos" element={<CustomerServicesPage />} />
                 <Route path="orcamentos" element={<QuotesPage />} />
-                <Route path="orcamentos/:id" element={<PlaceholderPage title="Detalhe do Orçamento" />} />
+                <Route path="orcamentos/:id" element={<QuoteDetailPage />} />
                 <Route path="pagamentos" element={<PaymentsPage />} />
                 <Route path="conversas" element={<ConversationsPage />} />
                 <Route path="conversas/:id" element={<ConversationsPage />} />
@@ -113,14 +122,14 @@ export default function App() {
                 <Route path="clientes" element={<AdminCustomers />} />
                 <Route path="clientes/:id" element={<AdminCustomerDetail />} />
                 <Route path="produtos" element={<AdminProducts />} />
-                <Route path="categorias" element={<PlaceholderPage title="Categorias" />} />
+                <Route path="categorias" element={<AdminCategories />} />
                 <Route path="servicos" element={<AdminServices />} />
                 <Route path="pedidos" element={<AdminOrders />} />
-                <Route path="pedidos/:id" element={<PlaceholderPage title="Detalhe do Pedido (Admin)" />} />
+                <Route path="pedidos/:id" element={<AdminOrderDetail />} />
                 <Route path="orcamentos" element={<AdminQuotes />} />
                 <Route path="pagamentos" element={<AdminPayments />} />
                 <Route path="conversas" element={<AdminConversations />} />
-                <Route path="arquivos" element={<PlaceholderPage title="Arquivos (Admin)" />} />
+                <Route path="arquivos" element={<AdminFiles />} />
                 <Route path="portfolio" element={<PlaceholderPage title="Portfólio (Admin)" />} />
                 <Route path="comunidade" element={<AdminCommunity />} />
                 <Route path="notificacoes" element={<NotificationsPage />} />
