@@ -7,7 +7,6 @@ import {
   type ReactNode,
 } from 'react'
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js'
-import { authLink } from '../lib/navigation'
 import { supabase } from '../lib/supabase'
 import type {
   User,
@@ -30,6 +29,7 @@ interface AuthContextValue {
   register: (payload: RegisterPayload, next?: string | null) => Promise<RegisterResult>
   logout: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
+  updatePassword: (password: string) => Promise<void>
 }
 
 interface ProfileRow {
@@ -65,25 +65,16 @@ function profileToUser(profile: ProfileRow): User {
 async function fetchProfile(authUser: SupabaseUser): Promise<User> {
   const { data, error } = await supabase
     .from('profiles')
-    .select(
-      'id,email,first_name,last_name,phone,avatar_url,role,status,created_at,updated_at',
-    )
+    .select('id,email,first_name,last_name,phone,avatar_url,role,status,created_at,updated_at')
     .eq('id', authUser.id)
     .single()
 
-  if (error) {
-    throw new Error(`Não foi possível carregar o perfil: ${error.message}`)
-  }
+  if (error) throw new Error(`Não foi possível carregar o perfil: ${error.message}`)
 
   const profile = data as ProfileRow
-
   if (profile.status !== 'active') {
     await supabase.auth.signOut()
-
-    if (profile.status === 'blocked') {
-      throw new Error('Esta conta está bloqueada.')
-    }
-
+    if (profile.status === 'blocked') throw new Error('Esta conta está bloqueada.')
     throw new Error('Esta conta está inativa.')
   }
 
@@ -97,16 +88,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const syncSession = useCallback(async (nextSession: Session | null) => {
     setSession(nextSession)
-
     if (!nextSession?.user) {
       setUser(null)
       setIsLoading(false)
       return
     }
-
     try {
-      const appUser = await fetchProfile(nextSession.user)
-      setUser(appUser)
+      setUser(await fetchProfile(nextSession.user))
     } catch (error) {
       console.error(error)
       setUser(null)
@@ -120,7 +108,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     supabase.auth.getSession().then(({ data, error }) => {
       if (!mounted) return
-
       if (error) {
         console.error('Erro ao restaurar sessão:', error)
         setUser(null)
@@ -128,18 +115,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(false)
         return
       }
-
       void syncSession(data.session)
     })
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!mounted) return
-
-      window.setTimeout(() => {
-        void syncSession(nextSession)
-      }, 0)
+      window.setTimeout(() => void syncSession(nextSession), 0)
     })
 
     return () => {
@@ -155,98 +136,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     if (error) {
-      throw new Error(
-        error.message === 'Invalid login credentials'
-          ? 'E-mail ou senha incorretos.'
-          : error.message,
-      )
+      throw new Error(error.message === 'Invalid login credentials' ? 'E-mail ou senha incorretos.' : error.message)
     }
-
-    if (!data.user || !data.session) {
-      throw new Error('Não foi possível iniciar a sessão.')
-    }
+    if (!data.user || !data.session) throw new Error('Não foi possível iniciar a sessão.')
 
     const appUser = await fetchProfile(data.user)
     setSession(data.session)
     setUser(appUser)
-
     return appUser
   }, [])
 
-  const register = useCallback(
-    async (payload: RegisterPayload, next?: string | null): Promise<RegisterResult> => {
-      const { data, error } = await supabase.auth.signUp({
-        email: payload.email.trim(),
-        password: payload.password,
-        options: {
-          emailRedirectTo: (import.meta.env.VITE_SITE_URL || window.location.origin).replace(/\/$/, '') + '/email-confirmado' + (next ? '?' + new URLSearchParams({ next }).toString() : ''),
-          data: {
-            first_name: payload.name.trim(),
-            last_name: payload.lastName.trim(),
-            phone: payload.phone?.trim() || null,
-          },
+  const register = useCallback(async (payload: RegisterPayload, next?: string | null): Promise<RegisterResult> => {
+    const siteUrl = (import.meta.env.VITE_SITE_URL || window.location.origin).replace(/\/$/, '')
+    const query = next ? '?' + new URLSearchParams({ next }).toString() : ''
+
+    const { data, error } = await supabase.auth.signUp({
+      email: payload.email.trim(),
+      password: payload.password,
+      options: {
+        emailRedirectTo: siteUrl + '/email-confirmado' + query,
+        data: {
+          first_name: payload.name.trim(),
+          last_name: payload.lastName.trim(),
+          phone: payload.phone?.trim() || null,
         },
-      })
+      },
+    })
 
-      if (error) {
-        throw new Error(error.message)
-      }
+    if (error) throw new Error(error.message)
+    if (!data.user) throw new Error('Não foi possível criar a conta.')
+    if (!data.session) return { requiresEmailConfirmation: true }
 
-      if (!data.user) {
-        throw new Error('Não foi possível criar a conta.')
-      }
-
-      if (!data.session) {
-        return { requiresEmailConfirmation: true }
-      }
-
-      const appUser = await fetchProfile(data.user)
-      setSession(data.session)
-      setUser(appUser)
-
-      return { requiresEmailConfirmation: false }
-    },
-    [],
-  )
+    const appUser = await fetchProfile(data.user)
+    setSession(data.session)
+    setUser(appUser)
+    return { requiresEmailConfirmation: false }
+  }, [])
 
   const logout = useCallback(async () => {
     const { error } = await supabase.auth.signOut()
-
-    if (error) {
-      throw new Error(error.message)
-    }
-
+    if (error) throw new Error(error.message)
     setSession(null)
     setUser(null)
   }, [])
 
   const resetPassword = useCallback(async (email: string) => {
-    const redirectTo = `${window.location.origin}/redefinir-senha`
+    const siteUrl = (import.meta.env.VITE_SITE_URL || window.location.origin).replace(/\/$/, '')
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: siteUrl + '/redefinir-senha',
+    })
+    if (error) throw new Error(error.message)
+  }, [])
 
-    const { error } = await supabase.auth.resetPasswordForEmail(
-      email.trim(),
-      { redirectTo },
-    )
-
-    if (error) {
-      throw new Error(error.message)
-    }
+  const updatePassword = useCallback(async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) throw new Error(error.message)
   }, [])
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        isAuthenticated: !!session && !!user,
-        isLoading,
-        role: user?.role ?? null,
-        login,
-        register,
-        logout,
-        resetPassword,
-      }}
-    >
+    <AuthContext.Provider value={{
+      user,
+      session,
+      isAuthenticated: !!session && !!user,
+      isLoading,
+      role: user?.role ?? null,
+      login,
+      register,
+      logout,
+      resetPassword,
+      updatePassword,
+    }}>
       {children}
     </AuthContext.Provider>
   )
@@ -254,10 +213,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
-
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider')
-  }
-
+  if (!context) throw new Error('useAuth must be used within AuthProvider')
   return context
 }

@@ -218,3 +218,18 @@ export async function archiveProduct(id: string) {
 
   if (error) throw error
 }
+
+export async function createCategory(input:{name:string;slug:string;description?:string|null;active:boolean;display_order:number}) {
+  const { data,error }=await supabase.from('product_categories').insert(input).select().single()
+  if(error) throw error
+  return data as ProductCategoryRow
+}
+export async function updateCategory(id:string,input:Partial<{name:string;slug:string;description:string|null;active:boolean;display_order:number}>) {
+  const { data,error }=await supabase.from('product_categories').update(input).eq('id',id).select().single()
+  if(error) throw error
+  return data as ProductCategoryRow
+}
+export async function archiveCategory(id:string) {
+  const { error }=await supabase.from('product_categories').update({active:false}).eq('id',id)
+  if(error) throw error
+}
