@@ -16,6 +16,9 @@ export type SiteProfile={
   satisfaction_label:string
   skills:string[]
   experience:Array<{title:string;role:string;description:string}>
+  tools:Array<{group:string;items:string[]}>
+  methods:Array<{title:string;description:string}>
+  solutions:Array<{title:string;description:string}>
   updated_at:string
   updated_by:string|null
 }
