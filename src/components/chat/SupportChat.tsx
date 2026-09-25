@@ -6,7 +6,7 @@ import { ChatComposer } from './ChatComposer'
 import { AttachmentView } from './AttachmentView'
 import { portalApi } from '../../api/portal'
 
-export function SupportChat({ staff = false }: { staff?: boolean }) {
+export function SupportChat({ staff = false, compact = false }: { staff?: boolean; compact?: boolean }) {
   const { user } = useAuth()
   const { id } = useParams()
   const [search] = useSearchParams()
@@ -98,11 +98,11 @@ export function SupportChat({ staff = false }: { staff?: boolean }) {
   const conversation = conversations.find(item => item.id === selected)
   const name = (item: SupportConversation) => `${item.customer?.first_name || 'Cliente'} ${item.customer?.last_name || ''}`.trim()
   return (
-    <div className="flex flex-col gap-4" style={{ color: '#f0f0f2' }}>
-      <div><h1 className="text-2xl font-bold">Conversas</h1><p className="text-sm" style={{ color: '#9090a0' }}>{staff ? 'Central de atendimento ao cliente' : 'Chat direto com a equipe Play Moments'}</p></div>
+    <div className={compact ? 'h-full flex flex-col' : 'flex flex-col gap-4'} style={{ color: '#f0f0f2' }}>
+      {!compact&&<div><h1 className="text-2xl font-bold">Conversas</h1><p className="text-sm" style={{ color: '#9090a0' }}>{staff ? 'Central de atendimento ao cliente' : 'Chat direto com a equipe Play Moments'}</p></div>}
       {error && <div role="alert" className="p-3 rounded-xl bg-red-950/40 text-sm">{error} <button className="underline min-h-11 px-2" onClick={() => setRetry(value => value + 1)}>Tentar novamente</button></div>}
       {loading ? <p role="status">Carregando conversas…</p> : (
-        <div className="flex flex-col md:flex-row rounded-2xl overflow-hidden border border-white/10" style={{ background: '#141416', minHeight: 420 }}>
+        <div className={'flex flex-col md:flex-row overflow-hidden border border-white/10 '+(compact?'rounded-none h-full':'rounded-2xl')} style={{ background: '#141416', minHeight: compact ? 0 : 420 }}>
           {staff && <aside className="md:w-64 md:shrink-0 border-b md:border-r border-white/10 p-3">
             <input aria-label="Buscar cliente" placeholder="Buscar cliente…" value={filter} onChange={event => setFilter(event.target.value)} className="w-full p-3 rounded-xl bg-white/5 mb-2" />
             <div className="max-h-40 md:max-h-[60vh] overflow-auto">
@@ -113,9 +113,12 @@ export function SupportChat({ staff = false }: { staff?: boolean }) {
             </div>
           </aside>}
           <div className="flex-1 min-w-0 flex flex-col">
-            <div className="px-4 py-4 border-b border-white/10 font-semibold">{staff ? (conversation ? name(conversation) : 'Selecione uma conversa') : 'Play Moments'}</div>
+            <div className="px-4 py-3 border-b border-white/10 font-semibold flex items-center gap-2">
+              {!staff&&<span className="w-8 h-8 rounded-full bg-[#E30613] text-white flex items-center justify-center text-xs font-bold">PM</span>}
+              <div className="min-w-0"><p>{staff ? (conversation ? name(conversation) : 'Selecione uma conversa') : 'Play Moments'}</p>{!staff&&<p className="text-[10px] text-emerald-400 font-normal">Atendimento direto</p>}</div>
+            </div>
             {!staff && <p className="px-4 pt-4 text-sm" style={{ color: '#ff9ca6' }}>{prompt}</p>}
-            <div role="log" aria-label="Mensagens" aria-live="polite" className="flex-1 overflow-auto p-4 space-y-3" style={{ height: '45vh', minHeight: 200 }}>
+            <div role="log" aria-label="Mensagens" aria-live="polite" className="flex-1 overflow-auto p-4 space-y-3" style={{ height: compact ? 'auto' : '45vh', minHeight: compact ? 0 : 200 }}>
               {messagesLoading && <p role="status">Carregando mensagens…</p>}
               {!messagesLoading && selected && !messages.length && !error && <p className="text-sm text-gray-400">Nenhuma mensagem ainda. Inicie a conversa abaixo.</p>}
               {messages.map(message => <div key={message.id} className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}>
