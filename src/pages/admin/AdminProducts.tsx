@@ -5,10 +5,16 @@ import { useToast } from '../../contexts/ToastContext'
 import {
   archiveProduct,
   createProduct,
+  deleteProductImage,
   listAdminProducts,
   listCategories,
+  reorderProductImages,
+  setProductCover,
   updateProduct,
+  uploadProductImage,
   type CatalogProductRow,
+  type ProductImageRow,
+  type PublicCatalogProduct,
   type CommercialMode,
   type ProductCategoryRow,
   type ProductInput,
@@ -117,15 +123,17 @@ function productToForm(product: CatalogProductRow): FormState {
 export function AdminProducts() {
   const toast = useToast()
 
-  const [products, setProducts] = useState<CatalogProductRow[]>([])
+  const [products, setProducts] = useState<PublicCatalogProduct[]>([])
   const [categories, setCategories] = useState<ProductCategoryRow[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
   const [modalOpen, setModalOpen] = useState(false)
-  const [editing, setEditing] = useState<CatalogProductRow | null>(null)
+  const [editing, setEditing] = useState<PublicCatalogProduct | null>(null)
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
+  const [pendingImages, setPendingImages] = useState<File[]>([])
+  const [mediaBusy, setMediaBusy] = useState(false)
 
   async function loadData() {
     try {
@@ -164,12 +172,15 @@ export function AdminProducts() {
   function openCreate() {
     setEditing(null)
     setForm(EMPTY_FORM)
+    setPendingImages([])
+    setPendingImages([])
     setModalOpen(true)
   }
 
-  function openEdit(product: CatalogProductRow) {
+  function openEdit(product: PublicCatalogProduct) {
     setEditing(product)
     setForm(productToForm(product))
+    setPendingImages([])
     setModalOpen(true)
   }
 
@@ -241,14 +252,25 @@ export function AdminProducts() {
         status: form.status,
       }
 
-      if (editing) {
-        await updateProduct(editing.id, input)
-        toast('Produto atualizado com sucesso.', 'success')
-      } else {
-        await createProduct(input)
-        toast('Produto criado com sucesso.', 'success')
+      const savedProduct = editing
+        ? await updateProduct(editing.id, input)
+        : await createProduct(input)
+
+      const existingCount = editing?.product_images?.length ?? 0
+      if (existingCount + pendingImages.length > 10) {
+        throw new Error('A galeria aceita no máximo 10 imagens.')
       }
 
+      for (let index = 0; index < pendingImages.length; index += 1) {
+        await uploadProductImage(
+          savedProduct.id,
+          pendingImages[index],
+          existingCount + index,
+          existingCount === 0 && index === 0,
+        )
+      }
+
+      toast(editing ? 'Produto atualizado com sucesso.' : 'Produto criado com sucesso.', 'success')
       closeModal()
       await loadData()
     } catch (error) {
@@ -262,6 +284,83 @@ export function AdminProducts() {
       toast(message, 'error')
     } finally {
       setSaving(false)
+    }
+  }
+
+  function addPendingImages(files: FileList | null) {
+    if (!files) return
+    const incoming = Array.from(files)
+    const currentCount = (editing?.product_images?.length ?? 0) + pendingImages.length
+    const available = Math.max(0, 10 - currentCount)
+    if (incoming.length > available) {
+      toast('A galeria aceita no máximo 10 imagens.', 'warning')
+    }
+    setPendingImages(current => [...current, ...incoming.slice(0, available)])
+  }
+
+  async function refreshEditingMedia(productId: string) {
+    const data = await listAdminProducts()
+    setProducts(data)
+    const updated = data.find(product => product.id === productId) ?? null
+    setEditing(updated)
+  }
+
+  async function handleSetCover(image: ProductImageRow) {
+    if (!editing) return
+    try {
+      setMediaBusy(true)
+      await setProductCover(editing.id, image.id)
+      await refreshEditingMedia(editing.id)
+      toast('Capa atualizada.', 'success')
+    } catch (error) {
+      console.error(error)
+      toast('Não foi possível alterar a capa.', 'error')
+    } finally {
+      setMediaBusy(false)
+    }
+  }
+
+  async function handleDeleteImage(image: ProductImageRow) {
+    if (!editing || !window.confirm('Excluir esta imagem da galeria?')) return
+    try {
+      setMediaBusy(true)
+      const wasCover = image.is_cover
+      await deleteProductImage(image)
+      await refreshEditingMedia(editing.id)
+      if (wasCover) {
+        const data = await listAdminProducts()
+        const updated = data.find(product => product.id === editing.id)
+        const next = updated?.product_images?.[0]
+        if (next) {
+          await setProductCover(editing.id, next.id)
+          await refreshEditingMedia(editing.id)
+        }
+      }
+      toast('Imagem removida.', 'success')
+    } catch (error) {
+      console.error(error)
+      toast('Não foi possível excluir a imagem.', 'error')
+    } finally {
+      setMediaBusy(false)
+    }
+  }
+
+  async function moveImage(imageId: string, direction: -1 | 1) {
+    if (!editing) return
+    const current = [...editing.product_images]
+    const index = current.findIndex(image => image.id === imageId)
+    const target = index + direction
+    if (index < 0 || target < 0 || target >= current.length) return
+    ;[current[index], current[target]] = [current[target], current[index]]
+    try {
+      setMediaBusy(true)
+      await reorderProductImages(current)
+      await refreshEditingMedia(editing.id)
+    } catch (error) {
+      console.error(error)
+      toast('Não foi possível reorganizar a galeria.', 'error')
+    } finally {
+      setMediaBusy(false)
     }
   }
 
@@ -819,6 +918,56 @@ export function AdminProducts() {
                 </div>
               </div>
 
+              <div className="pt-5 border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                  <div>
+                    <p className="text-sm font-semibold" style={{ color: '#f0f0f2' }}>Imagens do produto</p>
+                    <p className="text-xs mt-1" style={{ color: '#6b6b78' }}>Capa + galeria. Recomendado: 3 a 10 imagens. Máximo: 10.</p>
+                  </div>
+                  <label className="px-3 py-2 rounded-lg text-xs cursor-pointer" style={{ background: 'rgba(255,255,255,0.07)', color: '#f0f0f2' }}>
+                    + Selecionar imagens
+                    <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple className="hidden" onChange={event => { addPendingImages(event.target.files); event.currentTarget.value = '' }} />
+                  </label>
+                </div>
+
+                {editing?.product_images?.length ? (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
+                    {editing.product_images.map((image,index) => (
+                      <div key={image.id} className="rounded-xl overflow-hidden border" style={{ borderColor: image.is_cover ? 'rgba(227,6,19,0.7)' : 'rgba(255,255,255,0.08)', background: '#0f0f11' }}>
+                        <div className="h-32 bg-black/20">
+                          {image.public_url ? <img src={image.public_url} alt={image.alt_text || form.name} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">Sem prévia</div>}
+                        </div>
+                        <div className="p-2">
+                          <div className="flex justify-between gap-2 items-center">
+                            <span className="text-[11px]" style={{ color: image.is_cover ? '#ff6b7a' : '#9090a0' }}>{image.is_cover ? 'Capa' : 'Imagem '+(index+1)}</span>
+                            <div className="flex gap-1">
+                              <button type="button" disabled={mediaBusy || index===0} onClick={()=>moveImage(image.id,-1)} className="px-2 py-1 rounded bg-white/5 text-xs disabled:opacity-30">←</button>
+                              <button type="button" disabled={mediaBusy || index===editing.product_images.length-1} onClick={()=>moveImage(image.id,1)} className="px-2 py-1 rounded bg-white/5 text-xs disabled:opacity-30">→</button>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-1 mt-2">
+                            <button type="button" disabled={mediaBusy || image.is_cover} onClick={()=>handleSetCover(image)} className="px-2 py-1.5 rounded bg-white/5 text-[11px] disabled:opacity-40">Definir capa</button>
+                            <button type="button" disabled={mediaBusy} onClick={()=>handleDeleteImage(image)} className="px-2 py-1.5 rounded bg-red-500/10 text-red-300 text-[11px] disabled:opacity-40">Excluir</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : editing ? <p className="text-xs mb-3" style={{ color: '#6b6b78' }}>Este produto ainda não possui imagens.</p> : null}
+
+                {pendingImages.length > 0 && (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {pendingImages.map((file,index) => (
+                      <PendingImagePreview
+                        key={file.name+file.size+index}
+                        file={file}
+                        onRemove={()=>setPendingImages(current=>current.filter((_,i)=>i!==index))}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div
                 className="flex justify-end gap-3 pt-5 border-t"
                 style={{
@@ -892,5 +1041,29 @@ function Field({
 
       {children}
     </label>
+  )
+}
+
+
+function PendingImagePreview({ file, onRemove }: { file: File; onRemove: () => void }) {
+  const [preview,setPreview]=useState('')
+
+  useEffect(()=>{
+    const url=URL.createObjectURL(file)
+    setPreview(url)
+    return ()=>URL.revokeObjectURL(url)
+  },[file])
+
+  return (
+    <div className="rounded-xl overflow-hidden bg-white/5 border border-white/10">
+      <div className="h-28 bg-black/20">
+        {preview&&<img src={preview} alt={file.name} className="w-full h-full object-cover"/>}
+      </div>
+      <div className="p-3">
+        <p className="text-xs truncate" style={{ color: '#f0f0f2' }}>{file.name}</p>
+        <p className="text-[11px] mt-1" style={{ color: '#6b6b78' }}>{(file.size/1024/1024).toFixed(1)} MB · aguardando salvar</p>
+        <button type="button" onClick={onRemove} className="text-[11px] text-red-300 mt-2">Remover</button>
+      </div>
+    </div>
   )
 }
