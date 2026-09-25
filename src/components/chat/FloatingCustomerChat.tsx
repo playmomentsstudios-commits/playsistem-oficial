@@ -53,13 +53,13 @@ export function FloatingCustomerChat({unread=0}:{unread?:number}){
   }
 
   return <>
-    {open&&<div className="fixed z-[80] right-4 bottom-24 w-[min(410px,calc(100vw-24px))] h-[min(680px,calc(100vh-120px))] rounded-2xl overflow-hidden border border-white/10 bg-[#111113] shadow-2xl">
+    {open&&<div className="fixed z-[80] inset-2 sm:inset-auto sm:right-4 sm:bottom-24 sm:w-[min(410px,calc(100vw-24px))] sm:h-[min(680px,calc(100vh-120px))] rounded-2xl overflow-hidden border border-white/10 bg-[#111113] shadow-2xl">
       <div className="h-12 px-4 flex items-center justify-between border-b border-white/10 bg-[#0d0d0f]">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400"/>
           <span className="text-sm font-semibold">Atendimento Play Moments</span>
         </div>
-        <button type="button" onClick={()=>setOpen(false)} className="w-8 h-8 rounded-lg hover:bg-white/[0.06] text-gray-400" aria-label="Fechar chat">×</button>
+        <button type="button" onClick={()=>setOpen(false)} className="w-10 h-10 rounded-xl hover:bg-white/[0.06] text-gray-400" aria-label="Fechar chat">×</button>
       </div>
       <div className="h-[calc(100%-3rem)]"><SupportChat compact/></div>
     </div>}
@@ -69,7 +69,7 @@ export function FloatingCustomerChat({unread=0}:{unread?:number}){
       onPointerDown={down}
       onPointerMove={move}
       onPointerUp={up}
-      className="fixed z-[90] w-14 h-14 rounded-full bg-[#E30613] text-white shadow-2xl flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
+      className="fixed z-[90] w-14 h-14 sm:w-14 sm:h-14 rounded-full bg-[#E30613] text-white shadow-2xl flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
       style={{right:position.x,bottom:position.y}}
       aria-label={open?'Fechar chat':'Abrir chat'}
       title="Chat"
