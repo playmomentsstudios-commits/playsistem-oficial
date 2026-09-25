@@ -16,6 +16,7 @@ export function DashboardPage(){
 
   useEffect(()=>{
     if(!user)return
+    void portalApi.ensureClientDriveFolder(user.id).catch(()=>undefined)
     Promise.all([
       portalApi.orders(),
       portalApi.projects(),
