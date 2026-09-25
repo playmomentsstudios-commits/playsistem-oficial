@@ -174,6 +174,11 @@ export const portalApi = {
     const q=id?supabase.from('projects').update(values).eq('id',id):supabase.from('projects').insert(values)
     const { data,error }=await q.select().single()
     if(error) throw error
+    if(data?.customer_id){
+      void supabase.functions.invoke('google-drive-project-folder',{
+        body:{project_id:data.id},
+      }).catch(()=>undefined)
+    }
     return data
   },
   saveStage: async (values:any,id?:string) => {
@@ -280,11 +285,104 @@ export const portalApi = {
     if(error) throw error
   },
   files: async () => {
-    const { data,error }=await supabase.from('client_files').select('*').order('created_at',{ascending:false})
+    const { data,error }=await supabase.from('client_files')
+      .select('*,project:projects(id,title),task:tasks(id,title),customer:profiles!client_files_customer_id_fkey(id,email,first_name,last_name)')
+      .order('created_at',{ascending:false})
     if(error) throw error
     return data ?? []
   },
-  addClientFile: async (values:{customer_id:string;project_id?:string|null;task_id?:string|null;order_id?:string|null;uploaded_by:string;name:string;external_url?:string|null;storage_path?:string|null;file_type?:string|null;client_visible:boolean}) => {
+  driveConnectionTest: async () => {
+    const { data,error }=await supabase.functions.invoke('google-drive-test')
+    if(error) throw error
+    if(!data?.ok) throw new Error(data?.error||'Não foi possível conectar ao Google Drive.')
+    return data
+  },
+  ensureClientDriveFolder: async (customerId:string) => {
+    const { data,error }=await supabase.functions.invoke('google-drive-client-folder',{body:{customer_id:customerId}})
+    if(error) throw error
+    if(!data?.ok) throw new Error(data?.error||'Não foi possível preparar a pasta do cliente.')
+    return data
+  },
+  ensureProjectDriveFolder: async (projectId:string) => {
+    const { data,error }=await supabase.functions.invoke('google-drive-project-folder',{body:{project_id:projectId}})
+    if(error) throw error
+    if(!data?.ok) throw new Error(data?.error||'Não foi possível preparar a pasta do projeto.')
+    return data
+  },
+  uploadDriveFile: async (
+    values:{project_id:string;task_id?:string|null;folder_kind?:string;client_visible:boolean},
+    file:File,
+    onProgress?:(value:number)=>void,
+  ) => {
+    const mimeType=file.type||'application/octet-stream'
+    const { data:session,error:sessionError }=await supabase.functions.invoke('google-drive-upload-session',{
+      body:{
+        project_id:values.project_id,
+        task_id:values.task_id||null,
+        folder_kind:values.folder_kind||'received',
+        file_name:file.name,
+        mime_type:mimeType,
+        file_size:file.size,
+      },
+    })
+    if(sessionError) throw sessionError
+    if(!session?.ok||!session.upload_url) throw new Error(session?.error||'Não foi possível iniciar o upload no Google Drive.')
+
+    const chunkSize=8*1024*1024
+    let offset=0
+    let driveFile:any=null
+
+    while(offset<file.size){
+      const end=Math.min(offset+chunkSize,file.size)
+      const chunk=file.slice(offset,end)
+      let response:Response|null=null
+      let lastError:unknown=null
+
+      for(let attempt=0;attempt<3;attempt+=1){
+        try{
+          response=await fetch(session.upload_url,{
+            method:'PUT',
+            headers:{
+              'Content-Type':mimeType,
+              'Content-Range':`bytes ${offset}-${end-1}/${file.size}`,
+            },
+            body:chunk,
+          })
+          if(response.status===308||response.ok) break
+          lastError=new Error('Google Drive respondeu '+response.status)
+        }catch(error){
+          lastError=error
+        }
+        await new Promise(resolve=>window.setTimeout(resolve,750*(attempt+1)))
+      }
+
+      if(!response) throw lastError instanceof Error?lastError:new Error('Falha ao enviar arquivo ao Google Drive.')
+      if(response.status===308){
+        offset=end
+        onProgress?.(Math.round(offset/file.size*100))
+        continue
+      }
+      if(!response.ok) throw new Error('Falha no upload para o Google Drive.')
+      driveFile=await response.json()
+      offset=end
+      onProgress?.(100)
+    }
+
+    if(!driveFile?.id) throw new Error('O Google Drive não retornou o arquivo finalizado.')
+
+    const { data:finalized,error:finalizeError }=await supabase.functions.invoke('google-drive-finalize',{
+      body:{
+        project_id:values.project_id,
+        task_id:values.task_id||null,
+        drive_file_id:driveFile.id,
+        client_visible:values.client_visible,
+      },
+    })
+    if(finalizeError) throw finalizeError
+    if(!finalized?.ok) throw new Error(finalized?.error||'Não foi possível registrar o arquivo.')
+    return finalized.file
+  },
+  addClientFile: async (values:{customer_id:string;project_id?:string|null;task_id?:string|null;order_id?:string|null;uploaded_by:string;name:string;external_url?:string|null;storage_path?:string|null;file_type?:string|null;client_visible:boolean;storage_provider?:'supabase'|'google_drive'|'external';drive_file_id?:string|null;drive_folder_id?:string|null;file_size?:number|null;mime_type?:string|null}) => {
     const { error }=await supabase.from('client_files').insert(values)
     if(error) throw error
   },
