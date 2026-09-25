@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 export const portalApi = {
   customers: async () => {
     const { data, error } = await supabase.from('profiles')
-      .select('id,email,first_name,last_name,phone,status,created_at')
+      .select('id,email,first_name,last_name,phone,status,status_reason_code,status_changed_at,status_changed_by,created_at')
       .eq('role','customer').order('created_at',{ascending:false})
     if (error) throw error
     return data ?? []
@@ -11,6 +11,38 @@ export const portalApi = {
   updateProfile: async (id:string, values:{first_name:string;last_name:string;phone:string|null}) => {
     const { error } = await supabase.from('profiles').update(values).eq('id',id)
     if (error) throw error
+  },
+  setCustomerStatus: async (customerId:string,status:'active'|'inactive'|'blocked',reasonCode?:string|null) => {
+    const { error } = await supabase.rpc('admin_set_customer_status',{
+      p_customer_id:customerId,
+      p_status:status,
+      p_reason_code:reasonCode||null,
+    })
+    if(error) throw error
+  },
+  customerStatusHistory: async (customerId:string) => {
+    const { data,error }=await supabase.from('customer_status_history')
+      .select('*').eq('customer_id',customerId).order('created_at',{ascending:false})
+    if(error) throw error
+    return data ?? []
+  },
+  customerLoyalty: async (customerId:string) => {
+    const { data,error }=await supabase.from('customer_loyalty')
+      .select('*').eq('customer_id',customerId).maybeSingle()
+    if(error) throw error
+    return data
+  },
+  loyaltySettings: async () => {
+    const { data,error }=await supabase.from('loyalty_settings').select('*').eq('id',true).maybeSingle()
+    if(error) throw error
+    return data
+  },
+  saveLoyaltySettings: async (values:{cashback_basis_points:number;silver_threshold:number|null;gold_threshold:number|null;updated_by:string}) => {
+    const { error }=await supabase.from('loyalty_settings').update({
+      ...values,
+      updated_at:new Date().toISOString(),
+    }).eq('id',true)
+    if(error) throw error
   },
   services: async (admin=false) => {
     let q = supabase.from('services').select('*').order('created_at',{ascending:false})
@@ -150,6 +182,16 @@ export const portalApi = {
     if(error) throw error
     return data ?? []
   },
+  projectFiles: async (projectId:string) => {
+    const { data,error }=await supabase.from('client_files')
+      .select('*').eq('project_id',projectId).order('created_at',{ascending:false})
+    if(error) throw error
+    return data ?? []
+  },
+  assignClientFileTask: async (fileId:string,taskId:string|null) => {
+    const { error }=await supabase.from('client_files').update({task_id:taskId}).eq('id',fileId)
+    if(error) throw error
+  },
   payments: async () => {
     const { data,error } = await supabase.from('payments')
       .select('*,order:orders(order_number),customer:profiles!payments_customer_id_fkey(id,email,first_name,last_name),receipt:payment_receipts(*)')
@@ -202,7 +244,7 @@ export const portalApi = {
     if(error) throw error
     return data ?? []
   },
-  addClientFile: async (values:{customer_id:string;project_id?:string|null;order_id?:string|null;uploaded_by:string;name:string;external_url?:string|null;storage_path?:string|null;file_type?:string|null;client_visible:boolean}) => {
+  addClientFile: async (values:{customer_id:string;project_id?:string|null;task_id?:string|null;order_id?:string|null;uploaded_by:string;name:string;external_url?:string|null;storage_path?:string|null;file_type?:string|null;client_visible:boolean}) => {
     const { error }=await supabase.from('client_files').insert(values)
     if(error) throw error
   },
