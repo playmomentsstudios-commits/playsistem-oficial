@@ -11,6 +11,7 @@ import { AdminLayout } from './layouts/AdminLayout'
 import { HomePage } from './pages/public/HomePage'
 import { LoginPage } from './pages/public/LoginPage'
 import { RegisterPage } from './pages/public/RegisterPage'
+import { EmailConfirmedPage } from './pages/public/EmailConfirmedPage'
 import { CommunityPage } from './pages/public/CommunityPage'
 import { ProductsPage } from './pages/public/ProductsPage'
 import { ProductDetailPage } from './pages/public/ProductDetailPage'
@@ -67,6 +68,7 @@ export default function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/cadastro" element={<RegisterPage />} />
+              <Route path="/email-confirmado" element={<EmailConfirmedPage />} />
               <Route path="/esqueci-senha" element={<PlaceholderPage title="Recuperar Senha" />} />
               <Route path="/produtos" element={<ProductsPage />} />
               <Route path="/produtos/:slug" element={<ProductDetailPage />} />
