@@ -242,6 +242,25 @@ using (
   or (customer_id=auth.uid() and public.current_user_is_active_customer())
 );
 
+drop policy if exists payment_receipts_customer_insert on public.payment_receipts;
+create policy payment_receipts_customer_insert on public.payment_receipts for insert to authenticated
+with check (
+  customer_id=auth.uid()
+  and public.current_user_is_active_customer()
+  and exists (
+    select 1 from public.payments p
+    where p.id=payment_id and p.customer_id=auth.uid()
+  )
+);
+
+drop policy if exists payment_receipt_objects_insert on storage.objects;
+create policy payment_receipt_objects_insert on storage.objects for insert to authenticated
+with check (
+  bucket_id='payment-receipts'
+  and public.current_user_is_active_customer()
+  and split_part(name,'/',1)=auth.uid()::text
+);
+
 drop policy if exists payment_receipts_read on public.payment_receipts;
 create policy payment_receipts_read on public.payment_receipts for select to authenticated
 using (
@@ -282,6 +301,10 @@ using (
       and f.client_visible
   )
 );
+
+alter table public.orders
+  add column if not exists play_cash_discount integer not null default 0
+  check (play_cash_discount >= 0);
 
 -- Play Cash: 5% por padrão (R$ 0,50 a cada R$ 10,00 em serviços pagos).
 create table if not exists public.loyalty_settings (
@@ -368,13 +391,20 @@ declare
 begin
   select * into cfg from public.loyalty_settings where id=true;
 
-  select coalesce(sum(oi.total_price),0)::integer
+  select coalesce(sum(greatest(0,paid_service.service_total - paid_service.play_cash_discount)),0)::integer
   into spend_cents
-  from public.orders o
-  join public.order_items oi on oi.order_id=o.id
-  where o.customer_id=p_customer_id
-    and o.payment_status='paid'
-    and oi.item_type='service';
+  from (
+    select
+      o.id,
+      o.play_cash_discount,
+      sum(oi.total_price)::integer as service_total
+    from public.orders o
+    join public.order_items oi on oi.order_id=o.id
+    where o.customer_id=p_customer_id
+      and o.payment_status='paid'
+      and oi.item_type='service'
+    group by o.id,o.play_cash_discount
+  ) paid_service;
 
   generated_cents := floor(spend_cents::numeric * cfg.cashback_basis_points / 10000)::integer;
 
@@ -454,6 +484,89 @@ create trigger loyalty_settings_refresh_all
 after update of cashback_basis_points, silver_threshold, gold_threshold
 on public.loyalty_settings
 for each row execute function public.refresh_all_customer_loyalty();
+
+create or replace function public.apply_play_cash_to_order(
+  p_order_id uuid,
+  p_amount integer default null
+)
+returns integer
+language plpgsql
+security definer
+set search_path=public
+as $
+declare
+  order_row public.orders%rowtype;
+  available_cash integer;
+  amount_to_use integer;
+  loyalty_row public.customer_loyalty%rowtype;
+begin
+  if not public.current_user_is_active_customer() then
+    raise exception 'Customer access required' using errcode='42501';
+  end if;
+
+  select * into order_row
+  from public.orders
+  where id=p_order_id and customer_id=auth.uid()
+  for update;
+
+  if not found then
+    raise exception 'Order not found' using errcode='P0002';
+  end if;
+
+  if order_row.payment_status not in ('pending','rejected') then
+    raise exception 'Play Cash cannot be applied to this payment now' using errcode='22023';
+  end if;
+
+  if order_row.play_cash_discount > 0 then
+    raise exception 'Play Cash has already been applied to this order' using errcode='22023';
+  end if;
+
+  select * into loyalty_row
+  from public.customer_loyalty
+  where customer_id=auth.uid()
+  for update;
+
+  available_cash := greatest(0,coalesce(loyalty_row.unlocked_cash,0)-coalesce(loyalty_row.used_cash,0));
+
+  if available_cash <= 0 then
+    raise exception 'No Play Cash available' using errcode='22023';
+  end if;
+
+  amount_to_use := least(
+    available_cash,
+    order_row.total,
+    coalesce(nullif(p_amount,0),available_cash)
+  );
+
+  if amount_to_use <= 0 then
+    raise exception 'Invalid Play Cash amount' using errcode='22023';
+  end if;
+
+  update public.customer_loyalty
+  set used_cash=used_cash+amount_to_use,
+      updated_at=now()
+  where customer_id=auth.uid();
+
+  update public.orders
+  set play_cash_discount=amount_to_use,
+      total=greatest(0,total-amount_to_use),
+      payment_status=case when total-amount_to_use<=0 then 'paid' else 'pending' end,
+      status=case when total-amount_to_use<=0 and status='awaiting_payment' then 'paid' else status end
+  where id=p_order_id;
+
+  update public.payments
+  set amount=greatest(0,amount-amount_to_use),
+      status=case when amount-amount_to_use<=0 then 'paid' else 'pending' end,
+      paid_at=case when amount-amount_to_use<=0 then now() else paid_at end
+  where order_id=p_order_id
+    and status in ('pending','rejected');
+
+  return amount_to_use;
+end;
+$;
+
+revoke all on function public.apply_play_cash_to_order(uuid,integer) from public;
+grant execute on function public.apply_play_cash_to_order(uuid,integer) to authenticated;
 
 insert into public.customer_loyalty(customer_id)
 select id
