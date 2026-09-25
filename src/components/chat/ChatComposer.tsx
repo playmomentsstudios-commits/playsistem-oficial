@@ -16,6 +16,7 @@ export function ChatComposer({ disabled, onBusy, onSend }: Props) {
   const [error, setError] = useState('')
   const input = useRef<HTMLInputElement>(null)
   const photos = useRef<HTMLInputElement>(null)
+  const camera = useRef<HTMLInputElement>(null)
   const pendingId = useRef<string | null>(null)
   const sendingRef = useRef(false)
   const mounted = useRef(true)
@@ -59,10 +60,20 @@ export function ChatComposer({ disabled, onBusy, onSend }: Props) {
   return <form onSubmit={submit} className="p-3 border-t border-white/10 space-y-3">
     <input ref={input} type="file" className="hidden" aria-label="Selecionar arquivo original" disabled={disabled || busy} onChange={event => { choose(event.target.files?.[0] || null); event.target.value = '' }} />
     <input ref={photos} type="file" accept="image/*,video/*" className="hidden" aria-label="Selecionar foto ou vídeo" disabled={disabled || busy} onChange={event => { choose(event.target.files?.[0] || null); event.target.value = '' }} />
-    <div className="flex flex-wrap gap-2">
-      <Button type="button" variant="secondary" className="min-h-11" disabled={disabled || busy} onClick={() => input.current?.click()}>Anexar arquivo</Button>
-      <Button type="button" variant="secondary" className="min-h-11" disabled={disabled || busy} onClick={() => photos.current?.click()}>Fotos e vídeos</Button>
-      {!audio.recording && <Button type="button" variant="secondary" className="min-h-11" disabled={disabled || busy || !!file} onClick={audio.start}>{audio.requesting ? 'Aguardando microfone…' : 'Gravar áudio'}</Button>}
+    <input ref={camera} type="file" accept="image/*" capture="environment" className="hidden" aria-label="Abrir câmera" disabled={disabled || busy} onChange={event => { choose(event.target.files?.[0] || null); event.target.value = '' }} />
+    <div className="flex flex-wrap gap-1.5">
+      <button type="button" className="w-10 h-10 rounded-full bg-white/[0.06] hover:bg-white/[0.1] flex items-center justify-center text-gray-300" disabled={disabled || busy} onClick={() => input.current?.click()} title="Anexar arquivo" aria-label="Anexar arquivo">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.4 11.6 12 21a6 6 0 0 1-8.5-8.5l10-10a4 4 0 0 1 5.7 5.7l-10 10a2 2 0 1 1-2.8-2.8l9.2-9.2"/></svg>
+      </button>
+      <button type="button" className="w-10 h-10 rounded-full bg-white/[0.06] hover:bg-white/[0.1] flex items-center justify-center text-gray-300" disabled={disabled || busy} onClick={() => photos.current?.click()} title="Fotos e vídeos" aria-label="Fotos e vídeos">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 4.5-4.5L13 16l2.5-2.5L19 17"/></svg>
+      </button>
+      <button type="button" className="w-10 h-10 rounded-full bg-white/[0.06] hover:bg-white/[0.1] flex items-center justify-center text-gray-300" disabled={disabled || busy} onClick={() => camera.current?.click()} title="Abrir câmera" aria-label="Abrir câmera">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h3l1.5-2h7L17 7h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+      </button>
+      {!audio.recording && <button type="button" className="w-10 h-10 rounded-full bg-white/[0.06] hover:bg-white/[0.1] flex items-center justify-center text-gray-300" disabled={disabled || busy || !!file} onClick={audio.start} title="Gravar áudio" aria-label="Gravar áudio">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg>
+      </button>}
     </div>
     {audio.recording && <div className="flex flex-wrap items-center gap-2 rounded-xl bg-red-950/40 p-3">
       <p role="status" className="text-sm">Gravando {Math.floor(audio.seconds / 60)}:{String(audio.seconds % 60).padStart(2, '0')} / 5:00</p>
