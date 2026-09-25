@@ -82,15 +82,73 @@ export const portalApi = {
     if(error) throw error
     return data ?? []
   },
+  project: async (id:string) => {
+    const { data,error } = await supabase.from('projects')
+      .select('*,stages:project_stages(*),tasks(*,checklist:task_checklist_items(*),links:task_links(*))')
+      .eq('id',id).maybeSingle()
+    if(error) throw error
+    return data
+  },
+  teamMembers: async () => {
+    const { data,error } = await supabase.from('profiles')
+      .select('id,email,first_name,last_name,role,status')
+      .in('role',['admin','staff'])
+      .eq('status','active')
+      .order('first_name')
+    if(error) throw error
+    return data ?? []
+  },
   saveProject: async (values:any,id?:string) => {
     const q=id?supabase.from('projects').update(values).eq('id',id):supabase.from('projects').insert(values)
-    const { error }=await q
+    const { data,error }=await q.select().single()
+    if(error) throw error
+    return data
+  },
+  saveStage: async (values:any,id?:string) => {
+    const q=id?supabase.from('project_stages').update(values).eq('id',id):supabase.from('project_stages').insert(values)
+    const { data,error }=await q.select().single()
+    if(error) throw error
+    return data
+  },
+  deleteStage: async (id:string) => {
+    const { error }=await supabase.from('project_stages').delete().eq('id',id)
     if(error) throw error
   },
   saveTask: async (values:any,id?:string) => {
     const q=id?supabase.from('tasks').update(values).eq('id',id):supabase.from('tasks').insert(values)
-    const { error }=await q
+    const { data,error }=await q.select().single()
     if(error) throw error
+    return data
+  },
+  deleteTask: async (id:string) => {
+    const { error }=await supabase.from('tasks').delete().eq('id',id)
+    if(error) throw error
+  },
+  saveChecklistItem: async (values:any,id?:string) => {
+    const q=id?supabase.from('task_checklist_items').update(values).eq('id',id):supabase.from('task_checklist_items').insert(values)
+    const { data,error }=await q.select().single()
+    if(error) throw error
+    return data
+  },
+  deleteChecklistItem: async (id:string) => {
+    const { error }=await supabase.from('task_checklist_items').delete().eq('id',id)
+    if(error) throw error
+  },
+  saveTaskLink: async (values:any,id?:string) => {
+    const q=id?supabase.from('task_links').update(values).eq('id',id):supabase.from('task_links').insert(values)
+    const { data,error }=await q.select().single()
+    if(error) throw error
+    return data
+  },
+  deleteTaskLink: async (id:string) => {
+    const { error }=await supabase.from('task_links').delete().eq('id',id)
+    if(error) throw error
+  },
+  taskActivity: async (taskId:string) => {
+    const { data,error }=await supabase.from('task_activity_logs')
+      .select('*').eq('task_id',taskId).order('created_at',{ascending:false})
+    if(error) throw error
+    return data ?? []
   },
   payments: async () => {
     const { data,error } = await supabase.from('payments')
