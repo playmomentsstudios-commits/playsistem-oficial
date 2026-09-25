@@ -16,6 +16,7 @@ import { CommunityPage } from './pages/public/CommunityPage'
 import { ProductsPage } from './pages/public/ProductsPage'
 import { ProductDetailPage } from './pages/public/ProductDetailPage'
 import { ServicesPage } from './pages/public/ServicesPage'
+import { ServiceDetailPage } from './pages/public/ServiceDetailPage'
 import { PortfolioPage } from './pages/public/PortfolioPage'
 import { CategoryPage } from './pages/public/CategoryPage'
 
@@ -45,6 +46,7 @@ import { AdminProjects } from './pages/admin/AdminProjects'
 import { AdminServices } from './pages/admin/AdminServices'
 import { AdminQuotes } from './pages/admin/AdminQuotes'
 import { AdminAnnouncements } from './pages/admin/AdminAnnouncements'
+import { AdminCustomerDetail } from './pages/admin/AdminCustomerDetail'
 
 // Placeholder for unbuilt pages
 function PlaceholderPage({ title }: { title: string }) {
@@ -73,7 +75,7 @@ export default function App() {
               <Route path="/produtos" element={<ProductsPage />} />
               <Route path="/produtos/:slug" element={<ProductDetailPage />} />
               <Route path="/servicos" element={<ServicesPage />} />
-              <Route path="/servicos/:slug" element={<PlaceholderPage title="Detalhe do Serviço" />} />
+              <Route path="/servicos/:slug" element={<ServiceDetailPage />} />
               <Route path="/portfolio" element={<PortfolioPage />} />
               <Route path="/portfolio/:slug" element={<PlaceholderPage title="Projeto do Portfólio" />} />
               <Route path="/studio" element={<CategoryPage />} />
@@ -109,7 +111,7 @@ export default function App() {
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
                 <Route path="clientes" element={<AdminCustomers />} />
-                <Route path="clientes/:id" element={<PlaceholderPage title="Perfil do Cliente" />} />
+                <Route path="clientes/:id" element={<AdminCustomerDetail />} />
                 <Route path="produtos" element={<AdminProducts />} />
                 <Route path="categorias" element={<PlaceholderPage title="Categorias" />} />
                 <Route path="servicos" element={<AdminServices />} />
