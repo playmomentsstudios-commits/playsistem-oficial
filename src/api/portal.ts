@@ -51,7 +51,11 @@ export const portalApi = {
     return data ?? []
   },
   decideQuote: async (id:string,status:'accepted'|'rejected') => {
-    const { error } = await supabase.from('quotes').update({status}).eq('id',id)
+    const { error } = await supabase.rpc('decide_quote',{p_quote_id:id,p_status:status})
+    if(error) throw error
+  },
+  updateQuote: async (id:string,values:any) => {
+    const { error } = await supabase.from('quotes').update(values).eq('id',id)
     if(error) throw error
   },
   projects: async () => {
