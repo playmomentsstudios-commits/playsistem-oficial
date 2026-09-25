@@ -34,6 +34,18 @@ export const portalApi = {
     if(error) throw error
     return data as string
   },
+  createCartOrder: async (items:Array<{product_id:string;quantity:number}>) => {
+    const { data,error } = await supabase.rpc('create_cart_order',{p_items:items})
+    if(error) throw error
+    return data as string
+  },
+  order: async (id:string) => {
+    const { data,error } = await supabase.from('orders')
+      .select('*,items:order_items(*),payments(*),projects(id,title,status,due_date)')
+      .eq('id',id).maybeSingle()
+    if(error) throw error
+    return data
+  },
   orders: async () => {
     const { data,error } = await supabase.from('orders')
       .select('*,items:order_items(*)').order('created_at',{ascending:false})
@@ -49,6 +61,12 @@ export const portalApi = {
       .select('*,items:quote_items(*)').order('created_at',{ascending:false})
     if(error) throw error
     return data ?? []
+  },
+  quote: async (id:string) => {
+    const { data,error } = await supabase.from('quotes')
+      .select('*,items:quote_items(*)').eq('id',id).maybeSingle()
+    if(error) throw error
+    return data
   },
   decideQuote: async (id:string,status:'accepted'|'rejected') => {
     const { error } = await supabase.rpc('decide_quote',{p_quote_id:id,p_status:status})
@@ -119,6 +137,16 @@ export const portalApi = {
     const { data,error }=await supabase.from('client_files').select('*').order('created_at',{ascending:false})
     if(error) throw error
     return data ?? []
+  },
+  addClientFile: async (values:{customer_id:string;project_id?:string|null;order_id?:string|null;uploaded_by:string;name:string;external_url?:string|null;storage_path?:string|null;file_type?:string|null;client_visible:boolean}) => {
+    const { error }=await supabase.from('client_files').insert(values)
+    if(error) throw error
+  },
+  uploadClientFile: async (customerId:string,file:File) => {
+    const path = customerId + '/' + crypto.randomUUID() + '-' + file.name
+    const { error } = await supabase.storage.from('client-files').upload(path,file,{upsert:false})
+    if(error) throw error
+    return path
   },
   fileUrl: async (path:string) => {
     const { data,error }=await supabase.storage.from('client-files').createSignedUrl(path,600)
