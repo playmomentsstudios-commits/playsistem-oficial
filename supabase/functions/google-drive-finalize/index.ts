@@ -1,4 +1,4 @@
-import { corsHeaders, driveJson, ensureProjectFolder, json, requireUser } from "../_shared/googleDrive.ts";
+import { corsHeaders, driveJson, ensureProjectFolder, getDriveAccessToken, json, requireUser } from "../_shared/googleDrive.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -45,6 +45,25 @@ Deno.serve(async (req) => {
     const parentId = file.parents?.[0] || null;
     if (!parentId || !allowedFolderIds.has(parentId)) {
       throw new Error("Drive file is outside this project");
+    }
+
+    if ((staff ? clientVisible : true)) {
+      const token = await getDriveAccessToken();
+      const permissionResponse = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.id)}/permissions?sendNotificationEmail=false`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ type: "anyone", role: "reader" }),
+        },
+      );
+      if (!permissionResponse.ok) {
+        const detail = await permissionResponse.text();
+        throw new Error(`Could not publish client-visible Drive link: ${detail}`);
+      }
     }
 
     const values = {
