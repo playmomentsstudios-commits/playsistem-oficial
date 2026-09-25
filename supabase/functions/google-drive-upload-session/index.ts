@@ -16,6 +16,13 @@ Deno.serve(async (req) => {
       throw new Error("Invalid upload metadata");
     }
 
+    const maxFileSize = 1024 * 1024 * 1024;
+    if (fileSize > maxFileSize) {
+      throw new Error("File exceeds the 1 GB limit");
+    }
+
+    const uploadId = crypto.randomUUID();
+
     const { data: project, error: projectError } = await ctx.db
       .from("projects")
       .select("id,customer_id")
@@ -48,6 +55,7 @@ Deno.serve(async (req) => {
         playMomentsKind: "project-file",
         playMomentsEntityId: projectId,
         playMomentsTaskId: taskId || "",
+        playMomentsUploadId: uploadId,
       },
     };
 
@@ -78,6 +86,7 @@ Deno.serve(async (req) => {
       upload_url: uploadUrl,
       folder_id: target.drive_folder_id,
       customer_id: project.customer_id,
+      upload_id: uploadId,
     });
   } catch (error) {
     return json({ ok: false, error: error instanceof Error ? error.message : "Unknown error" }, 400);
