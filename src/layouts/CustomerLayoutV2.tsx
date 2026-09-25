@@ -83,19 +83,10 @@ export function CustomerLayoutV2() {
       className="h-full flex flex-col bg-[#0d0d0f] border-r border-white/5 transition-[width] duration-300 ease-out"
       style={{width:mobile?248:expanded?228:76}}
     >
-      <div className={'h-16 flex items-center border-b border-white/5 relative '+(showLabels?'px-4 justify-start':'justify-center')}>
+      <div className={'h-20 flex items-center border-b border-white/5 relative '+(showLabels?'px-4 justify-start':'justify-center')}>
         <Link to="/" className="flex items-center justify-center">
-          <img src={logoUrl} alt="Play Moments" className="h-6 w-auto" />
+          <img src={logoUrl} alt="Play Moments" className={showLabels?'h-8 w-auto':'h-8 w-auto max-w-[58px] object-contain'} />
         </Link>
-        {!mobile&&<button
-          type="button"
-          onClick={()=>setExpanded(value=>!value)}
-          className="absolute -right-3 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full border border-white/10 bg-[#171719] text-[#E30613] hover:bg-[#202024] flex items-center justify-center shadow-lg transition-transform"
-          title={expanded?'Recolher menu':'Expandir menu'}
-          aria-label={expanded?'Recolher menu':'Expandir menu'}
-        >
-          <span className={'transition-transform duration-300 '+(expanded?'rotate-180':'')}><MenuIcon name="chevron" size={15}/></span>
-        </button>}
         {mobile&&<button onClick={()=>setSidebarOpen(false)} className="absolute right-4 text-gray-500 hover:text-white">✕</button>}
       </div>
 
@@ -130,7 +121,17 @@ export function CustomerLayoutV2() {
         })}
       </nav>
 
-      <div className="p-2 border-t border-white/5">
+      <div className="p-2 border-t border-white/5 space-y-1">
+        {!mobile&&<button
+          type="button"
+          onClick={()=>setExpanded(value=>!value)}
+          className={'w-full rounded-xl text-[#E30613] hover:bg-[#E30613]/8 transition-colors '+(showLabels?'flex items-center gap-3 px-3 h-11':'h-11 flex items-center justify-center')}
+          title={expanded?'Recolher menu':'Expandir menu'}
+          aria-label={expanded?'Recolher menu':'Expandir menu'}
+        >
+          <span className={'transition-transform duration-300 '+(expanded?'rotate-180':'')}><MenuIcon name="chevron"/></span>
+          {showLabels&&<span className="text-sm font-medium text-[#b7b7c2]">{expanded?'Recolher menu':'Expandir menu'}</span>}
+        </button>}
         <button
           onClick={handleLogout}
           title={!showLabels?'Sair':undefined}
