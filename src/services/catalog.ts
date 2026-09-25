@@ -162,6 +162,11 @@ export async function getPublicProductBySlug(slug: string) {
         alt_text,
         display_order,
         is_cover
+      ),
+      category:product_categories (
+        id,
+        name,
+        slug
       )
     `)
     .eq('slug', slug)
