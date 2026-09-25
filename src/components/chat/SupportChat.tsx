@@ -4,6 +4,7 @@ import { conversationsApi, type SupportConversation, type SupportMessage } from 
 import { useAuth } from '../../contexts/AuthContext'
 import { ChatComposer } from './ChatComposer'
 import { AttachmentView } from './AttachmentView'
+import { portalApi } from '../../api/portal'
 
 export function SupportChat({ staff = false }: { staff?: boolean }) {
   const { user } = useAuth()
@@ -71,6 +72,7 @@ export function SupportChat({ staff = false }: { staff?: boolean }) {
           setMessages(previous => [...new Map([...result, ...previous].map(message => [message.id, message])).values()]
             .sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id)))
           setError('')
+          if (user?.id) void portalApi.markConversationRead(selected, user.id).catch(() => undefined)
         }
       } catch {
         if (active) setError('Não foi possível atualizar as mensagens. Tente novamente.')
