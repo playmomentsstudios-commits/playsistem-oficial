@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { afterAuthPath } from '../lib/navigation'
 import logoUrl from '../assets/logo-play-moments.png'
 import { portalApi } from '../api/portal'
+import { FloatingCustomerChat } from '../components/chat/FloatingCustomerChat'
 
 type IconName='home'|'user'|'orders'|'projects'|'services'|'quotes'|'payments'|'chat'|'files'|'notifications'|'announcements'|'settings'|'logout'|'chevron'
 
@@ -123,7 +124,7 @@ export function CustomerLayoutV2() {
           >
             <span className={'shrink-0 transition-transform duration-200 '+(active?'scale-105':'group-hover:scale-105')}><MenuIcon name={item.icon}/></span>
             {showLabels&&<span className={'text-sm truncate transition-colors '+(active?'font-semibold text-white':'font-medium text-[#b7b7c2] group-hover:text-white')}>{item.label}</span>}
-            {count>0&&<span className={(showLabels?'ml-auto ':'absolute top-1 right-1 ')+'min-w-4 h-4 px-1 rounded-full bg-[#E30613] text-white text-[9px] flex items-center justify-center'}>{count}</span>}
+            {count>0&&<span className={(showLabels?'ml-auto ':'absolute top-1 right-1 ')+'min-w-4 h-4 px-1 rounded-full '+(item.href==='/app/conversas'?'bg-[#25D366]':'bg-[#E30613]')+' text-white text-[9px] font-bold flex items-center justify-center'}>{count}</span>}
             {active&&<span className="absolute -left-2 w-1 h-6 rounded-r bg-[#E30613]"/>}
           </Link>
         })}
@@ -163,5 +164,6 @@ export function CustomerLayoutV2() {
         <Outlet/>
       </main>
     </div>
+    <FloatingCustomerChat unread={counts.messages}/>
   </div>
 }
