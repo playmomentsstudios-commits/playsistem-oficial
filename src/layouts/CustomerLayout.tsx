@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { afterAuthPath } from '../lib/navigation'
 import logoUrl from '../assets/logo-play-moments.png'
 
 const MENU = [
@@ -33,7 +34,7 @@ export function CustomerLayout() {
 
   if (!isAuthenticated) return <Navigate to="/login" state={{ from: location }} replace />
 
-  if (user?.role === 'admin' || user?.role === 'staff') return <Navigate to="/admin" replace />
+  if (user?.role === 'admin' || user?.role === 'staff') return <Navigate to={afterAuthPath(location.pathname + location.search, user.role)} replace />
 
   const handleLogout = async () => { await logout(); navigate('/') }
 

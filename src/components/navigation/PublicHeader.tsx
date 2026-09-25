@@ -2,12 +2,12 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useCart } from '../../contexts/CartContext'
+import { conversationLink } from '../../lib/navigation'
 import logoUrl from '../../assets/logo-play-moments.png'
 
 const NAV_LINKS = [
-  { label: 'Studio', href: '/studio' },
-  { label: 'Design & Digital', href: '/design' },
-  { label: 'Tech', href: '/tech' },
+  { label: 'Produtos', href: '/produtos' },
+  { label: 'Serviços', href: '/servicos' },
   { label: 'Portfólio', href: '/portfolio' },
   { label: 'Comunidade', href: '/comunidade' },
 ]
@@ -19,7 +19,7 @@ export function PublicHeader() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const handleLogout = () => { logout(); navigate('/') }
+  const handleLogout = async () => { await logout(); navigate('/') }
 
   return (
     <header className="sticky top-0 z-40" style={{
@@ -34,7 +34,7 @@ export function PublicHeader() {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden lg:flex items-center gap-6">
           {NAV_LINKS.map(link => (
             <Link
               key={link.href}
@@ -48,7 +48,8 @@ export function PublicHeader() {
         </nav>
 
         {/* Actions */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-3">
+          <Link to={conversationLink(user?.role ?? null)} className="px-4 py-3 rounded-full text-sm font-semibold" style={{ background: '#E30613', color: '#fff' }}>Falar agora</Link>
           {/* Cart */}
           <Link to="/carrinho" className="relative p-2 rounded-xl transition-colors" style={{ color: '#9090a0' }}>
             <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -72,7 +73,7 @@ export function PublicHeader() {
               ) : (
                 <Link to="/app/dashboard" className="px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors"
                   style={{ background: 'rgba(255,255,255,0.08)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.1)' }}>
-                  Meu Portal
+                  Minha conta
                 </Link>
               )}
               <button onClick={handleLogout} className="px-3 py-1.5 rounded-lg text-sm font-medium"
@@ -94,7 +95,7 @@ export function PublicHeader() {
         </div>
 
         {/* Mobile menu button */}
-        <button className="md:hidden p-2" style={{ color: '#9090a0' }} onClick={() => setMobileOpen(v => !v)}>
+        <button aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={mobileOpen} aria-controls="public-mobile-menu" className="lg:hidden p-3" style={{ color: '#9090a0' }} onClick={() => setMobileOpen(v => !v)}>
           <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             {mobileOpen
               ? <path d="M18 6L6 18M6 6l12 12" />
@@ -105,27 +106,28 @@ export function PublicHeader() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden border-t flex flex-col py-4 px-6 gap-4"
+        <div id="public-mobile-menu" className="lg:hidden border-t flex flex-col py-4 px-6 gap-4"
           style={{ borderColor: 'rgba(255,255,255,0.06)', background: '#0a0a0b' }}>
           {NAV_LINKS.map(link => (
             <Link key={link.href} to={link.href} onClick={() => setMobileOpen(false)}
-              className="text-sm font-medium" style={{ color: '#c0c0cc' }}>
+              className="text-sm font-medium min-h-11 flex items-center" style={{ color: '#c0c0cc' }}>
               {link.label}
             </Link>
           ))}
+          <Link to={conversationLink(user?.role ?? null)} onClick={() => setMobileOpen(false)} className="py-3 text-center rounded-full font-semibold" style={{ background: '#E30613', color: '#fff' }}>Falar agora</Link>
           <div className="flex flex-col gap-2 pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             {isAuthenticated ? (
               <>
-                <Link to="/app/dashboard" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-center rounded-xl"
+                <Link to={user?.role === 'admin' || user?.role === 'staff' ? '/admin' : '/app/dashboard'} onClick={() => setMobileOpen(false)} className="py-3 text-sm font-semibold text-center rounded-xl"
                   style={{ background: 'rgba(255,255,255,0.08)', color: '#f0f0f2' }}>
-                  Meu Portal
+                  {user?.role === 'admin' || user?.role === 'staff' ? 'Admin' : 'Minha conta'}
                 </Link>
-                <button onClick={handleLogout} className="py-2 text-sm" style={{ color: '#6b6b78' }}>Sair</button>
+                <button onClick={handleLogout} className="py-3 text-sm" style={{ color: '#6b6b78' }}>Sair</button>
               </>
             ) : (
               <>
-                <Link to="/login" onClick={() => setMobileOpen(false)} className="py-2 text-sm text-center" style={{ color: '#9090a0' }}>Entrar</Link>
-                <Link to="/cadastro" onClick={() => setMobileOpen(false)} className="py-2 text-sm font-semibold text-center rounded-full"
+                <Link to="/login" onClick={() => setMobileOpen(false)} className="py-3 text-sm text-center" style={{ color: '#9090a0' }}>Entrar</Link>
+                <Link to="/cadastro" onClick={() => setMobileOpen(false)} className="py-3 text-sm font-semibold text-center rounded-full"
                   style={{ background: '#E30613', color: '#fff' }}>
                   Criar conta
                 </Link>

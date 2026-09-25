@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js'
+import { authLink } from '../lib/navigation'
 import { supabase } from '../lib/supabase'
 import type {
   User,
@@ -26,7 +27,7 @@ interface AuthContextValue {
   isLoading: boolean
   role: UserRole | null
   login: (payload: LoginPayload) => Promise<User>
-  register: (payload: RegisterPayload) => Promise<RegisterResult>
+  register: (payload: RegisterPayload, next?: string | null) => Promise<RegisterResult>
   logout: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
 }
@@ -173,11 +174,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const register = useCallback(
-    async (payload: RegisterPayload): Promise<RegisterResult> => {
+    async (payload: RegisterPayload, next?: string | null): Promise<RegisterResult> => {
       const { data, error } = await supabase.auth.signUp({
         email: payload.email.trim(),
         password: payload.password,
         options: {
+          emailRedirectTo: window.location.origin + authLink('/login', next),
           data: {
             first_name: payload.name.trim(),
             last_name: payload.lastName.trim(),

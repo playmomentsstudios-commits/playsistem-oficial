@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { PublicLayout } from '../../layouts/PublicLayout'
-import logoUrl from '../../assets/logo-play-moments.png'
+import { useAuth } from '../../contexts/AuthContext'
+import { conversationLink } from '../../lib/navigation'
 
 const FEATURED_SERVICES = [
   {
@@ -58,55 +59,49 @@ const STATS = [
 ]
 
 export function HomePage() {
+  const { role } = useAuth()
+  const contact = conversationLink(role)
+  const quote = conversationLink(role, 'orcamento')
+  const quickLinks = [
+    { title: 'Falar com a Play Moments', description: 'Converse direto com nossa equipe.', icon: '◌', href: contact },
+    { title: 'Solicitar orçamento', description: 'Conte sua ideia e o que precisa.', icon: '✎', href: quote },
+    { title: 'Produtos', description: 'Encontre produtos e equipamentos.', icon: '◇', href: '/produtos' },
+    { title: 'Serviços', description: 'Conheça nossas soluções para você.', icon: '✦', href: '/servicos' },
+  ]
   return (
     <PublicLayout>
-      {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section className="relative flex flex-col items-center justify-center text-center px-6 py-24 overflow-hidden"
-        style={{ minHeight: '90vh' }}>
-        {/* Background glow */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div style={{
-            position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)',
-            width: 700, height: 700, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(227,6,19,0.06) 0%, transparent 70%)',
-          }} />
-        </div>
-
-        <div className="relative z-10 max-w-4xl mx-auto">
-          <img src={logoUrl} alt="Play Moments" className="mx-auto mb-8"
-            style={{ height: 56, width: 'auto', filter: 'drop-shadow(0 0 30px rgba(227,6,19,0.3))' }} />
-
-          <h1 className="font-extrabold leading-none mb-6"
-            style={{ fontSize: 'clamp(2.5rem, 7vw, 5rem)', letterSpacing: '-0.02em',
-              background: 'linear-gradient(135deg, #ffffff 0%, #c0c0cc 100%)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Criamos momentos<br />
-            <span style={{
-              background: 'linear-gradient(135deg, #E30613 0%, #ff4d6d 100%)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
-            }}>que ficam.</span>
+      <section className="relative text-center px-5 py-10 sm:py-16 overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at top, rgba(227,6,19,0.09), transparent 70%)' }} />
+        <div className="relative max-w-4xl mx-auto">
+          <h1 className="font-extrabold leading-tight mb-4" style={{ fontSize: 'clamp(2rem, 5vw, 3.75rem)', letterSpacing: '-0.02em', color: '#f0f0f2' }}>
+            O que você <span style={{ color: '#E30613' }}>precisa hoje?</span>
           </h1>
-
-          <p className="text-lg mb-10 max-w-2xl mx-auto" style={{ color: '#9090a0', lineHeight: 1.7 }}>
-            Studio de criação, design digital e tecnologia em equipamentos. Uma plataforma completa
-            para sua marca crescer com identidade e profissionalismo.
+          <p className="text-base sm:text-lg mb-6 max-w-xl mx-auto" style={{ color: '#9090a0' }}>
+            Criação, design, tecnologia e audiovisual. Produtos e serviços Play Moments para tirar suas ideias do papel.
           </p>
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-3">
+            <Link to={contact} className="col-span-2 sm:col-span-1 px-6 py-3 rounded-full font-bold" style={{ background: '#E30613', color: '#fff' }}>Falar agora</Link>
+            <Link to={quote} className="col-span-2 sm:col-span-1 px-6 py-3 rounded-full font-semibold" style={{ border: '1px solid #E30613', color: '#ff6b7a', background: 'rgba(227,6,19,0.08)' }}>Solicitar orçamento</Link>
+            <Link to="/produtos" className="px-4 py-3 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.06)', color: '#f0f0f2' }}>Ver produtos</Link>
+            <Link to="/servicos" className="px-4 py-3 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.06)', color: '#f0f0f2' }}>Ver serviços</Link>
+          </div>
+          <Link to={conversationLink(role, 'duvida')} className="inline-flex items-center min-h-11 mt-3 text-sm underline underline-offset-4" style={{ color: '#c0c0cc' }}>Tirar dúvidas</Link>
+        </div>
+      </section>
 
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link to="/servicos" className="px-8 py-3.5 rounded-full font-bold text-base transition-all duration-200"
-              style={{ background: '#E30613', color: '#fff' }}>
-              Explorar serviços
-            </Link>
-            <Link to="/portfolio" className="px-8 py-3.5 rounded-full font-bold text-base transition-all duration-200"
-              style={{ background: 'rgba(255,255,255,0.06)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.1)' }}>
-              Ver portfólio
-            </Link>
+      <section className="px-5 pb-8" aria-labelledby="quick-access-title">
+        <div className="max-w-6xl mx-auto">
+          <h2 id="quick-access-title" className="text-xl font-bold mb-4" style={{ color: '#f0f0f2' }}>Acessos rápidos</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {quickLinks.map(item => (
+              <Link key={item.title} to={item.href} className="p-4 rounded-2xl hover:-translate-y-1 transition-transform" style={{ background: '#141416', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <span aria-hidden="true" className="text-2xl" style={{ color: '#ff6b7a' }}>{item.icon}</span>
+                <h3 className="font-semibold text-sm mt-2 mb-1" style={{ color: '#f0f0f2' }}>{item.title}</h3>
+                <p className="text-xs" style={{ color: '#9090a0' }}>{item.description}</p>
+              </Link>
+            ))}
           </div>
         </div>
-
-        {/* Bottom fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none"
-          style={{ background: 'linear-gradient(to bottom, transparent, #0a0a0b)' }} />
       </section>
 
       {/* ── STATS ────────────────────────────────────────────────────────── */}
