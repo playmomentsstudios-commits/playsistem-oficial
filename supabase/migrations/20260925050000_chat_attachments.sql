@@ -52,7 +52,7 @@ begin
       where bucket_id = 'chat-attachments' and name = new.attachment_path;
     if object_metadata is null
       or (object_metadata->>'size')::bigint is distinct from new.attachment_size
-      or object_metadata->>'mimetype' is distinct from new.attachment_type then
+      or split_part(object_metadata->>'mimetype', ';', 1) is distinct from split_part(new.attachment_type, ';', 1) then
       raise exception 'Attachment upload missing or metadata mismatch' using errcode = '23514';
     end if;
   end if;

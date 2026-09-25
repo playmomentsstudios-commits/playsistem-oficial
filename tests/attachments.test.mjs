@@ -17,5 +17,5 @@ test('uses native media previews and leaves active document formats as download 
   assert.equal(previewKind('video/mp4'),'video')
   for(const type of ['image/svg+xml','text/html','application/pdf','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','image/heic']) assert.equal(previewKind(type),'file')
   assert.equal(attachmentMime({type:''}),'application/octet-stream')
-  assert.equal(attachmentMime({type:'audio/webm;codecs=opus'}),'audio/webm')
+  assert.equal(attachmentMime({type:'audio/webm;codecs=opus'}),'audio/webm;codecs=opus')
 })

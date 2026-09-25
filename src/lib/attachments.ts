@@ -9,7 +9,7 @@ export function validateAttachment(file: Pick<File, 'name' | 'size'>): string | 
 }
 
 export function attachmentMime(file: Pick<File, 'type'>) {
-  return file.type.split(';')[0] || 'application/octet-stream'
+  return file.type || 'application/octet-stream'
 }
 
 export function previewKind(type: string): 'image' | 'audio' | 'video' | 'file' {

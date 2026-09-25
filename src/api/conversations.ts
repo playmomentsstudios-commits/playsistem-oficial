@@ -35,7 +35,7 @@ export const conversationsApi = {
     if (error && !['409', '400'].includes(String(error.statusCode))) throw error
     if (error) {
       const { data: existing, error: lookupError } = await supabase.storage.from(CHAT_BUCKET).info(path)
-      if (lookupError || !existing || Number(existing.metadata?.size) !== file.size || existing.metadata?.mimetype !== type) throw error
+      if (lookupError || !existing || Number(existing.metadata?.size) !== file.size || String(existing.metadata?.mimetype).split(';')[0] !== type.split(';')[0]) throw error
     }
     return { attachment_path: path, attachment_name: file.name, attachment_type: type, attachment_size: file.size }
   },
