@@ -493,7 +493,7 @@ returns integer
 language plpgsql
 security definer
 set search_path=public
-as $
+as $$
 declare
   order_row public.orders%rowtype;
   available_cash integer;
@@ -563,7 +563,7 @@ begin
 
   return amount_to_use;
 end;
-$;
+$$;
 
 revoke all on function public.apply_play_cash_to_order(uuid,integer) from public;
 grant execute on function public.apply_play_cash_to_order(uuid,integer) to authenticated;
