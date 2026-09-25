@@ -13,6 +13,7 @@ import { LoginPage } from './pages/public/LoginPage'
 import { RegisterPage } from './pages/public/RegisterPage'
 import { CommunityPage } from './pages/public/CommunityPage'
 import { ProductsPage } from './pages/public/ProductsPage'
+import { ProductDetailPage } from './pages/public/ProductDetailPage'
 import { ServicesPage } from './pages/public/ServicesPage'
 import { PortfolioPage } from './pages/public/PortfolioPage'
 import { CategoryPage } from './pages/public/CategoryPage'
@@ -59,7 +60,7 @@ export default function App() {
               <Route path="/cadastro" element={<RegisterPage />} />
               <Route path="/esqueci-senha" element={<PlaceholderPage title="Recuperar Senha" />} />
               <Route path="/produtos" element={<ProductsPage />} />
-              <Route path="/produtos/:slug" element={<PlaceholderPage title="Detalhe do Produto" />} />
+              <Route path="/produtos/:slug" element={<ProductDetailPage />} />
               <Route path="/servicos" element={<ServicesPage />} />
               <Route path="/servicos/:slug" element={<PlaceholderPage title="Detalhe do Serviço" />} />
               <Route path="/portfolio" element={<PortfolioPage />} />

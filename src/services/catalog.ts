@@ -13,6 +13,16 @@ export interface ProductCategoryRow {
   display_order: number
 }
 
+export interface ProductImageRow {
+  id: string
+  product_id: string
+  storage_path: string
+  public_url: string | null
+  alt_text: string | null
+  display_order: number
+  is_cover: boolean
+}
+
 export interface CatalogProductRow {
   id: string
   name: string
@@ -34,6 +44,10 @@ export interface CatalogProductRow {
   created_by: string | null
   created_at: string
   updated_at: string
+}
+
+export interface PublicCatalogProduct extends CatalogProductRow {
+  product_images: ProductImageRow[]
 }
 
 export interface ProductInput {
@@ -75,6 +89,69 @@ export async function listAdminProducts() {
   if (error) throw error
 
   return (data ?? []) as CatalogProductRow[]
+}
+
+export async function listPublicProducts() {
+  const { data, error } = await supabase
+    .from('products')
+    .select(`
+      *,
+      product_images (
+        id,
+        product_id,
+        storage_path,
+        public_url,
+        alt_text,
+        display_order,
+        is_cover
+      )
+    `)
+    .eq('active', true)
+    .eq('status', 'published')
+    .order('featured', { ascending: false })
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+
+  return ((data ?? []) as PublicCatalogProduct[]).map(product => ({
+    ...product,
+    product_images: [...(product.product_images ?? [])].sort(
+      (a, b) => a.display_order - b.display_order,
+    ),
+  }))
+}
+
+export async function getPublicProductBySlug(slug: string) {
+  const { data, error } = await supabase
+    .from('products')
+    .select(`
+      *,
+      product_images (
+        id,
+        product_id,
+        storage_path,
+        public_url,
+        alt_text,
+        display_order,
+        is_cover
+      )
+    `)
+    .eq('slug', slug)
+    .eq('active', true)
+    .eq('status', 'published')
+    .maybeSingle()
+
+  if (error) throw error
+  if (!data) return null
+
+  const product = data as PublicCatalogProduct
+
+  return {
+    ...product,
+    product_images: [...(product.product_images ?? [])].sort(
+      (a, b) => a.display_order - b.display_order,
+    ),
+  }
 }
 
 export async function createProduct(input: ProductInput) {
