@@ -32,8 +32,7 @@ create index if not exists projects_drive_folder_idx
   where drive_folder_id is not null;
 
 create unique index if not exists client_files_drive_file_idx
-  on public.client_files(drive_file_id)
-  where drive_file_id is not null;
+  on public.client_files(drive_file_id);
 
 create table if not exists public.drive_settings (
   id boolean primary key default true check(id),
