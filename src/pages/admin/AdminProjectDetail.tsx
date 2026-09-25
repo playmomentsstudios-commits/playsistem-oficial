@@ -22,14 +22,19 @@ export function AdminProjectDetail(){
   const toast=useToast()
   const [project,setProject]=useState<any>(null)
   const [team,setTeam]=useState<any[]>([])
+  const [files,setFiles]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
   const [stageName,setStageName]=useState('')
+  const [fileTask,setFileTask]=useState('')
+  const [fileVisible,setFileVisible]=useState(true)
+  const [uploading,setUploading]=useState(false)
   const [taskForm,setTaskForm]=useState({title:'',stage_id:'',assigned_to:'',priority:'medium',due_date:'',client_visible:true})
 
   const load=async()=>{
-    const [item,members]=await Promise.all([portalApi.project(id),portalApi.teamMembers()])
+    const [item,members,projectFiles]=await Promise.all([portalApi.project(id),portalApi.teamMembers(),portalApi.projectFiles(id)])
     setProject(item)
     setTeam(members)
+    setFiles(projectFiles)
     setLoading(false)
   }
 
@@ -100,6 +105,44 @@ export function AdminProjectDetail(){
     }catch(error:any){toast(error.message,'error')}
   }
 
+  async function uploadProjectFile(event:React.ChangeEvent<HTMLInputElement>){
+    const file=event.target.files?.[0]
+    if(!file||!user)return
+    if(!project?.customer_id){
+      toast('Para usar a biblioteca do cliente, vincule este projeto a um cliente.','error')
+      event.target.value=''
+      return
+    }
+    setUploading(true)
+    try{
+      const storagePath=await portalApi.uploadClientFile(project.customer_id,file)
+      await portalApi.addClientFile({
+        customer_id:project.customer_id,
+        project_id:id,
+        task_id:fileTask||null,
+        uploaded_by:user.id,
+        name:file.name,
+        storage_path:storagePath,
+        file_type:file.type||null,
+        client_visible:fileVisible,
+      })
+      toast('Arquivo adicionado ao projeto.','success')
+      event.target.value=''
+      await load()
+    }catch(error:any){toast(error.message,'error')}
+    finally{setUploading(false)}
+  }
+
+  async function openFile(file:any){
+    try{
+      if(file.external_url){window.open(file.external_url,'_blank','noopener,noreferrer');return}
+      if(file.storage_path){
+        const url=await portalApi.fileUrl(file.storage_path)
+        window.open(url,'_blank','noopener,noreferrer')
+      }
+    }catch(error:any){toast(error.message,'error')}
+  }
+
   if(loading)return <p className="text-gray-400">Carregando projeto...</p>
   if(!project)return <div><p>Projeto não encontrado.</p><Link to="/admin/projetos" className="text-[#E30613]">Voltar</Link></div>
 
@@ -129,6 +172,39 @@ export function AdminProjectDetail(){
         {project.drive_folder_url&&<a href={project.drive_folder_url} target="_blank" rel="noreferrer" className="inline-block text-[#E30613]">Abrir pasta do projeto ↗</a>}
       </div>
     </div>
+
+    <section className="mt-8">
+      <h2 className="text-xl font-bold">Arquivos do projeto</h2>
+      <p className="text-sm text-gray-500 mb-4">Envie arquivos uma vez e direcione cada item para uma tarefa quando necessário.</p>
+      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10">
+        <div className="grid md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+          <label className="text-sm text-gray-400">Direcionar para
+            <select value={fileTask} onChange={e=>setFileTask(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+              <option value="">Arquivo geral do projeto</option>
+              {tasks.map((task:any)=><option key={task.id} value={task.id}>{task.title}</option>)}
+            </select>
+          </label>
+          <label className="text-sm text-gray-400">Visibilidade
+            <select value={fileVisible?'cliente':'interno'} onChange={e=>setFileVisible(e.target.value==='cliente')} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+              <option value="cliente">Cliente pode visualizar</option>
+              <option value="interno">Somente equipe</option>
+            </select>
+          </label>
+          <label className={'px-4 py-2.5 rounded-xl text-center cursor-pointer '+(uploading?'bg-white/10 text-gray-500':'bg-[#E30613] text-white')}>
+            {uploading?'Enviando...':'Adicionar arquivo'}
+            <input type="file" disabled={uploading} onChange={uploadProjectFile} className="hidden"/>
+          </label>
+        </div>
+        {!project.customer_id&&<p className="text-xs text-yellow-300 mt-3">Projeto interno: vincule um cliente para utilizar a biblioteca de arquivos.</p>}
+        <div className="mt-4 space-y-2">{files.length===0?<p className="text-sm text-gray-500">Nenhum arquivo adicionado.</p>:files.map(file=><div key={file.id} className="p-3 rounded-xl bg-white/5 flex flex-wrap items-center gap-3">
+          <button onClick={()=>openFile(file)} className="text-left min-w-0 flex-1"><p className="text-sm font-medium truncate">{file.name}</p><p className="text-xs text-gray-500">{file.client_visible?'Visível para o cliente':'Somente equipe'}</p></button>
+          <select value={file.task_id||''} onChange={async e=>{await portalApi.assignClientFileTask(file.id,e.target.value||null);await load()}} className="px-3 py-2 rounded-lg bg-black border border-white/10 text-xs">
+            <option value="">Arquivo geral</option>
+            {tasks.map((task:any)=><option key={task.id} value={task.id}>{task.title}</option>)}
+          </select>
+        </div>)}</div>
+      </div>
+    </section>
 
     <section className="mt-8">
       <h2 className="text-xl font-bold">Etapas</h2>
@@ -171,6 +247,10 @@ export function AdminProjectDetail(){
             </div>
           </div>
 
+          {(files.filter((file:any)=>file.task_id===task.id).length>0)&&<div className="mt-4">
+            <p className="text-sm font-semibold mb-2">Arquivos desta tarefa</p>
+            <div className="flex flex-wrap gap-2">{files.filter((file:any)=>file.task_id===task.id).map((file:any)=><button key={file.id} onClick={()=>openFile(file)} className="px-3 py-2 rounded-lg bg-white/5 text-xs">{file.name} ↗</button>)}</div>
+          </div>}
           <div className="grid lg:grid-cols-2 gap-4 mt-4">
             <div>
               <div className="flex justify-between"><p className="text-sm font-semibold">Checklist</p><button onClick={()=>addChecklist(task.id)} className="text-xs text-[#E30613]">+ item</button></div>
