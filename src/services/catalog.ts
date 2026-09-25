@@ -49,6 +49,7 @@ export interface CatalogProductRow {
 
 export interface PublicCatalogProduct extends CatalogProductRow {
   product_images: ProductImageRow[]
+  category?: Pick<ProductCategoryRow,'id'|'name'|'slug'> | null
 }
 
 export interface ProductInput {
@@ -94,6 +95,11 @@ export async function listAdminProducts() {
         alt_text,
         display_order,
         is_cover
+      ),
+      category:product_categories (
+        id,
+        name,
+        slug
       )
     `)
     .order('created_at', { ascending: false })
@@ -121,6 +127,11 @@ export async function listPublicProducts() {
         alt_text,
         display_order,
         is_cover
+      ),
+      category:product_categories (
+        id,
+        name,
+        slug
       )
     `)
     .eq('active', true)
