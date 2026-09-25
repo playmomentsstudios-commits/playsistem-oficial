@@ -6,7 +6,7 @@ import logoUrl from '../assets/logo-play-moments.png'
 import { portalApi } from '../api/portal'
 
 const MENU = [
-  { label: 'Dashboard', href: '/app/dashboard', icon: '⊞' },
+  { label: 'Painel', href: '/app/dashboard', icon: '⊞' },
   { label: 'Meu Perfil', href: '/app/perfil', icon: '◎' },
   { label: 'Pedidos', href: '/app/pedidos', icon: '📦' },
   { label: 'Meus Projetos', href: '/app/projetos', icon: '📈' },
