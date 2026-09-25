@@ -193,10 +193,19 @@ export function AdminFiles(){
         <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://..." className="px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
       </div>:<div className="grid md:grid-cols-2 gap-3">
         {provider==='supabase'&&<input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome exibido ao cliente" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>}
-        <input type="file" onChange={e=>setFile(e.target.files?.[0]||null)} className="px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
+        <input type="file" onChange={e=>{
+          const selected=e.target.files?.[0]||null
+          if(selected&&provider==='google_drive'&&selected.size>1024*1024*1024){
+            toast('O limite por arquivo no Google Drive é 1 GB.','error')
+            e.currentTarget.value=''
+            setFile(null)
+            return
+          }
+          setFile(selected)
+        }} className="px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
       </div>}
 
-      {provider==='google_drive'&&<p className="text-xs text-gray-500">Arquivos grandes são enviados diretamente do navegador ao Google Drive em partes de 8 MB. Eles não ocupam o Storage do Supabase.</p>}
+      {provider==='google_drive'&&<p className="text-xs text-gray-500">Arquivos de até 1 GB são enviados diretamente ao Google Drive em partes de 16 MB, com retomada automática se houver falha de rede. Eles não ocupam o Storage do Supabase.</p>}
 
       {saving&&progress>0&&<div>
         <div className="flex justify-between text-xs text-gray-500"><span>Enviando ao Google Drive</span><span>{progress}%</span></div>
