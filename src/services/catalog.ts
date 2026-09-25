@@ -37,6 +37,7 @@ export interface CatalogProductRow {
   promotional_price: number | null
   rental_daily_price: number | null
   stock: number
+  inventory_tracked: boolean
   featured: boolean
   active: boolean
   status: ProductStatus
