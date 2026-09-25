@@ -94,7 +94,8 @@ export const portalApi = {
   },
   payments: async () => {
     const { data,error } = await supabase.from('payments')
-      .select('*,order:orders(order_number),receipt:payment_receipts(*)').order('created_at',{ascending:false})
+      .select('*,order:orders(order_number),customer:profiles!payments_customer_id_fkey(id,email,first_name,last_name),receipt:payment_receipts(*)')
+      .order('created_at',{ascending:false})
     if(error) throw error
     return data ?? []
   },
@@ -119,6 +120,11 @@ export const portalApi = {
   reviewReceipt: async (id:string,status:'approved'|'rejected',note='') => {
     const { error }=await supabase.rpc('review_payment_receipt',{p_receipt_id:id,p_status:status,p_note:note||null})
     if(error) throw error
+  },
+  paymentReceiptUrl: async (path:string) => {
+    const { data,error }=await supabase.storage.from('payment-receipts').createSignedUrl(path,600)
+    if(error) throw error
+    return data.signedUrl
   },
   notifications: async () => {
     const { data,error }=await supabase.from('notifications').select('*').order('created_at',{ascending:false}).limit(100)
