@@ -102,10 +102,6 @@ export function ProductDetailPage() {
 
         {!loading && product && (
           <>
-            {(() => {
-              const isService = product.specifications?.catalog_kind === 'service'
-              return null
-            })()}
             <Link
               to="/produtos"
               className="text-sm"
