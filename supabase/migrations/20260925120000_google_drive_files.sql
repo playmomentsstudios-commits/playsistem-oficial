@@ -31,7 +31,7 @@ create index if not exists projects_drive_folder_idx
   on public.projects(drive_folder_id)
   where drive_folder_id is not null;
 
-create index if not exists client_files_drive_file_idx
+create unique index if not exists client_files_drive_file_idx
   on public.client_files(drive_file_id)
   where drive_file_id is not null;
 
