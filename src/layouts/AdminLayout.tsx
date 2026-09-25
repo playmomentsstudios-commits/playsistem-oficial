@@ -17,7 +17,7 @@ const MENU = [
   { label: 'Pagamentos', href: '/admin/pagamentos', icon: '💳' },
   { label: 'Conversas', href: '/admin/conversas', icon: '💬' },
   { label: 'Arquivos', href: '/admin/arquivos', icon: '📁' },
-  { label: 'Portfólio', href: '/admin/portfolio', icon: '🎨' },
+  { label: 'Quem Somos', href: '/admin/portfolio', icon: '🎨' },
   { label: 'Comunidade', href: '/admin/comunidade', icon: '📢' },
   { label: 'Notificações', href: '/admin/notificacoes', icon: '🔔' },
   { label: 'Comunicados', href: '/admin/comunicados', icon: '📣' },

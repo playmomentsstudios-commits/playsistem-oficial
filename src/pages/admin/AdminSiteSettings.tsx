@@ -1,9 +1,10 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { useToast } from '../../contexts/ToastContext'
 
-const TABS = ['Geral', 'Aparência', 'Redes Sociais', 'Contato', 'SEO']
+const TABS = ['Geral', 'Quem Somos', 'Aparência', 'Redes Sociais', 'Contato', 'SEO']
 
 export function AdminSiteSettings() {
   const [tab, setTab] = useState('Geral')
@@ -69,6 +70,14 @@ export function AdminSiteSettings() {
             </div>
             <Input label="Headline principal (Hero)" value={settings.heroHeadline} onChange={set('heroHeadline')} />
             <Input label="Texto do botão CTA" value={settings.heroCta} onChange={set('heroCta')} />
+          </div>
+        )}
+
+        {tab === 'Quem Somos' && (
+          <div className="p-5 rounded-2xl bg-[#141416] border border-white/10">
+            <h2 className="font-bold text-lg">Quem Somos & Portfólio</h2>
+            <p className="text-sm text-gray-500 mt-2">Edite sua bio, história, objetivo, currículo, foto, números da Home, categorias e projetos do portfólio.</p>
+            <Link to="/admin/portfolio" className="inline-flex mt-4 min-h-11 px-4 items-center rounded-xl bg-[#E30613] text-white text-sm font-semibold">Abrir editor de Quem Somos</Link>
           </div>
         )}
 

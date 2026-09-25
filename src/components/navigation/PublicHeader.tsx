@@ -7,7 +7,7 @@ import logoUrl from '../../assets/logo-play-moments.png'
 
 const NAV_LINKS = [
   { label: 'Produtos & Serviços', href: '/produtos' },
-  { label: 'Portfólio', href: '/portfolio' },
+  { label: 'Quem Somos', href: '/quem-somos' },
   { label: 'Comunidade', href: '/comunidade' },
 ]
 

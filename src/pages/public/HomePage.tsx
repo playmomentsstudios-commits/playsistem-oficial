@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom'
+import { useEffect,useState } from 'react'
+import { siteContentApi,type PortfolioItem,type SiteProfile } from '../../services/siteContent'
 import { PublicLayout } from '../../layouts/PublicLayout'
 import { useAuth } from '../../contexts/AuthContext'
 import { conversationLink } from '../../lib/navigation'
@@ -30,43 +32,19 @@ const FEATURED_SERVICES = [
   },
 ]
 
-const PORTFOLIO_ITEMS = [
-  {
-    title: 'Vertice — Identidade Visual',
-    category: 'Design & Digital',
-    image: 'https://images.unsplash.com/photo-1634942537034-2531766767d1?w=500&h=350&fit=crop&auto=format',
-    href: '/portfolio',
-  },
-  {
-    title: 'Evento Corporativo Tech',
-    category: 'Studio & Criação',
-    image: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&h=350&fit=crop&auto=format',
-    href: '/portfolio',
-  },
-  {
-    title: 'Setup Profissional 4K',
-    category: 'Tech & Equipamentos',
-    image: 'https://images.unsplash.com/photo-1608499267993-a4f0f95aa09b?w=500&h=350&fit=crop&auto=format',
-    href: '/portfolio',
-  },
-]
-
-const STATS = [
-  { value: '200+', label: 'Projetos entregues' },
-  { value: '120+', label: 'Clientes atendidos' },
-  { value: '5 anos', label: 'De mercado' },
-  { value: '98%', label: 'Satisfação' },
-]
 
 export function HomePage() {
   const { role } = useAuth()
+  const [profile,setProfile]=useState<SiteProfile|null>(null)
+  const [portfolio,setPortfolio]=useState<PortfolioItem[]>([])
+  useEffect(()=>{Promise.all([siteContentApi.profile(),siteContentApi.portfolioItems()]).then(([p,i])=>{setProfile(p);setPortfolio(i.filter(item=>item.featured).slice(0,3))}).catch(()=>undefined)},[])
   const contact = conversationLink(role)
   const quote = conversationLink(role, 'orcamento')
   const quickLinks = [
     { title: 'Falar com a Play Moments', description: 'Converse direto com nossa equipe.', icon: '◌', href: contact },
     { title: 'Solicitar orçamento', description: 'Conte sua ideia e o que precisa.', icon: '✎', href: quote },
-    { title: 'Produtos', description: 'Encontre produtos e equipamentos.', icon: '◇', href: '/produtos' },
-    { title: 'Serviços', description: 'Conheça nossas soluções para você.', icon: '✦', href: '/servicos' },
+    { title: 'Produtos & Serviços', description: 'Explore a loja completa da Play Moments.', icon: '◇', href: '/produtos' },
+    { title: 'Quem Somos', description: 'Conheça a trajetória, currículo e portfólio.', icon: '✦', href: '/quem-somos' },
   ]
   return (
     <PublicLayout>
@@ -82,8 +60,8 @@ export function HomePage() {
           <div className="grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-3">
             <Link to={contact} className="col-span-2 sm:col-span-1 px-6 py-3 rounded-full font-bold" style={{ background: '#E30613', color: '#fff' }}>Falar agora</Link>
             <Link to={quote} className="col-span-2 sm:col-span-1 px-6 py-3 rounded-full font-semibold" style={{ border: '1px solid #E30613', color: '#ff6b7a', background: 'rgba(227,6,19,0.08)' }}>Solicitar orçamento</Link>
-            <Link to="/produtos" className="px-4 py-3 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.06)', color: '#f0f0f2' }}>Ver produtos</Link>
-            <Link to="/servicos" className="px-4 py-3 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.06)', color: '#f0f0f2' }}>Ver serviços</Link>
+            <Link to="/produtos" className="px-4 py-3 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.06)', color: '#f0f0f2' }}>Produtos & Serviços</Link>
+            <Link to="/quem-somos" className="px-4 py-3 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.06)', color: '#f0f0f2' }}>Quem Somos</Link>
           </div>
           <Link to={conversationLink(role, 'duvida')} className="inline-flex items-center min-h-11 mt-3 text-sm underline underline-offset-4" style={{ color: '#c0c0cc' }}>Tirar dúvidas</Link>
         </div>
@@ -107,7 +85,12 @@ export function HomePage() {
       {/* ── STATS ────────────────────────────────────────────────────────── */}
       <section className="px-6 py-10">
         <div className="mx-auto grid grid-cols-2 md:grid-cols-4 gap-4" style={{ maxWidth: 900 }}>
-          {STATS.map(s => (
+          {[
+            {value:profile?.projects_delivered_label||'8 mil+',label:'Projetos entregues'},
+            {value:profile?.clients_served_label||'2 mil+',label:'Clientes atendidos'},
+            {value:'Desde '+(profile?.market_since||2008),label:'No mercado'},
+            {value:profile?.satisfaction_label||'85%',label:'Satisfação'},
+          ].map(s => (
             <div key={s.label} className="text-center py-6 px-4 rounded-2xl"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
               <p className="font-extrabold text-3xl mb-1" style={{ color: '#E30613' }}>{s.value}</p>
@@ -164,21 +147,21 @@ export function HomePage() {
               <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: '#E30613' }}>Portfólio</p>
               <h2 className="text-3xl font-bold" style={{ color: '#f0f0f2' }}>Projetos recentes</h2>
             </div>
-            <Link to="/portfolio" className="text-sm font-semibold" style={{ color: '#9090a0' }}>
+            <Link to="/quem-somos#portfolio" className="text-sm font-semibold" style={{ color: '#9090a0' }}>
               Ver todos →
             </Link>
           </div>
 
           <div className="grid md:grid-cols-3 gap-5">
-            {PORTFOLIO_ITEMS.map(item => (
-              <Link key={item.title} to={item.href}
+            {portfolio.map(item => (
+              <Link key={item.id} to="/quem-somos#portfolio"
                 className="group overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1"
                 style={{ background: '#141416', border: '1px solid rgba(255,255,255,0.07)' }}>
-                <div className="relative overflow-hidden" style={{ height: 200 }}>
-                  <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <div className="relative overflow-hidden bg-white/[0.03]" style={{ height: 200 }}>
+                  {item.cover_url?<img src={item.cover_url} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />:<div className="w-full h-full flex items-center justify-center text-4xl opacity-30">◆</div>}
                 </div>
                 <div className="p-4">
-                  <p className="text-xs mb-1" style={{ color: '#E30613' }}>{item.category}</p>
+                  <p className="text-xs mb-1" style={{ color: '#E30613' }}>{item.category?.name||item.client||'Projeto'}</p>
                   <p className="font-semibold text-sm" style={{ color: '#f0f0f2' }}>{item.title}</p>
                 </div>
               </Link>
