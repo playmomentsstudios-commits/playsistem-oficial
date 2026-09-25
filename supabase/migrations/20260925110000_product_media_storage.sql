@@ -48,6 +48,16 @@ using (
   and public.current_user_is_staff_or_admin()
 );
 
+with ranked_covers as (
+  select id,row_number() over(partition by product_id order by display_order,id) as rn
+  from public.product_images
+  where is_cover=true
+)
+update public.product_images pi
+set is_cover=false
+from ranked_covers rc
+where pi.id=rc.id and rc.rn>1;
+
 create unique index if not exists product_images_single_cover_idx
 on public.product_images(product_id)
 where is_cover=true;
