@@ -55,7 +55,9 @@ export function AdminFiles(){
   const [clientVisible,setClientVisible]=useState(false)
   const [name,setName]=useState('')
   const [url,setUrl]=useState('')
-  const [file,setFile]=useState<File|null>(null)
+  const [selectedFiles,setSelectedFiles]=useState<File[]>([])
+  const [currentFileName,setCurrentFileName]=useState('')
+  const [completedFiles,setCompletedFiles]=useState(0)
   const [libraryCustomer,setLibraryCustomer]=useState<string|null>(null)
   const [libraryProject,setLibraryProject]=useState<string|null>(null)
   const [menuFile,setMenuFile]=useState<string|null>(null)
@@ -108,26 +110,38 @@ export function AdminFiles(){
     e.preventDefault()
     if(!user||!customer)return
     try{
-      setSaving(true);setProgress(0)
+      setSaving(true);setProgress(0);setCompletedFiles(0);setCurrentFileName('')
       if(provider==='google_drive'){
-        if(!project||!file)throw new Error('Selecione um projeto e um arquivo para enviar ao Google Drive.')
+        if(!project||!selectedFiles.length)throw new Error('Selecione um projeto e um ou mais arquivos para enviar ao Google Drive.')
         await portalApi.ensureProjectDriveFolder(project)
-        await portalApi.uploadDriveFile({
-          project_id:project,
-          task_id:task||null,
-          folder_kind:folderKind,
-          client_visible:clientVisible,
-        },file,setProgress)
-        toast('Arquivo enviado para o Google Drive e vinculado ao projeto.','success')
+        for(let index=0;index<selectedFiles.length;index+=1){
+          const current=selectedFiles[index]
+          setCurrentFileName(current.name)
+          await portalApi.uploadDriveFile({
+            project_id:project,
+            task_id:task||null,
+            folder_kind:folderKind,
+            client_visible:clientVisible,
+          },current,value=>setProgress(Math.round(((index+(value/100))/selectedFiles.length)*100)))
+          setCompletedFiles(index+1)
+        }
+        toast(selectedFiles.length===1?'Arquivo enviado para o Google Drive.':selectedFiles.length+' arquivos enviados para o Google Drive.','success')
       }else if(provider==='supabase'){
-        if(!name.trim()||!file)throw new Error('Informe o nome e selecione um arquivo.')
-        const storage_path=await portalApi.uploadClientFile(customer,file)
-        await portalApi.addClientFile({
-          customer_id:customer,project_id:project||null,task_id:task||null,uploaded_by:user.id,
-          name:name.trim(),storage_path,file_type:file.type||null,storage_provider:'supabase',
-          file_size:file.size,mime_type:file.type||null,client_visible:clientVisible,
-        })
-        toast('Arquivo enviado ao armazenamento do portal.','success')
+        if(!selectedFiles.length)throw new Error('Selecione um ou mais arquivos.')
+        for(let index=0;index<selectedFiles.length;index+=1){
+          const current=selectedFiles[index]
+          setCurrentFileName(current.name)
+          const storage_path=await portalApi.uploadClientFile(customer,current)
+          await portalApi.addClientFile({
+            customer_id:customer,project_id:project||null,task_id:task||null,uploaded_by:user.id,
+            name:selectedFiles.length===1&&name.trim()?name.trim():current.name,
+            storage_path,file_type:current.type||null,storage_provider:'supabase',
+            file_size:current.size,mime_type:current.type||null,client_visible:clientVisible,
+          })
+          setCompletedFiles(index+1)
+          setProgress(Math.round(((index+1)/selectedFiles.length)*100))
+        }
+        toast(selectedFiles.length===1?'Arquivo enviado ao portal.':selectedFiles.length+' arquivos enviados ao portal.','success')
       }else{
         if(!name.trim()||!url.trim())throw new Error('Informe o nome e o link externo.')
         await portalApi.addClientFile({
@@ -136,7 +150,7 @@ export function AdminFiles(){
         })
         toast('Link externo registrado.','success')
       }
-      setName('');setUrl('');setFile(null);setTask('');setProgress(0)
+      setName('');setUrl('');setSelectedFiles([]);setTask('');setProgress(0);setCompletedFiles(0);setCurrentFileName('')
       await load()
     }catch(error:any){toast(error.message||'Não foi possível salvar o arquivo.','error')}
     finally{setSaving(false)}
@@ -173,23 +187,23 @@ export function AdminFiles(){
       <Button type="button" variant="secondary" loading={testing} onClick={testDrive}>Testar Google Drive</Button>
     </div>
 
-    <form onSubmit={save} className="p-5 rounded-2xl bg-[#141416] border border-white/10 mb-8 space-y-4">
+    <form onSubmit={save} className="p-4 sm:p-5 rounded-2xl bg-[#141416] border border-white/10 mb-8 space-y-4">
       <div className="grid md:grid-cols-3 gap-3">
         <label className="text-xs text-gray-500">Armazenamento
-          <select value={provider} onChange={e=>setProvider(e.target.value as typeof provider)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+          <select value={provider} onChange={e=>setProvider(e.target.value as typeof provider)} className="mt-1 w-full min-h-11 px-3 py-2 rounded-xl bg-black border border-white/10">
             <option value="google_drive">Google Drive — recomendado</option>
             <option value="supabase">Portal / Supabase — arquivos pequenos</option>
             <option value="external">Link externo</option>
           </select>
         </label>
         <label className="text-xs text-gray-500">Cliente
-          <select value={customer} onChange={e=>{setCustomer(e.target.value);setProject('');setTask('')}} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+          <select value={customer} onChange={e=>{setCustomer(e.target.value);setProject('');setTask('')}} className="mt-1 w-full min-h-11 px-3 py-2 rounded-xl bg-black border border-white/10">
             <option value="">Selecione o cliente</option>
             {customers.map(c=><option key={c.id} value={c.id}>{c.first_name} {c.last_name} — {c.email}</option>)}
           </select>
         </label>
         <label className="text-xs text-gray-500">Projeto
-          <select value={project} onChange={e=>{setProject(e.target.value);setTask('')}} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+          <select value={project} onChange={e=>{setProject(e.target.value);setTask('')}} className="mt-1 w-full min-h-11 px-3 py-2 rounded-xl bg-black border border-white/10">
             <option value="">Sem projeto</option>
             {customerProjects.map((p:any)=><option key={p.id} value={p.id}>{p.title}</option>)}
           </select>
@@ -204,12 +218,12 @@ export function AdminFiles(){
           </select>
         </label>
         {provider==='google_drive'&&<label className="text-xs text-gray-500">Pasta do projeto
-          <select value={folderKind} onChange={e=>setFolderKind(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+          <select value={folderKind} onChange={e=>setFolderKind(e.target.value)} className="mt-1 w-full min-h-11 px-3 py-2 rounded-xl bg-black border border-white/10">
             {folderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
           </select>
         </label>}
         <label className="text-xs text-gray-500">Visibilidade
-          <select value={clientVisible?'client':'internal'} onChange={e=>setClientVisible(e.target.value==='client')} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+          <select value={clientVisible?'client':'internal'} onChange={e=>setClientVisible(e.target.value==='client')} className="mt-1 w-full min-h-11 px-3 py-2 rounded-xl bg-black border border-white/10">
             <option value="client">Visível ao cliente</option>
             <option value="internal">Somente equipe</option>
           </select>
@@ -217,22 +231,41 @@ export function AdminFiles(){
       </div>
 
       {provider==='external'?<div className="grid md:grid-cols-2 gap-3">
-        <input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome do arquivo ou material" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
-        <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://..." className="px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
-      </div>:<div className="grid md:grid-cols-2 gap-3">
-        {provider==='supabase'&&<input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome exibido ao cliente" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>}
-        <input type="file" onChange={e=>{
-          const selected=e.target.files?.[0]||null
-          if(selected&&provider==='google_drive'&&selected.size>1024*1024*1024){
-            toast('O limite por arquivo no Google Drive é 1 GB.','error');e.currentTarget.value='';setFile(null);return
-          }
-          setFile(selected)
-        }} className="px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
+        <input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome do arquivo ou material" className="min-h-11 px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
+        <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://..." className="min-h-11 px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
+      </div>:<div className="space-y-3">
+        {provider==='supabase'&&<input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome personalizado (opcional quando selecionar 1 arquivo)" className="w-full min-h-11 px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>}
+        <label className="block rounded-2xl border border-dashed border-white/15 bg-white/[0.025] p-4 sm:p-5 hover:border-[#E30613]/50 transition-colors cursor-pointer">
+          <input type="file" multiple onChange={e=>{
+            const picked=Array.from(e.target.files||[])
+            const invalid=provider==='google_drive'?picked.find(item=>item.size>10*1024*1024*1024):null
+            if(invalid){
+              toast('Cada arquivo do Google Drive pode ter até 10 GB.','error');e.currentTarget.value='';setSelectedFiles([]);return
+            }
+            setSelectedFiles(picked)
+          }} className="sr-only"/>
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-[#E30613]/10 text-[#E30613] flex items-center justify-center shrink-0">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 16V4m0 0-4 4m4-4 4 4M5 14v5h14v-5"/></svg>
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">{selectedFiles.length?selectedFiles.length+' arquivo(s) selecionado(s)':'Selecionar arquivos'}</p>
+              <p className="text-xs text-gray-500 mt-1">{provider==='google_drive'?'Seleção múltipla · até 10 GB por arquivo':'Você pode selecionar vários arquivos de uma vez'}</p>
+            </div>
+          </div>
+        </label>
+        {selectedFiles.length>0&&<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {selectedFiles.slice(0,12).map(item=><div key={item.name+item.lastModified} className="px-3 py-2 rounded-xl bg-black/20 border border-white/8 min-w-0">
+            <p className="text-xs font-medium truncate">{item.name}</p>
+            <p className="text-[10px] text-gray-500 mt-1">{sizeLabel(item.size)}</p>
+          </div>)}
+          {selectedFiles.length>12&&<div className="px-3 py-2 rounded-xl bg-black/20 border border-white/8 text-xs text-gray-500">+ {selectedFiles.length-12} arquivo(s)</div>}
+        </div>}
       </div>}
 
-      {provider==='google_drive'&&<p className="text-xs text-gray-500">Arquivos de até 1 GB são enviados diretamente ao Google Drive em partes de 16 MB, com retomada automática.</p>}
-      {saving&&progress>0&&<div><div className="flex justify-between text-xs text-gray-500"><span>Enviando ao Google Drive</span><span>{progress}%</span></div><div className="h-2 rounded bg-white/10 mt-2"><div className="h-2 rounded bg-[#E30613]" style={{width:progress+'%'}}/></div></div>}
-      <Button type="submit" loading={saving}>{provider==='google_drive'?'Enviar para o Google Drive':'Salvar arquivo'}</Button>
+      {provider==='google_drive'&&<p className="text-xs text-gray-500">Até 10 GB por arquivo. O envio vai direto do navegador ao Google Drive em partes de 16 MB, sem ocupar o Storage do Supabase.</p>}
+      {saving&&progress>0&&<div className="rounded-xl bg-black/20 border border-white/8 p-3"><div className="flex justify-between gap-3 text-xs text-gray-500"><span className="truncate">{currentFileName||'Enviando arquivos'}</span><span className="shrink-0">{progress}% · {completedFiles}/{selectedFiles.length}</span></div><div className="h-2 rounded bg-white/10 mt-2 overflow-hidden"><div className="h-2 rounded bg-[#E30613] transition-[width]" style={{width:progress+'%'}}/></div></div>}
+      <Button type="submit" loading={saving} className="w-full sm:w-auto min-h-12">{provider==='google_drive'?(selectedFiles.length>1?'Enviar '+selectedFiles.length+' arquivos':'Enviar para o Google Drive'):'Salvar arquivo'}</Button>
     </form>
 
     <section className="mb-9">
