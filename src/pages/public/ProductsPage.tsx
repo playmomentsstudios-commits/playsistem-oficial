@@ -27,6 +27,7 @@ function getCover(product: PublicCatalogProduct) {
 export function ProductsPage() {
   const [products, setProducts] = useState<PublicCatalogProduct[]>([])
   const [search, setSearch] = useState('')
+  const [category, setCategory] = useState('todos')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -50,13 +51,24 @@ export function ProductsPage() {
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
 
-    if (!term) return products
+    return products.filter(product => {
+      const matchesTerm = !term ||
+        product.name.toLowerCase().includes(term) ||
+        (product.short_description ?? '').toLowerCase().includes(term)
+      const matchesCategory = category === 'todos' || product.category?.slug === category
+      return matchesTerm && matchesCategory
+    })
+  }, [products, search, category])
 
-    return products.filter(product =>
-      product.name.toLowerCase().includes(term) ||
-      (product.short_description ?? '').toLowerCase().includes(term),
-    )
-  }, [products, search])
+  const categories = useMemo(() => {
+    const map = new Map<string,string>()
+    for (const product of products) {
+      if (product.category?.slug && product.category?.name) {
+        map.set(product.category.slug, product.category.name)
+      }
+    }
+    return Array.from(map.entries()).sort((a,b)=>a[1].localeCompare(b[1],'pt-BR'))
+  }, [products])
 
   return (
     <PublicLayout>
@@ -81,7 +93,7 @@ export function ProductsPage() {
           </p>
         </div>
 
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-4">
           <input
             value={search}
             onChange={event => setSearch(event.target.value)}
@@ -93,6 +105,11 @@ export function ProductsPage() {
               color: '#f0f0f2',
             }}
           />
+        </div>
+
+        <div className="flex flex-wrap justify-center gap-2 mb-8">
+          <button type="button" onClick={()=>setCategory('todos')} className="px-3 py-1.5 rounded-full text-xs transition-colors" style={{background:category==='todos'?'#E30613':'rgba(255,255,255,0.05)',color:category==='todos'?'#fff':'#9090a0',border:'1px solid rgba(255,255,255,0.08)'}}>Todos</button>
+          {categories.map(([slug,name])=><button key={slug} type="button" onClick={()=>setCategory(slug)} className="px-3 py-1.5 rounded-full text-xs transition-colors" style={{background:category===slug?'#E30613':'rgba(255,255,255,0.05)',color:category===slug?'#fff':'#9090a0',border:'1px solid rgba(255,255,255,0.08)'}}>{name}</button>)}
         </div>
 
         {loading && (
@@ -148,7 +165,7 @@ export function ProductsPage() {
                       <img
                         src={cover}
                         alt={product.name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        className={'w-full h-full transition-transform duration-500 group-hover:scale-105 '+(product.product_images.length ? 'object-cover' : 'object-contain p-5')}
                       />
                     ) : (
                       <span
