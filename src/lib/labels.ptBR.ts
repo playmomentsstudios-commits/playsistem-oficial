@@ -94,7 +94,7 @@ export const statusPublicacao: Record<string,string> = {
 
 export function rotulo(map:Record<string,string>,value?:string|null){
   if(!value)return '—'
-  return map[value] ?? value.replaceAll('_',' ')
+  return map[value] ?? value.split('_').join(' ')
 }
 
 

@@ -1,5 +1,5 @@
 import { useEffect,useMemo,useState } from 'react'
-import { Link,useParams } from 'react-router-dom'
+import { Link,useNavigate,useParams } from 'react-router-dom'
 import { portalApi } from '../../api/portal'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
@@ -26,6 +26,7 @@ function customerAge(createdAt:string){
 
 export function AdminCustomerDetail(){
   const {id=''}=useParams()
+  const navigate=useNavigate()
   const {user}=useAuth()
   const toast=useToast()
   const [customer,setCustomer]=useState<any>(null)
@@ -38,6 +39,9 @@ export function AdminCustomerDetail(){
   const [targetStatus,setTargetStatus]=useState<'active'|'inactive'|'blocked'>('inactive')
   const [reason,setReason]=useState('payment_pending')
   const [saving,setSaving]=useState(false)
+  const [deleteOpen,setDeleteOpen]=useState(false)
+  const [deleteConfirmation,setDeleteConfirmation]=useState('')
+  const [deleting,setDeleting]=useState(false)
 
   const load=async()=>{
     const [customersList,allOrders,allProjects,allPayments,loyaltyRow,loyaltySettings,statusHistory]=await Promise.all([
@@ -78,6 +82,20 @@ export function AdminCustomerDetail(){
       await load()
     }catch(error:any){toast(error.message,'error')}
     finally{setSaving(false)}
+  }
+
+  async function deleteCustomer(){
+    if(!customer||deleteConfirmation.trim().toLowerCase()!==customer.email.trim().toLowerCase())return
+    setDeleting(true)
+    try{
+      await portalApi.deleteCustomer(customer.id,deleteConfirmation)
+      toast('Cliente excluído permanentemente.','success')
+      navigate('/admin/clientes',{replace:true})
+    }catch(error:any){
+      toast(error.message||'Não foi possível excluir o cliente.','error')
+    }finally{
+      setDeleting(false)
+    }
   }
 
   async function saveLoyalty(){
@@ -161,6 +179,16 @@ export function AdminCustomerDetail(){
           {targetStatus!=='active'&&<select value={reason} onChange={e=>setReason(e.target.value)} className="px-3 py-2 rounded-xl bg-black border border-white/10">{reasons.map(code=><option key={code} value={code}>{rotulo(motivoStatusCliente,code)}</option>)}</select>}
         </div>
         <button disabled={saving||targetStatus===customer.status} onClick={changeStatus} className="mt-3 px-4 py-2 rounded-xl bg-white/10 text-sm disabled:opacity-40">{targetStatus==='active'?'Reativar cliente':targetStatus==='blocked'?'Bloquear cliente':'Inativar cliente'}</button>
+        {user?.role==='admin'&&<div className="mt-5 border-t border-red-500/15 pt-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-red-300">Excluir cliente</h3>
+              <p className="text-xs text-gray-500 mt-1">Exclusão permanente somente para cadastros sem histórico operacional. Clientes com pedidos, pagamentos, projetos, orçamentos ou conversas devem ser inativados ou bloqueados.</p>
+            </div>
+            <button type="button" onClick={()=>{setDeleteConfirmation('');setDeleteOpen(true)}} className="px-3 py-2 rounded-lg bg-red-500/10 text-red-400 text-xs shrink-0">Excluir</button>
+          </div>
+        </div>}
+
         <div className="mt-5 border-t border-white/10 pt-4">
           <h3 className="text-sm font-semibold">Histórico de acesso</h3>
           <div className="mt-2 space-y-2">{history.length===0?<p className="text-xs text-gray-500">Nenhuma alteração registrada.</p>:history.map(item=><div key={item.id} className="text-xs p-2 rounded-lg bg-white/5"><b>{rotulo(statusCliente,item.new_status)}</b>{item.reason_code?' · '+rotulo(motivoStatusCliente,item.reason_code):''}<p className="text-gray-600 mt-1">{new Date(item.created_at).toLocaleString('pt-BR')}</p></div>)}</div>
@@ -186,5 +214,29 @@ export function AdminCustomerDetail(){
     </div>
 
     <Link to="/admin/conversas" className="inline-block mt-5 px-4 py-3 rounded-xl bg-[#E30613]">Abrir central de conversa</Link>
+
+    {deleteOpen&&<div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onMouseDown={e=>{if(e.currentTarget===e.target&&!deleting)setDeleteOpen(false)}}>
+      <div className="w-full max-w-md rounded-2xl bg-[#111113] border border-red-500/20 shadow-2xl p-5">
+        <div className="flex justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-bold">Excluir cliente?</h2>
+            <p className="text-sm text-gray-500 mt-1">Esta ação remove a conta de acesso e, quando não houver histórico operacional, também remove a pasta exclusiva desse cliente no Google Drive.</p>
+          </div>
+          <button type="button" disabled={deleting} onClick={()=>setDeleteOpen(false)} className="w-8 h-8 rounded-lg bg-white/5 text-gray-400">×</button>
+        </div>
+
+        <div className="mt-5 p-3 rounded-xl bg-red-500/[0.06] border border-red-500/15">
+          <p className="text-xs text-red-300">Para confirmar, digite exatamente o e-mail do cliente:</p>
+          <p className="text-xs font-semibold mt-1">{customer.email}</p>
+        </div>
+
+        <input value={deleteConfirmation} onChange={e=>setDeleteConfirmation(e.target.value)} placeholder={customer.email} className="mt-4 w-full px-3 py-2.5 rounded-xl bg-black border border-white/10"/>
+
+        <div className="flex justify-end gap-2 mt-5">
+          <button type="button" disabled={deleting} onClick={()=>setDeleteOpen(false)} className="px-4 py-2 rounded-xl bg-white/5 text-sm">Cancelar</button>
+          <button type="button" disabled={deleting||deleteConfirmation.trim().toLowerCase()!==customer.email.trim().toLowerCase()} onClick={deleteCustomer} className="px-4 py-2 rounded-xl bg-red-600 text-sm disabled:opacity-40">{deleting?'Excluindo...':'Excluir permanentemente'}</button>
+        </div>
+      </div>
+    </div>}
   </div>
 }

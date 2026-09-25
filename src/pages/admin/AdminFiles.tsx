@@ -353,7 +353,7 @@ export function AdminFiles(){
                     {(row.external_url||row.storage_path)&&<button type="button" onClick={()=>{setMenuFile(null);void open(row)}} className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center" title="Abrir" aria-label="Abrir">↗</button>}
                     {row.storage_provider==='google_drive'&&row.project_id&&<label className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer" title="Mover" aria-label="Mover">
                       ⇄
-                      <select defaultValue="" onChange={e=>{if(e.target.value){void move(row,e.target.value);setMenuFile(null)}} className="absolute opacity-0 pointer-events-auto w-9 h-9 cursor-pointer">
+                      <select defaultValue="" onChange={e=>{if(e.target.value){void move(row,e.target.value);setMenuFile(null)}}} className="absolute opacity-0 pointer-events-auto w-9 h-9 cursor-pointer">
                         <option value="">Mover</option>
                         {folderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
                       </select>

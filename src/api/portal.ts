@@ -20,6 +20,21 @@ export const portalApi = {
     })
     if(error) throw error
   },
+  deleteCustomer: async (customerId:string,confirmation:string) => {
+    const { data,error }=await supabase.functions.invoke('admin-delete-customer',{
+      body:{customer_id:customerId,confirmation},
+    })
+    if(error){
+      const context=(error as any)?.context
+      let message='Não foi possível excluir o cliente.'
+      try{
+        const payload=await context?.json?.()
+        if(payload?.error)message=payload.error
+      }catch{}
+      throw new Error(message)
+    }
+    if(!data?.ok) throw new Error(data?.error||'Não foi possível excluir o cliente.')
+  },
   customerStatusHistory: async (customerId:string) => {
     const { data,error }=await supabase.from('customer_status_history')
       .select('*').eq('customer_id',customerId).order('created_at',{ascending:false})
