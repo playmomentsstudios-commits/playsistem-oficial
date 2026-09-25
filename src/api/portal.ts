@@ -88,6 +88,14 @@ export const portalApi = {
     const { error } = await supabase.from('orders').update({status}).eq('id',id)
     if(error) throw error
   },
+  applyPlayCash: async (orderId:string,amount?:number|null) => {
+    const { data,error }=await supabase.rpc('apply_play_cash_to_order',{
+      p_order_id:orderId,
+      p_amount:amount||null,
+    })
+    if(error) throw error
+    return data as number
+  },
   quotes: async () => {
     const { data,error } = await supabase.from('quotes')
       .select('*,items:quote_items(*)').order('created_at',{ascending:false})
