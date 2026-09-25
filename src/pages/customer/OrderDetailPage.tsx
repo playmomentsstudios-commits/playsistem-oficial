@@ -1,0 +1,12 @@
+import { useEffect,useState } from 'react'
+import { Link,useParams } from 'react-router-dom'
+import { portalApi } from '../../api/portal'
+import { OrderStatusBadge } from '../../components/ui/Badge'
+const money=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v/100)
+export function OrderDetailPage(){
+ const {id=''}=useParams(); const [row,setRow]=useState<any>(null),[loading,setLoading]=useState(true),[error,setError]=useState('')
+ useEffect(()=>{portalApi.order(id).then(setRow).catch(e=>setError(e.message)).finally(()=>setLoading(false))},[id])
+ if(loading)return <p className="text-gray-400">Carregando pedido...</p>
+ if(error||!row)return <div><p className="text-red-300">{error||'Pedido não encontrado.'}</p><Link to="/app/pedidos" className="text-[#E30613]">Voltar</Link></div>
+ return <div><Link to="/app/pedidos" className="text-sm text-[#E30613]">← Pedidos</Link><div className="flex flex-wrap justify-between gap-4 mt-4"><div><h1 className="text-2xl font-bold">{row.order_number}</h1><p className="text-sm text-gray-500">{new Date(row.created_at).toLocaleString('pt-BR')}</p></div><OrderStatusBadge status={row.status}/></div><div className="grid lg:grid-cols-[1fr_320px] gap-5 mt-6"><div className="p-5 rounded-2xl bg-[#141416] border border-white/10"><h2 className="font-bold mb-4">Itens</h2>{row.items?.map((i:any)=><div key={i.id} className="flex justify-between gap-4 py-3 border-b border-white/5"><div><p>{i.name_snapshot}</p><p className="text-xs text-gray-500">{i.quantity} × {money(i.unit_price)}</p></div><b>{money(i.total_price)}</b></div>)}</div><aside className="space-y-4"><div className="p-5 rounded-2xl bg-[#141416] border border-white/10"><div className="flex justify-between"><span>Total</span><b>{money(row.total)}</b></div><p className="text-sm text-gray-500 mt-2">Pagamento: {row.payment_status}</p>{row.payment_status!=='paid'&&<Link to="/app/pagamentos" className="inline-block mt-4 text-[#E30613]">Efetuar pagamento →</Link>}</div>{row.projects?.[0]&&<div className="p-5 rounded-2xl bg-[#141416] border border-white/10"><p className="text-xs text-gray-500">Projeto relacionado</p><Link to={'/app/projetos/'+row.projects[0].id} className="font-semibold">{row.projects[0].title}</Link><p className="text-xs text-gray-500 mt-1">{row.projects[0].status}</p></div>}<Link to="/app/conversas" className="block p-4 text-center rounded-xl bg-white/5">Falar sobre este pedido</Link></aside></div></div>
+}
