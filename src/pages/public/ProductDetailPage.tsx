@@ -5,6 +5,7 @@ import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
+import { useCart } from '../../contexts/CartContext'
 import { portalApi } from '../../api/portal'
 import { authLink } from '../../lib/navigation'
 import {
@@ -32,6 +33,7 @@ export function ProductDetailPage() {
   const { user } = useAuth()
   const toast = useToast()
   const navigate = useNavigate()
+  const { addItem } = useCart()
   const [buying, setBuying] = useState(false)
 
   const [product, setProduct] =
@@ -255,7 +257,7 @@ export function ProductDetailPage() {
                 </div>
 
                 {(product.commercial_mode === 'sale' || product.commercial_mode === 'sale_and_rental') && product.sale_price !== null && (
-                  <div className="mt-6"><Button size="lg" loading={buying} disabled={product.stock <= 0} onClick={buy}>Comprar agora</Button></div>
+                  <div className="mt-6 flex flex-wrap gap-3"><Button size="lg" loading={buying} disabled={product.stock <= 0} onClick={buy}>Comprar agora</Button><Button size="lg" variant="secondary" disabled={product.stock <= 0} onClick={() => { addItem({ id: product.id, name: product.name, slug: product.slug, price: product.promotional_price ?? product.sale_price ?? 0, image: getCover(product), stock: product.stock }); toast('Produto adicionado ao carrinho.','success') }}>Adicionar ao carrinho</Button></div>
                 )}
 
                 {product.sku && (
