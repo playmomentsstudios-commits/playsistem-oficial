@@ -352,8 +352,8 @@ export const portalApi = {
     file:File,
     onProgress?:(value:number)=>void,
   ) => {
-    const maxFileSize=1024*1024*1024
-    if(file.size>maxFileSize) throw new Error('O limite por arquivo no Google Drive é 1 GB.')
+    const maxFileSize=10*1024*1024*1024
+    if(file.size>maxFileSize) throw new Error('O limite por arquivo no Google Drive é 10 GB.')
 
     const mimeType=file.type||'application/octet-stream'
     const { data:session,error:sessionError }=await supabase.functions.invoke('google-drive-upload-session',{
