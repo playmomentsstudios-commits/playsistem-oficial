@@ -1,59 +1,14 @@
-import { useState } from 'react'
+import { useEffect,useState } from 'react'
+import { portalApi } from '../../api/portal'
 import { OrderStatusBadge } from '../../components/ui/Badge'
-
-const DEMO_ORDERS = [
-  { id: 'o1', number: 'PM-000001', customer: 'Marcos Lima', service: 'Identidade Visual', total: 350000, status: 'in_production', date: '2024-09-15' },
-  { id: 'o2', number: 'PM-000002', customer: 'João Silva', service: 'Fotografia Profissional', total: 180000, status: 'completed', date: '2024-09-01' },
-  { id: 'o3', number: 'PM-000003', customer: 'Ana Costa', service: 'Site Premium', total: 450000, status: 'awaiting_payment', date: '2024-09-22' },
-  { id: 'o4', number: 'PM-000004', customer: 'Fernanda Rocha', service: 'Produção de Vídeo', total: 680000, status: 'processing', date: '2024-09-18' },
-]
-
-function fmt(cents: number) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100)
-}
-
-export function AdminOrders() {
-  const [filter, setFilter] = useState('all')
-
-  const filtered = filter === 'all' ? DEMO_ORDERS : DEMO_ORDERS.filter(o => o.status === filter)
-
-  return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold" style={{ color: '#f0f0f2' }}>Pedidos</h1>
-        <p className="text-sm" style={{ color: '#6b6b78' }}>Gerencie todos os pedidos da plataforma</p>
-      </div>
-
-      <div className="flex gap-2 mb-4 flex-wrap">
-        {[['all', 'Todos'], ['awaiting_payment', 'Aguardando'], ['in_production', 'Em produção'], ['completed', 'Concluídos']].map(([v, l]) => (
-          <button key={v} onClick={() => setFilter(v)}
-            className="px-3 py-1.5 rounded-full text-sm font-medium transition-all"
-            style={{
-              background: filter === v ? '#E30613' : 'rgba(255,255,255,0.06)',
-              color: filter === v ? '#fff' : '#9090a0',
-              border: `1px solid ${filter === v ? '#E30613' : 'rgba(255,255,255,0.1)'}`,
-            }}>
-            {l}
-          </button>
-        ))}
-      </div>
-
-      <div className="rounded-2xl overflow-hidden" style={{ background: '#141416', border: '1px solid rgba(255,255,255,0.07)' }}>
-        {filtered.map((o, i) => (
-          <div key={o.id} className="flex items-center justify-between px-5 py-4 hover:bg-white/[0.02] transition-colors cursor-pointer"
-            style={{ borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.05)' : undefined }}>
-            <div>
-              <p className="text-sm font-bold" style={{ color: '#E30613' }}>{o.number}</p>
-              <p className="text-sm font-semibold" style={{ color: '#f0f0f2' }}>{o.customer}</p>
-              <p className="text-xs" style={{ color: '#6b6b78' }}>{o.service} · {new Date(o.date).toLocaleDateString('pt-BR')}</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <OrderStatusBadge status={o.status} />
-              <span className="font-bold text-sm" style={{ color: '#f0f0f2' }}>{fmt(o.total)}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
+import { useToast } from '../../contexts/ToastContext'
+const money=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v/100)
+export function AdminOrders(){
+ const [rows,setRows]=useState<any[]>([]),[filter,setFilter]=useState('all'),[loading,setLoading]=useState(true); const toast=useToast()
+ const load=()=>portalApi.orders().then(setRows).finally(()=>setLoading(false)); useEffect(()=>{void load()},[])
+ const filtered=filter==='all'?rows:rows.filter(o=>o.status===filter)
+ async function setStatus(id:string,status:string){try{await portalApi.updateOrder(id,status);toast('Pedido atualizado.','success');await load()}catch(e:any){toast(e.message,'error')}}
+ return <div><h1 className="text-2xl font-bold text-white mb-2">Pedidos</h1><p className="text-sm text-gray-500 mb-5">Pedidos reais da plataforma</p>
+ <div className="flex gap-2 flex-wrap mb-4">{['all','awaiting_payment','paid','in_production','completed','cancelled'].map(v=><button key={v} onClick={()=>setFilter(v)} className={'px-3 py-1.5 rounded-full text-sm '+(filter===v?'bg-[#E30613]':'bg-white/5')}>{v}</button>)}</div>
+ {loading?<p>Carregando...</p>:<div className="space-y-2">{filtered.map(o=><div key={o.id} className="p-4 rounded-2xl bg-[#141416] border border-white/10 flex flex-wrap justify-between gap-4"><div><b className="text-[#E30613]">{o.order_number}</b><p className="text-sm">{o.items?.[0]?.name_snapshot||'Pedido'}</p><p className="text-xs text-gray-500">{new Date(o.created_at).toLocaleString('pt-BR')}</p></div><div className="flex items-center gap-3"><OrderStatusBadge status={o.status}/><b>{money(o.total)}</b><select value={o.status} onChange={e=>setStatus(o.id,e.target.value)} className="bg-black border border-white/10 rounded px-2 py-1 text-sm"><option value="pending">pending</option><option value="awaiting_payment">awaiting_payment</option><option value="paid">paid</option><option value="processing">processing</option><option value="in_production">in_production</option><option value="ready">ready</option><option value="completed">completed</option><option value="cancelled">cancelled</option></select></div></div>)}</div>}</div>
 }

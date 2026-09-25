@@ -11,10 +11,12 @@ import { AdminLayout } from './layouts/AdminLayout'
 import { HomePage } from './pages/public/HomePage'
 import { LoginPage } from './pages/public/LoginPage'
 import { RegisterPage } from './pages/public/RegisterPage'
+import { EmailConfirmedPage } from './pages/public/EmailConfirmedPage'
 import { CommunityPage } from './pages/public/CommunityPage'
 import { ProductsPage } from './pages/public/ProductsPage'
 import { ProductDetailPage } from './pages/public/ProductDetailPage'
 import { ServicesPage } from './pages/public/ServicesPage'
+import { ServiceDetailPage } from './pages/public/ServiceDetailPage'
 import { PortfolioPage } from './pages/public/PortfolioPage'
 import { CategoryPage } from './pages/public/CategoryPage'
 
@@ -26,6 +28,10 @@ import { QuotesPage } from './pages/customer/QuotesPage'
 import { ConversationsPage } from './pages/customer/ConversationsPage'
 import { FilesPage } from './pages/customer/FilesPage'
 import { NotificationsPage } from './pages/customer/NotificationsPage'
+import { PaymentsPage } from './pages/customer/PaymentsPage'
+import { ProjectsPage } from './pages/customer/ProjectsPage'
+import { CustomerServicesPage } from './pages/customer/CustomerServicesPage'
+import { AnnouncementsPage } from './pages/customer/AnnouncementsPage'
 
 // Admin panel
 import { AdminDashboard } from './pages/admin/AdminDashboard'
@@ -35,6 +41,12 @@ import { AdminOrders } from './pages/admin/AdminOrders'
 import { AdminConversations } from './pages/admin/AdminConversations'
 import { AdminSiteSettings } from './pages/admin/AdminSiteSettings'
 import { AdminCommunity } from './pages/admin/AdminCommunity'
+import { AdminPayments } from './pages/admin/AdminPayments'
+import { AdminProjects } from './pages/admin/AdminProjects'
+import { AdminServices } from './pages/admin/AdminServices'
+import { AdminQuotes } from './pages/admin/AdminQuotes'
+import { AdminAnnouncements } from './pages/admin/AdminAnnouncements'
+import { AdminCustomerDetail } from './pages/admin/AdminCustomerDetail'
 
 // Placeholder for unbuilt pages
 function PlaceholderPage({ title }: { title: string }) {
@@ -58,11 +70,12 @@ export default function App() {
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/cadastro" element={<RegisterPage />} />
+              <Route path="/email-confirmado" element={<EmailConfirmedPage />} />
               <Route path="/esqueci-senha" element={<PlaceholderPage title="Recuperar Senha" />} />
               <Route path="/produtos" element={<ProductsPage />} />
               <Route path="/produtos/:slug" element={<ProductDetailPage />} />
               <Route path="/servicos" element={<ServicesPage />} />
-              <Route path="/servicos/:slug" element={<PlaceholderPage title="Detalhe do Serviço" />} />
+              <Route path="/servicos/:slug" element={<ServiceDetailPage />} />
               <Route path="/portfolio" element={<PortfolioPage />} />
               <Route path="/portfolio/:slug" element={<PlaceholderPage title="Projeto do Portfólio" />} />
               <Route path="/studio" element={<CategoryPage />} />
@@ -80,15 +93,17 @@ export default function App() {
                 <Route path="perfil" element={<ProfilePage />} />
                 <Route path="pedidos" element={<OrdersPage />} />
                 <Route path="pedidos/:id" element={<PlaceholderPage title="Detalhe do Pedido" />} />
-                <Route path="servicos" element={<PlaceholderPage title="Meus Serviços" />} />
+                <Route path="servicos" element={<CustomerServicesPage />} />
                 <Route path="orcamentos" element={<QuotesPage />} />
                 <Route path="orcamentos/:id" element={<PlaceholderPage title="Detalhe do Orçamento" />} />
-                <Route path="pagamentos" element={<PlaceholderPage title="Pagamentos" />} />
+                <Route path="pagamentos" element={<PaymentsPage />} />
                 <Route path="conversas" element={<ConversationsPage />} />
                 <Route path="conversas/:id" element={<ConversationsPage />} />
                 <Route path="arquivos" element={<FilesPage />} />
                 <Route path="notificacoes" element={<NotificationsPage />} />
-                <Route path="comunicados" element={<PlaceholderPage title="Comunicados" />} />
+                <Route path="projetos" element={<ProjectsPage />} />
+                <Route path="projetos/:id" element={<ProjectsPage />} />
+                <Route path="comunicados" element={<AnnouncementsPage />} />
                 <Route path="configuracoes" element={<PlaceholderPage title="Configurações da Conta" />} />
               </Route>
 
@@ -96,19 +111,22 @@ export default function App() {
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
                 <Route path="clientes" element={<AdminCustomers />} />
-                <Route path="clientes/:id" element={<PlaceholderPage title="Perfil do Cliente" />} />
+                <Route path="clientes/:id" element={<AdminCustomerDetail />} />
                 <Route path="produtos" element={<AdminProducts />} />
                 <Route path="categorias" element={<PlaceholderPage title="Categorias" />} />
-                <Route path="servicos" element={<PlaceholderPage title="Serviços (Admin)" />} />
+                <Route path="servicos" element={<AdminServices />} />
                 <Route path="pedidos" element={<AdminOrders />} />
                 <Route path="pedidos/:id" element={<PlaceholderPage title="Detalhe do Pedido (Admin)" />} />
-                <Route path="orcamentos" element={<PlaceholderPage title="Orçamentos (Admin)" />} />
-                <Route path="pagamentos" element={<PlaceholderPage title="Pagamentos (Admin)" />} />
+                <Route path="orcamentos" element={<AdminQuotes />} />
+                <Route path="pagamentos" element={<AdminPayments />} />
                 <Route path="conversas" element={<AdminConversations />} />
                 <Route path="arquivos" element={<PlaceholderPage title="Arquivos (Admin)" />} />
                 <Route path="portfolio" element={<PlaceholderPage title="Portfólio (Admin)" />} />
                 <Route path="comunidade" element={<AdminCommunity />} />
-                <Route path="notificacoes" element={<PlaceholderPage title="Notificações (Admin)" />} />
+                <Route path="notificacoes" element={<NotificationsPage />} />
+                <Route path="projetos" element={<AdminProjects />} />
+                <Route path="produtividade" element={<AdminProjects />} />
+                <Route path="comunicados" element={<AdminAnnouncements />} />
                 <Route path="equipe" element={<PlaceholderPage title="Equipe" />} />
                 <Route path="site" element={<AdminSiteSettings />} />
                 <Route path="configuracoes" element={<PlaceholderPage title="Configurações (Admin)" />} />

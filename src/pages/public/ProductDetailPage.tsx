@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { PublicLayout } from '../../layouts/PublicLayout'
 import { Badge } from '../../components/ui/Badge'
+import { Button } from '../../components/ui/Button'
+import { useAuth } from '../../contexts/AuthContext'
+import { useToast } from '../../contexts/ToastContext'
+import { portalApi } from '../../api/portal'
+import { authLink } from '../../lib/navigation'
 import {
   getPublicProductBySlug,
   type PublicCatalogProduct,
@@ -24,6 +29,10 @@ function getCover(product: PublicCatalogProduct) {
 
 export function ProductDetailPage() {
   const { slug = '' } = useParams()
+  const { user } = useAuth()
+  const toast = useToast()
+  const navigate = useNavigate()
+  const [buying, setBuying] = useState(false)
 
   const [product, setProduct] =
     useState<PublicCatalogProduct | null>(null)
@@ -44,6 +53,18 @@ export function ProductDetailPage() {
 
     void load()
   }, [slug])
+
+  async function buy() {
+    if (!product) return
+    if (!user) { navigate(authLink('/cadastro', '/produtos/' + product.slug)); return }
+    try {
+      setBuying(true)
+      await portalApi.createProductOrder(product.id)
+      toast('Pedido criado. Finalize o pagamento na sua área.','success')
+      navigate('/app/pagamentos')
+    } catch (error: any) { toast(error.message || 'Não foi possível criar o pedido.','error') }
+    finally { setBuying(false) }
+  }
 
   return (
     <PublicLayout>
@@ -232,6 +253,10 @@ export function ProductDetailPage() {
                     {product.description}
                   </p>
                 </div>
+
+                {(product.commercial_mode === 'sale' || product.commercial_mode === 'sale_and_rental') && product.sale_price !== null && (
+                  <div className="mt-6"><Button size="lg" loading={buying} disabled={product.stock <= 0} onClick={buy}>Comprar agora</Button></div>
+                )}
 
                 {product.sku && (
                   <p

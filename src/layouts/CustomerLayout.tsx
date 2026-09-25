@@ -1,13 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { afterAuthPath } from '../lib/navigation'
 import logoUrl from '../assets/logo-play-moments.png'
+import { portalApi } from '../api/portal'
 
 const MENU = [
   { label: 'Dashboard', href: '/app/dashboard', icon: '⊞' },
   { label: 'Meu Perfil', href: '/app/perfil', icon: '◎' },
   { label: 'Pedidos', href: '/app/pedidos', icon: '📦' },
+  { label: 'Meus Projetos', href: '/app/projetos', icon: '📈' },
   { label: 'Serviços', href: '/app/servicos', icon: '⚡' },
   { label: 'Orçamentos', href: '/app/orcamentos', icon: '📋' },
   { label: 'Pagamentos', href: '/app/pagamentos', icon: '💳' },
@@ -23,6 +25,14 @@ export function CustomerLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [counts, setCounts] = useState({ messages: 0, notifications: 0 })
+  useEffect(() => {
+    if (!user?.id) return
+    const load = () => portalApi.unreadCounts(user.id).then(setCounts).catch(() => undefined)
+    void load()
+    const timer = window.setInterval(load, 10000)
+    return () => window.clearInterval(timer)
+  }, [user?.id])
 
   if (isLoading) {
     return (
@@ -84,6 +94,8 @@ export function CustomerLayout() {
               }}>
               <span style={{ fontSize: 15 }}>{item.icon}</span>
               {item.label}
+              {item.href === '/app/conversas' && counts.messages > 0 && <span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.messages}</span>}
+              {item.href === '/app/notificacoes' && counts.notifications > 0 && <span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.notifications}</span>}
             </Link>
           )
         })}

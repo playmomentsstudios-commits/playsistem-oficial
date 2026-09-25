@@ -1,0 +1,13 @@
+import { useEffect,useState } from 'react'
+import { Link,useParams } from 'react-router-dom'
+import { portalApi } from '../../api/portal'
+import { EmptyState } from '../../components/ui/EmptyState'
+function progress(p:any){const valid=(p.tasks||[]).filter((t:any)=>t.status!=='cancelled');if(!valid.length)return 0;return Math.round(valid.filter((t:any)=>t.status==='completed').length/valid.length*100)}
+export function ProjectsPage(){
+ const {id}=useParams(); const [rows,setRows]=useState<any[]>([]),[loading,setLoading]=useState(true)
+ useEffect(()=>{portalApi.projects().then(setRows).finally(()=>setLoading(false))},[])
+ const p=id?rows.find(x=>x.id===id):null
+ if(loading)return <p className="text-gray-400">Carregando...</p>
+ if(id&&p)return <div><Link to="/app/projetos" className="text-sm text-[#E30613]">← Meus projetos</Link><h1 className="text-2xl font-bold text-white mt-4">{p.title}</h1><p className="text-gray-400 mt-2">{p.description}</p><div className="mt-6 p-5 rounded-2xl bg-[#141416] border border-white/10"><div className="flex justify-between"><span>Progresso</span><b>{progress(p)}%</b></div><div className="h-2 bg-white/10 rounded mt-2"><div className="h-2 bg-[#E30613] rounded" style={{width:progress(p)+'%'}}/></div><p className="text-sm text-gray-400 mt-4">Status: {p.status}</p>{p.due_date&&<p className="text-sm text-gray-400">Prazo: {new Date(p.due_date+'T12:00').toLocaleDateString('pt-BR')}</p>}</div><h2 className="font-bold mt-6 mb-3">Etapas e tarefas</h2><div className="space-y-3">{(p.stages||[]).filter((s:any)=>s.client_visible).sort((a:any,b:any)=>a.position-b.position).map((s:any)=><div key={s.id} className="p-4 rounded-xl bg-white/5"><b>{s.name}</b><p className="text-xs text-gray-500">{s.status}</p>{(p.tasks||[]).filter((t:any)=>t.stage_id===s.id&&t.client_visible).map((t:any)=><p key={t.id} className="text-sm mt-2">• {t.title} — {t.status}</p>)}</div>)}</div></div>
+ return <div><h1 className="text-2xl font-bold text-white mb-2">Meus Projetos</h1><p className="text-sm text-gray-500 mb-6">Acompanhe andamento, etapas e prazos</p>{!rows.length?<EmptyState icon="📈" title="Nenhum projeto ativo"/>:<div className="grid md:grid-cols-2 gap-4">{rows.map(p=><Link key={p.id} to={'/app/projetos/'+p.id} className="p-5 rounded-2xl bg-[#141416] border border-white/10"><div className="flex justify-between gap-3"><b>{p.title}</b><span className="text-xs text-gray-400">{p.status}</span></div><p className="text-sm text-gray-500 mt-2">{progress(p)}% concluído</p><div className="h-2 bg-white/10 rounded mt-2"><div className="h-2 bg-[#E30613] rounded" style={{width:progress(p)+'%'}}/></div></Link>)}</div>}</div>
+}
