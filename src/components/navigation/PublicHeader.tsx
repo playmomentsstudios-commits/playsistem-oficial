@@ -6,8 +6,7 @@ import { conversationLink } from '../../lib/navigation'
 import logoUrl from '../../assets/logo-play-moments.png'
 
 const NAV_LINKS = [
-  { label: 'Produtos', href: '/produtos' },
-  { label: 'Serviços', href: '/servicos' },
+  { label: 'Produtos & Serviços', href: '/produtos' },
   { label: 'Portfólio', href: '/portfolio' },
   { label: 'Comunidade', href: '/comunidade' },
 ]
@@ -27,10 +26,14 @@ export function PublicHeader() {
       borderBottom: '1px solid rgba(255,255,255,0.06)',
       backdropFilter: 'blur(20px)',
     }}>
-      <div className="mx-auto px-4 flex items-center justify-between" style={{ maxWidth: 1200, height: 64 }}>
+      <div className="mx-auto px-4 flex items-center justify-between relative" style={{ maxWidth: 1200, height: 64 }}>
         {/* Logo */}
-        <Link to="/">
+        <Link to="/" className="hidden lg:block">
           <img src={logoUrl} alt="Play Moments" style={{ height: 30, width: 'auto' }} />
+        </Link>
+
+        <Link to="/" className="lg:hidden absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
+          <img src={logoUrl} alt="Play Moments" style={{ height: 34, width: 'auto' }} />
         </Link>
 
         {/* Desktop Nav */}
@@ -95,7 +98,7 @@ export function PublicHeader() {
         </div>
 
         {/* Mobile menu button */}
-        <button aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={mobileOpen} aria-controls="public-mobile-menu" className="lg:hidden p-3" style={{ color: '#9090a0' }} onClick={() => setMobileOpen(v => !v)}>
+        <button aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={mobileOpen} aria-controls="public-mobile-menu" className="lg:hidden p-3 ml-auto" style={{ color: '#9090a0' }} onClick={() => setMobileOpen(v => !v)}>
           <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             {mobileOpen
               ? <path d="M18 6L6 18M6 6l12 12" />
