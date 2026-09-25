@@ -18,7 +18,7 @@ import { CartPage } from './pages/public/CartPage'
 import { CommunityPage } from './pages/public/CommunityPage'
 import { ProductsPage } from './pages/public/ProductsPage'
 import { ProductDetailPage } from './pages/public/ProductDetailPage'
-import { PortfolioPage } from './pages/public/PortfolioPage'
+import { AboutPage } from './pages/public/AboutPage'
 import { CategoryPage } from './pages/public/CategoryPage'
 
 // Customer portal
@@ -57,6 +57,7 @@ import { AdminCustomerDetail } from './pages/admin/AdminCustomerDetail'
 import { AdminOrderDetail } from './pages/admin/AdminOrderDetail'
 import { AdminCategories } from './pages/admin/AdminCategories'
 import { AdminFiles } from './pages/admin/AdminFiles'
+import { AdminAboutPortfolio } from './pages/admin/AdminAboutPortfolio'
 
 // Placeholder for unbuilt pages
 function PlaceholderPage({ title }: { title: string }) {
@@ -87,13 +88,14 @@ export default function App() {
               <Route path="/produtos/:slug" element={<ProductDetailPage />} />
               <Route path="/servicos" element={<Navigate to="/produtos" replace />} />
               <Route path="/servicos/:slug" element={<Navigate to="/produtos" replace />} />
-              <Route path="/portfolio" element={<PortfolioPage />} />
-              <Route path="/portfolio/:slug" element={<PlaceholderPage title="Projeto do Portfólio" />} />
+              <Route path="/quem-somos" element={<AboutPage />} />
+              <Route path="/portfolio" element={<Navigate to="/quem-somos#portfolio" replace />} />
+              <Route path="/portfolio/:slug" element={<Navigate to="/quem-somos#portfolio" replace />} />
               <Route path="/studio" element={<CategoryPage />} />
               <Route path="/design" element={<CategoryPage />} />
               <Route path="/tech" element={<CategoryPage />} />
               <Route path="/comunidade" element={<CommunityPage />} />
-              <Route path="/sobre" element={<PlaceholderPage title="Sobre a Play Moments" />} />
+              <Route path="/sobre" element={<Navigate to="/quem-somos" replace />} />
               <Route path="/contato" element={<PlaceholderPage title="Contato" />} />
               <Route path="/carrinho" element={<CartPage />} />
 
@@ -133,7 +135,7 @@ export default function App() {
                 <Route path="pagamentos" element={<AdminPayments />} />
                 <Route path="conversas" element={<AdminConversations />} />
                 <Route path="arquivos" element={<AdminFiles />} />
-                <Route path="portfolio" element={<PlaceholderPage title="Portfólio (Admin)" />} />
+                <Route path="portfolio" element={<AdminAboutPortfolio />} />
                 <Route path="comunidade" element={<AdminCommunity />} />
                 <Route path="notificacoes" element={<NotificationsPage />} />
                 <Route path="projetos" element={<AdminProjects />} />
