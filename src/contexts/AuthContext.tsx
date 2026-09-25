@@ -179,7 +179,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: payload.email.trim(),
         password: payload.password,
         options: {
-          emailRedirectTo: window.location.origin + authLink('/login', next),
+          emailRedirectTo: (import.meta.env.VITE_SITE_URL || window.location.origin).replace(/\/$/, '') + '/email-confirmado' + (next ? '?' + new URLSearchParams({ next }).toString() : ''),
           data: {
             first_name: payload.name.trim(),
             last_name: payload.lastName.trim(),
