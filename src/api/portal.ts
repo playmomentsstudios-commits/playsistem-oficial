@@ -237,6 +237,21 @@ export const portalApi = {
     const { error }=await supabase.from('client_files').update({task_id:taskId}).eq('id',fileId)
     if(error) throw error
   },
+  deleteClientFile: async (fileId:string) => {
+    const { data,error }=await supabase.functions.invoke('google-drive-file-manage',{
+      body:{action:'delete',file_id:fileId},
+    })
+    if(error) throw error
+    if(!data?.ok) throw new Error(data?.error||'Não foi possível excluir o arquivo.')
+  },
+  moveDriveFile: async (fileId:string,folderKind:string) => {
+    const { data,error }=await supabase.functions.invoke('google-drive-file-manage',{
+      body:{action:'move',file_id:fileId,folder_kind:folderKind},
+    })
+    if(error) throw error
+    if(!data?.ok) throw new Error(data?.error||'Não foi possível mover o arquivo.')
+    return data
+  },
   payments: async () => {
     const { data,error } = await supabase.from('payments')
       .select('*,order:orders(order_number),customer:profiles!payments_customer_id_fkey(id,email,first_name,last_name),receipt:payment_receipts(*)')
