@@ -515,3 +515,39 @@ exception when duplicate_object then null; end $$;
 do $$ begin
   alter publication supabase_realtime add table public.projects;
 exception when duplicate_object then null; end $$;
+
+-- Harden customer writes: purchases/requests use SECURITY DEFINER helpers instead of raw inserts.
+drop policy if exists orders_customer_insert on public.orders;
+drop policy if exists order_items_customer_insert on public.order_items;
+drop policy if exists quotes_customer_insert on public.quotes;
+drop policy if exists quotes_customer_decide on public.quotes;
+drop policy if exists payments_customer_insert on public.payments;
+
+-- Customers may only mark their own notifications as read, not rewrite notification contents.
+revoke update on public.notifications from authenticated;
+grant update (read_at) on public.notifications to authenticated;
+
+create or replace function public.decide_quote(p_quote_id uuid, p_status text)
+returns void language plpgsql security definer set search_path=public
+as $$
+begin
+  if p_status not in ('accepted','rejected') then
+    raise exception 'Invalid quote decision' using errcode='22023';
+  end if;
+  update public.quotes
+    set status=p_status
+  where id=p_quote_id
+    and customer_id=auth.uid()
+    and status in ('sent','viewed');
+  if not found then
+    raise exception 'Quote not available' using errcode='42501';
+  end if;
+  insert into public.notifications(user_id,type,title,message,link,metadata)
+    select id,'quote_decision','Orçamento respondido',
+      case when p_status='accepted' then 'O cliente aceitou um orçamento.' else 'O cliente recusou um orçamento.' end,
+      '/admin/orcamentos',jsonb_build_object('quote_id',p_quote_id,'status',p_status)
+    from public.profiles
+    where role in ('admin','staff') and status='active';
+end $$;
+revoke all on function public.decide_quote(uuid,text) from public;
+grant execute on function public.decide_quote(uuid,text) to authenticated;
