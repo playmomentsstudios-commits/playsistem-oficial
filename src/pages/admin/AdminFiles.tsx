@@ -1,5 +1,4 @@
 import { useEffect,useMemo,useState } from 'react'
-import { Link } from 'react-router-dom'
 import { portalApi } from '../../api/portal'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
@@ -57,6 +56,9 @@ export function AdminFiles(){
   const [name,setName]=useState('')
   const [url,setUrl]=useState('')
   const [file,setFile]=useState<File|null>(null)
+  const [libraryCustomer,setLibraryCustomer]=useState<string|null>(null)
+  const [libraryProject,setLibraryProject]=useState<string|null>(null)
+  const [menuFile,setMenuFile]=useState<string|null>(null)
 
   const load=async()=>{
     try{
@@ -85,6 +87,13 @@ export function AdminFiles(){
     }
     return Array.from(map.entries())
   },[files])
+
+  const selectedLibraryGroup=libraryCustomer
+    ? grouped.find(([customerId])=>customerId===libraryCustomer)?.[1]||null
+    : null
+  const selectedLibraryProject=selectedLibraryGroup&&libraryProject
+    ? selectedLibraryGroup.projects.get(libraryProject)||null
+    : null
 
   async function testDrive(){
     try{
@@ -227,56 +236,137 @@ export function AdminFiles(){
     </form>
 
     <section className="mb-9">
-      <div className="flex items-end justify-between mb-3"><div><h2 className="text-lg font-bold">Adicionados recentemente</h2><p className="text-xs text-gray-500">Últimos 8 arquivos registrados</p></div></div>
-      {loading?<p className="text-gray-500">Carregando...</p>:recent.length===0?<p className="text-sm text-gray-500">Nenhum arquivo ainda.</p>:<div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
-        {recent.map(row=><button key={row.id} type="button" onClick={()=>open(row)} className="text-left p-3 rounded-2xl bg-[#141416] border border-white/10 hover:border-white/20 min-w-0">
-          <div className="h-16 rounded-xl bg-white/5 flex items-center justify-center text-3xl mb-3">{fileIcon(row)}</div>
-          <div className="text-[10px] text-[#E30613] font-bold">{extension(row.name)}</div>
-          <div className="text-xs font-semibold truncate mt-1" title={row.name}>{row.name}</div>
-          <div className="text-[10px] text-gray-500 mt-1 truncate">{row.customer?.first_name||'Sem cliente'}{row.project?.title?' · '+row.project.title:''}</div>
-          <div className="text-[10px] text-gray-600 mt-1">{sizeLabel(row.file_size)}</div>
+      <div className="mb-3">
+        <h2 className="text-lg font-bold">Recentes</h2>
+        <p className="text-xs text-gray-500">Acesso rápido aos últimos arquivos.</p>
+      </div>
+      {loading?<p className="text-gray-500">Carregando...</p>:recent.length===0?<p className="text-sm text-gray-500">Nenhum arquivo ainda.</p>:<div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
+        {recent.map(row=><button key={row.id} type="button" onClick={()=>open(row)} className="group text-left p-2.5 rounded-xl bg-[#141416] border border-white/8 hover:border-white/20 transition-colors min-w-0">
+          <div className="h-11 rounded-lg bg-white/[0.04] flex items-center justify-center text-2xl mb-2">{fileIcon(row)}</div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[9px] text-[#E30613] font-bold tracking-wide">{extension(row.name)}</span>
+            <span className="text-[9px] text-gray-600">{sizeLabel(row.file_size)}</span>
+          </div>
+          <div className="text-[11px] font-semibold truncate mt-1" title={row.name}>{row.name}</div>
+          <div className="text-[9px] text-gray-500 mt-1 truncate">{row.customer?.first_name||'Sem cliente'}</div>
         </button>)}
       </div>}
     </section>
 
     <section>
-      <div className="mb-4"><h2 className="text-lg font-bold">Biblioteca por cliente</h2><p className="text-xs text-gray-500">Organização visual semelhante à estrutura do Drive.</p></div>
-      {loading?<p className="text-gray-500">Carregando...</p>:grouped.length===0?<p className="text-sm text-gray-500">Nenhum arquivo registrado.</p>:<div className="space-y-5">
-        {grouped.map(([customerId,group])=><div key={customerId} className="rounded-2xl border border-white/10 bg-[#101012] overflow-hidden">
-          <div className="px-5 py-4 bg-white/[0.03] border-b border-white/10 flex items-center gap-3">
-            <span className="text-xl">📁</span>
-            <div><h3 className="font-bold">{group.customer?[group.customer.first_name,group.customer.last_name].filter(Boolean).join(' '):'Sem cliente'}</h3><p className="text-xs text-gray-500">{group.customer?.email||''}</p></div>
-          </div>
-          <div className="p-4 space-y-4">
-            {Array.from(group.projects.entries()).map(([projectId,projectGroup])=><div key={projectId}>
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2"><span>📂</span><b className="text-sm">{projectGroup.project?.title||'Arquivos gerais'}</b><span className="text-[10px] text-gray-600">{projectGroup.files.length} arquivo(s)</span></div>
-                {projectGroup.project&&<Link to={'/admin/projetos/'+projectGroup.project.id} className="text-xs text-[#E30613]">Abrir projeto →</Link>}
+      <div className="mb-4">
+        <h2 className="text-lg font-bold">Clientes</h2>
+        <p className="text-xs text-gray-500">Abra um cliente para navegar pelos projetos e arquivos sem sair desta tela.</p>
+      </div>
+
+      {loading?<p className="text-gray-500">Carregando...</p>:grouped.length===0?<p className="text-sm text-gray-500">Nenhum arquivo registrado.</p>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        {grouped.map(([customerId,group])=>{
+          const totalFiles=Array.from(group.projects.values()).reduce((sum,item)=>sum+item.files.length,0)
+          return <button
+            key={customerId}
+            type="button"
+            onClick={()=>{setLibraryCustomer(customerId);setLibraryProject(null);setMenuFile(null)}}
+            className="text-left rounded-xl border border-white/8 bg-[#121214] hover:bg-[#171719] hover:border-white/15 transition-colors p-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-white/[0.05] flex items-center justify-center">📁</div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold truncate">{group.customer?[group.customer.first_name,group.customer.last_name].filter(Boolean).join(' '):'Sem cliente'}</p>
+                <p className="text-[10px] text-gray-500 truncate">{group.customer?.email||''}</p>
               </div>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {projectGroup.files.map(row=><div key={row.id} className="p-3 rounded-xl bg-[#17171a] border border-white/10">
-                  <div className="flex gap-3">
-                    <div className="w-12 h-12 shrink-0 rounded-xl bg-white/5 flex items-center justify-center text-2xl">{fileIcon(row)}</div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex gap-2 items-center"><span className="text-[10px] text-[#E30613] font-bold">{extension(row.name)}</span><span className="text-[10px] text-gray-600">{sizeLabel(row.file_size)}</span></div>
-                      <p className="text-sm font-medium truncate mt-1" title={row.name}>{row.name}</p>
-                      <p className="text-[10px] text-gray-500 truncate">{row.task?.title||'Arquivo geral do projeto'}</p>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {(row.external_url||row.storage_path)&&<button type="button" onClick={()=>open(row)} className="px-2.5 py-1.5 rounded-lg bg-white/5 text-xs">Abrir</button>}
-                    {row.storage_provider==='google_drive'&&row.project_id&&<select defaultValue="" onChange={e=>{if(e.target.value){void move(row,e.target.value);e.currentTarget.value=''}}} className="px-2 py-1.5 rounded-lg bg-black border border-white/10 text-xs">
-                      <option value="">Mover...</option>
-                      {folderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
-                    </select>}
-                    <button type="button" onClick={()=>remove(row)} className="px-2.5 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-xs">Excluir</button>
-                  </div>
-                </div>)}
+              <div className="text-right">
+                <p className="text-xs font-semibold">{totalFiles}</p>
+                <p className="text-[9px] text-gray-600">arquivos</p>
               </div>
-            </div>)}
-          </div>
-        </div>)}
+            </div>
+          </button>
+        })}
       </div>}
     </section>
+
+    {libraryCustomer&&selectedLibraryGroup&&<div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onMouseDown={e=>{if(e.currentTarget===e.target){setLibraryCustomer(null);setLibraryProject(null);setMenuFile(null)}}}>
+      <div className="w-full max-w-5xl max-h-[86vh] rounded-2xl border border-white/10 bg-[#111113] shadow-2xl overflow-hidden flex flex-col">
+        <div className="h-14 px-4 sm:px-5 border-b border-white/10 flex items-center gap-3 shrink-0">
+          {libraryProject&&<button type="button" onClick={()=>{setLibraryProject(null);setMenuFile(null)}} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-300" title="Voltar" aria-label="Voltar">←</button>}
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold truncate">
+              {selectedLibraryGroup.customer?[selectedLibraryGroup.customer.first_name,selectedLibraryGroup.customer.last_name].filter(Boolean).join(' '):'Sem cliente'}
+            </p>
+            <p className="text-[10px] text-gray-500 truncate">
+              {libraryProject&&selectedLibraryProject?.project?.title?selectedLibraryProject.project.title:selectedLibraryGroup.customer?.email||'Biblioteca de arquivos'}
+            </p>
+          </div>
+          <button type="button" onClick={()=>{setLibraryCustomer(null);setLibraryProject(null);setMenuFile(null)}} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-400 text-lg" title="Fechar" aria-label="Fechar">×</button>
+        </div>
+
+        <div className="p-4 sm:p-5 overflow-y-auto">
+          {!libraryProject?<div>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Projetos</p>
+              <span className="text-[10px] text-gray-600">{selectedLibraryGroup.projects.size} pasta(s)</span>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {Array.from(selectedLibraryGroup.projects.entries()).map(([projectId,projectGroup])=><button
+                key={projectId}
+                type="button"
+                onClick={()=>{setLibraryProject(projectId);setMenuFile(null)}}
+                className="text-left p-4 rounded-xl border border-white/8 bg-[#171719] hover:bg-[#1d1d20] hover:border-white/15 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-white/[0.05] flex items-center justify-center">📂</div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold truncate">{projectGroup.project?.title||'Arquivos gerais'}</p>
+                    <p className="text-[10px] text-gray-500 mt-1">{projectGroup.files.length} arquivo(s)</p>
+                  </div>
+                  <span className="text-gray-600">›</span>
+                </div>
+              </button>)}
+            </div>
+          </div>:selectedLibraryProject?<div>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Arquivos</p>
+              <span className="text-[10px] text-gray-600">{selectedLibraryProject.files.length} item(ns)</span>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {selectedLibraryProject.files.map(row=><div key={row.id} className="relative p-3 rounded-xl bg-[#171719] border border-white/8 hover:border-white/15 transition-colors">
+                <button type="button" onClick={()=>open(row)} className="w-full text-left">
+                  <div className="h-20 rounded-lg bg-white/[0.035] flex items-center justify-center text-3xl">{fileIcon(row)}</div>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <span className="text-[9px] font-bold text-[#E30613]">{extension(row.name)}</span>
+                    <span className="text-[9px] text-gray-600">{sizeLabel(row.file_size)}</span>
+                  </div>
+                  <p className="text-xs font-semibold truncate mt-1" title={row.name}>{row.name}</p>
+                  <p className="text-[9px] text-gray-500 truncate mt-1">{row.task?.title||'Arquivo geral'}</p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={()=>setMenuFile(menuFile===row.id?null:row.id)}
+                  className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-black/45 hover:bg-black/70 flex items-center justify-center text-gray-300"
+                  title="Ações"
+                  aria-label="Ações do arquivo"
+                >•••</button>
+
+                {menuFile===row.id&&<div className="absolute z-20 right-2 top-10 w-40 rounded-xl border border-white/10 bg-[#0d0d0f] shadow-2xl p-2" onMouseLeave={()=>setMenuFile(null)}>
+                  <div className="flex items-center gap-1">
+                    {(row.external_url||row.storage_path)&&<button type="button" onClick={()=>{setMenuFile(null);void open(row)}} className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center" title="Abrir" aria-label="Abrir">↗</button>}
+                    {row.storage_provider==='google_drive'&&row.project_id&&<label className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer" title="Mover" aria-label="Mover">
+                      ⇄
+                      <select defaultValue="" onChange={e=>{if(e.target.value){void move(row,e.target.value);setMenuFile(null)}} className="absolute opacity-0 pointer-events-auto w-9 h-9 cursor-pointer">
+                        <option value="">Mover</option>
+                        {folderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
+                      </select>
+                    </label>}
+                    <button type="button" onClick={()=>{setMenuFile(null);void remove(row)}} className="w-9 h-9 rounded-lg hover:bg-red-500/10 text-red-400 flex items-center justify-center" title="Excluir" aria-label="Excluir">🗑</button>
+                  </div>
+                  <p className="text-[9px] text-gray-600 px-1 pt-1">abrir · mover · excluir</p>
+                </div>}
+              </div>)}
+            </div>
+          </div>:null}
+        </div>
+      </div>
+    </div>}
   </div>
 }
