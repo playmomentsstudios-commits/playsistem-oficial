@@ -72,7 +72,7 @@ export function ProductDetailPage() {
 
   return (
     <PublicLayout>
-      <div className="mx-auto px-4 py-12" style={{ maxWidth: 1100 }}>
+      <div className="mx-auto px-4 py-6 sm:py-12" style={{ maxWidth: 1100 }}>
         {loading && (
           <div
             className="text-center py-20"
@@ -110,11 +110,11 @@ export function ProductDetailPage() {
               ← Voltar para produtos
             </Link>
 
-            <div className="grid lg:grid-cols-2 gap-10 mt-8">
+            <div className="grid lg:grid-cols-2 gap-6 lg:gap-10 mt-5 sm:mt-8">
               <div
                 className="rounded-2xl overflow-hidden flex items-center justify-center"
                 style={{
-                  minHeight: 420,
+                  minHeight: 'clamp(260px, 70vw, 420px)',
                   background: '#141416',
                   border: '1px solid rgba(255,255,255,0.07)',
                 }}
@@ -160,7 +160,7 @@ export function ProductDetailPage() {
                 {product.category?.name && <p className="text-xs uppercase tracking-wider mb-2" style={{color:'#E30613'}}>{product.category.name}</p>}
 
                 <h1
-                  className="text-4xl font-bold mb-3"
+                  className="text-2xl sm:text-4xl font-bold mb-3"
                   style={{ color: '#f0f0f2' }}
                 >
                   {product.name}
@@ -263,7 +263,7 @@ export function ProductDetailPage() {
                 </div>
 
                 {(product.commercial_mode === 'sale' || product.commercial_mode === 'sale_and_rental') && product.sale_price !== null && (
-                  <div className="mt-6 flex flex-wrap gap-3"><Button size="lg" loading={buying} disabled={product.inventory_tracked && product.stock <= 0} onClick={buy}>{product.specifications?.catalog_kind === 'service' ? 'Contratar agora' : 'Comprar agora'}</Button><Button size="lg" variant="secondary" disabled={product.inventory_tracked && product.stock <= 0} onClick={() => { addItem({ id: product.id, name: product.name, slug: product.slug, price: product.promotional_price ?? product.sale_price ?? 0, image: getCover(product), stock: product.inventory_tracked ? product.stock : 1 }); toast(product.specifications?.catalog_kind === 'service' ? 'Serviço adicionado ao carrinho.' : 'Produto adicionado ao carrinho.','success') }}>{product.specifications?.catalog_kind === 'service' ? 'Adicionar ao carrinho' : 'Adicionar ao carrinho'}</Button></div>
+                  <div className="mt-6 grid grid-cols-1 sm:flex gap-3"><Button size="lg" fullWidth loading={buying} disabled={product.inventory_tracked && product.stock <= 0} onClick={buy}>{product.specifications?.catalog_kind === 'service' ? 'Contratar agora' : 'Comprar agora'}</Button><Button size="lg" fullWidth variant="secondary" disabled={product.inventory_tracked && product.stock <= 0} onClick={() => { addItem({ id: product.id, name: product.name, slug: product.slug, price: product.promotional_price ?? product.sale_price ?? 0, image: getCover(product), stock: product.inventory_tracked ? product.stock : 1 }); toast(product.specifications?.catalog_kind === 'service' ? 'Serviço adicionado ao carrinho.' : 'Produto adicionado ao carrinho.','success') }}>{product.specifications?.catalog_kind === 'service' ? 'Adicionar ao carrinho' : 'Adicionar ao carrinho'}</Button></div>
                 )}
 
                 {product.sku && (
