@@ -43,7 +43,6 @@ export function FilesPage(){
   },[rows])
 
   const selected=projectId?groups.find(([id])=>id===projectId)?.[1]||null:null
-  const recent=rows.slice(0,6)
 
   async function open(file:any){
     if(file.external_url){window.open(file.external_url,'_blank','noopener');return}
@@ -58,24 +57,6 @@ export function FilesPage(){
     </div>
 
     {loading?<p className="text-gray-400">Carregando...</p>:!rows.length?<EmptyState icon="📁" title="Nenhum arquivo ainda"/>:<>
-      <section className="mb-8">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold text-white">Recentes</h2>
-          <p className="text-xs text-gray-500">Últimos arquivos liberados pela equipe.</p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2">
-          {recent.map(file=><button key={file.id} type="button" onClick={()=>void open(file)} className="text-left p-2.5 rounded-xl bg-[#141416] border border-white/8 hover:border-white/20 transition-colors min-w-0">
-            <div className="h-12 rounded-lg bg-white/[0.04] flex items-center justify-center text-2xl mb-2">{fileIcon(file)}</div>
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[9px] text-[#E30613] font-bold">{extension(file.name)}</span>
-              <span className="text-[9px] text-gray-600">{sizeLabel(file.file_size)}</span>
-            </div>
-            <p className="text-[11px] font-semibold truncate mt-1" title={file.name}>{file.name}</p>
-            <p className="text-[9px] text-gray-500 truncate mt-1">{file.project?.title||'Arquivos gerais'}</p>
-          </button>)}
-        </div>
-      </section>
-
       <section>
         <div className="mb-4">
           <h2 className="text-sm font-semibold text-white">Projetos</h2>
