@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       task_id: taskId,
       uploaded_by: ctx.userId,
       name: file.name,
-      external_url: file.webViewLink || null,
+      external_url: file.webViewLink || `https://drive.google.com/file/d/${file.id}/view`,
       storage_path: null,
       file_type: file.mimeType || null,
       client_visible: staff ? clientVisible : true,
