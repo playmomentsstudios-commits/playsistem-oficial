@@ -14,15 +14,26 @@ export function ProjectsPage(){
   const {id}=useParams()
   const [rows,setRows]=useState<any[]>([])
   const [project,setProject]=useState<any>(null)
+  const [files,setFiles]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
 
   useEffect(()=>{
     if(id){
-      portalApi.project(id).then(setProject).finally(()=>setLoading(false))
+      Promise.all([portalApi.project(id),portalApi.projectFiles(id)])
+        .then(([item,projectFiles])=>{setProject(item);setFiles(projectFiles)})
+        .finally(()=>setLoading(false))
     }else{
       portalApi.projects().then(setRows).finally(()=>setLoading(false))
     }
   },[id])
+
+  async function openFile(file:any){
+    if(file.external_url){window.open(file.external_url,'_blank','noopener,noreferrer');return}
+    if(file.storage_path){
+      const url=await portalApi.fileUrl(file.storage_path)
+      window.open(url,'_blank','noopener,noreferrer')
+    }
+  }
 
   const stages=useMemo(()=>[...(project?.stages||[])].filter((stage:any)=>stage.client_visible).sort((a:any,b:any)=>a.position-b.position),[project])
   const currentStage=stages.find((stage:any)=>stage.status==='in_progress')||stages.find((stage:any)=>stage.status==='pending')||stages.at(-1)
@@ -58,6 +69,11 @@ export function ProjectsPage(){
         </div>
       </div>
 
+      {files.filter((file:any)=>!file.task_id).length>0&&<div className="mt-8">
+        <h2 className="font-bold mb-3">Arquivos gerais do projeto</h2>
+        <div className="flex flex-wrap gap-2">{files.filter((file:any)=>!file.task_id).map((file:any)=><button key={file.id} onClick={()=>openFile(file)} className="px-3 py-2 rounded-lg bg-white/5 text-sm">{file.name} ↗</button>)}</div>
+      </div>}
+
       <h2 className="font-bold mt-8 mb-3">Etapas e tarefas</h2>
       <div className="space-y-3">{stages.map((stage:any)=><div key={stage.id} className="p-4 rounded-xl bg-white/5 border border-white/5">
         <div className="flex justify-between gap-3"><b>{stage.name}</b><span className="text-xs text-gray-500">{rotulo(statusEtapa,stage.status)}</span></div>
@@ -67,6 +83,7 @@ export function ProjectsPage(){
           {task.description&&<p className="text-xs text-gray-500 mt-1">{task.description}</p>}
           {(task.checklist||[]).length>0&&<div className="mt-2 space-y-1">{task.checklist.sort((a:any,b:any)=>a.position-b.position).map((item:any)=><p key={item.id} className="text-xs text-gray-400">{item.completed?'✓':'○'} {item.title}</p>)}</div>}
           {(task.links||[]).filter((link:any)=>link.client_visible).length>0&&<div className="mt-2 flex flex-wrap gap-2">{task.links.filter((link:any)=>link.client_visible).map((link:any)=><a key={link.id} href={link.url} target="_blank" rel="noreferrer" className="text-xs text-[#E30613] px-2 py-1 rounded bg-white/5">{link.label} ↗</a>)}</div>}
+          {files.filter((file:any)=>file.task_id===task.id).length>0&&<div className="mt-2 flex flex-wrap gap-2">{files.filter((file:any)=>file.task_id===task.id).map((file:any)=><button key={file.id} onClick={()=>openFile(file)} className="text-xs text-[#E30613] px-2 py-1 rounded bg-white/5">{file.name} ↗</button>)}</div>}
         </div>)}</div>
       </div>)}</div>
     </div>
