@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { conversationsApi, type SupportConversation, type SupportMessage } from '../../api/conversations'
 import { useAuth } from '../../contexts/AuthContext'
-import { Button } from '../ui/Button'
+import { ChatComposer } from './ChatComposer'
+import { AttachmentView } from './AttachmentView'
 
 export function SupportChat({ staff = false }: { staff?: boolean }) {
   const { user } = useAuth()
@@ -11,16 +12,12 @@ export function SupportChat({ staff = false }: { staff?: boolean }) {
   const [conversations, setConversations] = useState<SupportConversation[]>([])
   const [selected, setSelected] = useState('')
   const [messages, setMessages] = useState<SupportMessage[]>([])
-  const [text, setText] = useState('')
   const [loading, setLoading] = useState(true)
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
-  const [sendError, setSendError] = useState('')
   const [retry, setRetry] = useState(0)
   const [filter, setFilter] = useState('')
-  const pending = useRef<{ id: string; conversation: string; content: string } | null>(null)
-  const sendingRef = useRef(false)
   const end = useRef<HTMLDivElement>(null)
   const subject = search.get('assunto')
   const prompt = subject === 'orcamento'
@@ -58,10 +55,7 @@ export function SupportChat({ staff = false }: { staff?: boolean }) {
 
   useEffect(() => {
     setMessages([])
-    setText('')
-    setSendError('')
     setMessagesLoading(!!selected)
-    pending.current = null
   }, [selected])
 
   useEffect(() => {
@@ -92,27 +86,11 @@ export function SupportChat({ staff = false }: { staff?: boolean }) {
 
   useEffect(() => { end.current?.scrollIntoView({ block: 'nearest' }) }, [messages.length])
 
-  async function send(event: React.FormEvent) {
-    event.preventDefault()
-    const content = text.trim()
-    if (!content || !user || !selected || sendingRef.current) return
-    sendingRef.current = true
-    setSending(true)
-    setSendError('')
-    if (pending.current?.content !== content || pending.current?.conversation !== selected) {
-      pending.current = { id: crypto.randomUUID(), conversation: selected, content }
-    }
-    try {
-      const message = await conversationsApi.send(selected, user.id, content, pending.current.id)
-      setMessages(previous => [...previous.filter(item => item.id !== message.id), message])
-      setText('')
-      pending.current = null
-    } catch {
-      setSendError('Mensagem não confirmada. Seu texto foi mantido; tente enviar novamente.')
-    } finally {
-      sendingRef.current = false
-      setSending(false)
-    }
+  async function send(content: string, file: File | null, id: string) {
+    if (!user || !selected) throw new Error('Selecione uma conversa.')
+    const attachment = file ? await conversationsApi.upload(selected, user.id, id, file) : undefined
+    const message = await conversationsApi.send(selected, user.id, content, id, attachment)
+    setMessages(previous => [...previous.filter(item => item.id !== message.id), message])
   }
 
   const conversation = conversations.find(item => item.id === selected)
@@ -140,17 +118,14 @@ export function SupportChat({ staff = false }: { staff?: boolean }) {
               {!messagesLoading && selected && !messages.length && !error && <p className="text-sm text-gray-400">Nenhuma mensagem ainda. Inicie a conversa abaixo.</p>}
               {messages.map(message => <div key={message.id} className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}>
                 <div className="max-w-[85%] rounded-2xl px-4 py-3 text-sm" style={{ background: message.sender_id === user?.id ? '#E30613' : 'rgba(255,255,255,0.07)' }}>
+                  <AttachmentView message={message} />
                   <p className="whitespace-pre-wrap break-words" style={{ overflowWrap: 'anywhere' }}>{message.content}</p>
                   <p className="text-xs mt-1 opacity-70">{new Date(message.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
                 </div>
               </div>)}
               <div ref={end} />
             </div>
-            {sendError && <p role="alert" className="px-4 pb-3 text-sm text-red-300">{sendError}</p>}
-            <form onSubmit={send} className="flex items-end gap-2 p-3 border-t border-white/10">
-              <textarea aria-label="Mensagem" placeholder="Digite sua mensagem…" value={text} maxLength={5000} rows={2} disabled={!selected || sending} onChange={event => setText(event.target.value)} className="flex-1 min-w-0 p-3 rounded-xl text-sm bg-white/5 resize-none" />
-              <Button type="submit" loading={sending} disabled={!selected || !text.trim() || messagesLoading}>Enviar</Button>
-            </form>
+            <ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} />
           </div>
         </div>
       )}
