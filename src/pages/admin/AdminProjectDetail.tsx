@@ -10,6 +10,31 @@ const projectStatuses=['planning','active','paused','review','completed','cancel
 const priorities=['low','medium','high','urgent']
 const taskStatuses=['pending','in_progress','review','completed','cancelled']
 const stageStatuses=['pending','in_progress','completed']
+const driveFolderOptions=[
+  ['received','01 - Arquivos recebidos'],
+  ['raw','02 - Brutos'],
+  ['production','03 - Produção'],
+  ['preview','04 - Prévia'],
+  ['approved','05 - Aprovados'],
+  ['delivery','06 - Entrega final'],
+]
+
+function fileSize(value:number|null|undefined){
+  if(!value)return '—'
+  const units=['B','KB','MB','GB','TB']
+  let size=value,index=0
+  while(size>=1024&&index<units.length-1){size/=1024;index+=1}
+  return size.toLocaleString('pt-BR',{maximumFractionDigits:index>=3?2:1})+' '+units[index]
+}
+
+function projectFileIcon(file:any){
+  const type=(file.mime_type||file.file_type||'').toLowerCase()
+  if(type.startsWith('video/'))return '🎬'
+  if(type.startsWith('image/'))return '🖼️'
+  if(type.startsWith('audio/'))return '🎵'
+  if(type.includes('pdf'))return '📄'
+  return '📎'
+}
 
 function progress(project:any){
   const tasks=(project?.tasks||[]).filter((task:any)=>task.status!=='cancelled')
@@ -26,8 +51,10 @@ export function AdminProjectDetail(){
   const [loading,setLoading]=useState(true)
   const [stageName,setStageName]=useState('')
   const [fileTask,setFileTask]=useState('')
-  const [fileVisible,setFileVisible]=useState(true)
+  const [fileVisible,setFileVisible]=useState(false)
+  const [fileFolder,setFileFolder]=useState('received')
   const [uploading,setUploading]=useState(false)
+  const [fileProgress,setFileProgress]=useState(0)
   const [taskForm,setTaskForm]=useState({title:'',stage_id:'',assigned_to:'',priority:'medium',due_date:'',client_visible:true})
 
   const load=async()=>{
@@ -113,24 +140,44 @@ export function AdminProjectDetail(){
       event.target.value=''
       return
     }
+    if(file.size>1024*1024*1024){
+      toast('O limite por arquivo é 1 GB.','error')
+      event.target.value=''
+      return
+    }
     setUploading(true)
+    setFileProgress(0)
     try{
-      const storagePath=await portalApi.uploadClientFile(project.customer_id,file)
-      await portalApi.addClientFile({
-        customer_id:project.customer_id,
+      await portalApi.ensureProjectDriveFolder(id)
+      await portalApi.uploadDriveFile({
         project_id:id,
         task_id:fileTask||null,
-        uploaded_by:user.id,
-        name:file.name,
-        storage_path:storagePath,
-        file_type:file.type||null,
+        folder_kind:fileFolder,
         client_visible:fileVisible,
-      })
-      toast('Arquivo adicionado ao projeto.','success')
+      },file,setFileProgress)
+      toast('Arquivo enviado ao Google Drive e adicionado ao projeto.','success')
       event.target.value=''
+      setFileProgress(0)
       await load()
     }catch(error:any){toast(error.message,'error')}
     finally{setUploading(false)}
+  }
+
+  async function deleteProjectFile(file:any){
+    if(!window.confirm('Excluir "'+file.name+'"?'))return
+    try{
+      await portalApi.deleteClientFile(file.id)
+      toast('Arquivo excluído.','success')
+      await load()
+    }catch(error:any){toast(error.message,'error')}
+  }
+
+  async function moveProjectFile(file:any,folderKind:string){
+    try{
+      await portalApi.moveDriveFile(file.id,folderKind)
+      toast('Arquivo movido no Google Drive.','success')
+      await load()
+    }catch(error:any){toast(error.message,'error')}
   }
 
   async function openFile(file:any){
@@ -174,35 +221,69 @@ export function AdminProjectDetail(){
     </div>
 
     <section className="mt-8">
-      <h2 className="text-xl font-bold">Arquivos do projeto</h2>
-      <p className="text-sm text-gray-500 mb-4">Envie arquivos uma vez e direcione cada item para uma tarefa quando necessário.</p>
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10">
-        <div className="grid md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+      <div className="flex flex-wrap justify-between gap-3 items-end">
+        <div>
+          <h2 className="text-xl font-bold">Arquivos do projeto</h2>
+          <p className="text-sm text-gray-500">Os mesmos arquivos da Central de Arquivos, vinculados diretamente a este projeto.</p>
+        </div>
+        <Link to="/admin/arquivos" className="text-sm text-[#E30613]">Abrir Central de Arquivos →</Link>
+      </div>
+
+      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10 mt-4">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
           <label className="text-sm text-gray-400">Direcionar para
             <select value={fileTask} onChange={e=>setFileTask(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
               <option value="">Arquivo geral do projeto</option>
               {tasks.map((task:any)=><option key={task.id} value={task.id}>{task.title}</option>)}
             </select>
           </label>
+          <label className="text-sm text-gray-400">Pasta no Drive
+            <select value={fileFolder} onChange={e=>setFileFolder(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+              {driveFolderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
+            </select>
+          </label>
           <label className="text-sm text-gray-400">Visibilidade
             <select value={fileVisible?'cliente':'interno'} onChange={e=>setFileVisible(e.target.value==='cliente')} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
-              <option value="cliente">Cliente pode visualizar</option>
               <option value="interno">Somente equipe</option>
+              <option value="cliente">Cliente pode visualizar</option>
             </select>
           </label>
           <label className={'px-4 py-2.5 rounded-xl text-center cursor-pointer '+(uploading?'bg-white/10 text-gray-500':'bg-[#E30613] text-white')}>
-            {uploading?'Enviando...':'Adicionar arquivo'}
+            {uploading?'Enviando...':'Adicionar ao Drive'}
             <input type="file" disabled={uploading} onChange={uploadProjectFile} className="hidden"/>
           </label>
         </div>
+
+        {uploading&&fileProgress>0&&<div className="mt-4">
+          <div className="flex justify-between text-xs text-gray-500"><span>Upload para o Google Drive</span><span>{fileProgress}%</span></div>
+          <div className="h-2 rounded bg-white/10 mt-2"><div className="h-2 rounded bg-[#E30613]" style={{width:fileProgress+'%'}}/></div>
+        </div>}
+
         {!project.customer_id&&<p className="text-xs text-yellow-300 mt-3">Projeto interno: vincule um cliente para utilizar a biblioteca de arquivos.</p>}
-        <div className="mt-4 space-y-2">{files.length===0?<p className="text-sm text-gray-500">Nenhum arquivo adicionado.</p>:files.map(file=><div key={file.id} className="p-3 rounded-xl bg-white/5 flex flex-wrap items-center gap-3">
-          <button onClick={()=>openFile(file)} className="text-left min-w-0 flex-1"><p className="text-sm font-medium truncate">{file.name}</p><p className="text-xs text-gray-500">{file.client_visible?'Visível para o cliente':'Somente equipe'}</p></button>
-          <select value={file.task_id||''} onChange={async e=>{await portalApi.assignClientFileTask(file.id,e.target.value||null);await load()}} className="px-3 py-2 rounded-lg bg-black border border-white/10 text-xs">
-            <option value="">Arquivo geral</option>
-            {tasks.map((task:any)=><option key={task.id} value={task.id}>{task.title}</option>)}
-          </select>
-        </div>)}</div>
+
+        <div className="mt-5 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {files.length===0?<p className="text-sm text-gray-500">Nenhum arquivo vinculado a este projeto.</p>:files.map(file=><div key={file.id} className="p-3 rounded-xl bg-white/5 border border-white/10">
+            <div className="flex gap-3">
+              <div className="w-12 h-12 shrink-0 rounded-xl bg-black/30 flex items-center justify-center text-2xl">{projectFileIcon(file)}</div>
+              <button onClick={()=>openFile(file)} className="text-left min-w-0 flex-1">
+                <p className="text-sm font-medium truncate" title={file.name}>{file.name}</p>
+                <p className="text-xs text-gray-500 mt-1">{fileSize(file.file_size)} · {file.client_visible?'Cliente':'Equipe'}</p>
+                <p className="text-[10px] text-gray-600 mt-1">{tasks.find((task:any)=>task.id===file.task_id)?.title||'Arquivo geral do projeto'}</p>
+              </button>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <select value={file.task_id||''} onChange={async e=>{await portalApi.assignClientFileTask(file.id,e.target.value||null);await load()}} className="px-2 py-1.5 rounded-lg bg-black border border-white/10 text-xs">
+                <option value="">Arquivo geral</option>
+                {tasks.map((task:any)=><option key={task.id} value={task.id}>{task.title}</option>)}
+              </select>
+              {file.storage_provider==='google_drive'&&<select defaultValue="" onChange={e=>{if(e.target.value){void moveProjectFile(file,e.target.value);e.currentTarget.value=''}}} className="px-2 py-1.5 rounded-lg bg-black border border-white/10 text-xs">
+                <option value="">Mover pasta...</option>
+                {driveFolderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
+              </select>}
+              <button type="button" onClick={()=>deleteProjectFile(file)} className="px-2.5 py-1.5 rounded-lg bg-red-500/10 text-red-400 text-xs">Excluir</button>
+            </div>
+          </div>)}
+        </div>
       </div>
     </section>
 
