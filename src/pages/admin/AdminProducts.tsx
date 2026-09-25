@@ -958,11 +958,11 @@ export function AdminProducts() {
                 {pendingImages.length > 0 && (
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {pendingImages.map((file,index) => (
-                      <div key={file.name+file.size+index} className="p-3 rounded-xl bg-white/5 border border-white/10">
-                        <p className="text-xs truncate" style={{ color: '#f0f0f2' }}>{file.name}</p>
-                        <p className="text-[11px] mt-1" style={{ color: '#6b6b78' }}>{(file.size/1024/1024).toFixed(1)} MB · aguardando salvar</p>
-                        <button type="button" onClick={()=>setPendingImages(current=>current.filter((_,i)=>i!==index))} className="text-[11px] text-red-300 mt-2">Remover</button>
-                      </div>
+                      <PendingImagePreview
+                        key={file.name+file.size+index}
+                        file={file}
+                        onRemove={()=>setPendingImages(current=>current.filter((_,i)=>i!==index))}
+                      />
                     ))}
                   </div>
                 )}
@@ -1041,5 +1041,29 @@ function Field({
 
       {children}
     </label>
+  )
+}
+
+
+function PendingImagePreview({ file, onRemove }: { file: File; onRemove: () => void }) {
+  const [preview,setPreview]=useState('')
+
+  useEffect(()=>{
+    const url=URL.createObjectURL(file)
+    setPreview(url)
+    return ()=>URL.revokeObjectURL(url)
+  },[file])
+
+  return (
+    <div className="rounded-xl overflow-hidden bg-white/5 border border-white/10">
+      <div className="h-28 bg-black/20">
+        {preview&&<img src={preview} alt={file.name} className="w-full h-full object-cover"/>}
+      </div>
+      <div className="p-3">
+        <p className="text-xs truncate" style={{ color: '#f0f0f2' }}>{file.name}</p>
+        <p className="text-[11px] mt-1" style={{ color: '#6b6b78' }}>{(file.size/1024/1024).toFixed(1)} MB · aguardando salvar</p>
+        <button type="button" onClick={onRemove} className="text-[11px] text-red-300 mt-2">Remover</button>
+      </div>
+    </div>
   )
 }
