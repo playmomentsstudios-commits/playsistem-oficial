@@ -48,6 +48,8 @@ import { AdminSiteSettings } from './pages/admin/AdminSiteSettings'
 import { AdminCommunity } from './pages/admin/AdminCommunity'
 import { AdminPayments } from './pages/admin/AdminPayments'
 import { AdminProjects } from './pages/admin/AdminProjects'
+import { AdminProjectDetail } from './pages/admin/AdminProjectDetail'
+import { AdminProductivity } from './pages/admin/AdminProductivity'
 import { AdminServices } from './pages/admin/AdminServices'
 import { AdminQuotes } from './pages/admin/AdminQuotes'
 import { AdminAnnouncements } from './pages/admin/AdminAnnouncements'
@@ -134,7 +136,8 @@ export default function App() {
                 <Route path="comunidade" element={<AdminCommunity />} />
                 <Route path="notificacoes" element={<NotificationsPage />} />
                 <Route path="projetos" element={<AdminProjects />} />
-                <Route path="produtividade" element={<AdminProjects />} />
+                <Route path="projetos/:id" element={<AdminProjectDetail />} />
+                <Route path="produtividade" element={<AdminProductivity />} />
                 <Route path="comunicados" element={<AdminAnnouncements />} />
                 <Route path="equipe" element={<PlaceholderPage title="Equipe" />} />
                 <Route path="site" element={<AdminSiteSettings />} />

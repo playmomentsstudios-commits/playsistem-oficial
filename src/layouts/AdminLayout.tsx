@@ -5,7 +5,7 @@ import logoUrl from '../assets/logo-play-moments.png'
 import { portalApi } from '../api/portal'
 
 const MENU = [
-  { label: 'Dashboard', href: '/admin', icon: '⊞', exact: true },
+  { label: 'Painel', href: '/admin', icon: '⊞', exact: true },
   { label: 'Clientes', href: '/admin/clientes', icon: '👥' },
   { label: 'Produtos', href: '/admin/produtos', icon: '📦' },
   { label: 'Projetos', href: '/admin/projetos', icon: '📈' },
@@ -75,7 +75,7 @@ export function AdminLayout() {
       <div className="px-4 py-2 mx-2 mt-2 rounded-lg"
         style={{ background: 'rgba(227,6,19,0.1)', border: '1px solid rgba(227,6,19,0.2)' }}>
         <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#E30613' }}>
-          {user?.role === 'admin' ? '● Admin' : '● Staff'}
+          {user?.role === 'admin' ? '● Administrador' : '● Equipe'}
         </p>
         <p className="text-xs truncate" style={{ color: '#9090a0' }}>{user?.name}</p>
       </div>
