@@ -52,6 +52,8 @@ import { AdminProjectDetail } from './pages/admin/AdminProjectDetail'
 import { AdminProductivity } from './pages/admin/AdminProductivity'
 import { AdminServices } from './pages/admin/AdminServices'
 import { AdminQuotes } from './pages/admin/AdminQuotes'
+import { AdminQuoteDetail } from './pages/admin/AdminQuoteDetail'
+import { AdminTeam } from './pages/admin/AdminTeam'
 import { AdminAnnouncements } from './pages/admin/AdminAnnouncements'
 import { AdminCustomerDetail } from './pages/admin/AdminCustomerDetail'
 import { AdminOrderDetail } from './pages/admin/AdminOrderDetail'
@@ -129,6 +131,7 @@ export default function App() {
                 <Route path="pedidos" element={<AdminOrders />} />
                 <Route path="pedidos/:id" element={<AdminOrderDetail />} />
                 <Route path="orcamentos" element={<AdminQuotes />} />
+                <Route path="orcamentos/:id" element={<AdminQuoteDetail />} />
                 <Route path="pagamentos" element={<AdminPayments />} />
                 <Route path="conversas" element={<AdminConversations />} />
                 <Route path="arquivos" element={<AdminFiles />} />
@@ -139,7 +142,7 @@ export default function App() {
                 <Route path="projetos/:id" element={<AdminProjectDetail />} />
                 <Route path="produtividade" element={<AdminProductivity />} />
                 <Route path="comunicados" element={<AdminAnnouncements />} />
-                <Route path="equipe" element={<PlaceholderPage title="Equipe" />} />
+                <Route path="equipe" element={<AdminTeam />} />
                 <Route path="site" element={<AdminSiteSettings />} />
                 <Route path="configuracoes" element={<PlaceholderPage title="Configurações (Admin)" />} />
                 <Route path="auditoria" element={<PlaceholderPage title="Auditoria" />} />
