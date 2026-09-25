@@ -33,7 +33,20 @@ export function RegisterPage() {
     if (Object.keys(errs).length) { setErrors(errs); return }
     setLoading(true)
     try {
-      await register({ name: form.name, lastName: form.lastName, email: form.email, phone: form.phone, password: form.password })
+      const result = await register({
+        name: form.name,
+        lastName: form.lastName,
+        email: form.email,
+        phone: form.phone,
+        password: form.password,
+      })
+
+      if (result.requiresEmailConfirmation) {
+        toast('Conta criada. Confira seu e-mail para confirmar o cadastro.', 'success')
+        navigate('/login')
+        return
+      }
+
       toast('Conta criada com sucesso!', 'success')
       navigate('/app/dashboard')
     } catch (err: any) {
