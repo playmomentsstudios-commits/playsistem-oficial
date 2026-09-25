@@ -98,15 +98,37 @@ export const portalApi = {
   },
   quotes: async () => {
     const { data,error } = await supabase.from('quotes')
-      .select('*,items:quote_items(*)').order('created_at',{ascending:false})
+      .select('*,items:quote_items(*),customer:profiles!quotes_customer_id_fkey(id,email,first_name,last_name)')
+      .order('created_at',{ascending:false})
     if(error) throw error
     return data ?? []
   },
   quote: async (id:string) => {
     const { data,error } = await supabase.from('quotes')
-      .select('*,items:quote_items(*)').eq('id',id).maybeSingle()
+      .select('*,items:quote_items(*),customer:profiles!quotes_customer_id_fkey(id,email,first_name,last_name)')
+      .eq('id',id).maybeSingle()
     if(error) throw error
     return data
+  },
+  createQuote: async (values:any) => {
+    const { data,error }=await supabase.from('quotes').insert(values).select().single()
+    if(error) throw error
+    return data
+  },
+  saveQuoteItem: async (values:any,id?:string) => {
+    const q=id?supabase.from('quote_items').update(values).eq('id',id):supabase.from('quote_items').insert(values)
+    const { data,error }=await q.select().single()
+    if(error) throw error
+    return data
+  },
+  deleteQuoteItem: async (id:string) => {
+    const { error }=await supabase.from('quote_items').delete().eq('id',id)
+    if(error) throw error
+  },
+  convertQuote: async (id:string,createProject=true) => {
+    const { data,error }=await supabase.rpc('admin_convert_quote',{p_quote_id:id,p_create_project:createProject})
+    if(error) throw error
+    return data as {order_id:string;project_id:string|null;already_converted:boolean}
   },
   decideQuote: async (id:string,status:'accepted'|'rejected') => {
     const { error } = await supabase.rpc('decide_quote',{p_quote_id:id,p_status:status})
@@ -131,12 +153,22 @@ export const portalApi = {
   },
   teamMembers: async () => {
     const { data,error } = await supabase.from('profiles')
-      .select('id,email,first_name,last_name,role,status')
+      .select('id,email,first_name,last_name,role,status,created_at')
       .in('role',['admin','staff'])
-      .eq('status','active')
       .order('first_name')
     if(error) throw error
     return data ?? []
+  },
+  allProfiles: async () => {
+    const { data,error }=await supabase.from('profiles')
+      .select('id,email,first_name,last_name,role,status,created_at')
+      .order('created_at',{ascending:false})
+    if(error) throw error
+    return data ?? []
+  },
+  setMemberRole: async (userId:string,role:'customer'|'staff'|'admin') => {
+    const { error }=await supabase.rpc('admin_set_member_role',{p_user_id:userId,p_role:role})
+    if(error) throw error
   },
   saveProject: async (values:any,id?:string) => {
     const q=id?supabase.from('projects').update(values).eq('id',id):supabase.from('projects').insert(values)
@@ -279,13 +311,13 @@ export const portalApi = {
   unreadCounts: async (userId:string) => {
     const [n,m] = await Promise.all([
       supabase.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',userId).is('read_at',null),
-      supabase.from('messages').select('id',{count:'exact',head:true}).neq('sender_id',userId).is('read_at',null)
+      supabase.rpc('unread_message_count')
     ])
-    return {notifications:n.count??0,messages:m.count??0}
+    if(m.error) throw m.error
+    return {notifications:n.count??0,messages:Number(m.data||0)}
   },
-  markConversationRead: async (conversationId:string,userId:string) => {
-    const { error }=await supabase.from('messages').update({read_at:new Date().toISOString()})
-      .eq('conversation_id',conversationId).neq('sender_id',userId).is('read_at',null)
+  markConversationRead: async (conversationId:string,_userId?:string) => {
+    const { error }=await supabase.rpc('mark_conversation_read_v2',{p_conversation_id:conversationId})
     if(error) throw error
   }
 }
