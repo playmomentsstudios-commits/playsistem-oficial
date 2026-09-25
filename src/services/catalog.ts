@@ -37,6 +37,7 @@ export interface CatalogProductRow {
   promotional_price: number | null
   rental_daily_price: number | null
   stock: number
+  inventory_tracked: boolean
   featured: boolean
   active: boolean
   status: ProductStatus
@@ -48,6 +49,7 @@ export interface CatalogProductRow {
 
 export interface PublicCatalogProduct extends CatalogProductRow {
   product_images: ProductImageRow[]
+  category?: Pick<ProductCategoryRow,'id'|'name'|'slug'> | null
 }
 
 export interface ProductInput {
@@ -93,6 +95,11 @@ export async function listAdminProducts() {
         alt_text,
         display_order,
         is_cover
+      ),
+      category:product_categories (
+        id,
+        name,
+        slug
       )
     `)
     .order('created_at', { ascending: false })
@@ -120,6 +127,11 @@ export async function listPublicProducts() {
         alt_text,
         display_order,
         is_cover
+      ),
+      category:product_categories (
+        id,
+        name,
+        slug
       )
     `)
     .eq('active', true)
@@ -150,6 +162,11 @@ export async function getPublicProductBySlug(slug: string) {
         alt_text,
         display_order,
         is_cover
+      ),
+      category:product_categories (
+        id,
+        name,
+        slug
       )
     `)
     .eq('slug', slug)

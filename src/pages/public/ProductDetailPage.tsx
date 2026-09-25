@@ -24,7 +24,9 @@ function getCover(product: PublicCatalogProduct) {
   return (
     product.product_images.find(image => image.is_cover)?.public_url ??
     product.product_images[0]?.public_url ??
-    null
+    (typeof product.specifications?.cover_asset === 'string'
+      ? product.specifications.cover_asset
+      : null)
   )
 }
 
@@ -121,7 +123,7 @@ export function ProductDetailPage() {
                   <img
                     src={getCover(product) ?? ''}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    className={'w-full h-full '+(product.product_images.length ? 'object-cover' : 'object-contain p-8')}
                     style={{ maxHeight: 520 }}
                   />
                 ) : (
@@ -144,14 +146,18 @@ export function ProductDetailPage() {
 
                   <Badge
                     variant={
-                      product.stock > 0 ? 'success' : 'warning'
+                      product.inventory_tracked
+                        ? (product.stock > 0 ? 'success' : 'warning')
+                        : 'success'
                     }
                   >
-                    {product.stock > 0
-                      ? `${product.stock} em estoque`
-                      : 'Sem estoque'}
+                    {product.inventory_tracked
+                      ? (product.stock > 0 ? `${product.stock} em estoque` : 'Sem estoque')
+                      : 'Disponível'}
                   </Badge>
                 </div>
+
+                {product.category?.name && <p className="text-xs uppercase tracking-wider mb-2" style={{color:'#E30613'}}>{product.category.name}</p>}
 
                 <h1
                   className="text-4xl font-bold mb-3"
@@ -257,7 +263,7 @@ export function ProductDetailPage() {
                 </div>
 
                 {(product.commercial_mode === 'sale' || product.commercial_mode === 'sale_and_rental') && product.sale_price !== null && (
-                  <div className="mt-6 flex flex-wrap gap-3"><Button size="lg" loading={buying} disabled={product.stock <= 0} onClick={buy}>Comprar agora</Button><Button size="lg" variant="secondary" disabled={product.stock <= 0} onClick={() => { addItem({ id: product.id, name: product.name, slug: product.slug, price: product.promotional_price ?? product.sale_price ?? 0, image: getCover(product), stock: product.stock }); toast('Produto adicionado ao carrinho.','success') }}>Adicionar ao carrinho</Button></div>
+                  <div className="mt-6 flex flex-wrap gap-3"><Button size="lg" loading={buying} disabled={product.inventory_tracked && product.stock <= 0} onClick={buy}>{product.specifications?.catalog_kind === 'service' ? 'Contratar agora' : 'Comprar agora'}</Button><Button size="lg" variant="secondary" disabled={product.inventory_tracked && product.stock <= 0} onClick={() => { addItem({ id: product.id, name: product.name, slug: product.slug, price: product.promotional_price ?? product.sale_price ?? 0, image: getCover(product), stock: product.inventory_tracked ? product.stock : 1 }); toast(product.specifications?.catalog_kind === 'service' ? 'Serviço adicionado ao carrinho.' : 'Produto adicionado ao carrinho.','success') }}>{product.specifications?.catalog_kind === 'service' ? 'Adicionar ao carrinho' : 'Adicionar ao carrinho'}</Button></div>
                 )}
 
                 {product.sku && (
