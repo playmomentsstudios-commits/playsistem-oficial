@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
 
     const { data: file, error: fileError } = await ctx.db
       .from("client_files")
-      .select("id,project_id,storage_provider,storage_path,drive_file_id,drive_folder_id")
+      .select("id,name,project_id,storage_provider,storage_path,drive_file_id,drive_folder_id")
       .eq("id", fileId)
       .single();
     if (fileError || !file) throw new Error("File not found");
@@ -46,6 +46,39 @@ Deno.serve(async (req) => {
       if (deleteError) throw deleteError;
 
       return json({ ok: true });
+    }
+
+    if (action === "rename") {
+      const nextName = String(body.name || "").trim();
+      if (!nextName) throw new Error("File name is required");
+      if (nextName.length > 255) throw new Error("File name is too long");
+
+      if (file.storage_provider === "google_drive" && file.drive_file_id) {
+        const token = await getDriveAccessToken();
+        const response = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.drive_file_id)}?fields=id,name`,
+          {
+            method: "PATCH",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ name: nextName }),
+          },
+        );
+        if (!response.ok) {
+          const detail = await response.text();
+          throw new Error(`Could not rename Drive file: ${response.status} ${detail}`);
+        }
+      }
+
+      const { error: renameError } = await ctx.db
+        .from("client_files")
+        .update({ name: nextName })
+        .eq("id", fileId);
+      if (renameError) throw renameError;
+
+      return json({ ok: true, name: nextName });
     }
 
     if (action === "move") {
