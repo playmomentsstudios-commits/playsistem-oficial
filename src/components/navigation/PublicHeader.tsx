@@ -5,10 +5,9 @@ import { useCart } from '../../contexts/CartContext'
 import { conversationLink } from '../../lib/navigation'
 import logoUrl from '../../assets/logo-play-moments.png'
 
-const NAV_LINKS = [
+const PUBLIC_NAV_LINKS = [
   { label: 'Produtos & Serviços', href: '/produtos' },
   { label: 'Quem Somos', href: '/quem-somos' },
-  { label: 'Comunidade', href: '/comunidade' },
 ]
 
 export function PublicHeader() {
@@ -17,6 +16,9 @@ export function PublicHeader() {
   const { itemCount } = useCart()
   const location = useLocation()
   const navigate = useNavigate()
+  const navLinks = isAuthenticated
+    ? [...PUBLIC_NAV_LINKS, { label: 'Comunidade', href: '/comunidade' }]
+    : PUBLIC_NAV_LINKS
 
   const handleLogout = async () => { await logout(); navigate('/') }
 
@@ -38,7 +40,7 @@ export function PublicHeader() {
 
         {/* Desktop Nav */}
         <nav className="hidden lg:flex items-center gap-6">
-          {NAV_LINKS.map(link => (
+          {navLinks.map(link => (
             <Link
               key={link.href}
               to={link.href}
@@ -111,7 +113,7 @@ export function PublicHeader() {
       {mobileOpen && (
         <div id="public-mobile-menu" className="lg:hidden border-t flex flex-col py-4 px-6 gap-4"
           style={{ borderColor: 'rgba(255,255,255,0.06)', background: '#0a0a0b' }}>
-          {NAV_LINKS.map(link => (
+          {navLinks.map(link => (
             <Link key={link.href} to={link.href} onClick={() => setMobileOpen(false)}
               className="text-sm font-medium min-h-11 flex items-center" style={{ color: '#c0c0cc' }}>
               {link.label}
