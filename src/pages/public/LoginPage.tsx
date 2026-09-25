@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
+import { afterAuthPath, authLink, safeReturnPath } from '../../lib/navigation'
 import logoUrl from '../../assets/logo-play-moments.png'
 
 export function LoginPage() {
@@ -11,11 +12,13 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
-  const { login } = useAuth()
+  const { login, user, isLoading } = useAuth()
   const toast = useToast()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as any)?.from?.pathname || '/app/dashboard'
+  const previous = location.state?.from
+  const from = safeReturnPath(new URLSearchParams(location.search).get('next')) ?? safeReturnPath(previous?.pathname ? previous.pathname + (previous.search || '') + (previous.hash || '') : null)
+  if (!isLoading && user) return <Navigate to={afterAuthPath(from, user.role)} replace />
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,9 +29,9 @@ export function LoginPage() {
 
     setLoading(true)
     try {
-      await login({ email, password })
+      const signedIn = await login({ email, password })
       toast('Login realizado com sucesso!', 'success')
-      navigate(from, { replace: true })
+      navigate(afterAuthPath(from, signedIn.role), { replace: true })
     } catch (err: any) {
       toast(err.message || 'Erro ao fazer login.', 'error')
     } finally {
@@ -65,7 +68,7 @@ export function LoginPage() {
 
           <h1 className="text-2xl font-bold mb-2" style={{ color: '#f0f0f2' }}>Entrar</h1>
           <p className="text-sm mb-8" style={{ color: '#6b6b78' }}>
-            Não tem conta? <Link to="/cadastro" style={{ color: '#E30613' }}>Criar agora</Link>
+            Não tem conta? <Link to={authLink('/cadastro', from)} style={{ color: '#E30613' }}>Criar agora</Link>
           </p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">

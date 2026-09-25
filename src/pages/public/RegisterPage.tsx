@@ -1,18 +1,22 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
+import { afterAuthPath, authLink, safeReturnPath } from '../../lib/navigation'
 import logoUrl from '../../assets/logo-play-moments.png'
 
 export function RegisterPage() {
   const [form, setForm] = useState({ name: '', lastName: '', email: '', phone: '', password: '', confirm: '' })
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const { register } = useAuth()
+  const { register, user, isLoading } = useAuth()
   const toast = useToast()
   const navigate = useNavigate()
+  const location = useLocation()
+  const next = safeReturnPath(new URLSearchParams(location.search).get('next'))
+  if (!isLoading && user) return <Navigate to={afterAuthPath(next, user.role)} replace />
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(prev => ({ ...prev, [k]: e.target.value }))
@@ -39,16 +43,16 @@ export function RegisterPage() {
         email: form.email,
         phone: form.phone,
         password: form.password,
-      })
+      }, next)
 
       if (result.requiresEmailConfirmation) {
         toast('Conta criada. Confira seu e-mail para confirmar o cadastro.', 'success')
-        navigate('/login')
+        navigate(authLink('/login', next))
         return
       }
 
       toast('Conta criada com sucesso!', 'success')
-      navigate('/app/dashboard')
+      navigate(afterAuthPath(next, 'customer'))
     } catch (err: any) {
       toast(err.message || 'Erro ao criar conta.', 'error')
     } finally {
@@ -63,7 +67,7 @@ export function RegisterPage() {
 
         <h1 className="text-2xl font-bold mb-2" style={{ color: '#f0f0f2' }}>Criar conta</h1>
         <p className="text-sm mb-8" style={{ color: '#6b6b78' }}>
-          Já tem conta? <Link to="/login" style={{ color: '#E30613' }}>Entrar</Link>
+          Já tem conta? <Link to={authLink('/login', next)} style={{ color: '#E30613' }}>Entrar</Link>
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

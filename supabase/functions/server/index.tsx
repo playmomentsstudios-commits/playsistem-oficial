@@ -197,72 +197,8 @@ app.patch("/orders/:id/status", authMiddleware, adminMiddleware, async (c) => {
   return ok(c, updated.find((o: any) => o.id === id));
 });
 
-// ── Conversations & Messages ───────────────────────────────────────────────────
-
-app.get("/conversations", authMiddleware, async (c) => {
-  const userId = c.get("userId");
-  const role = c.get("userRole");
-  const conversations = (await kv.get("conversations")) || [];
-  const userConvs = role === "admin" || role === "staff"
-    ? conversations
-    : conversations.filter((cv: any) => cv.participants.includes(userId));
-  return ok(c, userConvs);
-});
-
-app.post("/conversations", authMiddleware, async (c) => {
-  const { customerId } = await c.req.json();
-  const conversations = (await kv.get("conversations")) || [];
-  const existing = conversations.find((cv: any) => cv.customerId === customerId);
-  if (existing) return ok(c, existing);
-  const conv = {
-    id: `conv-${Date.now()}`,
-    participants: [customerId, "admin"],
-    customerId,
-    unreadCount: 0,
-    status: "open",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-  await kv.set("conversations", [...conversations, conv]);
-  return ok(c, conv, 201);
-});
-
-app.get("/conversations/:id/messages", authMiddleware, async (c) => {
-  const convId = c.req.param("id");
-  const messages = (await kv.get(`messages:${convId}`)) || [];
-  return ok(c, { data: messages, total: messages.length, page: 1, limit: 100, hasMore: false });
-});
-
-app.post("/conversations/:id/messages", authMiddleware, async (c) => {
-  const convId = c.req.param("id");
-  const userId = c.get("userId");
-  const role = c.get("userRole");
-  const body = await c.req.json();
-
-  const messages = (await kv.get(`messages:${convId}`)) || [];
-  const msg = {
-    id: `msg-${Date.now()}`,
-    conversationId: convId,
-    senderId: userId,
-    senderRole: role || "customer",
-    type: body.type || "text",
-    content: body.content,
-    status: "sent",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    sentAt: new Date().toISOString(),
-  };
-
-  await kv.set(`messages:${convId}`, [...messages, msg]);
-
-  // Update conversation last message
-  const conversations = (await kv.get("conversations")) || [];
-  await kv.set("conversations", conversations.map((cv: any) =>
-    cv.id === convId ? { ...cv, lastMessage: msg.content, lastMessageAt: msg.createdAt } : cv
-  ));
-
-  return ok(c, msg, 201);
-});
+// Support chat uses Supabase tables with RLS (see src/api/conversations.ts).
+// Legacy KV chat endpoints retired to avoid a second, incompatible inbox.
 
 // ── Posts ─────────────────────────────────────────────────────────────────────
 
