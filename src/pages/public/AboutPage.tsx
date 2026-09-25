@@ -15,7 +15,7 @@ export function AboutPage(){
     <div className="mx-auto px-4 py-8 sm:py-12" style={{maxWidth:1100}}>
       <section className="grid lg:grid-cols-[340px_1fr] gap-8 lg:gap-12 items-start">
         <div className="rounded-3xl overflow-hidden bg-[#141416] border border-white/10 min-h-[360px] flex items-center justify-center">
-          {profile?.photo_url?<img src={profile.photo_url} alt={profile.display_name} className="w-full h-full object-cover"/>:<div className="text-center p-8"><div className="w-24 h-24 rounded-full bg-[#E30613]/15 text-[#E30613] mx-auto flex items-center justify-center text-3xl font-bold">{profile?.display_name?.charAt(0)||'P'}</div><p className="text-xs text-gray-600 mt-4">Foto profissional</p></div>}
+          <img src={profile?.photo_url||'/profile/felipe-costa.webp'} alt={profile?.display_name||'Felipe Costa'} className="w-full h-full object-cover"/>
         </div>
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-[#E30613] font-semibold">{profile?.eyebrow||'Quem Somos'}</p>

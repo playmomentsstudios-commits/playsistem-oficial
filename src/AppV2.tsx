@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { CartProvider } from './contexts/CartContext'
 import { ToastProvider } from './contexts/ToastContext'
+import { useAuth } from './contexts/AuthContext'
 
 // Layouts
 import { CustomerLayoutV2 } from './layouts/CustomerLayoutV2'
@@ -18,9 +19,7 @@ import { CartPage } from './pages/public/CartPage'
 import { CommunityPage } from './pages/public/CommunityPage'
 import { ProductsPage } from './pages/public/ProductsPage'
 import { ProductDetailPage } from './pages/public/ProductDetailPage'
-import { ServicesPage } from './pages/public/ServicesPage'
-import { ServiceDetailPage } from './pages/public/ServiceDetailPage'
-import { PortfolioPage } from './pages/public/PortfolioPage'
+import { AboutPage } from './pages/public/AboutPage'
 import { CategoryPage } from './pages/public/CategoryPage'
 
 // Customer portal
@@ -59,6 +58,7 @@ import { AdminCustomerDetailV2 } from './pages/admin/AdminCustomerDetailV2'
 import { AdminOrderDetail } from './pages/admin/AdminOrderDetail'
 import { AdminCategories } from './pages/admin/AdminCategories'
 import { AdminFilesV2 } from './pages/admin/AdminFilesV2'
+import { AdminAboutPortfolio } from './pages/admin/AdminAboutPortfolio'
 
 // Placeholder for unbuilt pages
 function PlaceholderPage({ title }: { title: string }) {
@@ -69,6 +69,14 @@ function PlaceholderPage({ title }: { title: string }) {
       <p className="text-sm" style={{ color: '#6b6b78' }}>Página em desenvolvimento. Em breve disponível.</p>
     </div>
   )
+}
+
+function AuthenticatedCommunity() {
+  const { isAuthenticated, isLoading } = useAuth()
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center bg-[#0a0a0b]"><div className="w-8 h-8 rounded-full border-2 border-[#E30613] border-t-transparent animate-spin" /></div>
+  }
+  return isAuthenticated ? <CommunityPage /> : <Navigate to="/login" replace />
 }
 
 export default function AppV2() {
@@ -87,15 +95,16 @@ export default function AppV2() {
               <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
               <Route path="/produtos" element={<ProductsPage />} />
               <Route path="/produtos/:slug" element={<ProductDetailPage />} />
-              <Route path="/servicos" element={<ServicesPage />} />
-              <Route path="/servicos/:slug" element={<ServiceDetailPage />} />
-              <Route path="/portfolio" element={<PortfolioPage />} />
-              <Route path="/portfolio/:slug" element={<PlaceholderPage title="Projeto do Portfólio" />} />
+              <Route path="/servicos" element={<Navigate to="/produtos" replace />} />
+              <Route path="/servicos/:slug" element={<Navigate to="/produtos" replace />} />
+              <Route path="/quem-somos" element={<AboutPage />} />
+              <Route path="/portfolio" element={<Navigate to="/quem-somos#portfolio" replace />} />
+              <Route path="/portfolio/:slug" element={<Navigate to="/quem-somos#portfolio" replace />} />
               <Route path="/studio" element={<CategoryPage />} />
               <Route path="/design" element={<CategoryPage />} />
               <Route path="/tech" element={<CategoryPage />} />
-              <Route path="/comunidade" element={<CommunityPage />} />
-              <Route path="/sobre" element={<PlaceholderPage title="Sobre a Play Moments" />} />
+              <Route path="/comunidade" element={<AuthenticatedCommunity />} />
+              <Route path="/sobre" element={<Navigate to="/quem-somos" replace />} />
               <Route path="/contato" element={<PlaceholderPage title="Contato" />} />
               <Route path="/carrinho" element={<CartPage />} />
 
@@ -135,7 +144,7 @@ export default function AppV2() {
                 <Route path="pagamentos" element={<AdminPayments />} />
                 <Route path="conversas" element={<AdminConversations />} />
                 <Route path="arquivos" element={<AdminFilesV2 />} />
-                <Route path="portfolio" element={<PlaceholderPage title="Portfólio (Admin)" />} />
+                <Route path="portfolio" element={<AdminAboutPortfolio />} />
                 <Route path="comunidade" element={<AdminCommunity />} />
                 <Route path="notificacoes" element={<NotificationsPage />} />
                 <Route path="projetos" element={<AdminProjects />} />

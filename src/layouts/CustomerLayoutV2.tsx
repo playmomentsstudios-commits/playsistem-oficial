@@ -6,7 +6,7 @@ import logoUrl from '../assets/logo-play-moments.png'
 import { portalApi } from '../api/portal'
 import { FloatingCustomerChat } from '../components/chat/FloatingCustomerChat'
 
-type IconName='home'|'user'|'orders'|'projects'|'services'|'quotes'|'payments'|'chat'|'files'|'notifications'|'announcements'|'settings'|'logout'|'chevron'
+type IconName='home'|'user'|'orders'|'projects'|'services'|'quotes'|'payments'|'chat'|'files'|'community'|'notifications'|'announcements'|'settings'|'logout'|'chevron'
 
 const ICONS:Record<IconName,React.ReactNode>={
   home:<><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></>,
@@ -18,6 +18,7 @@ const ICONS:Record<IconName,React.ReactNode>={
   payments:<><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M7 15h4"/></>,
   chat:<><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8M8 13h5"/></>,
   files:<><path d="M4 6h6l2 2h8v10H4z"/><path d="M8 12h8"/></>,
+  community:<><circle cx="9" cy="9" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3.5 20c.6-3.7 2.7-5.5 5.5-5.5s4.9 1.8 5.5 5.5"/><path d="M14 15.5c2.9-.5 5.3 1 6.2 4.5"/></>,
   notifications:<><path d="M6 17h12l-1.5-2.5V10a4.5 4.5 0 0 0-9 0v4.5z"/><path d="M10 20h4"/></>,
   announcements:<><path d="M4 11v3h3l8 4V7l-8 4z"/><path d="M18 9c1 1 1 3 0 4"/></>,
   settings:<><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7 7 0 0 0-1.8-1L14.5 3h-5l-.3 3a7 7 0 0 0-1.8 1L5 6 3 9.5 5.1 11a7 7 0 0 0 0 2L3 14.5 5 18l2.4-1a7 7 0 0 0 1.8 1l.3 3h5l.3-3a7 7 0 0 0 1.8-1l2.4 1 2-3.5-2.1-1.5c.1-.3.1-.7.1-1Z"/></>,
@@ -39,6 +40,7 @@ const MENU:{label:string;href:string;icon:IconName}[]=[
   { label: 'Pagamentos', href: '/app/pagamentos', icon: 'payments' },
   { label: 'Conversas', href: '/app/conversas', icon: 'chat' },
   { label: 'Arquivos', href: '/app/arquivos', icon: 'files' },
+  { label: 'Comunidade', href: '/comunidade', icon: 'community' },
   { label: 'Notificações', href: '/app/notificacoes', icon: 'notifications' },
   { label: 'Comunicados', href: '/app/comunicados', icon: 'announcements' },
   { label: 'Configurações', href: '/app/configuracoes', icon: 'settings' },
