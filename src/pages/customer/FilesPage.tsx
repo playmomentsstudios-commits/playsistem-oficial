@@ -1,6 +1,7 @@
 import { useEffect,useMemo,useState } from 'react'
 import { portalApi } from '../../api/portal'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { useToast } from '../../contexts/ToastContext'
 
 function sizeLabel(value:number|null|undefined){
   if(!value)return '—'
@@ -26,6 +27,7 @@ function fileIcon(file:any){
 }
 
 export function FilesPage(){
+  const toast=useToast()
   const [rows,setRows]=useState<any[]>([])
   const [projects,setProjects]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
@@ -76,7 +78,10 @@ export function FilesPage(){
         },current,value=>setUploadProgress(Math.round(((index+(value/100))/uploadFiles.length)*100)))
       }
       setUploadFiles([]);setUploadProgress(0);setUploadName('')
+      toast('Arquivos enviados para a Play Moments.','success')
       await load()
+    }catch(error:any){
+      toast(error.message||'Não foi possível enviar os arquivos.','error')
     }finally{setUploading(false)}
   }
 
@@ -129,7 +134,7 @@ export function FilesPage(){
             <input type="file" multiple className="sr-only" disabled={uploading} onChange={event=>{
               const picked=Array.from(event.target.files||[])
               const invalid=picked.find(file=>file.size>10*1024*1024*1024)
-              if(invalid){event.currentTarget.value='';setUploadFiles([]);return}
+              if(invalid){toast('Cada arquivo pode ter no máximo 10 GB.','error');event.currentTarget.value='';setUploadFiles([]);return}
               setUploadFiles(picked)
             }}/>
             + Enviar
