@@ -83,12 +83,28 @@ export async function listCategories() {
 export async function listAdminProducts() {
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select(`
+      *,
+      product_images (
+        id,
+        product_id,
+        storage_path,
+        public_url,
+        alt_text,
+        display_order,
+        is_cover
+      )
+    `)
     .order('created_at', { ascending: false })
 
   if (error) throw error
 
-  return (data ?? []) as CatalogProductRow[]
+  return ((data ?? []) as PublicCatalogProduct[]).map(product => ({
+    ...product,
+    product_images: [...(product.product_images ?? [])].sort(
+      (a, b) => a.display_order - b.display_order,
+    ),
+  }))
 }
 
 export async function listPublicProducts() {
@@ -232,4 +248,90 @@ export async function updateCategory(id:string,input:Partial<{name:string;slug:s
 export async function archiveCategory(id:string) {
   const { error }=await supabase.from('product_categories').update({active:false}).eq('id',id)
   if(error) throw error
+}
+
+
+export async function uploadProductImage(
+  productId: string,
+  file: File,
+  displayOrder: number,
+  isCover = false,
+) {
+  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+  const safeExt = ['jpg','jpeg','png','webp','avif'].includes(ext) ? ext : 'jpg'
+  const storagePath = productId + '/' + crypto.randomUUID() + '.' + safeExt
+
+  const { error: uploadError } = await supabase.storage
+    .from('product-images')
+    .upload(storagePath, file, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: file.type || undefined,
+    })
+
+  if (uploadError) throw uploadError
+
+  const { data: publicData } = supabase.storage
+    .from('product-images')
+    .getPublicUrl(storagePath)
+
+  const { data, error } = await supabase
+    .from('product_images')
+    .insert({
+      product_id: productId,
+      storage_path: storagePath,
+      public_url: publicData.publicUrl,
+      alt_text: file.name,
+      display_order: displayOrder,
+      is_cover: false,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    await supabase.storage.from('product-images').remove([storagePath])
+    throw error
+  }
+
+  if (isCover) {
+    await setProductCover(productId, data.id)
+    return { ...(data as ProductImageRow), is_cover: true }
+  }
+
+  return data as ProductImageRow
+}
+
+export async function deleteProductImage(image: ProductImageRow) {
+  const { error: rowError } = await supabase
+    .from('product_images')
+    .delete()
+    .eq('id', image.id)
+
+  if (rowError) throw rowError
+
+  const { error: storageError } = await supabase.storage
+    .from('product-images')
+    .remove([image.storage_path])
+
+  if (storageError) throw storageError
+}
+
+export async function setProductCover(productId: string, imageId: string) {
+  const { error } = await supabase.rpc('set_product_cover', {
+    p_product_id: productId,
+    p_image_id: imageId,
+  })
+
+  if (error) throw error
+}
+
+export async function reorderProductImages(images: ProductImageRow[]) {
+  for (let index = 0; index < images.length; index += 1) {
+    const { error } = await supabase
+      .from('product_images')
+      .update({ display_order: index })
+      .eq('id', images[index].id)
+
+    if (error) throw error
+  }
 }
