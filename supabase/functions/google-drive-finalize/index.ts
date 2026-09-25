@@ -7,10 +7,11 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const projectId = String(body.project_id || "");
     const driveFileId = String(body.drive_file_id || "");
+    const uploadId = String(body.upload_id || "");
     const taskId = body.task_id ? String(body.task_id) : null;
     const clientVisible = Boolean(body.client_visible);
 
-    if (!projectId || !driveFileId) throw new Error("Missing file metadata");
+    if (!projectId || (!driveFileId && !uploadId)) throw new Error("Missing file metadata");
 
     const { data: project, error: projectError } = await ctx.db
       .from("projects")
@@ -37,9 +38,30 @@ Deno.serve(async (req) => {
       ...folders.folders.map((row:any) => row.drive_folder_id),
     ]);
 
-    const file = await driveJson(
-      `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(driveFileId)}?fields=id,name,mimeType,size,parents,webViewLink,webContentLink,trashed`
-    );
+    let file:any = null;
+
+    if (driveFileId) {
+      file = await driveJson(
+        `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(driveFileId)}?fields=id,name,mimeType,size,parents,webViewLink,webContentLink,trashed,appProperties`
+      );
+    } else {
+      const q = [
+        "trashed=false",
+        `appProperties has { key='playMomentsUploadId' and value='${uploadId.replace(/\\/g,"\\\\").replace(/'/g,"\\'")}' }`,
+        `appProperties has { key='playMomentsEntityId' and value='${projectId.replace(/\\/g,"\\\\").replace(/'/g,"\\'")}' }`,
+      ].join(" and ");
+      const params = new URLSearchParams({
+        q,
+        spaces:"drive",
+        pageSize:"2",
+        fields:"files(id,name,mimeType,size,parents,webViewLink,webContentLink,trashed,appProperties)",
+      });
+      const result = await driveJson(
+        `https://www.googleapis.com/drive/v3/files?${params.toString()}`
+      );
+      file = result.files?.[0] || null;
+      if (!file) throw new Error("Uploaded Drive file was not found yet");
+    }
 
     if (file.trashed) throw new Error("Drive file is in trash");
     const parentId = file.parents?.[0] || null;
