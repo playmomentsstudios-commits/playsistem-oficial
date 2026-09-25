@@ -33,9 +33,9 @@ export function CustomerLayout() {
 
   if (!isAuthenticated) return <Navigate to="/login" state={{ from: location }} replace />
 
-  if (user?.role === 'admin') return <Navigate to="/admin" replace />
+  if (user?.role === 'admin' || user?.role === 'staff') return <Navigate to="/admin" replace />
 
-  const handleLogout = () => { logout(); navigate('/') }
+  const handleLogout = async () => { await logout(); navigate('/') }
 
   const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
     <aside style={{

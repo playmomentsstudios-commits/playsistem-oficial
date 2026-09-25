@@ -38,9 +38,9 @@ export function AdminLayout() {
   }
 
   if (!isAuthenticated) return <Navigate to="/login" state={{ from: location }} replace />
-  if (user?.role === 'customer') return <Navigate to="/app/dashboard" replace />
+  if (!user || !['admin', 'staff'].includes(user.role)) return <Navigate to="/app/dashboard" replace />
 
-  const handleLogout = () => { logout(); navigate('/') }
+  const handleLogout = async () => { await logout(); navigate('/') }
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? location.pathname === href : location.pathname === href || location.pathname.startsWith(href + '/')

@@ -68,12 +68,6 @@ export function LoginPage() {
             Não tem conta? <Link to="/cadastro" style={{ color: '#E30613' }}>Criar agora</Link>
           </p>
 
-          {/* Demo credentials hint */}
-          <div className="mb-6 p-3 rounded-xl text-xs" style={{ background: 'rgba(76,201,240,0.08)', border: '1px solid rgba(76,201,240,0.2)', color: '#67d7f0' }}>
-            <strong>Demo:</strong> admin@playmoments.com.br / admin123<br />
-            <strong>Cliente:</strong> cliente@exemplo.com / cliente123
-          </div>
-
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Input label="E-mail" type="email" placeholder="seu@email.com"
               value={email} onChange={e => setEmail(e.target.value)} error={errors.email} />
