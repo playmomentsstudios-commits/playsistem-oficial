@@ -382,7 +382,7 @@ export const portalApi = {
     if(!finalized?.ok) throw new Error(finalized?.error||'Não foi possível registrar o arquivo.')
     return finalized.file
   },
-  addClientFile: async (values:{customer_id:string;project_id?:string|null;task_id?:string|null;order_id?:string|null;uploaded_by:string;name:string;external_url?:string|null;storage_path?:string|null;file_type?:string|null;client_visible:boolean}) => {
+  addClientFile: async (values:{customer_id:string;project_id?:string|null;task_id?:string|null;order_id?:string|null;uploaded_by:string;name:string;external_url?:string|null;storage_path?:string|null;file_type?:string|null;client_visible:boolean;storage_provider?:'supabase'|'google_drive'|'external';drive_file_id?:string|null;drive_folder_id?:string|null;file_size?:number|null;mime_type?:string|null}) => {
     const { error }=await supabase.from('client_files').insert(values)
     if(error) throw error
   },
