@@ -14,6 +14,7 @@ import type {
   LoginPayload,
   RegisterPayload,
 } from '../types'
+import { motivoStatusCliente,rotulo } from '../lib/labels.ptBR'
 
 interface RegisterResult {
   requiresEmailConfirmation: boolean
@@ -41,6 +42,7 @@ interface ProfileRow {
   avatar_url: string | null
   role: UserRole
   status: 'active' | 'inactive' | 'blocked'
+  status_reason_code: string | null
   created_at: string
   updated_at: string
 }
@@ -65,7 +67,7 @@ function profileToUser(profile: ProfileRow): User {
 async function fetchProfile(authUser: SupabaseUser): Promise<User> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('id,email,first_name,last_name,phone,avatar_url,role,status,created_at,updated_at')
+    .select('id,email,first_name,last_name,phone,avatar_url,role,status,status_reason_code,created_at,updated_at')
     .eq('id', authUser.id)
     .single()
 
@@ -73,9 +75,10 @@ async function fetchProfile(authUser: SupabaseUser): Promise<User> {
 
   const profile = data as ProfileRow
   if (profile.status !== 'active') {
+    const reason = profile.status_reason_code ? rotulo(motivoStatusCliente,profile.status_reason_code) : null
     await supabase.auth.signOut()
-    if (profile.status === 'blocked') throw new Error('Esta conta está bloqueada.')
-    throw new Error('Esta conta está inativa.')
+    const base = profile.status === 'blocked' ? 'Esta conta está bloqueada.' : 'Esta conta está inativa.'
+    throw new Error(reason ? base+' Motivo: '+reason+'.' : base)
   }
 
   return profileToUser(profile)
