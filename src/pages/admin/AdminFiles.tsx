@@ -36,7 +36,7 @@ export function AdminFiles(){
   const [project,setProject]=useState('')
   const [task,setTask]=useState('')
   const [folderKind,setFolderKind]=useState('received')
-  const [clientVisible,setClientVisible]=useState(true)
+  const [clientVisible,setClientVisible]=useState(false)
   const [name,setName]=useState('')
   const [url,setUrl]=useState('')
   const [file,setFile]=useState<File|null>(null)
