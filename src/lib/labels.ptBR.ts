@@ -96,3 +96,28 @@ export function rotulo(map:Record<string,string>,value?:string|null){
   if(!value)return '—'
   return map[value] ?? value.replaceAll('_',' ')
 }
+
+
+export const nivelCliente: Record<string,string> = {
+  bronze:'Bronze',
+  silver:'Prata',
+  gold:'Ouro',
+}
+
+export const statusCliente: Record<string,string> = {
+  active:'Ativo',
+  inactive:'Inativo',
+  blocked:'Bloqueado',
+}
+
+export const motivoStatusCliente: Record<string,string> = {
+  payment_pending:'Pendência financeira',
+  information_incomplete:'Cadastro ou informações incompletas',
+  terms_violation:'Descumprimento das condições do serviço',
+  prolonged_inactivity:'Inatividade prolongada',
+  customer_request:'Solicitação do cliente',
+  security_review:'Revisão de segurança da conta',
+  platform_misuse:'Uso indevido da plataforma',
+  commercial_relationship_ended:'Encerramento da relação comercial',
+  administrative_other:'Motivo administrativo',
+}
