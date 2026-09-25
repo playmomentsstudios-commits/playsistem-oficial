@@ -96,6 +96,9 @@ export function AdminFiles(){
           name:name.trim(),
           storage_path,
           file_type:file.type||null,
+          storage_provider:'supabase',
+          file_size:file.size,
+          mime_type:file.type||null,
           client_visible:clientVisible,
         })
         toast('Arquivo enviado ao armazenamento do portal.','success')
@@ -108,6 +111,7 @@ export function AdminFiles(){
           uploaded_by:user.id,
           name:name.trim(),
           external_url:url.trim(),
+          storage_provider:'external',
           client_visible:clientVisible,
         })
         toast('Link externo registrado.','success')
