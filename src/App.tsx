@@ -18,8 +18,6 @@ import { CartPage } from './pages/public/CartPage'
 import { CommunityPage } from './pages/public/CommunityPage'
 import { ProductsPage } from './pages/public/ProductsPage'
 import { ProductDetailPage } from './pages/public/ProductDetailPage'
-import { ServicesPage } from './pages/public/ServicesPage'
-import { ServiceDetailPage } from './pages/public/ServiceDetailPage'
 import { PortfolioPage } from './pages/public/PortfolioPage'
 import { CategoryPage } from './pages/public/CategoryPage'
 
@@ -87,8 +85,8 @@ export default function App() {
               <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
               <Route path="/produtos" element={<ProductsPage />} />
               <Route path="/produtos/:slug" element={<ProductDetailPage />} />
-              <Route path="/servicos" element={<ServicesPage />} />
-              <Route path="/servicos/:slug" element={<ServiceDetailPage />} />
+              <Route path="/servicos" element={<Navigate to="/produtos" replace />} />
+              <Route path="/servicos/:slug" element={<Navigate to="/produtos" replace />} />
               <Route path="/portfolio" element={<PortfolioPage />} />
               <Route path="/portfolio/:slug" element={<PlaceholderPage title="Projeto do Portfólio" />} />
               <Route path="/studio" element={<CategoryPage />} />

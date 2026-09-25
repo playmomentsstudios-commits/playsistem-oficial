@@ -24,10 +24,30 @@ function getCover(product: PublicCatalogProduct) {
   )
 }
 
+const CATEGORY_COLORS:Record<string,string>={
+  'audio-musica':'#7C3AED',
+  'branding-identidade':'#F43F5E',
+  'comercial-institucional':'#F59E0B',
+  'design-grafico':'#EF4444',
+  'dj-eventos':'#EC4899',
+  'motion-graphics':'#8B5CF6',
+  'social-media-conteudo':'#3B82F6',
+  'video-audiovisual':'#14B8A6',
+  'web-sistemas':'#22C55E',
+  'studio':'#F97316',
+  'equipamentos':'#06B6D4',
+  'tecnologia':'#6366F1',
+}
+
+function categoryColor(slug?:string|null){
+  return (slug&&CATEGORY_COLORS[slug])||'#E30613'
+}
+
 export function ProductsPage() {
   const [products, setProducts] = useState<PublicCatalogProduct[]>([])
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('todos')
+  const [maxPrice,setMaxPrice]=useState('todos')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -56,9 +76,11 @@ export function ProductsPage() {
         product.name.toLowerCase().includes(term) ||
         (product.short_description ?? '').toLowerCase().includes(term)
       const matchesCategory = category === 'todos' || product.category?.slug === category
-      return matchesTerm && matchesCategory
+      const effectivePrice = product.promotional_price ?? product.sale_price ?? 0
+      const matchesPrice = maxPrice === 'todos' || effectivePrice <= Number(maxPrice)
+      return matchesTerm && matchesCategory && matchesPrice
     })
-  }, [products, search, category])
+  }, [products, search, category, maxPrice])
 
   const categories = useMemo(() => {
     const map = new Map<string,string>()
@@ -107,9 +129,23 @@ export function ProductsPage() {
           />
         </div>
 
-        <div className="flex flex-wrap justify-center gap-2 mb-8">
+        <div className="flex flex-wrap justify-center gap-2 mb-4">
           <button type="button" onClick={()=>setCategory('todos')} className="px-3 py-1.5 rounded-full text-xs transition-colors" style={{background:category==='todos'?'#E30613':'rgba(255,255,255,0.05)',color:category==='todos'?'#fff':'#9090a0',border:'1px solid rgba(255,255,255,0.08)'}}>Todos</button>
-          {categories.map(([slug,name])=><button key={slug} type="button" onClick={()=>setCategory(slug)} className="px-3 py-1.5 rounded-full text-xs transition-colors" style={{background:category===slug?'#E30613':'rgba(255,255,255,0.05)',color:category===slug?'#fff':'#9090a0',border:'1px solid rgba(255,255,255,0.08)'}}>{name}</button>)}
+          {categories.map(([slug,name])=>{
+            const color=categoryColor(slug)
+            return <button key={slug} type="button" onClick={()=>setCategory(slug)} className="px-3 py-1.5 rounded-full text-xs transition-colors" style={{background:category===slug?color:'rgba(255,255,255,0.05)',color:category===slug?'#fff':color,border:'1px solid '+(category===slug?color:'rgba(255,255,255,0.08)')}}>{name}</button>
+          })}
+        </div>
+
+        <div className="flex justify-center mb-8">
+          <select value={maxPrice} onChange={event=>setMaxPrice(event.target.value)} className="px-4 py-2.5 rounded-full text-xs outline-none" style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.08)',color:'#c0c0cc'}}>
+            <option value="todos">Todos os valores</option>
+            <option value="50000">Até R$ 500</option>
+            <option value="100000">Até R$ 1.000</option>
+            <option value="200000">Até R$ 2.000</option>
+            <option value="500000">Até R$ 5.000</option>
+            <option value="1000000">Até R$ 10.000</option>
+          </select>
         </div>
 
         {loading && (
@@ -140,9 +176,10 @@ export function ProductsPage() {
         )}
 
         {!loading && !error && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
             {filtered.map(product => {
               const cover = getCover(product)
+              const color = categoryColor(product.category?.slug)
 
               return (
                 <Link
@@ -165,7 +202,7 @@ export function ProductsPage() {
                       <img
                         src={cover}
                         alt={product.name}
-                        className={'w-full h-full transition-transform duration-500 group-hover:scale-105 '+(product.product_images.length ? 'object-cover' : 'object-contain p-5')}
+                        className={'w-full h-full transition-transform duration-500 group-hover:scale-105 '+(product.product_images.length ? 'object-cover' : 'object-contain p-4 sm:p-5')}
                       />
                     ) : (
                       <span
@@ -190,15 +227,12 @@ export function ProductsPage() {
                   </div>
 
                   <div className="p-4 flex flex-col flex-1">
-                    <p
-                      className="text-xs mb-1"
-                      style={{ color: '#6b6b78' }}
-                    >
-                      {product.specifications?.catalog_kind === 'service'
+                    <p className="text-[10px] sm:text-xs mb-1 font-semibold" style={{ color }}>
+                      {product.category?.name ?? (product.specifications?.catalog_kind === 'service'
                         ? 'Serviço'
                         : product.product_type === 'equipment'
                           ? 'Equipamento'
-                          : 'Produto'}
+                          : 'Produto')}
                     </p>
 
                     <p
@@ -265,7 +299,7 @@ export function ProductsPage() {
                     >
                       <span
                         className="text-xs font-semibold"
-                        style={{ color: '#E30613' }}
+                        style={{ color }}
                       >
                         Ver detalhes →
                       </span>
