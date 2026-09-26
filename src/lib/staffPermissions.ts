@@ -2,6 +2,7 @@ export type StaffDepartment='commercial'|'design'|'video'|'audio'|'web'|'support
 
 export const STAFF_PERMISSIONS=[
   ['customers.view','Clientes — visualizar'],
+  ['customers.manage','Clientes — alterar status'],
   ['catalog.view','Catálogo — visualizar'],
   ['catalog.manage','Catálogo — editar produtos e categorias'],
   ['sales.view','Vendas — visualizar pedidos'],
@@ -64,7 +65,7 @@ export const STAFF_PRESETS:Record<StaffDepartment,string[]>={
     'customers.view','sales.view','quotes.view','payments.view','payments.manage',
   ],
   operations:[
-    'customers.view','catalog.view','sales.view','quotes.view',
+    'customers.view','customers.manage','catalog.view','sales.view','quotes.view',
     'conversations.access','conversations.view_all','conversations.manage','conversations.transfer',
     'projects.view','projects.manage','files.view','files.manage','payments.view',
   ],
