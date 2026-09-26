@@ -30,7 +30,7 @@ export const CRM_STAGE_LABELS:Record<CrmStage,string>={
   lost:'Perdido',
 }
 
-export const CRM_STAGES:Object.keys extends never?never:CrmStage[]=[
+export const CRM_STAGES:CrmStage[]=[
   'new_contact','in_service','quote','negotiation','won','production','delivered','lost',
 ]
 
