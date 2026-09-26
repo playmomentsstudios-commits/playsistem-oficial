@@ -22,7 +22,7 @@ const MENU = [
   { label: 'Comunidade', href: '/admin/comunidade', icon: '📢', permission: 'community.manage' },
   { label: 'Notificações', href: '/admin/notificacoes', icon: '🔔' },
   { label: 'Comunicados', href: '/admin/comunicados', icon: '📣', permission: 'community.manage' },
-  { label: 'Equipe', href: '/admin/equipe', icon: '🧑‍💼', adminOnly: true },
+  { label: 'Colaboradores', href: '/admin/equipe', icon: '🧑‍💼', adminOnly: true },
   { label: 'Site', href: '/admin/site', icon: '🌐', permission: 'site.manage' },
   { label: 'Configurações', href: '/admin/configuracoes', icon: '⚙', adminOnly: true },
   { label: 'Auditoria', href: '/admin/auditoria', icon: '📝', adminOnly: true },
