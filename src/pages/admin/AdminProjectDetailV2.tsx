@@ -198,6 +198,7 @@ export function AdminProjectDetailV2(){
 
   async function requestReview(file:any){
     try{
+      if(file.storage_provider==='google_drive'&&!file.client_visible)await fileManagementApi.publish(file.id)
       await portalApi.requestFileReview(file.id)
       toast('Aprovação solicitada ao cliente.','success')
       setFileMenu(null)
