@@ -808,3 +808,214 @@ begin
   end if;
 end;
 $$;
+
+
+-- Security-definer operations must respect collaborator permissions too.
+create or replace function public.admin_set_customer_status(
+  p_customer_id uuid,
+  p_status text,
+  p_reason_code text default null
+)
+returns void
+language plpgsql
+security definer
+set search_path=public
+as $$
+declare
+  previous_status text;
+begin
+  if not (
+    public.current_user_is_admin()
+    or public.current_user_has_permission('customers.manage')
+  ) then
+    raise exception 'Customer management permission required' using errcode='42501';
+  end if;
+
+  if p_status not in ('active','inactive','blocked') then
+    raise exception 'Invalid customer status' using errcode='22023';
+  end if;
+
+  if p_status<>'active' and p_reason_code not in (
+    'payment_pending','information_incomplete','terms_violation','prolonged_inactivity',
+    'customer_request','security_review','platform_misuse','commercial_relationship_ended','administrative_other'
+  ) then
+    raise exception 'A standardized reason is required' using errcode='22023';
+  end if;
+
+  select status into previous_status
+  from public.profiles
+  where id=p_customer_id and role='customer'
+  for update;
+
+  if not found then raise exception 'Customer not found' using errcode='P0002'; end if;
+
+  update public.profiles
+  set status=p_status,
+      status_reason_code=case when p_status='active' then null else p_reason_code end,
+      status_changed_at=now(),
+      status_changed_by=auth.uid()
+  where id=p_customer_id;
+
+  insert into public.customer_status_history(
+    customer_id,previous_status,new_status,reason_code,changed_by
+  )
+  values(
+    p_customer_id,previous_status,p_status,
+    case when p_status='active' then null else p_reason_code end,
+    auth.uid()
+  );
+end;
+$$;
+
+create or replace function public.set_product_cover(p_product_id uuid,p_image_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path=public
+as $$
+begin
+  if not (
+    public.current_user_is_admin()
+    or public.current_user_has_permission('catalog.manage')
+  ) then
+    raise exception 'Catalog management permission required' using errcode='42501';
+  end if;
+
+  if not exists(
+    select 1 from public.product_images
+    where id=p_image_id and product_id=p_product_id
+  ) then
+    raise exception 'Image not found for product' using errcode='P0002';
+  end if;
+
+  update public.product_images set is_cover=false where product_id=p_product_id;
+  update public.product_images set is_cover=true where id=p_image_id;
+end;
+$$;
+
+create or replace function public.review_payment_receipt(
+  p_receipt_id uuid,
+  p_status text,
+  p_note text default null
+)
+returns void
+language plpgsql
+security definer
+set search_path=public
+as $$
+declare
+  r public.payment_receipts%rowtype;
+begin
+  if not (
+    public.current_user_is_admin()
+    or public.current_user_has_permission('payments.manage')
+  ) then
+    raise exception 'Payment management permission required' using errcode='42501';
+  end if;
+
+  if p_status not in ('approved','rejected') then
+    raise exception 'Invalid status' using errcode='22023';
+  end if;
+
+  update public.payment_receipts
+  set status=p_status,admin_note=p_note,reviewed_at=now(),reviewed_by=auth.uid()
+  where id=p_receipt_id
+  returning * into r;
+
+  if not found then raise exception 'Receipt not found'; end if;
+
+  if p_status='approved' then
+    update public.payments set status='paid',paid_at=now() where id=r.payment_id;
+    update public.orders
+    set payment_status='paid',
+        status=case when status='awaiting_payment' then 'paid' else status end
+    where id=(select order_id from public.payments where id=r.payment_id);
+
+    insert into public.notifications(user_id,type,title,message,link)
+    values(r.customer_id,'payment_confirmed','Pagamento recebido','Seu comprovante foi aprovado e o pagamento foi confirmado.','/app/pagamentos');
+  else
+    update public.payments set status='rejected' where id=r.payment_id;
+    insert into public.notifications(user_id,type,title,message,link)
+    values(r.customer_id,'payment_rejected','Comprovante precisa de revisão',coalesce(p_note,'Envie um novo comprovante para análise.'),'/app/pagamentos');
+  end if;
+end;
+$$;
+
+create or replace function public.admin_convert_quote(
+  p_quote_id uuid,
+  p_create_project boolean default true
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path=public
+as $$
+declare
+  q public.quotes%rowtype;
+  order_uuid uuid;
+  project_uuid uuid;
+begin
+  if not (
+    public.current_user_is_admin()
+    or (
+      public.current_user_has_permission('quotes.manage')
+      and public.current_user_has_permission('sales.manage')
+    )
+  ) then
+    raise exception 'Commercial management permission required' using errcode='42501';
+  end if;
+
+  select * into q from public.quotes where id=p_quote_id for update;
+  if not found then raise exception 'Quote not found' using errcode='P0002'; end if;
+  if q.status<>'accepted' then raise exception 'Only accepted quotes can be converted' using errcode='22023'; end if;
+
+  if q.converted_order_id is not null then
+    return jsonb_build_object(
+      'order_id',q.converted_order_id,
+      'project_id',q.converted_project_id,
+      'already_converted',true
+    );
+  end if;
+
+  insert into public.orders(customer_id,status,payment_status,subtotal,total,notes)
+  values(q.customer_id,'awaiting_payment','pending',q.subtotal,q.total,'Gerado a partir do orçamento '||q.quote_number)
+  returning id into order_uuid;
+
+  insert into public.order_items(order_id,item_type,name_snapshot,quantity,unit_price,total_price)
+  select order_uuid,'service',description,quantity,unit_price,total_price
+  from public.quote_items where quote_id=q.id;
+
+  if q.total>0 then
+    insert into public.payments(customer_id,order_id,quote_id,amount,method,status,provider)
+    values(q.customer_id,order_uuid,q.id,q.total,'pix_manual','pending','manual');
+  end if;
+
+  if p_create_project then
+    insert into public.projects(
+      title,description,project_type,customer_id,order_id,quote_id,status,priority,created_by
+    )
+    values(
+      q.title,q.description,'service',q.customer_id,order_uuid,q.id,'planning','medium',auth.uid()
+    )
+    returning id into project_uuid;
+  end if;
+
+  update public.quotes
+  set converted_order_id=order_uuid,converted_project_id=project_uuid
+  where id=q.id;
+
+  insert into public.notifications(user_id,type,title,message,link,metadata)
+  values(
+    q.customer_id,'quote_converted','Orçamento convertido em pedido',
+    'Seu orçamento '||q.quote_number||' foi convertido em pedido.',
+    '/app/pedidos/'||order_uuid::text,
+    jsonb_build_object('quote_id',q.id,'order_id',order_uuid,'project_id',project_uuid)
+  );
+
+  return jsonb_build_object(
+    'order_id',order_uuid,
+    'project_id',project_uuid,
+    'already_converted',false
+  );
+end;
+$$;
