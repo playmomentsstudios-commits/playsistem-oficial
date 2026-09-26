@@ -5,6 +5,7 @@ import { afterAuthPath } from '../lib/navigation'
 import logoUrl from '../assets/logo-play-moments.png'
 import { portalApi } from '../api/portal'
 import { FloatingCustomerChat } from '../components/chat/FloatingCustomerChat'
+import { settingsApi } from '../api/settings'
 
 type IconName='home'|'user'|'orders'|'projects'|'services'|'quotes'|'payments'|'chat'|'files'|'community'|'notifications'|'announcements'|'settings'|'logout'|'chevron'
 
@@ -55,6 +56,7 @@ export function CustomerLayoutV2() {
     try{return window.localStorage.getItem('playmoments.customer.sidebar')==='expanded'}catch{return false}
   })
   const [counts, setCounts] = useState({ messages: 0, notifications: 0 })
+  const [floatingChatEnabled,setFloatingChatEnabled]=useState(true)
 
   useEffect(() => {
     if (!user?.id) return
@@ -67,6 +69,18 @@ export function CustomerLayoutV2() {
   useEffect(()=>{
     try{window.localStorage.setItem('playmoments.customer.sidebar',expanded?'expanded':'collapsed')}catch{}
   },[expanded])
+
+  useEffect(()=>{
+    if(!user?.id)return
+    let active=true
+    settingsApi.userPreferences().then(prefs=>{
+      if(!active||!prefs)return
+      setExpanded(prefs.sidebar_expanded)
+      setFloatingChatEnabled(prefs.floating_chat_enabled)
+      try{window.localStorage.setItem('playmoments.customer.sidebar',prefs.sidebar_expanded?'expanded':'collapsed')}catch{}
+    }).catch(()=>undefined)
+    return()=>{active=false}
+  },[user?.id,location.pathname])
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-[#0a0a0b]">
@@ -167,6 +181,6 @@ export function CustomerLayoutV2() {
         <Outlet/>
       </main>
     </div>
-    <FloatingCustomerChat unread={counts.messages}/>
+    {floatingChatEnabled&&<FloatingCustomerChat unread={counts.messages}/>} 
   </div>
 }
