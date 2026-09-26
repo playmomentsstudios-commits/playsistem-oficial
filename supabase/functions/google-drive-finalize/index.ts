@@ -1,4 +1,4 @@
-import { corsHeaders, driveJson, ensureProjectFolder, getDriveAccessToken, json, requireUser } from "../_shared/googleDrive.ts";
+import { corsHeaders, driveJson, ensureProjectFolder, getDriveAccessToken, hasPermission, json, requireUser } from "../_shared/googleDrive.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
       .single();
     if (projectError || !project) throw new Error("Project not found");
 
-    const staff = ["admin","staff"].includes(ctx.role);
+    const staff = ctx.role === "admin" || hasPermission(ctx, "files.manage");
     if (!staff && project.customer_id !== ctx.userId) throw new Error("Forbidden");
 
     if (taskId) {
