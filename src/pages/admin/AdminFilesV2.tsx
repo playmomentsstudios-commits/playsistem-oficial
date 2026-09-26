@@ -64,6 +64,7 @@ export function AdminFilesV2(){
   const [completedFiles,setCompletedFiles]=useState(0)
   const [libraryCustomer,setLibraryCustomer]=useState<string|null>(null)
   const [libraryProject,setLibraryProject]=useState<string|null>(null)
+  const [libraryCustomFolders,setLibraryCustomFolders]=useState<any[]>([])
   const [menuFile,setMenuFile]=useState<string|null>(null)
 
   const load=async()=>{
@@ -109,6 +110,13 @@ export function AdminFilesV2(){
   const selectedLibraryProject=selectedLibraryGroup&&libraryProject
     ? selectedLibraryGroup.projects.get(libraryProject)||null
     : null
+
+  useEffect(()=>{
+    if(!libraryProject||libraryProject==='sem-projeto'){setLibraryCustomFolders([]);return}
+    portalApi.customDriveFolders(libraryProject)
+      .then(setLibraryCustomFolders)
+      .catch(()=>setLibraryCustomFolders([]))
+  },[libraryProject])
 
   async function testDrive(){
     try{
@@ -465,7 +473,7 @@ export function AdminFilesV2(){
                       <span className="text-[9px] text-gray-600">{sizeLabel(row.file_size)}</span>
                     </div>
                     <p className="text-xs font-semibold truncate mt-1" title={row.name}>{row.name}</p>
-                    <p className="text-[9px] text-gray-500 truncate mt-1">{row.task?.title||'Arquivo geral'}</p>
+                    <p className="text-[9px] text-gray-500 truncate mt-1">{row.custom_folder?.name?('📁 '+row.custom_folder.name):(row.task?.title||'Arquivo geral')}</p>
                     {review&&<span className={'inline-flex mt-2 px-2 py-1 rounded-full text-[9px] font-semibold '+review.className}>{review.label}</span>}
                   </button>
 
