@@ -139,7 +139,7 @@ export function FilesPage(){
       <p className="text-sm text-gray-500">Organizados por projeto, como uma biblioteca de pastas.</p>
     </div>
 
-    {loading?<p className="text-gray-400">Carregando...</p>:!rows.length?<EmptyState icon="📁" title="Nenhum arquivo ainda"/>:<>
+    {loading?<p className="text-gray-400">Carregando...</p>:groups.length===0?<EmptyState icon="📁" title="Nenhum projeto ou arquivo ainda"/>:<>
       <section>
         <div className="mb-4">
           <h2 className="text-sm font-semibold text-white">Projetos</h2>
@@ -147,7 +147,7 @@ export function FilesPage(){
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
-          {groups.map(([id,group])=><button key={id} type="button" onClick={()=>{setProjectId(id);setUploadFiles([]);setUploadProgress(0)}} className="group text-left p-3 sm:p-4 min-h-[112px] rounded-2xl border border-white/8 bg-[#121214] hover:bg-[#171719] hover:border-white/15 transition-all">
+          {groups.map(([id,group])=><button key={id} type="button" onClick={()=>{setProjectId(id);setVersionGroup(null);setUploadFiles([]);setUploadProgress(0)}} className="group text-left p-3 sm:p-4 min-h-[112px] rounded-2xl border border-white/8 bg-[#121214] hover:bg-[#171719] hover:border-white/15 transition-all">
             <div className="flex items-start gap-3">
               <div className="w-11 h-11 rounded-xl bg-[#E30613]/10 text-[#E30613] flex items-center justify-center shrink-0">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h6l2 2h8v10H4z"/><path d="M8 12h8"/></svg>
@@ -155,7 +155,7 @@ export function FilesPage(){
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold truncate">{group.project?.title||'Arquivos gerais'}</p>
                 <p className="text-[10px] text-gray-500 mt-1">{group.files.length} arquivo(s)</p>
-                <p className="text-[10px] text-gray-600 mt-2">Atualizado em {new Date(group.files[0]?.created_at).toLocaleDateString('pt-BR')}</p>
+                <p className="text-[10px] text-gray-600 mt-2">{group.files[0]?.created_at?'Atualizado em '+new Date(group.files[0].created_at).toLocaleDateString('pt-BR'):'Sem arquivos ainda'}</p>
               </div>
               <span className="text-gray-600 group-hover:text-[#E30613] transition-colors">›</span>
             </div>
@@ -164,10 +164,10 @@ export function FilesPage(){
       </section>
     </>}
 
-    {projectId&&selected&&<div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4" onMouseDown={event=>{if(event.currentTarget===event.target&&!uploading)setProjectId(null)}}>
+    {projectId&&selected&&<div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4" onMouseDown={event=>{if(event.currentTarget===event.target&&!uploading)setProjectId(null);setVersionGroup(null)}}>
       <div className="w-full max-w-5xl h-[92vh] sm:h-auto sm:max-h-[86vh] rounded-t-2xl sm:rounded-2xl border border-white/10 bg-[#111113] shadow-2xl overflow-hidden flex flex-col">
         <div className="h-14 px-4 sm:px-5 border-b border-white/10 flex items-center gap-3 shrink-0">
-          <button type="button" onClick={()=>setProjectId(null)} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-300" aria-label="Voltar">←</button>
+          <button type="button" onClick={()=>setProjectId(null);setVersionGroup(null)} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-300" aria-label="Voltar">←</button>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold truncate">{selected.project?.title||'Arquivos gerais'}</p>
             <p className="text-[10px] text-gray-500">{selected.files.length} arquivo(s) disponíveis</p>
@@ -185,7 +185,7 @@ export function FilesPage(){
             }}/>
             + Enviar vários
           </label>}
-          <button type="button" disabled={uploading} onClick={()=>setProjectId(null)} className="w-10 h-10 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-400 text-lg" aria-label="Fechar">×</button>
+          <button type="button" disabled={uploading} onClick={()=>setProjectId(null);setVersionGroup(null)} className="w-10 h-10 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-400 text-lg" aria-label="Fechar">×</button>
         </div>
 
         <div className="p-3 sm:p-5 overflow-y-auto">
