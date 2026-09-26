@@ -77,3 +77,29 @@ drop trigger if exists app_settings_updated_at on public.app_settings;
 create trigger app_settings_updated_at
 before update on public.app_settings
 for each row execute function public.set_settings_updated_at();
+
+
+create or replace function public.ensure_user_preferences_row()
+returns trigger
+language plpgsql
+security definer
+set search_path=public
+as $$
+begin
+  insert into public.user_preferences(user_id)
+  values(new.id)
+  on conflict(user_id) do nothing;
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_ensure_user_preferences on public.profiles;
+create trigger profiles_ensure_user_preferences
+after insert on public.profiles
+for each row execute function public.ensure_user_preferences_row();
+
+-- Keep administrative settings inside the audit trail created previously.
+drop trigger if exists app_settings_audit_log on public.app_settings;
+create trigger app_settings_audit_log
+after insert or update or delete on public.app_settings
+for each row execute function public.capture_audit_log();
