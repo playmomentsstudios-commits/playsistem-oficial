@@ -36,6 +36,8 @@ export function FilesPage(){
   const [uploadFiles,setUploadFiles]=useState<File[]>([])
   const [uploadProgress,setUploadProgress]=useState(0)
   const [uploadName,setUploadName]=useState('')
+  const [versionGroup,setVersionGroup]=useState<string|null>(null)
+  const [reviewing,setReviewing]=useState<string|null>(null)
 
   async function load(){
     try{
@@ -63,6 +65,21 @@ export function FilesPage(){
 
   const selected=projectId?groups.find(([id])=>id===projectId)?.[1]||null:null
 
+  const selectedVersionGroups=useMemo(()=>{
+    if(!selected)return []
+    const map=new Map<string,any[]>()
+    for(const file of selected.files){
+      const key=file.version_group_id||file.id
+      if(!map.has(key))map.set(key,[])
+      map.get(key)!.push(file)
+    }
+    return Array.from(map.entries()).map(([groupId,versions])=>({
+      groupId,
+      versions:versions.sort((a,b)=>(b.version_number||1)-(a.version_number||1)),
+      latest:versions.sort((a,b)=>(b.version_number||1)-(a.version_number||1))[0],
+    }))
+  },[selected])
+
   async function uploadToProject(){
     if(!projectId||projectId==='general'||!uploadFiles.length)return
     try{
@@ -89,6 +106,31 @@ export function FilesPage(){
     if(file.external_url){window.open(file.external_url,'_blank','noopener');return}
     if(file.storage_path){window.open(await portalApi.fileUrl(file.storage_path),'_blank','noopener');return}
     if(file.drive_file_id){window.open('https://drive.google.com/file/d/'+file.drive_file_id+'/view','_blank','noopener')}
+  }
+
+  async function review(file:any,action:'approved'|'changes_requested'){
+    let comment=''
+    if(action==='changes_requested'){
+      comment=window.prompt('Descreva o que precisa ser ajustado nesta versão:')||''
+      if(!comment.trim())return
+    }else{
+      comment=window.prompt('Comentário opcional para a aprovação:')||''
+    }
+    try{
+      setReviewing(file.id)
+      await portalApi.submitFileReview(file.id,action,comment)
+      toast(action==='approved'?'Versão aprovada.':'Ajustes enviados para a equipe.','success')
+      await load()
+    }catch(error:any){toast(error.message||'Não foi possível registrar sua avaliação.','error')}
+    finally{setReviewing(null)}
+  }
+
+  function reviewLabel(file:any){
+    if(!file.review_required)return null
+    if(file.review_status==='pending')return {text:'Aguardando sua aprovação',className:'text-yellow-300 bg-yellow-500/10'}
+    if(file.review_status==='approved')return {text:'Aprovado',className:'text-emerald-400 bg-emerald-500/10'}
+    if(file.review_status==='changes_requested')return {text:'Ajustes solicitados',className:'text-orange-400 bg-orange-500/10'}
+    return null
   }
 
   return <div>
@@ -158,16 +200,55 @@ export function FilesPage(){
             {uploading&&<div className="h-2 bg-white/10 rounded-full overflow-hidden mt-3"><div className="h-full bg-[#E30613] transition-[width]" style={{width:uploadProgress+'%'}}/></div>}
           </div>}
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
-            {selected.files.map(file=><button key={file.id} type="button" onClick={()=>void open(file)} className="text-left p-2.5 sm:p-3 min-h-[150px] rounded-xl bg-[#171719] border border-white/8 hover:border-white/15 transition-colors">
-              <div className="h-24 rounded-lg bg-white/[0.035] flex items-center justify-center text-3xl">{fileIcon(file)}</div>
-              <div className="mt-2 flex items-center justify-between gap-2">
-                <span className="text-[9px] font-bold text-[#E30613]">{extension(file.name)}</span>
-                <span className="text-[9px] text-gray-600">{sizeLabel(file.file_size)}</span>
+            {selectedVersionGroups.map(group=>{
+              const file=group.latest
+              const status=reviewLabel(file)
+              return <div key={group.groupId} className="p-2.5 sm:p-3 min-h-[178px] rounded-xl bg-[#171719] border border-white/8">
+                <button type="button" onClick={()=>void open(file)} className="w-full text-left">
+                  <div className="h-24 rounded-lg bg-white/[0.035] flex items-center justify-center text-3xl">{fileIcon(file)}</div>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <span className="text-[9px] font-bold text-[#E30613]">{extension(file.name)} · v{file.version_number||1}</span>
+                    <span className="text-[9px] text-gray-600">{sizeLabel(file.file_size)}</span>
+                  </div>
+                  <p className="text-xs font-semibold truncate mt-1" title={file.name}>{file.name}</p>
+                  <p className="text-[9px] text-gray-500 mt-1">{new Date(file.created_at).toLocaleDateString('pt-BR')}</p>
+                </button>
+                {status&&<div className={'mt-2 inline-flex px-2 py-1 rounded-full text-[9px] font-semibold '+status.className}>{status.text}</div>}
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {group.versions.length>1&&<button type="button" onClick={()=>setVersionGroup(group.groupId)} className="min-h-8 px-2 rounded-lg bg-white/[0.05] text-[10px] text-gray-300">{group.versions.length} versões</button>}
+                  {file.review_required&&file.review_status==='pending'&&<>
+                    <button disabled={reviewing===file.id} type="button" onClick={()=>void review(file,'approved')} className="min-h-8 px-2 rounded-lg bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold disabled:opacity-50">Aprovar</button>
+                    <button disabled={reviewing===file.id} type="button" onClick={()=>void review(file,'changes_requested')} className="min-h-8 px-2 rounded-lg bg-orange-500/10 text-orange-400 text-[10px] font-semibold disabled:opacity-50">Pedir ajuste</button>
+                  </>}
+                </div>
               </div>
-              <p className="text-xs font-semibold truncate mt-1" title={file.name}>{file.name}</p>
-              <p className="text-[9px] text-gray-500 mt-1">{new Date(file.created_at).toLocaleDateString('pt-BR')}</p>
-            </button>)}
+            })}
           </div>
+        </div>
+      </div>
+    </div>}
+
+    {versionGroup&&selected&&<div className="fixed inset-0 z-[60] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4" onMouseDown={e=>{if(e.currentTarget===e.target)setVersionGroup(null)}}>
+      <div className="w-full max-w-2xl max-h-[80vh] overflow-hidden rounded-2xl bg-[#111113] border border-white/10 shadow-2xl">
+        <div className="h-14 px-4 border-b border-white/10 flex items-center justify-between gap-3">
+          <div><p className="font-semibold text-sm">Histórico de versões</p><p className="text-[10px] text-gray-500">Abra qualquer versão anterior sem perder a atual.</p></div>
+          <button onClick={()=>setVersionGroup(null)} className="w-9 h-9 rounded-lg bg-white/[0.05]">×</button>
+        </div>
+        <div className="p-3 sm:p-4 overflow-y-auto max-h-[calc(80vh-56px)] space-y-2">
+          {selected.files.filter((file:any)=>(file.version_group_id||file.id)===versionGroup).sort((a:any,b:any)=>(b.version_number||1)-(a.version_number||1)).map((file:any)=>{
+            const status=reviewLabel(file)
+            return <button key={file.id} onClick={()=>void open(file)} className="w-full text-left p-3 rounded-xl bg-white/[0.035] border border-white/8 hover:border-white/15">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-lg bg-black/30 flex items-center justify-center text-xl">{fileIcon(file)}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2"><p className="text-sm font-semibold truncate">{file.name}</p><span className="text-[10px] text-[#E30613]">v{file.version_number||1}</span></div>
+                  <p className="text-[10px] text-gray-500 mt-1">{sizeLabel(file.file_size)} · {new Date(file.created_at).toLocaleString('pt-BR')}</p>
+                  {status&&<span className={'inline-flex mt-1 px-2 py-0.5 rounded-full text-[9px] '+status.className}>{status.text}</span>}
+                </div>
+                <span className="text-gray-600">↗</span>
+              </div>
+            </button>
+          })}
         </div>
       </div>
     </div>}
