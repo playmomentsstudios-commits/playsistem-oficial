@@ -59,6 +59,7 @@ import { AdminOrderDetail } from './pages/admin/AdminOrderDetail'
 import { AdminCategories } from './pages/admin/AdminCategories'
 import { AdminFilesV2 } from './pages/admin/AdminFilesV2'
 import { AdminAboutPortfolio } from './pages/admin/AdminAboutPortfolio'
+import { AdminCRM } from './pages/admin/AdminCRM'
 import { AdminPermissionGate } from './components/admin/AdminPermissionGate'
 
 // Placeholder for unbuilt pages
@@ -134,6 +135,7 @@ export default function AppV2() {
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
                 <Route path="clientes" element={<AdminPermissionGate permission="customers.view"><AdminCustomers /></AdminPermissionGate>} />
+                <Route path="crm" element={<AdminPermissionGate permission={['customers.view','customers.manage']}><AdminCRM /></AdminPermissionGate>} />
                 <Route path="clientes/:id" element={<AdminPermissionGate permission="customers.view"><AdminCustomerDetailV2 /></AdminPermissionGate>} />
                 <Route path="produtos" element={<AdminPermissionGate permission={['catalog.view','catalog.manage']}><AdminProducts /></AdminPermissionGate>} />
                 <Route path="categorias" element={<AdminPermissionGate permission={['catalog.view','catalog.manage']}><AdminCategories /></AdminPermissionGate>} />
