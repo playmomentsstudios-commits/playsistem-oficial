@@ -56,6 +56,7 @@ export function AdminProjectDetailV2(){
   const [fileFolder,setFileFolder]=useState('received')
   const [uploading,setUploading]=useState(false)
   const [fileProgress,setFileProgress]=useState(0)
+  const [fileProgressName,setFileProgressName]=useState('')
   const [fileMenu,setFileMenu]=useState<string|null>(null)
   const [taskForm,setTaskForm]=useState({title:'',stage_id:'',assigned_to:'',priority:'medium',due_date:'',client_visible:true})
 
@@ -135,34 +136,90 @@ export function AdminProjectDetailV2(){
   }
 
   async function uploadProjectFile(event:React.ChangeEvent<HTMLInputElement>){
-    const file=event.target.files?.[0]
-    if(!file||!user)return
+    const picked=Array.from(event.target.files||[])
+    event.target.value=''
+    if(!picked.length||!user)return
     if(!project?.customer_id){
       toast('Para usar a biblioteca do cliente, vincule este projeto a um cliente.','error')
-      event.target.value=''
       return
     }
-    if(file.size>1024*1024*1024){
-      toast('O limite por arquivo é 1 GB.','error')
-      event.target.value=''
+    const invalid=picked.find(file=>file.size>50*1024*1024*1024)
+    if(invalid){
+      toast('Cada arquivo do Google Drive pode ter até 50 GB.','error')
       return
     }
     setUploading(true)
     setFileProgress(0)
+    setFileProgressName('')
     try{
       await portalApi.ensureProjectDriveFolder(id)
-      await portalApi.uploadDriveFile({
-        project_id:id,
-        task_id:fileTask||null,
-        folder_kind:fileFolder,
-        client_visible:fileVisible,
-      },file,setFileProgress)
-      toast('Arquivo enviado ao Google Drive e adicionado ao projeto.','success')
-      event.target.value=''
+      for(let index=0;index<picked.length;index+=1){
+        const file=picked[index]
+        setFileProgressName(file.name)
+        await portalApi.uploadDriveFile({
+          project_id:id,
+          task_id:fileTask||null,
+          folder_kind:fileFolder,
+          client_visible:fileVisible,
+        },file,value=>setFileProgress(Math.round(((index+(value/100))/picked.length)*100)))
+      }
+      toast(picked.length===1?'Arquivo enviado ao Google Drive e adicionado ao projeto.':picked.length+' arquivos enviados ao projeto.','success')
       setFileProgress(0)
+      setFileProgressName('')
       await load()
     }catch(error:any){toast(error.message,'error')}
     finally{setUploading(false)}
+  }
+
+  async function uploadNewVersion(event:React.ChangeEvent<HTMLInputElement>,previousFile:any){
+    const file=event.target.files?.[0]
+    event.target.value=''
+    if(!file)return
+    if(file.size>50*1024*1024*1024){
+      toast('A nova versão pode ter até 50 GB no Google Drive.','error')
+      return
+    }
+    try{
+      setUploading(true);setFileProgress(0);setFileProgressName(file.name)
+      await portalApi.ensureProjectDriveFolder(id)
+      const uploaded=await portalApi.uploadDriveFile({
+        project_id:id,
+        task_id:previousFile.task_id||null,
+        folder_kind:'preview',
+        client_visible:true,
+      },file,setFileProgress)
+      await portalApi.linkFileVersion(uploaded.id,previousFile.id)
+      toast('Nova versão adicionada. Agora você pode solicitar a aprovação do cliente.','success')
+      setFileMenu(null);setFileProgress(0);setFileProgressName('')
+      await load()
+    }catch(error:any){toast(error.message||'Não foi possível adicionar a nova versão.','error')}
+    finally{setUploading(false)}
+  }
+
+  async function requestReview(file:any){
+    try{
+      await portalApi.requestFileReview(file.id)
+      toast('Aprovação solicitada ao cliente.','success')
+      setFileMenu(null)
+      await load()
+    }catch(error:any){toast(error.message||'Não foi possível solicitar aprovação.','error')}
+  }
+
+  async function cancelReview(file:any){
+    try{
+      await portalApi.cancelFileReview(file.id)
+      toast('Solicitação de aprovação cancelada.','success')
+      setFileMenu(null)
+      await load()
+    }catch(error:any){toast(error.message||'Não foi possível cancelar a aprovação.','error')}
+  }
+
+  function reviewBadge(file:any){
+    if(!file.review_required)return null
+    if(file.review_status==='pending')return {label:'Aguardando cliente',className:'bg-yellow-500/10 text-yellow-300'}
+    if(file.review_status==='approved')return {label:'Aprovado',className:'bg-emerald-500/10 text-emerald-400'}
+    if(file.review_status==='changes_requested')return {label:'Ajustes solicitados',className:'bg-orange-500/10 text-orange-400'}
+    return null
   }
 
   async function deleteProjectFile(file:any){
@@ -263,51 +320,62 @@ export function AdminProjectDetailV2(){
             </select>
           </label>
           <label className={'px-4 py-2.5 rounded-xl text-center cursor-pointer '+(uploading?'bg-white/10 text-gray-500':'bg-[#E30613] text-white')}>
-            {uploading?'Enviando...':'Adicionar ao Drive'}
-            <input type="file" disabled={uploading} onChange={uploadProjectFile} className="hidden"/>
+            {uploading?'Enviando...':'Adicionar arquivos'}
+            <input type="file" multiple disabled={uploading} onChange={uploadProjectFile} className="hidden"/>
           </label>
         </div>
 
         {uploading&&fileProgress>0&&<div className="mt-4">
-          <div className="flex justify-between text-xs text-gray-500"><span>Upload para o Google Drive</span><span>{fileProgress}%</span></div>
+          <div className="flex justify-between gap-3 text-xs text-gray-500"><span className="truncate">{fileProgressName||'Upload para o Google Drive'}</span><span>{fileProgress}%</span></div>
           <div className="h-2 rounded bg-white/10 mt-2"><div className="h-2 rounded bg-[#E30613]" style={{width:fileProgress+'%'}}/></div>
         </div>}
 
         {!project.customer_id&&<p className="text-xs text-yellow-300 mt-3">Projeto interno: vincule um cliente para utilizar a biblioteca de arquivos.</p>}
 
         <div className="mt-5 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {files.length===0?<p className="text-sm text-gray-500">Nenhum arquivo vinculado a este projeto.</p>:files.map(file=><div key={file.id} className="p-3 rounded-xl bg-white/5 border border-white/10">
-            <div className="flex gap-3">
-              <div className="w-12 h-12 shrink-0 rounded-xl bg-black/30 flex items-center justify-center text-2xl">{projectFileIcon(file)}</div>
-              <button onClick={()=>openFile(file)} className="text-left min-w-0 flex-1">
-                <p className="text-sm font-medium truncate" title={file.name}>{file.name}</p>
-                <p className="text-xs text-gray-500 mt-1">{fileSize(file.file_size)} · {file.client_visible?'Cliente':'Equipe'}</p>
-                <p className="text-[10px] text-gray-600 mt-1">{tasks.find((task:any)=>task.id===file.task_id)?.title||'Arquivo geral do projeto'}</p>
-              </button>
+          {files.length===0?<p className="text-sm text-gray-500">Nenhum arquivo vinculado a este projeto.</p>:files.map(file=>{
+            const review=reviewBadge(file)
+            return <div key={file.id} className="p-3 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex gap-3">
+                <div className="w-12 h-12 shrink-0 rounded-xl bg-black/30 flex items-center justify-center text-2xl">{projectFileIcon(file)}</div>
+                <button onClick={()=>openFile(file)} className="text-left min-w-0 flex-1">
+                  <div className="flex items-center gap-2 min-w-0"><p className="text-sm font-medium truncate" title={file.name}>{file.name}</p><span className="text-[9px] text-[#E30613] shrink-0">v{file.version_number||1}</span></div>
+                  <p className="text-xs text-gray-500 mt-1">{fileSize(file.file_size)} · {file.client_visible?'Cliente':'Equipe'}</p>
+                  <p className="text-[10px] text-gray-600 mt-1">{tasks.find((task:any)=>task.id===file.task_id)?.title||'Arquivo geral do projeto'}</p>
+                  {review&&<span className={'inline-flex mt-2 px-2 py-1 rounded-full text-[9px] font-semibold '+review.className}>{review.label}</span>}
+                </button>
+              </div>
+              <div className="mt-3 flex justify-end relative">
+                <button type="button" onClick={()=>setFileMenu(fileMenu===file.id?null:file.id)} className="w-8 h-8 rounded-lg bg-black/30 hover:bg-black/50 text-gray-400 hover:text-white" title="Ações" aria-label="Ações do arquivo">•••</button>
+                {fileMenu===file.id&&<div className="absolute z-20 right-0 bottom-10 w-56 rounded-xl border border-white/10 bg-[#0d0d0f] shadow-2xl p-2">
+                  <div className="flex items-center gap-1 mb-2">
+                    <button type="button" onClick={()=>{setFileMenu(null);void openFile(file)}} className="w-9 h-9 rounded-lg hover:bg-white/[0.07]" title="Abrir">↗</button>
+                    <button type="button" onClick={()=>void renameProjectFile(file)} className="w-9 h-9 rounded-lg hover:bg-white/[0.07]" title="Renomear">✎</button>
+                    <label className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer" title="Enviar nova versão">V+</label>
+                    <input type="file" className="sr-only" onChange={e=>void uploadNewVersion(e,file)}/>
+                    <button type="button" onClick={()=>{setFileMenu(null);void deleteProjectFile(file)}} className="w-9 h-9 rounded-lg hover:bg-red-500/10 text-red-400" title="Excluir">⌫</button>
+                  </div>
+                  <div className="mb-2">
+                    {!file.review_required&&<button type="button" onClick={()=>void requestReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-[#E30613]/10 text-[#ff5d68] text-xs text-left">Solicitar aprovação do cliente</button>}
+                    {file.review_required&&file.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-white/[0.05] text-gray-300 text-xs text-left">Cancelar solicitação de aprovação</button>}
+                    {file.review_required&&['approved','changes_requested'].includes(file.review_status)&&<button type="button" onClick={()=>void requestReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-white/[0.05] text-gray-300 text-xs text-left">Solicitar nova avaliação</button>}
+                  </div>
+                  <label className="block text-[10px] text-gray-500">Tarefa
+                    <select value={file.task_id||''} onChange={async e=>{await portalApi.assignClientFileTask(file.id,e.target.value||null);setFileMenu(null);await load()}} className="mt-1 w-full px-2 py-1.5 rounded-lg bg-black border border-white/10 text-xs">
+                      <option value="">Arquivo geral</option>
+                      {tasks.map((task:any)=><option key={task.id} value={task.id}>{task.title}</option>)}
+                    </select>
+                  </label>
+                  {file.storage_provider==='google_drive'&&<label className="block text-[10px] text-gray-500 mt-2">Pasta
+                    <select defaultValue="" onChange={e=>{if(e.target.value){void moveProjectFile(file,e.target.value);setFileMenu(null)}}} className="mt-1 w-full px-2 py-1.5 rounded-lg bg-black border border-white/10 text-xs">
+                      <option value="">Mover para...</option>
+                      {driveFolderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
+                    </select>
+                  </label>}
+                </div>}
+              </div>
             </div>
-            <div className="mt-3 flex justify-end relative">
-              <button type="button" onClick={()=>setFileMenu(fileMenu===file.id?null:file.id)} className="w-8 h-8 rounded-lg bg-black/30 hover:bg-black/50 text-gray-400 hover:text-white" title="Ações" aria-label="Ações do arquivo">•••</button>
-              {fileMenu===file.id&&<div className="absolute z-20 right-0 bottom-10 w-52 rounded-xl border border-white/10 bg-[#0d0d0f] shadow-2xl p-2">
-                <div className="flex items-center gap-1 mb-2">
-                  <button type="button" onClick={()=>{setFileMenu(null);void openFile(file)}} className="w-9 h-9 rounded-lg hover:bg-white/[0.07]" title="Abrir">↗</button>
-                  <button type="button" onClick={()=>void renameProjectFile(file)} className="w-9 h-9 rounded-lg hover:bg-white/[0.07]" title="Renomear">✎</button>
-                  <button type="button" onClick={()=>{setFileMenu(null);void deleteProjectFile(file)}} className="w-9 h-9 rounded-lg hover:bg-red-500/10 text-red-400" title="Excluir">⌫</button>
-                </div>
-                <label className="block text-[10px] text-gray-500">Tarefa
-                  <select value={file.task_id||''} onChange={async e=>{await portalApi.assignClientFileTask(file.id,e.target.value||null);setFileMenu(null);await load()}} className="mt-1 w-full px-2 py-1.5 rounded-lg bg-black border border-white/10 text-xs">
-                    <option value="">Arquivo geral</option>
-                    {tasks.map((task:any)=><option key={task.id} value={task.id}>{task.title}</option>)}
-                  </select>
-                </label>
-                {file.storage_provider==='google_drive'&&<label className="block text-[10px] text-gray-500 mt-2">Pasta
-                  <select defaultValue="" onChange={e=>{if(e.target.value){void moveProjectFile(file,e.target.value);setFileMenu(null)}}} className="mt-1 w-full px-2 py-1.5 rounded-lg bg-black border border-white/10 text-xs">
-                    <option value="">Mover para...</option>
-                    {driveFolderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
-                  </select>
-                </label>}
-              </div>}
-            </div>
-          </div>)}
+          })}
         </div>
       </div>
     </section>
