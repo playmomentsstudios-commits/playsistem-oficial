@@ -8,6 +8,7 @@ import { hasStaffPermission } from '../lib/staffPermissions'
 const MENU = [
   { label: 'Painel', href: '/admin', icon: '⊞', exact: true },
   { label: 'Clientes', href: '/admin/clientes', icon: '👥', permission: 'customers.view' },
+  { label: 'CRM Comercial', href: '/admin/crm', icon: '◫', permission: ['customers.view','customers.manage'] },
   { label: 'Produtos', href: '/admin/produtos', icon: '📦', permission: ['catalog.view','catalog.manage'] },
   { label: 'Projetos', href: '/admin/projetos', icon: '📈', permission: ['projects.view','projects.manage'] },
   { label: 'Produtividade', href: '/admin/produtividade', icon: '✅', permission: ['projects.view','projects.manage'] },
