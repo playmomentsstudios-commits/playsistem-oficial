@@ -76,7 +76,7 @@ export function AdminTeam(){
       email:member.email||'',
       job_title:s?.job_title||'Colaborador',
       department:(s?.department||'custom') as StaffDepartment,
-      permissions:s?.permissions||[],
+      permissions:s?.permissions?.includes('*')?STAFF_PERMISSIONS.map(([permission])=>permission):s?.permissions||[],
       active:s?.active??true,
     })
   }
