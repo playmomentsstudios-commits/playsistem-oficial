@@ -133,8 +133,8 @@ export function FilesPage(){
           {projectId!=='general'&&<label className="min-h-10 px-3 rounded-xl bg-[#E30613] text-white text-xs font-semibold flex items-center justify-center cursor-pointer">
             <input type="file" multiple className="sr-only" disabled={uploading} onChange={event=>{
               const picked=Array.from(event.target.files||[])
-              const invalid=picked.find(file=>file.size>10*1024*1024*1024)
-              if(invalid){toast('Cada arquivo pode ter no máximo 10 GB.','error');event.currentTarget.value='';setUploadFiles([]);return}
+              const invalid=picked.find(file=>file.size>50*1024*1024*1024)
+              if(invalid){toast('Cada arquivo pode ter no máximo 50 GB.','error');event.currentTarget.value='';setUploadFiles([]);return}
               setUploadFiles(picked)
             }}/>
             + Enviar
@@ -147,7 +147,7 @@ export function FilesPage(){
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm font-semibold">{uploadFiles.length} arquivo(s) selecionado(s)</p>
-                <p className="text-[10px] text-gray-500 truncate mt-1">{uploading?(uploadName||'Enviando...'):'Até 10 GB por arquivo · enviados para Arquivos recebidos'}</p>
+                <p className="text-[10px] text-gray-500 truncate mt-1">{uploading?(uploadName||'Enviando...'):'Até 50 GB por arquivo · enviados para Arquivos recebidos'}</p>
               </div>
               <button type="button" disabled={uploading} onClick={()=>void uploadToProject()} className="min-h-11 px-4 rounded-xl bg-[#E30613] text-white text-xs font-semibold shrink-0">{uploading?uploadProgress+'%':'Enviar agora'}</button>
             </div>
