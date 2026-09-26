@@ -60,6 +60,8 @@ import { AdminCategories } from './pages/admin/AdminCategories'
 import { AdminFilesV2 } from './pages/admin/AdminFilesV2'
 import { AdminAboutPortfolio } from './pages/admin/AdminAboutPortfolio'
 import { AdminCRM } from './pages/admin/AdminCRM'
+import { AdminReports } from './pages/admin/AdminReports'
+import { AdminAudit } from './pages/admin/AdminAudit'
 import { AdminPermissionGate } from './components/admin/AdminPermissionGate'
 
 // Placeholder for unbuilt pages
@@ -157,8 +159,8 @@ export default function AppV2() {
                 <Route path="equipe" element={<AdminPermissionGate adminOnly><AdminTeam /></AdminPermissionGate>} />
                 <Route path="site" element={<AdminPermissionGate permission="site.manage"><AdminSiteSettings /></AdminPermissionGate>} />
                 <Route path="configuracoes" element={<AdminPermissionGate adminOnly><PlaceholderPage title="Configurações (Admin)" /></AdminPermissionGate>} />
-                <Route path="auditoria" element={<AdminPermissionGate adminOnly><PlaceholderPage title="Auditoria" /></AdminPermissionGate>} />
-                <Route path="relatorios" element={<PlaceholderPage title="Relatórios" />} />
+                <Route path="auditoria" element={<AdminPermissionGate adminOnly><AdminAudit /></AdminPermissionGate>} />
+                <Route path="relatorios" element={<AdminPermissionGate permission="reports.view"><AdminReports /></AdminPermissionGate>} />
               </Route>
 
               {/* Fallback */}
