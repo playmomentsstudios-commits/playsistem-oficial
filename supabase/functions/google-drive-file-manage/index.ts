@@ -115,17 +115,40 @@ Deno.serve(async (req) => {
 
     if (action === "move") {
       const folderKind = String(body.folder_kind || "");
+      const customFolderId = body.custom_folder_id ? String(body.custom_folder_id) : null;
+
       if (file.storage_provider !== "google_drive" || !file.drive_file_id || !file.project_id) {
         throw new Error("Only project files stored in Google Drive can be moved");
       }
 
-      const { data: target, error: folderError } = await ctx.db
-        .from("project_drive_folders")
-        .select("drive_folder_id,folder_kind,folder_name")
-        .eq("project_id", file.project_id)
-        .eq("folder_kind", folderKind)
-        .single();
-      if (folderError || !target) throw new Error("Target Drive folder not found");
+      let target:any = null;
+
+      if (customFolderId) {
+        const { data: customFolder, error: customFolderError } = await ctx.db
+          .from("project_custom_folders")
+          .select("id,project_id,parent_kind,name,drive_folder_id")
+          .eq("id", customFolderId)
+          .eq("project_id", file.project_id)
+          .single();
+        if (customFolderError || !customFolder) throw new Error("Target custom folder not found");
+
+        target = {
+          id: customFolder.id,
+          drive_folder_id: customFolder.drive_folder_id,
+          folder_kind: customFolder.parent_kind,
+          folder_name: customFolder.name,
+          custom: true,
+        };
+      } else {
+        const { data: standardFolder, error: folderError } = await ctx.db
+          .from("project_drive_folders")
+          .select("drive_folder_id,folder_kind,folder_name")
+          .eq("project_id", file.project_id)
+          .eq("folder_kind", folderKind)
+          .single();
+        if (folderError || !standardFolder) throw new Error("Target Drive folder not found");
+        target = standardFolder;
+      }
 
       const token = await getDriveAccessToken();
       const params = new URLSearchParams({
@@ -149,7 +172,10 @@ Deno.serve(async (req) => {
 
       const { error: updateError } = await ctx.db
         .from("client_files")
-        .update({ drive_folder_id: target.drive_folder_id })
+        .update({
+          drive_folder_id: target.drive_folder_id,
+          custom_folder_id: customFolderId,
+        })
         .eq("id", fileId);
       if (updateError) throw updateError;
 

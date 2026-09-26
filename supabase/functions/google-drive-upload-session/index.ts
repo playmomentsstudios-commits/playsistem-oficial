@@ -1,4 +1,4 @@
-import { corsHeaders, ensureProjectFolder, getDriveAccessToken, json, requireUser } from "../_shared/googleDrive.ts";
+import { corsHeaders, ensureProjectFolder, getDriveAccessToken, hasPermission, json, requireUser } from "../_shared/googleDrive.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -11,6 +11,7 @@ Deno.serve(async (req) => {
     const mimeType = String(body.mime_type || "application/octet-stream");
     const fileSize = Number(body.file_size || 0);
     const folderKind = String(body.folder_kind || "received");
+    const customFolderId = body.custom_folder_id ? String(body.custom_folder_id) : null;
 
     if (!projectId || !fileName || !Number.isFinite(fileSize) || fileSize <= 0) {
       throw new Error("Invalid upload metadata");
@@ -43,9 +44,25 @@ Deno.serve(async (req) => {
     }
 
     const folders = await ensureProjectFolder(ctx.db, ctx.userId, projectId);
-    const target = folders.folders.find((row:any) => row.folder_kind === folderKind)
+    let target:any = folders.folders.find((row:any) => row.folder_kind === folderKind)
       || folders.folders.find((row:any) => row.folder_kind === "received");
     if (!target) throw new Error("Drive target folder not found");
+
+    if (customFolderId) {
+      const { data: customFolder, error: customFolderError } = await ctx.db
+        .from("project_custom_folders")
+        .select("id,project_id,parent_kind,name,drive_folder_id")
+        .eq("id", customFolderId)
+        .eq("project_id", projectId)
+        .single();
+      if (customFolderError || !customFolder) throw new Error("Custom folder not found");
+      target = {
+        drive_folder_id: customFolder.drive_folder_id,
+        folder_kind: customFolder.parent_kind,
+        folder_name: customFolder.name,
+        custom_folder_id: customFolder.id,
+      };
+    }
 
     const token = await getDriveAccessToken();
     const metadata = {
@@ -56,6 +73,7 @@ Deno.serve(async (req) => {
         playMomentsEntityId: projectId,
         playMomentsTaskId: taskId || "",
         playMomentsUploadId: uploadId,
+        playMomentsCustomFolderId: customFolderId || "",
       },
     };
 
@@ -87,6 +105,7 @@ Deno.serve(async (req) => {
       folder_id: target.drive_folder_id,
       customer_id: project.customer_id,
       upload_id: uploadId,
+      custom_folder_id: customFolderId,
     });
   } catch (error) {
     return json({ ok: false, error: error instanceof Error ? error.message : "Unknown error" }, 400);

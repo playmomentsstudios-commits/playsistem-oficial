@@ -273,7 +273,7 @@ export const portalApi = {
   },
   projectFiles: async (projectId:string) => {
     const { data,error }=await supabase.from('client_files')
-      .select('*').eq('project_id',projectId).order('created_at',{ascending:false})
+      .select('*,custom_folder:project_custom_folders(id,name,parent_kind,client_visible)').eq('project_id',projectId).order('created_at',{ascending:false})
     if(error) throw error
     return data ?? []
   },
@@ -379,7 +379,7 @@ export const portalApi = {
   },
   files: async () => {
     const { data,error }=await supabase.from('client_files')
-      .select('*,project:projects(id,title),task:tasks(id,title),customer:profiles!client_files_customer_id_fkey(id,email,first_name,last_name)')
+      .select('*,project:projects(id,title),task:tasks(id,title),customer:profiles!client_files_customer_id_fkey(id,email,first_name,last_name),custom_folder:project_custom_folders(id,name,parent_kind,client_visible)')
       .order('created_at',{ascending:false})
     if(error) throw error
     return data ?? []
@@ -402,6 +402,18 @@ export const portalApi = {
     if(!data?.ok) throw new Error(data?.error||'Não foi possível preparar a pasta do projeto.')
     return data
   },
+  customDriveFolders: async (projectId:string) => {
+    const { data,error }=await supabase.from('project_custom_folders')
+      .select('*').eq('project_id',projectId).order('parent_kind').order('name')
+    if(error) throw error
+    return data ?? []
+  },
+  createCustomDriveFolder: async (values:{project_id:string;parent_kind:string;name:string;client_visible?:boolean}) => {
+    const { data,error }=await supabase.functions.invoke('google-drive-custom-folder',{body:values})
+    if(error) throw error
+    if(!data?.ok) throw new Error(data?.error||'Não foi possível criar a pasta no Google Drive.')
+    return data.folder
+  },
   driveUploadStatus: async (projectId:string,uploadUrl:string,fileSize:number) => {
     const { data,error }=await supabase.functions.invoke('google-drive-upload-status',{
       body:{project_id:projectId,upload_url:uploadUrl,file_size:fileSize},
@@ -411,7 +423,7 @@ export const portalApi = {
     return data as {complete:boolean;next_offset?:number;file?:any}
   },
   uploadDriveFile: async (
-    values:{project_id:string;task_id?:string|null;folder_kind?:string;client_visible:boolean},
+    values:{project_id:string;task_id?:string|null;folder_kind?:string;custom_folder_id?:string|null;client_visible:boolean},
     file:File,
     onProgress?:(value:number)=>void,
   ) => {
@@ -424,6 +436,7 @@ export const portalApi = {
         project_id:values.project_id,
         task_id:values.task_id||null,
         folder_kind:values.folder_kind||'received',
+        custom_folder_id:values.custom_folder_id||null,
         file_name:file.name,
         mime_type:mimeType,
         file_size:file.size,
@@ -507,6 +520,7 @@ export const portalApi = {
       drive_file_id:driveFile?.id||null,
       upload_id:session.upload_id,
       client_visible:values.client_visible,
+      custom_folder_id:values.custom_folder_id||null,
     }
 
     let finalized:any=null
