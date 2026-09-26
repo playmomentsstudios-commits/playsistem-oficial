@@ -33,6 +33,7 @@ export function CustomerSettings(){
       })
       setPrefs(saved)
       try{window.localStorage.setItem('playmoments.customer.sidebar',saved.sidebar_expanded?'expanded':'collapsed')}catch{}
+      window.dispatchEvent(new CustomEvent('playmoments:preferences',{detail:saved}))
       toast('Preferências salvas.','success')
     }catch(error:any){toast(error.message||'Não foi possível salvar suas preferências.','error')}
     finally{setSaving(false)}
