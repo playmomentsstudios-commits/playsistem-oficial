@@ -23,6 +23,10 @@ export function CustomerSettings(){
     return()=>{active=false}
   },[])
 
+  function toggle(key:keyof UserPreferences){
+    return (e:React.ChangeEvent<HTMLInputElement>)=>setPrefs(current=>current?{...current,[key]:e.target.checked}:current)
+  }
+
   async function save(){
     if(!prefs)return
     try{
@@ -30,12 +34,18 @@ export function CustomerSettings(){
       const saved=await settingsApi.saveUserPreferences({
         sidebar_expanded:prefs.sidebar_expanded,
         floating_chat_enabled:prefs.floating_chat_enabled,
+        notify_portal:prefs.notify_portal,
+        notify_email:prefs.notify_email,
+        notify_project_updates:prefs.notify_project_updates,
+        notify_file_updates:prefs.notify_file_updates,
+        notify_commercial_updates:prefs.notify_commercial_updates,
+        profile_contact_visible_to_team:prefs.profile_contact_visible_to_team,
       })
       setPrefs(saved)
       try{window.localStorage.setItem('playmoments.customer.sidebar',saved.sidebar_expanded?'expanded':'collapsed')}catch{}
       window.dispatchEvent(new CustomEvent('playmoments:preferences',{detail:saved}))
-      toast('Preferências salvas.','success')
-    }catch(error:any){toast(error.message||'Não foi possível salvar suas preferências.','error')}
+      toast('Configurações salvas.','success')
+    }catch(error:any){toast(error.message||'Não foi possível salvar suas configurações.','error')}
     finally{setSaving(false)}
   }
 
@@ -54,42 +64,60 @@ export function CustomerSettings(){
 
   if(loading)return <div className="py-16 text-center text-sm text-gray-500">Carregando configurações...</div>
 
-  return <div className="max-w-4xl">
+  const option=(title:string,description:string,key:keyof UserPreferences)=>(
+    <label className="flex items-center justify-between gap-4 p-3 rounded-xl bg-white/[0.035] border border-white/8 cursor-pointer">
+      <div><p className="text-sm font-medium">{title}</p><p className="text-[10px] text-gray-500 mt-1">{description}</p></div>
+      <input type="checkbox" checked={Boolean(prefs?.[key])} onChange={toggle(key)} className="accent-[#E30613]"/>
+    </label>
+  )
+
+  return <div className="max-w-5xl">
     <div className="mb-6">
       <p className="text-[11px] uppercase tracking-[0.18em] text-[#E30613] font-semibold">Conta</p>
       <h1 className="text-2xl font-bold mt-1">Configurações</h1>
-      <p className="text-sm text-gray-500 mt-1">Controle sua experiência no portal e a segurança da sua conta.</p>
+      <p className="text-sm text-gray-500 mt-1">Controle sua experiência, notificações, privacidade e segurança.</p>
     </div>
 
     <div className="grid lg:grid-cols-2 gap-5">
       <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
         <h2 className="font-semibold">Experiência do portal</h2>
         <p className="text-xs text-gray-500 mt-1">Preferências aplicadas quando você entrar na sua conta.</p>
-
         <div className="space-y-3 mt-5">
-          <label className="flex items-center justify-between gap-4 p-3 rounded-xl bg-white/[0.035] border border-white/8 cursor-pointer">
-            <div><p className="text-sm font-medium">Menu lateral expandido</p><p className="text-[10px] text-gray-500 mt-1">Entrar no portal com os nomes das opções visíveis.</p></div>
-            <input type="checkbox" checked={prefs?.sidebar_expanded??false} onChange={e=>setPrefs(current=>current?{...current,sidebar_expanded:e.target.checked}:current)} className="accent-[#E30613]"/>
-          </label>
-
-          <label className="flex items-center justify-between gap-4 p-3 rounded-xl bg-white/[0.035] border border-white/8 cursor-pointer">
-            <div><p className="text-sm font-medium">Chat flutuante</p><p className="text-[10px] text-gray-500 mt-1">Mostrar o atalho de conversa sobre as páginas do portal.</p></div>
-            <input type="checkbox" checked={prefs?.floating_chat_enabled??true} onChange={e=>setPrefs(current=>current?{...current,floating_chat_enabled:e.target.checked}:current)} className="accent-[#E30613]"/>
-          </label>
+          {option('Menu lateral expandido','Entrar no portal com os nomes das opções visíveis.','sidebar_expanded')}
+          {option('Chat flutuante','Mostrar o atalho de conversa sobre as páginas do portal.','floating_chat_enabled')}
         </div>
-
-        <button disabled={saving||!prefs} onClick={()=>void save()} className="mt-4 min-h-11 px-4 rounded-xl bg-[#E30613] text-white text-sm font-semibold disabled:opacity-40">{saving?'Salvando...':'Salvar preferências'}</button>
       </section>
 
       <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
         <h2 className="font-semibold">Dados da conta</h2>
-        <p className="text-xs text-gray-500 mt-1">Seus dados principais ficam separados das preferências do sistema.</p>
+        <p className="text-xs text-gray-500 mt-1">Contato, cadastro e endereço ficam no seu perfil.</p>
         <div className="mt-5 p-3 rounded-xl bg-white/[0.035] border border-white/8">
           <p className="text-[10px] uppercase text-gray-600">Conta</p>
           <p className="text-sm font-medium mt-1">{user?.name} {user?.lastName}</p>
           <p className="text-xs text-gray-500 mt-1">{user?.email}</p>
         </div>
-        <Link to="/app/perfil" className="inline-flex mt-4 min-h-11 px-4 items-center rounded-xl bg-white/[0.06] border border-white/10 text-sm font-semibold">Editar nome e telefone</Link>
+        <Link to="/app/perfil" className="inline-flex mt-4 min-h-11 px-4 items-center rounded-xl bg-white/[0.06] border border-white/10 text-sm font-semibold">Editar cadastro e endereço</Link>
+      </section>
+
+      <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
+        <h2 className="font-semibold">Notificações</h2>
+        <p className="text-xs text-gray-500 mt-1">Escolha quais comunicações deseja receber.</p>
+        <div className="space-y-3 mt-5">
+          {option('Notificações no portal','Manter avisos dentro da sua conta.','notify_portal')}
+          {option('Notificações por e-mail','Permitir comunicações transacionais por e-mail.','notify_email')}
+          {option('Atualizações de projetos','Avisos relacionados ao andamento dos seus projetos.','notify_project_updates')}
+          {option('Atualizações de arquivos','Avisos sobre novos arquivos, versões e aprovações.','notify_file_updates')}
+          {option('Orçamentos e pedidos','Avisos relacionados a orçamento, pedido e fluxo comercial.','notify_commercial_updates')}
+        </div>
+      </section>
+
+      <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
+        <h2 className="font-semibold">Privacidade</h2>
+        <p className="text-xs text-gray-500 mt-1">Controle o uso interno dos seus dados de contato.</p>
+        <div className="space-y-3 mt-5">
+          {option('Contato visível à equipe','Permitir que colaboradores autorizados vejam seus dados de contato para atendimento e execução dos serviços.','profile_contact_visible_to_team')}
+        </div>
+        <p className="text-[10px] text-gray-600 mt-3">Essa preferência não altera dados obrigatórios de pedidos, pagamentos ou registros necessários para executar serviços contratados.</p>
       </section>
 
       <section className="lg:col-span-2 p-5 rounded-2xl bg-[#141416] border border-white/10">
@@ -106,5 +134,7 @@ export function CustomerSettings(){
         </form>
       </section>
     </div>
+
+    <button disabled={saving||!prefs} onClick={()=>void save()} className="mt-5 min-h-11 px-5 rounded-xl bg-[#E30613] text-white text-sm font-semibold disabled:opacity-40">{saving?'Salvando...':'Salvar configurações'}</button>
   </div>
 }
