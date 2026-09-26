@@ -155,7 +155,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
                   {staff&&conversation&&<p className="text-[10px] text-gray-500 font-normal mt-0.5">Responsável: {assigneeName(conversation)}</p>}
                 </div>
               </div>
-              {staff&&conversation&&<div className="grid sm:grid-cols-3 gap-2 mt-3">
+              {staff&&conversation&&<div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-2 mt-3">
                 <label className="text-[10px] text-gray-500">Direcionar para
                   <select disabled={transferring} value={conversation.assigned_to||''} onChange={e=>void transfer(e.target.value)} className="mt-1 w-full min-h-10 px-2 rounded-lg bg-black border border-white/10 text-xs">
                     <option value="">Não atribuído</option>
@@ -171,6 +171,9 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
                   <select value={conversation.priority||'normal'} onChange={e=>void updateCrm({priority:e.target.value})} className="mt-1 w-full min-h-10 px-2 rounded-lg bg-black border border-white/10 text-xs">
                     <option value="low">Baixa</option><option value="normal">Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option>
                   </select>
+                </label>
+                <label className="text-[10px] text-gray-500">Tags
+                  <input key={conversation.id+(conversation.tags||[]).join(',')} defaultValue={(conversation.tags||[]).join(', ')} onBlur={e=>void updateCrm({tags:e.target.value.split(',').map(tag=>tag.trim()).filter(Boolean)})} placeholder="venda, vídeo, urgente" className="mt-1 w-full min-h-10 px-2 rounded-lg bg-black border border-white/10 text-xs"/>
                 </label>
               </div>}
             </div>
