@@ -69,7 +69,7 @@ export function AdminReports(){
       ['Produtividade','Concluídas','Atrasadas'],
       ...report.task_productivity.map(item=>[item.assignee,String(item.completed),String(item.overdue)]),
     ]
-    const csv=lines.map(row=>row.map(cell=>'"'+String(cell??'').replaceAll('"','""')+'"').join(';')).join('\n')
+    const csv=lines.map(row=>row.map(cell=>'"'+String(cell??'').split('"').join('""')+'"').join(';')).join('\n')
     const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'})
     const url=URL.createObjectURL(blob)
     const a=document.createElement('a')
