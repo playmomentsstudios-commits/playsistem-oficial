@@ -273,7 +273,7 @@ export const portalApi = {
   },
   projectFiles: async (projectId:string) => {
     const { data,error }=await supabase.from('client_files')
-      .select('*').eq('project_id',projectId).order('created_at',{ascending:false})
+      .select('*,custom_folder:project_custom_folders(id,name,parent_kind,client_visible)').eq('project_id',projectId).order('created_at',{ascending:false})
     if(error) throw error
     return data ?? []
   },
@@ -379,7 +379,7 @@ export const portalApi = {
   },
   files: async () => {
     const { data,error }=await supabase.from('client_files')
-      .select('*,project:projects(id,title),task:tasks(id,title),customer:profiles!client_files_customer_id_fkey(id,email,first_name,last_name)')
+      .select('*,project:projects(id,title),task:tasks(id,title),customer:profiles!client_files_customer_id_fkey(id,email,first_name,last_name),custom_folder:project_custom_folders(id,name,parent_kind,client_visible)')
       .order('created_at',{ascending:false})
     if(error) throw error
     return data ?? []
