@@ -351,8 +351,10 @@ export function AdminProjectDetailV2(){
                   <div className="flex items-center gap-1 mb-2">
                     <button type="button" onClick={()=>{setFileMenu(null);void openFile(file)}} className="w-9 h-9 rounded-lg hover:bg-white/[0.07]" title="Abrir">↗</button>
                     <button type="button" onClick={()=>void renameProjectFile(file)} className="w-9 h-9 rounded-lg hover:bg-white/[0.07]" title="Renomear">✎</button>
-                    <label className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer" title="Enviar nova versão">V+</label>
-                    <input type="file" className="sr-only" onChange={e=>void uploadNewVersion(e,file)}/>
+                    <label className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer" title="Enviar nova versão">
+                      V+
+                      <input type="file" className="sr-only" onChange={e=>void uploadNewVersion(e,file)}/>
+                    </label>
                     <button type="button" onClick={()=>{setFileMenu(null);void deleteProjectFile(file)}} className="w-9 h-9 rounded-lg hover:bg-red-500/10 text-red-400" title="Excluir">⌫</button>
                   </div>
                   <div className="mb-2">
