@@ -3,28 +3,29 @@ import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-d
 import { useAuth } from '../contexts/AuthContext'
 import logoUrl from '../assets/logo-play-moments.png'
 import { portalApi } from '../api/portal'
+import { hasStaffPermission } from '../lib/staffPermissions'
 
 const MENU = [
   { label: 'Painel', href: '/admin', icon: '⊞', exact: true },
-  { label: 'Clientes', href: '/admin/clientes', icon: '👥' },
-  { label: 'Produtos', href: '/admin/produtos', icon: '📦' },
-  { label: 'Projetos', href: '/admin/projetos', icon: '📈' },
-  { label: 'Produtividade', href: '/admin/produtividade', icon: '✅' },
-  { label: 'Categorias', href: '/admin/categorias', icon: '🏷' },
-  { label: 'Serviços', href: '/admin/servicos', icon: '⚡' },
-  { label: 'Pedidos', href: '/admin/pedidos', icon: '🛒' },
-  { label: 'Orçamentos', href: '/admin/orcamentos', icon: '📋' },
-  { label: 'Pagamentos', href: '/admin/pagamentos', icon: '💳' },
-  { label: 'Conversas', href: '/admin/conversas', icon: '💬' },
-  { label: 'Arquivos', href: '/admin/arquivos', icon: '📁' },
-  { label: 'Quem Somos', href: '/admin/portfolio', icon: '🎨' },
-  { label: 'Comunidade', href: '/admin/comunidade', icon: '📢' },
+  { label: 'Clientes', href: '/admin/clientes', icon: '👥', permission: 'customers.view' },
+  { label: 'Produtos', href: '/admin/produtos', icon: '📦', permission: ['catalog.view','catalog.manage'] },
+  { label: 'Projetos', href: '/admin/projetos', icon: '📈', permission: ['projects.view','projects.manage'] },
+  { label: 'Produtividade', href: '/admin/produtividade', icon: '✅', permission: ['projects.view','projects.manage'] },
+  { label: 'Categorias', href: '/admin/categorias', icon: '🏷', permission: ['catalog.view','catalog.manage'] },
+  { label: 'Serviços', href: '/admin/servicos', icon: '⚡', permission: ['catalog.view','catalog.manage'] },
+  { label: 'Pedidos', href: '/admin/pedidos', icon: '🛒', permission: ['sales.view','sales.manage'] },
+  { label: 'Orçamentos', href: '/admin/orcamentos', icon: '📋', permission: ['quotes.view','quotes.manage'] },
+  { label: 'Pagamentos', href: '/admin/pagamentos', icon: '💳', permission: ['payments.view','payments.manage'] },
+  { label: 'Conversas', href: '/admin/conversas', icon: '💬', permission: ['conversations.access','conversations.view_all'] },
+  { label: 'Arquivos', href: '/admin/arquivos', icon: '📁', permission: ['files.view','files.manage'] },
+  { label: 'Quem Somos', href: '/admin/portfolio', icon: '🎨', permission: 'site.manage' },
+  { label: 'Comunidade', href: '/admin/comunidade', icon: '📢', permission: 'community.manage' },
   { label: 'Notificações', href: '/admin/notificacoes', icon: '🔔' },
-  { label: 'Comunicados', href: '/admin/comunicados', icon: '📣' },
-  { label: 'Equipe', href: '/admin/equipe', icon: '🧑‍💼' },
-  { label: 'Site', href: '/admin/site', icon: '🌐' },
-  { label: 'Configurações', href: '/admin/configuracoes', icon: '⚙' },
-  { label: 'Auditoria', href: '/admin/auditoria', icon: '📝' },
+  { label: 'Comunicados', href: '/admin/comunicados', icon: '📣', permission: 'community.manage' },
+  { label: 'Equipe', href: '/admin/equipe', icon: '🧑‍💼', adminOnly: true },
+  { label: 'Site', href: '/admin/site', icon: '🌐', permission: 'site.manage' },
+  { label: 'Configurações', href: '/admin/configuracoes', icon: '⚙', adminOnly: true },
+  { label: 'Auditoria', href: '/admin/auditoria', icon: '📝', adminOnly: true },
 ]
 
 export function AdminLayout() {
@@ -33,6 +34,7 @@ export function AdminLayout() {
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [counts, setCounts] = useState({ messages: 0, notifications: 0 })
+  const [staffPermissions,setStaffPermissions]=useState<string[]>([])
   useEffect(() => {
     if (!user?.id) return
     const load = () => portalApi.unreadCounts(user.id).then(setCounts).catch(() => undefined)
@@ -40,6 +42,11 @@ export function AdminLayout() {
     const timer = window.setInterval(load, 10000)
     return () => window.clearInterval(timer)
   }, [user?.id])
+
+  useEffect(()=>{
+    if(!user?.id||user.role!=='staff'){setStaffPermissions([]);return}
+    portalApi.myStaffProfile().then(profile=>setStaffPermissions(profile?.permissions||[])).catch(()=>setStaffPermissions([]))
+  },[user?.id,user?.role])
 
   if (isLoading) {
     return (
@@ -75,13 +82,17 @@ export function AdminLayout() {
       <div className="px-4 py-2 mx-2 mt-2 rounded-lg"
         style={{ background: 'rgba(227,6,19,0.1)', border: '1px solid rgba(227,6,19,0.2)' }}>
         <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#E30613' }}>
-          {user?.role === 'admin' ? '● Administrador' : '● Equipe'}
+          {user?.role === 'admin' ? '● Administrador' : '● Colaborador'}
         </p>
         <p className="text-xs truncate" style={{ color: '#9090a0' }}>{user?.name}</p>
       </div>
 
       <nav className="flex-1 px-2 pt-3 overflow-y-auto pb-4">
-        {MENU.map(item => {
+        {MENU.filter(item => {
+          if(user?.role==='admin')return true
+          if((item as any).adminOnly)return false
+          return hasStaffPermission(user?.role,staffPermissions,(item as any).permission)
+        }).map(item => {
           const active = isActive(item.href, item.exact)
           return (
             <Link key={item.href} to={item.href}
