@@ -65,14 +65,21 @@ export const conversationsApi = {
       .select('id,customer_id,created_at,updated_at,assigned_to,assigned_at,status,priority,tags,customer:profiles!customer_id(first_name,last_name),assignee:profiles!conversations_assigned_to_fkey(id,first_name,last_name,role)')
       .order('updated_at', { ascending: false })
     if (error) throw error
-    return data as unknown as SupportConversation[]
+    return (data||[]).map((row:any)=>({
+      ...row,
+      customer:Array.isArray(row.customer)?row.customer[0]||null:row.customer,
+      assignee:Array.isArray(row.assignee)?row.assignee[0]||null:row.assignee,
+    })) as SupportConversation[]
   },
   async team(): Promise<ConversationTeamMember[]> {
     const { data,error }=await supabase.from('profiles')
       .select('id,first_name,last_name,email,role,staff:staff_profiles(job_title,department,permissions,active)')
       .in('role',['admin','staff']).eq('status','active').order('first_name')
     if(error)throw error
-    return (data||[]) as unknown as ConversationTeamMember[]
+    return (data||[]).map((row:any)=>({
+      ...row,
+      staff:Array.isArray(row.staff)?row.staff[0]||null:row.staff,
+    })) as ConversationTeamMember[]
   },
   async assign(conversationId:string,assignee:string|null,note?:string) {
     const { error }=await supabase.rpc('assign_conversation',{
