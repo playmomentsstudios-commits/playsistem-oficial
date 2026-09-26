@@ -50,7 +50,7 @@ export function AdminAboutPortfolio(){
   }
 
   return <div>
-    <div className="mb-6"><h1 className="text-2xl font-bold">Quem Somos & Portfólio</h1><p className="text-sm text-gray-500">Edite sua apresentação, currículo, números e trabalhos exibidos no site público.</p></div>
+    <div className="mb-6"><h1 className="text-2xl font-bold">Quem Somos & Portfólio</h1><p className="text-sm text-gray-500">Edite sua apresentação, números, ferramentas, métodos, soluções e trabalhos exibidos no site público.</p></div>
 
     <div className="flex gap-2 mb-6 overflow-x-auto">
       {([['perfil','Perfil e números'],['portfolio','Portfólio'],['categorias','Categorias']] as const).map(([id,label])=><button key={id} onClick={()=>setTab(id)} className={'px-4 min-h-11 rounded-xl text-sm whitespace-nowrap '+(tab===id?'bg-[#E30613] text-white':'bg-white/[0.05] text-gray-400')}>{label}</button>)}
@@ -78,6 +78,39 @@ export function AdminAboutPortfolio(){
         <label className="text-xs text-gray-500">Desde<input type="number" value={profile.market_since} onChange={e=>setProfile({...profile,market_since:Number(e.target.value)})} className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/></label>
         <label className="text-xs text-gray-500">Satisfação<input value={profile.satisfaction_label} onChange={e=>setProfile({...profile,satisfaction_label:e.target.value})} className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/></label>
       </div>
+      <div className="grid lg:grid-cols-3 gap-4">
+        <div className="p-4 rounded-2xl bg-[#141416] border border-white/10">
+          <h3 className="font-semibold">Ferramentas</h3>
+          <p className="text-xs text-gray-500 mt-1">Um grupo por linha no formato: Grupo | item 1, item 2, item 3</p>
+          <textarea
+            rows={10}
+            value={(profile.tools||[]).map(group=>group.group+' | '+group.items.join(', ')).join('\n')}
+            onChange={e=>setProfile({...profile,tools:e.target.value.split('\n').map(line=>line.trim()).filter(Boolean).map(line=>{const [group,...rest]=line.split('|');return {group:(group||'Geral').trim(),items:rest.join('|').split(',').map(item=>item.trim()).filter(Boolean)}})})}
+            className="mt-3 w-full p-3 rounded-xl bg-black border border-white/10 text-xs"
+          />
+        </div>
+        <div className="p-4 rounded-2xl bg-[#141416] border border-white/10">
+          <h3 className="font-semibold">Métodos</h3>
+          <p className="text-xs text-gray-500 mt-1">Um método por linha: Título | descrição</p>
+          <textarea
+            rows={10}
+            value={(profile.methods||[]).map(item=>item.title+' | '+item.description).join('\n')}
+            onChange={e=>setProfile({...profile,methods:e.target.value.split('\n').map(line=>line.trim()).filter(Boolean).map(line=>{const [title,...rest]=line.split('|');return {title:(title||'Método').trim(),description:rest.join('|').trim()}})})}
+            className="mt-3 w-full p-3 rounded-xl bg-black border border-white/10 text-xs"
+          />
+        </div>
+        <div className="p-4 rounded-2xl bg-[#141416] border border-white/10">
+          <h3 className="font-semibold">Soluções</h3>
+          <p className="text-xs text-gray-500 mt-1">Uma solução por linha: Título | descrição</p>
+          <textarea
+            rows={10}
+            value={(profile.solutions||[]).map(item=>item.title+' | '+item.description).join('\n')}
+            onChange={e=>setProfile({...profile,solutions:e.target.value.split('\n').map(line=>line.trim()).filter(Boolean).map(line=>{const [title,...rest]=line.split('|');return {title:(title||'Solução').trim(),description:rest.join('|').trim()}})})}
+            className="mt-3 w-full p-3 rounded-xl bg-black border border-white/10 text-xs"
+          />
+        </div>
+      </div>
+
       <Button onClick={saveProfile} loading={saving}>Salvar Quem Somos</Button>
     </div>}
 

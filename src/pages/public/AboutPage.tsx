@@ -38,7 +38,37 @@ export function AboutPage(){
 
       {!!profile?.skills?.length&&<section className="mt-10"><h2 className="text-xl font-bold">Áreas de atuação</h2><div className="flex flex-wrap gap-2 mt-4">{profile.skills.map(skill=><span key={skill} className="px-3 py-2 rounded-full text-xs bg-white/[0.05] border border-white/8 text-gray-300">{skill}</span>)}</div></section>}
 
-      {!!profile?.experience?.length&&<section className="mt-12"><p className="text-xs uppercase tracking-wider text-[#E30613]">Currículo</p><h2 className="text-2xl font-bold mt-2">Experiência profissional</h2><div className="grid md:grid-cols-2 gap-3 mt-5">{profile.experience.map((exp,index)=><div key={index} className="p-4 rounded-2xl bg-[#141416] border border-white/8"><h3 className="font-semibold">{exp.title}</h3><p className="text-xs text-[#E30613] mt-1">{exp.role}</p><p className="text-xs text-gray-500 leading-5 mt-3">{exp.description}</p></div>)}</div>{profile.resume_url&&<a href={profile.resume_url} target="_blank" rel="noreferrer" className="inline-flex mt-4 px-4 py-3 rounded-xl bg-white/[0.06] text-sm font-semibold">Abrir currículo completo ↗</a>}</section>}
+      {(!!profile?.tools?.length||!!profile?.methods?.length||!!profile?.solutions?.length)&&<section className="mt-12">
+        <p className="text-xs uppercase tracking-wider text-[#E30613]">Como eu trabalho</p>
+        <h2 className="text-2xl font-bold mt-2">Ferramentas, métodos e soluções</h2>
+        <p className="text-sm text-gray-500 mt-2 max-w-3xl">Mais importante do que listar empresas é mostrar o que eu consigo executar, com quais ferramentas e como organizo cada projeto.</p>
+
+        {!!profile?.tools?.length&&<div className="mt-7">
+          <h3 className="text-lg font-semibold">Ferramentas</h3>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+            {profile.tools.map((group,index)=><div key={index} className="p-4 rounded-2xl bg-[#141416] border border-white/8">
+              <p className="text-xs font-semibold text-[#E30613]">{group.group}</p>
+              <div className="flex flex-wrap gap-2 mt-3">{group.items.map(item=><span key={item} className="px-2.5 py-1.5 rounded-full bg-white/[0.05] border border-white/8 text-[11px] text-gray-300">{item}</span>)}</div>
+            </div>)}
+          </div>
+        </div>}
+
+        {!!profile?.methods?.length&&<div className="mt-8">
+          <h3 className="text-lg font-semibold">Métodos de trabalho</h3>
+          <div className="grid md:grid-cols-2 gap-3 mt-4">
+            {profile.methods.map((method,index)=><div key={index} className="p-4 rounded-2xl bg-[#141416] border border-white/8"><h4 className="font-semibold">{method.title}</h4><p className="text-xs text-gray-500 leading-5 mt-2">{method.description}</p></div>)}
+          </div>
+        </div>}
+
+        {!!profile?.solutions?.length&&<div className="mt-8">
+          <h3 className="text-lg font-semibold">Soluções que executo</h3>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+            {profile.solutions.map((solution,index)=><div key={index} className="p-4 rounded-2xl bg-[#141416] border border-white/8"><h4 className="font-semibold">{solution.title}</h4><p className="text-xs text-gray-500 leading-5 mt-2">{solution.description}</p></div>)}
+          </div>
+        </div>}
+
+        {profile?.resume_url&&<a href={profile.resume_url} target="_blank" rel="noreferrer" className="inline-flex mt-6 px-4 py-3 rounded-xl bg-white/[0.06] text-sm font-semibold">Abrir currículo completo ↗</a>}
+      </section>}
 
       <section id="portfolio" className="mt-16">
         <p className="text-xs uppercase tracking-wider text-[#E30613]">Portfólio</p>
