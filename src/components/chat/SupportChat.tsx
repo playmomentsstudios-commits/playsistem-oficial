@@ -20,6 +20,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   const [retry, setRetry] = useState(0)
   const [filter, setFilter] = useState('')
   const [team,setTeam]=useState<ConversationTeamMember[]>([])
+  const [staffPermissions,setStaffPermissions]=useState<string[]>([])
   const [transferring,setTransferring]=useState(false)
   const end = useRef<HTMLDivElement>(null)
   const subject = search.get('assunto')
@@ -30,9 +31,16 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   useEffect(()=>{
     if(!staff)return
     let active=true
-    conversationsApi.team().then(rows=>{if(active)setTeam(rows)}).catch(()=>undefined)
+    Promise.all([
+      conversationsApi.team(),
+      user?.role==='staff'?portalApi.myStaffProfile():Promise.resolve(null),
+    ]).then(([rows,profile])=>{
+      if(!active)return
+      setTeam(rows)
+      setStaffPermissions(profile?.permissions||[])
+    }).catch(()=>undefined)
     return ()=>{active=false}
-  },[staff])
+  },[staff,user?.role,user?.id])
 
   useEffect(() => {
     let active = true
@@ -111,6 +119,8 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
     return person ? `${person.first_name||''} ${person.last_name||''}`.trim() || 'Colaborador' : 'Não atribuído'
   }
 
+  const canTransfer=user?.role==='admin'||staffPermissions.includes('*')||staffPermissions.includes('conversations.transfer')
+
   async function transfer(assignee:string){
     if(!conversation)return
     try{
@@ -157,7 +167,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
               </div>
               {staff&&conversation&&<div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-2 mt-3">
                 <label className="text-[10px] text-gray-500">Direcionar para
-                  <select disabled={transferring} value={conversation.assigned_to||''} onChange={e=>void transfer(e.target.value)} className="mt-1 w-full min-h-10 px-2 rounded-lg bg-black border border-white/10 text-xs">
+                  <select disabled={transferring||!canTransfer} value={conversation.assigned_to||''} onChange={e=>void transfer(e.target.value)} className="mt-1 w-full min-h-10 px-2 rounded-lg bg-black border border-white/10 text-xs disabled:opacity-50">
                     <option value="">Não atribuído</option>
                     {team.map(member=><option key={member.id} value={member.id}>{member.first_name} {member.last_name}{member.staff?.job_title?' — '+member.staff.job_title:member.role==='admin'?' — Admin':''}</option>)}
                   </select>
