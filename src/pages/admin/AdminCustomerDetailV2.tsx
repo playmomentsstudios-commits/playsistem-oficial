@@ -5,6 +5,7 @@ import { customerDeletionApi } from '../../api/customerDeletion'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { motivoStatusCliente,nivelCliente,rotulo,statusCliente,statusPagamento,statusProjeto } from '../../lib/labels.ptBR'
+import { crmApi,CRM_STAGES,CRM_STAGE_LABELS,type CrmStage } from '../../api/crm'
 
 const reasons=[
   'payment_pending','information_incomplete','terms_violation','prolonged_inactivity',
@@ -37,6 +38,9 @@ export function AdminCustomerDetailV2(){
   const [loyalty,setLoyalty]=useState<any>(null)
   const [settings,setSettings]=useState<any>(null)
   const [history,setHistory]=useState<any[]>([])
+  const [crm,setCrm]=useState<any>(null)
+  const [crmHistory,setCrmHistory]=useState<any[]>([])
+  const [team,setTeam]=useState<any[]>([])
   const [targetStatus,setTargetStatus]=useState<'active'|'inactive'|'blocked'>('inactive')
   const [reason,setReason]=useState('payment_pending')
   const [saving,setSaving]=useState(false)
@@ -48,9 +52,10 @@ export function AdminCustomerDetailV2(){
   const [analyzingDelete,setAnalyzingDelete]=useState(false)
 
   const load=async()=>{
-    const [customersList,allOrders,allProjects,allPayments,loyaltyRow,loyaltySettings,statusHistory]=await Promise.all([
+    const [customersList,allOrders,allProjects,allPayments,loyaltyRow,loyaltySettings,statusHistory,crmRow,crmEvents,teamRows]=await Promise.all([
       portalApi.customers(),portalApi.orders(),portalApi.projects(),portalApi.payments(),
       portalApi.customerLoyalty(id),portalApi.loyaltySettings(),portalApi.customerStatusHistory(id),
+      crmApi.one(id),crmApi.history(id),portalApi.teamMembers(),
     ])
     setCustomer(customersList.find((item:any)=>item.id===id)||null)
     setOrders(allOrders.filter((item:any)=>item.customer_id===id))
@@ -59,6 +64,9 @@ export function AdminCustomerDetailV2(){
     setLoyalty(loyaltyRow)
     setSettings(loyaltySettings)
     setHistory(statusHistory)
+    setCrm(crmRow)
+    setCrmHistory(crmEvents)
+    setTeam(teamRows)
   }
 
   useEffect(()=>{void load()},[id])
@@ -130,6 +138,29 @@ export function AdminCustomerDetailV2(){
     }
   }
 
+  async function saveCrm(){
+    if(!crm)return
+    setSaving(true)
+    try{
+      await crmApi.save({
+        customer_id:id,
+        stage:crm.stage as CrmStage,
+        owner_id:crm.owner_id||null,
+        source:crm.source||null,
+        next_action:crm.next_action||null,
+        next_action_at:crm.next_action_at||null,
+        last_contact_at:crm.last_contact_at||null,
+        estimated_value:Number(crm.estimated_value)||0,
+        internal_notes:crm.internal_notes||null,
+        lost_reason:crm.stage==='lost'?(crm.lost_reason||null):null,
+        stage_note:'Atualização pela ficha do cliente',
+      })
+      toast('CRM do cliente atualizado.','success')
+      await load()
+    }catch(error:any){toast(error.message||'Não foi possível atualizar o CRM.','error')}
+    finally{setSaving(false)}
+  }
+
   async function saveLoyalty(){
     if(!settings||!user)return
     setSaving(true)
@@ -169,6 +200,58 @@ export function AdminCustomerDetailV2(){
       <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-xs text-gray-500">Nível</p><b className="text-lg">{rotulo(nivelCliente,loyalty?.level||'bronze')}</b></div>
       <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-xs text-gray-500">Play Cash disponível</p><b className="text-lg text-[#E30613]">{money(availableCash)}</b></div>
     </div>
+
+    {crm&&<section className="mt-6 p-5 rounded-2xl bg-[#141416] border border-white/10">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.16em] text-[#E30613] font-semibold">CRM</p>
+          <h2 className="font-bold text-lg mt-1">Relacionamento comercial</h2>
+          <p className="text-sm text-gray-500 mt-1">Responsável, etapa, valor, próxima ação e observações internas.</p>
+        </div>
+        <Link to="/admin/crm" className="min-h-10 px-3 rounded-xl bg-white/[0.06] text-xs font-semibold flex items-center">Abrir pipeline</Link>
+      </div>
+
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-5">
+        <label className="text-xs text-gray-500">Etapa
+          <select value={crm.stage||'new_contact'} onChange={e=>setCrm({...crm,stage:e.target.value})} className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10">
+            {CRM_STAGES.map(stage=><option key={stage} value={stage}>{CRM_STAGE_LABELS[stage]}</option>)}
+          </select>
+        </label>
+        <label className="text-xs text-gray-500">Responsável
+          <select value={crm.owner_id||''} onChange={e=>setCrm({...crm,owner_id:e.target.value||null})} className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10">
+            <option value="">Sem responsável</option>
+            {team.map(member=><option key={member.id} value={member.id}>{member.first_name} {member.last_name||''}</option>)}
+          </select>
+        </label>
+        <label className="text-xs text-gray-500">Origem
+          <input value={crm.source||''} onChange={e=>setCrm({...crm,source:e.target.value})} placeholder="Instagram, indicação..." className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
+        </label>
+        <label className="text-xs text-gray-500">Valor estimado (R$)
+          <input type="number" step="0.01" value={(crm.estimated_value||0)/100} onChange={e=>setCrm({...crm,estimated_value:Math.round(Number(e.target.value||0)*100)})} className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
+        </label>
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-3 mt-3">
+        <label className="text-xs text-gray-500">Próxima ação
+          <input value={crm.next_action||''} onChange={e=>setCrm({...crm,next_action:e.target.value})} placeholder="Ex.: enviar orçamento revisado" className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
+        </label>
+        <label className="text-xs text-gray-500">Quando
+          <input type="datetime-local" value={crm.next_action_at?new Date(crm.next_action_at).toISOString().slice(0,16):''} onChange={e=>setCrm({...crm,next_action_at:e.target.value?new Date(e.target.value).toISOString():null})} className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
+        </label>
+      </div>
+
+      <label className="block text-xs text-gray-500 mt-3">Observações internas
+        <textarea value={crm.internal_notes||''} onChange={e=>setCrm({...crm,internal_notes:e.target.value})} rows={3} placeholder="Informações internas que o cliente não vê." className="mt-1 w-full p-3 rounded-xl bg-black border border-white/10"/>
+      </label>
+      {crm.stage==='lost'&&<label className="block text-xs text-gray-500 mt-3">Motivo da perda
+        <input value={crm.lost_reason||''} onChange={e=>setCrm({...crm,lost_reason:e.target.value})} placeholder="Preço, prazo, sem retorno..." className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
+      </label>}
+
+      <div className="flex flex-wrap items-center gap-3 mt-4">
+        <button disabled={saving} onClick={()=>void saveCrm()} className="min-h-11 px-4 rounded-xl bg-[#E30613] text-sm font-semibold disabled:opacity-50">Salvar CRM</button>
+        {crmHistory[0]&&<p className="text-[10px] text-gray-600">Última mudança: {new Date(crmHistory[0].created_at).toLocaleString('pt-BR')}</p>}
+      </div>
+    </section>}
 
     <div className="grid xl:grid-cols-2 gap-5 mt-6">
       <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
