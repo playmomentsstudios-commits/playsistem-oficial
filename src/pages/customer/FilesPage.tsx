@@ -164,10 +164,10 @@ export function FilesPage(){
       </section>
     </>}
 
-    {projectId&&selected&&<div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4" onMouseDown={event=>{if(event.currentTarget===event.target&&!uploading)setProjectId(null);setVersionGroup(null)}}>
+    {projectId&&selected&&<div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4" onMouseDown={event=>{if(event.currentTarget===event.target&&!uploading){setProjectId(null);setVersionGroup(null)}}}>
       <div className="w-full max-w-5xl h-[92vh] sm:h-auto sm:max-h-[86vh] rounded-t-2xl sm:rounded-2xl border border-white/10 bg-[#111113] shadow-2xl overflow-hidden flex flex-col">
         <div className="h-14 px-4 sm:px-5 border-b border-white/10 flex items-center gap-3 shrink-0">
-          <button type="button" onClick={()=>setProjectId(null);setVersionGroup(null)} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-300" aria-label="Voltar">←</button>
+          <button type="button" onClick={()=>{setProjectId(null);setVersionGroup(null)}} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-300" aria-label="Voltar">←</button>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold truncate">{selected.project?.title||'Arquivos gerais'}</p>
             <p className="text-[10px] text-gray-500">{selected.files.length} arquivo(s) disponíveis</p>
@@ -185,7 +185,7 @@ export function FilesPage(){
             }}/>
             + Enviar vários
           </label>}
-          <button type="button" disabled={uploading} onClick={()=>setProjectId(null);setVersionGroup(null)} className="w-10 h-10 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-400 text-lg" aria-label="Fechar">×</button>
+          <button type="button" disabled={uploading} onClick={()=>{setProjectId(null);setVersionGroup(null)}} className="w-10 h-10 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-400 text-lg" aria-label="Fechar">×</button>
         </div>
 
         <div className="p-3 sm:p-5 overflow-y-auto">
