@@ -281,6 +281,40 @@ export const portalApi = {
     const { error }=await supabase.from('client_files').update({task_id:taskId}).eq('id',fileId)
     if(error) throw error
   },
+  fileReviews: async (fileId:string) => {
+    const { data,error }=await supabase.from('file_reviews')
+      .select('*,author:profiles!file_reviews_created_by_fkey(first_name,last_name,email)')
+      .eq('file_id',fileId).order('created_at',{ascending:false})
+    if(error) throw error
+    return data ?? []
+  },
+  requestFileReview: async (fileId:string) => {
+    const { data,error }=await supabase.rpc('request_file_review',{p_file_id:fileId})
+    if(error) throw error
+    return data
+  },
+  cancelFileReview: async (fileId:string) => {
+    const { data,error }=await supabase.rpc('cancel_file_review',{p_file_id:fileId})
+    if(error) throw error
+    return data
+  },
+  submitFileReview: async (fileId:string,action:'approved'|'changes_requested',comment?:string) => {
+    const { data,error }=await supabase.rpc('submit_file_review',{
+      p_file_id:fileId,
+      p_action:action,
+      p_comment:comment?.trim()||null,
+    })
+    if(error) throw error
+    return data
+  },
+  linkFileVersion: async (newFileId:string,previousFileId:string) => {
+    const { data,error }=await supabase.rpc('link_file_version',{
+      p_new_file_id:newFileId,
+      p_previous_file_id:previousFileId,
+    })
+    if(error) throw error
+    return data
+  },
   deleteClientFile: async (fileId:string) => {
     const { data,error }=await supabase.functions.invoke('google-drive-file-manage',{
       body:{action:'delete',file_id:fileId},

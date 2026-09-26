@@ -189,6 +189,33 @@ export function AdminFilesV2(){
     }catch(error:any){toast(error.message||'Não foi possível renomear o arquivo.','error')}
   }
 
+  async function requestReview(row:any){
+    try{
+      if(row.storage_provider==='google_drive'&&!row.client_visible)await fileManagementApi.publish(row.id)
+      await portalApi.requestFileReview(row.id)
+      toast('Aprovação solicitada ao cliente.','success')
+      setMenuFile(null)
+      await load()
+    }catch(error:any){toast(error.message||'Não foi possível solicitar aprovação.','error')}
+  }
+
+  async function cancelReview(row:any){
+    try{
+      await portalApi.cancelFileReview(row.id)
+      toast('Solicitação de aprovação cancelada.','success')
+      setMenuFile(null)
+      await load()
+    }catch(error:any){toast(error.message||'Não foi possível cancelar a aprovação.','error')}
+  }
+
+  function reviewBadge(row:any){
+    if(!row.review_required)return null
+    if(row.review_status==='pending')return {label:'Aguardando cliente',className:'bg-yellow-500/10 text-yellow-300'}
+    if(row.review_status==='approved')return {label:'Aprovado',className:'bg-emerald-500/10 text-emerald-400'}
+    if(row.review_status==='changes_requested')return {label:'Ajustes solicitados',className:'bg-orange-500/10 text-orange-400'}
+    return null
+  }
+
   return <div>
     <div className="flex flex-wrap justify-between gap-4 items-end mb-6">
       <div>
@@ -292,7 +319,7 @@ export function AdminFilesV2(){
         {recent.map(row=><button key={row.id} type="button" onClick={()=>open(row)} className="group text-left p-2.5 rounded-xl bg-[#141416] border border-white/8 hover:border-white/20 transition-colors min-w-0">
           <div className="h-11 rounded-lg bg-white/[0.04] flex items-center justify-center text-2xl mb-2">{fileIcon(row)}</div>
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[9px] text-[#E30613] font-bold tracking-wide">{extension(row.name)}</span>
+            <span className="text-[9px] text-[#E30613] font-bold tracking-wide">{extension(row.name)} · v{row.version_number||1}</span>
             <span className="text-[9px] text-gray-600">{sizeLabel(row.file_size)}</span>
           </div>
           <div className="text-[11px] font-semibold truncate mt-1" title={row.name}>{row.name}</div>
@@ -377,40 +404,49 @@ export function AdminFilesV2(){
             </div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {selectedLibraryProject.files.map(row=><div key={row.id} className="relative p-3 rounded-xl bg-[#171719] border border-white/8 hover:border-white/15 transition-colors">
-                <button type="button" onClick={()=>open(row)} className="w-full text-left">
-                  <div className="h-20 rounded-lg bg-white/[0.035] flex items-center justify-center text-3xl">{fileIcon(row)}</div>
-                  <div className="mt-2 flex items-center justify-between gap-2">
-                    <span className="text-[9px] font-bold text-[#E30613]">{extension(row.name)}</span>
-                    <span className="text-[9px] text-gray-600">{sizeLabel(row.file_size)}</span>
-                  </div>
-                  <p className="text-xs font-semibold truncate mt-1" title={row.name}>{row.name}</p>
-                  <p className="text-[9px] text-gray-500 truncate mt-1">{row.task?.title||'Arquivo geral'}</p>
-                </button>
+              {selectedLibraryProject.files.map(row=>{
+                const review=reviewBadge(row)
+                return <div key={row.id} className="relative p-3 rounded-xl bg-[#171719] border border-white/8 hover:border-white/15 transition-colors">
+                  <button type="button" onClick={()=>open(row)} className="w-full text-left">
+                    <div className="h-20 rounded-lg bg-white/[0.035] flex items-center justify-center text-3xl">{fileIcon(row)}</div>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <span className="text-[9px] font-bold text-[#E30613]">{extension(row.name)} · v{row.version_number||1}</span>
+                      <span className="text-[9px] text-gray-600">{sizeLabel(row.file_size)}</span>
+                    </div>
+                    <p className="text-xs font-semibold truncate mt-1" title={row.name}>{row.name}</p>
+                    <p className="text-[9px] text-gray-500 truncate mt-1">{row.task?.title||'Arquivo geral'}</p>
+                    {review&&<span className={'inline-flex mt-2 px-2 py-1 rounded-full text-[9px] font-semibold '+review.className}>{review.label}</span>}
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={()=>setMenuFile(menuFile===row.id?null:row.id)}
-                  className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-black/45 hover:bg-black/70 flex items-center justify-center text-gray-300"
-                  title="Ações"
-                  aria-label="Ações do arquivo"
-                >•••</button>
+                  <button
+                    type="button"
+                    onClick={()=>setMenuFile(menuFile===row.id?null:row.id)}
+                    className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-black/45 hover:bg-black/70 flex items-center justify-center text-gray-300"
+                    title="Ações"
+                    aria-label="Ações do arquivo"
+                  >•••</button>
 
-                {menuFile===row.id&&<div className="absolute z-20 right-2 top-10 rounded-xl border border-white/10 bg-[#0d0d0f] shadow-2xl p-1.5" onMouseLeave={()=>setMenuFile(null)}>
-                  <div className="flex items-center gap-1">
-                    {(row.external_url||row.storage_path)&&<button type="button" onClick={()=>{setMenuFile(null);void open(row)}} className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center text-sm" title="Abrir" aria-label="Abrir arquivo">↗</button>}
-                    <button type="button" onClick={()=>void rename(row)} className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center text-sm" title="Renomear" aria-label="Renomear arquivo">✎</button>
-                    {row.storage_provider==='google_drive'&&row.project_id&&<label className="relative w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer text-sm" title="Mover" aria-label="Mover arquivo">
-                      ⇄
-                      <select defaultValue="" onChange={e=>{if(e.target.value){void move(row,e.target.value);setMenuFile(null)}}} className="absolute inset-0 opacity-0 cursor-pointer">
-                        <option value="">Mover</option>
-                        {folderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
-                      </select>
-                    </label>}
-                    <button type="button" onClick={()=>{setMenuFile(null);void remove(row)}} className="w-9 h-9 rounded-lg hover:bg-red-500/10 text-red-400 flex items-center justify-center text-sm" title="Excluir" aria-label="Excluir arquivo">⌫</button>
-                  </div>
-                </div>}
-              </div>)}
+                  {menuFile===row.id&&<div className="absolute z-20 right-2 top-10 w-56 rounded-xl border border-white/10 bg-[#0d0d0f] shadow-2xl p-1.5" onMouseLeave={()=>setMenuFile(null)}>
+                    <div className="flex items-center gap-1">
+                      {(row.external_url||row.storage_path)&&<button type="button" onClick={()=>{setMenuFile(null);void open(row)}} className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center text-sm" title="Abrir" aria-label="Abrir arquivo">↗</button>}
+                      <button type="button" onClick={()=>void rename(row)} className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center text-sm" title="Renomear" aria-label="Renomear arquivo">✎</button>
+                      {row.storage_provider==='google_drive'&&row.project_id&&<label className="relative w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer text-sm" title="Mover" aria-label="Mover arquivo">
+                        ⇄
+                        <select defaultValue="" onChange={e=>{if(e.target.value){void move(row,e.target.value);setMenuFile(null)}}} className="absolute inset-0 opacity-0 cursor-pointer">
+                          <option value="">Mover</option>
+                          {folderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
+                        </select>
+                      </label>}
+                      <button type="button" onClick={()=>{setMenuFile(null);void remove(row)}} className="w-9 h-9 rounded-lg hover:bg-red-500/10 text-red-400 flex items-center justify-center text-sm" title="Excluir" aria-label="Excluir arquivo">⌫</button>
+                    </div>
+                    <div className="mt-1 border-t border-white/8 pt-1">
+                      {!row.review_required&&<button type="button" onClick={()=>void requestReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Solicitar aprovação</button>}
+                      {row.review_required&&row.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Cancelar aprovação</button>}
+                      {row.review_required&&['approved','changes_requested'].includes(row.review_status)&&<button type="button" onClick={()=>void requestReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Solicitar nova avaliação</button>}
+                    </div>
+                  </div>}
+                </div>
+              })}
             </div>
           </div>:null}
         </div>
