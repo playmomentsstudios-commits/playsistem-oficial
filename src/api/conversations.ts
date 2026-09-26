@@ -15,7 +15,22 @@ export interface SupportConversation {
   id: string
   customer_id: string
   created_at: string
+  updated_at?: string
+  assigned_to?: string | null
+  assigned_at?: string | null
+  status?: 'open'|'pending'|'resolved'
+  priority?: 'low'|'normal'|'high'|'urgent'
+  tags?: string[]
   customer: { first_name: string; last_name: string } | null
+  assignee?: { id:string; first_name:string; last_name:string; role:string } | null
+}
+export interface ConversationTeamMember {
+  id:string
+  first_name:string
+  last_name:string
+  email:string
+  role:string
+  staff?: { job_title:string;department:string;permissions:string[];active:boolean } | null
 }
 export interface SupportMessage extends Partial<MessageAttachment> {
   id: string
@@ -47,10 +62,34 @@ export const conversationsApi = {
   },
   async list(): Promise<SupportConversation[]> {
     const { data, error } = await supabase.from('conversations')
-      .select('id,customer_id,created_at,customer:profiles!customer_id(first_name,last_name)')
-      .order('created_at', { ascending: false })
+      .select('id,customer_id,created_at,updated_at,assigned_to,assigned_at,status,priority,tags,customer:profiles!customer_id(first_name,last_name),assignee:profiles!conversations_assigned_to_fkey(id,first_name,last_name,role)')
+      .order('updated_at', { ascending: false })
     if (error) throw error
     return data as unknown as SupportConversation[]
+  },
+  async team(): Promise<ConversationTeamMember[]> {
+    const { data,error }=await supabase.from('profiles')
+      .select('id,first_name,last_name,email,role,staff:staff_profiles(job_title,department,permissions,active)')
+      .in('role',['admin','staff']).eq('status','active').order('first_name')
+    if(error)throw error
+    return (data||[]) as unknown as ConversationTeamMember[]
+  },
+  async assign(conversationId:string,assignee:string|null,note?:string) {
+    const { error }=await supabase.rpc('assign_conversation',{
+      p_conversation_id:conversationId,
+      p_assignee:assignee,
+      p_note:note||null,
+    })
+    if(error)throw error
+  },
+  async updateCrm(conversationId:string,values:{status?:string;priority?:string;tags?:string[]}) {
+    const { error }=await supabase.rpc('update_conversation_crm',{
+      p_conversation_id:conversationId,
+      p_status:values.status||null,
+      p_priority:values.priority||null,
+      p_tags:values.tags||null,
+    })
+    if(error)throw error
   },
   async open(): Promise<string> {
     const { data, error } = await supabase.rpc('open_customer_conversation')
