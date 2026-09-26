@@ -1,6 +1,7 @@
 import { useEffect,useState } from 'react'
 import { Link } from 'react-router-dom'
 import { portalApi } from '../../api/portal'
+import { settingsApi } from '../../api/settings'
 import { OrderStatusBadge } from '../../components/ui/Badge'
 import { useToast } from '../../contexts/ToastContext'
 import { rotulo,statusPedido } from '../../lib/labels.ptBR'
@@ -8,7 +9,7 @@ const money=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency
 const statusOptions=['pending','awaiting_payment','paid','processing','in_production','ready','completed','cancelled']
 export function AdminOrders(){
  const [rows,setRows]=useState<any[]>([]),[filter,setFilter]=useState('all'),[loading,setLoading]=useState(true); const toast=useToast()
- const load=()=>portalApi.orders().then(setRows).finally(()=>setLoading(false)); useEffect(()=>{void load()},[])
+ const load=()=>portalApi.orders().then(setRows).finally(()=>setLoading(false)); useEffect(()=>{void settingsApi.appSettings().then(s=>{if(s)setFilter(s.orders_default_filter)}).catch(()=>{}).finally(()=>{void load()})},[])
  const filtered=filter==='all'?rows:rows.filter(o=>o.status===filter)
  async function setStatus(id:string,status:string){try{await portalApi.updateOrder(id,status);toast('Pedido atualizado.','success');await load()}catch(e:any){toast(e.message,'error')}}
  return <div><h1 className="text-2xl font-bold text-white mb-2">Pedidos</h1><p className="text-sm text-gray-500 mb-5">Pedidos reais da plataforma</p>
