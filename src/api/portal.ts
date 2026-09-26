@@ -168,11 +168,40 @@ export const portalApi = {
   },
   teamMembers: async () => {
     const { data,error } = await supabase.from('profiles')
-      .select('id,email,first_name,last_name,role,status,created_at')
+      .select('id,email,first_name,last_name,role,status,created_at,staff:staff_profiles(user_id,job_title,department,permissions,active,color,updated_at)')
       .in('role',['admin','staff'])
       .order('first_name')
     if(error) throw error
     return data ?? []
+  },
+  myStaffProfile: async () => {
+    const { data:{user} }=await supabase.auth.getUser()
+    if(!user)return null
+    const { data,error }=await supabase.from('staff_profiles')
+      .select('*').eq('user_id',user.id).maybeSingle()
+    if(error) throw error
+    return data
+  },
+  saveCollaborator: async (values:{user_id:string;job_title:string;department:string;permissions:string[];active:boolean}) => {
+    const { error }=await supabase.rpc('admin_save_collaborator',{
+      p_user_id:values.user_id,
+      p_job_title:values.job_title,
+      p_department:values.department,
+      p_permissions:values.permissions,
+      p_active:values.active,
+    })
+    if(error) throw error
+  },
+  inviteCollaborator: async (values:{email:string;first_name:string;last_name:string;job_title:string;department:string;permissions:string[]}) => {
+    const { data,error }=await supabase.functions.invoke('admin-invite-collaborator',{
+      body:{
+        ...values,
+        redirect_to:window.location.origin+'/redefinir-senha',
+      },
+    })
+    if(error) throw error
+    if(!data?.ok) throw new Error(data?.error||'Não foi possível convidar o colaborador.')
+    return data
   },
   allProfiles: async () => {
     const { data,error }=await supabase.from('profiles')
@@ -352,8 +381,8 @@ export const portalApi = {
     file:File,
     onProgress?:(value:number)=>void,
   ) => {
-    const maxFileSize=10*1024*1024*1024
-    if(file.size>maxFileSize) throw new Error('O limite por arquivo no Google Drive é 10 GB.')
+    const maxFileSize=50*1024*1024*1024
+    if(file.size>maxFileSize) throw new Error('O limite por arquivo no Google Drive é 50 GB.')
 
     const mimeType=file.type||'application/octet-stream'
     const { data:session,error:sessionError }=await supabase.functions.invoke('google-drive-upload-session',{

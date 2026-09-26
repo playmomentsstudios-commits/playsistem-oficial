@@ -59,6 +59,7 @@ import { AdminOrderDetail } from './pages/admin/AdminOrderDetail'
 import { AdminCategories } from './pages/admin/AdminCategories'
 import { AdminFilesV2 } from './pages/admin/AdminFilesV2'
 import { AdminAboutPortfolio } from './pages/admin/AdminAboutPortfolio'
+import { AdminPermissionGate } from './components/admin/AdminPermissionGate'
 
 // Placeholder for unbuilt pages
 function PlaceholderPage({ title }: { title: string }) {
@@ -132,29 +133,29 @@ export default function AppV2() {
               {/* Admin panel */}
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
-                <Route path="clientes" element={<AdminCustomers />} />
-                <Route path="clientes/:id" element={<AdminCustomerDetailV2 />} />
-                <Route path="produtos" element={<AdminProducts />} />
-                <Route path="categorias" element={<AdminCategories />} />
-                <Route path="servicos" element={<AdminServices />} />
-                <Route path="pedidos" element={<AdminOrders />} />
-                <Route path="pedidos/:id" element={<AdminOrderDetail />} />
-                <Route path="orcamentos" element={<AdminQuotes />} />
-                <Route path="orcamentos/:id" element={<AdminQuoteDetail />} />
-                <Route path="pagamentos" element={<AdminPayments />} />
-                <Route path="conversas" element={<AdminConversations />} />
-                <Route path="arquivos" element={<AdminFilesV2 />} />
-                <Route path="portfolio" element={<AdminAboutPortfolio />} />
-                <Route path="comunidade" element={<AdminCommunity />} />
+                <Route path="clientes" element={<AdminPermissionGate permission="customers.view"><AdminCustomers /></AdminPermissionGate>} />
+                <Route path="clientes/:id" element={<AdminPermissionGate permission="customers.view"><AdminCustomerDetailV2 /></AdminPermissionGate>} />
+                <Route path="produtos" element={<AdminPermissionGate permission={['catalog.view','catalog.manage']}><AdminProducts /></AdminPermissionGate>} />
+                <Route path="categorias" element={<AdminPermissionGate permission={['catalog.view','catalog.manage']}><AdminCategories /></AdminPermissionGate>} />
+                <Route path="servicos" element={<AdminPermissionGate permission={['catalog.view','catalog.manage']}><AdminServices /></AdminPermissionGate>} />
+                <Route path="pedidos" element={<AdminPermissionGate permission={['sales.view','sales.manage']}><AdminOrders /></AdminPermissionGate>} />
+                <Route path="pedidos/:id" element={<AdminPermissionGate permission={['sales.view','sales.manage']}><AdminOrderDetail /></AdminPermissionGate>} />
+                <Route path="orcamentos" element={<AdminPermissionGate permission={['quotes.view','quotes.manage']}><AdminQuotes /></AdminPermissionGate>} />
+                <Route path="orcamentos/:id" element={<AdminPermissionGate permission={['quotes.view','quotes.manage']}><AdminQuoteDetail /></AdminPermissionGate>} />
+                <Route path="pagamentos" element={<AdminPermissionGate permission={['payments.view','payments.manage']}><AdminPayments /></AdminPermissionGate>} />
+                <Route path="conversas" element={<AdminPermissionGate permission={['conversations.access','conversations.view_all']}><AdminConversations /></AdminPermissionGate>} />
+                <Route path="arquivos" element={<AdminPermissionGate permission={['files.view','files.manage']}><AdminFilesV2 /></AdminPermissionGate>} />
+                <Route path="portfolio" element={<AdminPermissionGate permission="site.manage"><AdminAboutPortfolio /></AdminPermissionGate>} />
+                <Route path="comunidade" element={<AdminPermissionGate permission="community.manage"><AdminCommunity /></AdminPermissionGate>} />
                 <Route path="notificacoes" element={<NotificationsPage />} />
-                <Route path="projetos" element={<AdminProjects />} />
-                <Route path="projetos/:id" element={<AdminProjectDetailV2 />} />
-                <Route path="produtividade" element={<AdminProductivity />} />
-                <Route path="comunicados" element={<AdminAnnouncements />} />
-                <Route path="equipe" element={<AdminTeam />} />
-                <Route path="site" element={<AdminSiteSettings />} />
-                <Route path="configuracoes" element={<PlaceholderPage title="Configurações (Admin)" />} />
-                <Route path="auditoria" element={<PlaceholderPage title="Auditoria" />} />
+                <Route path="projetos" element={<AdminPermissionGate permission={['projects.view','projects.manage']}><AdminProjects /></AdminPermissionGate>} />
+                <Route path="projetos/:id" element={<AdminPermissionGate permission={['projects.view','projects.manage']}><AdminProjectDetailV2 /></AdminPermissionGate>} />
+                <Route path="produtividade" element={<AdminPermissionGate permission={['projects.view','projects.manage']}><AdminProductivity /></AdminPermissionGate>} />
+                <Route path="comunicados" element={<AdminPermissionGate permission="community.manage"><AdminAnnouncements /></AdminPermissionGate>} />
+                <Route path="equipe" element={<AdminPermissionGate adminOnly><AdminTeam /></AdminPermissionGate>} />
+                <Route path="site" element={<AdminPermissionGate permission="site.manage"><AdminSiteSettings /></AdminPermissionGate>} />
+                <Route path="configuracoes" element={<AdminPermissionGate adminOnly><PlaceholderPage title="Configurações (Admin)" /></AdminPermissionGate>} />
+                <Route path="auditoria" element={<AdminPermissionGate adminOnly><PlaceholderPage title="Auditoria" /></AdminPermissionGate>} />
                 <Route path="relatorios" element={<PlaceholderPage title="Relatórios" />} />
               </Route>
 

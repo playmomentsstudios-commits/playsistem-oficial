@@ -16,9 +16,9 @@ Deno.serve(async (req) => {
       throw new Error("Invalid upload metadata");
     }
 
-    const maxFileSize = 10 * 1024 * 1024 * 1024;
+    const maxFileSize = 50 * 1024 * 1024 * 1024;
     if (fileSize > maxFileSize) {
-      throw new Error("File exceeds the 10 GB limit");
+      throw new Error("File exceeds the 50 GB limit");
     }
 
     const uploadId = crypto.randomUUID();
@@ -30,8 +30,8 @@ Deno.serve(async (req) => {
       .single();
     if (projectError || !project) throw new Error("Project not found");
 
-    const staff = ["admin","staff"].includes(ctx.role);
-    if (!staff && project.customer_id !== ctx.userId) throw new Error("Forbidden");
+    const staffAllowed = ctx.role === "admin" || hasPermission(ctx, "files.manage");
+    if (!staffAllowed && project.customer_id !== ctx.userId) throw new Error("Forbidden");
 
     if (taskId) {
       const { data: task, error: taskError } = await ctx.db

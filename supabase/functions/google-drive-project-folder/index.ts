@@ -1,4 +1,4 @@
-import { corsHeaders, ensureProjectFolder, json, requireUser } from "../_shared/googleDrive.ts";
+import { corsHeaders, ensureProjectFolder, hasPermission, json, requireUser } from "../_shared/googleDrive.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -8,7 +8,8 @@ Deno.serve(async (req) => {
     const projectId = String(body.project_id || "");
     if (!projectId) throw new Error("project_id is required");
 
-    if (!["admin","staff"].includes(ctx.role)) {
+    const staffAllowed = ctx.role === "admin" || hasPermission(ctx, "projects.manage") || hasPermission(ctx, "files.manage");
+    if (!staffAllowed) {
       const { data: project, error } = await ctx.db
         .from("projects")
         .select("customer_id")

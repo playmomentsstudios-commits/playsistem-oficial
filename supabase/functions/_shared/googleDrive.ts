@@ -23,6 +23,7 @@ export type RequestContext = {
   db: SupabaseClient;
   userId: string;
   role: string;
+  permissions: string[];
 };
 
 export async function requireUser(req: Request): Promise<RequestContext> {
@@ -49,12 +50,32 @@ export async function requireUser(req: Request): Promise<RequestContext> {
     throw new Error("Inactive user");
   }
 
-  return { db, userId: authData.user.id, role: profile.role };
+  let permissions: string[] = [];
+  if (profile.role === "staff") {
+    const { data: staff } = await db
+      .from("staff_profiles")
+      .select("permissions,active")
+      .eq("user_id", authData.user.id)
+      .maybeSingle();
+    if (staff?.active) permissions = Array.isArray(staff.permissions) ? staff.permissions : [];
+  }
+
+  return { db, userId: authData.user.id, role: profile.role, permissions };
 }
 
 export function requireStaff(ctx: RequestContext) {
   if (!["admin", "staff"].includes(ctx.role)) {
     throw new Error("Staff access required");
+  }
+}
+
+export function hasPermission(ctx: RequestContext, permission: string) {
+  return ctx.role === "admin" || ctx.permissions.includes("*") || ctx.permissions.includes(permission);
+}
+
+export function requirePermission(ctx: RequestContext, permission: string) {
+  if (!hasPermission(ctx, permission)) {
+    throw new Error("Permission required: " + permission);
   }
 }
 

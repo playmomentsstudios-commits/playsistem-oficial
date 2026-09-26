@@ -1,11 +1,11 @@
-import { corsHeaders, getDriveAccessToken, json, requireStaff, requireUser } from "../_shared/googleDrive.ts";
+import { corsHeaders, getDriveAccessToken, json, requirePermission, requireUser } from "../_shared/googleDrive.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const ctx = await requireUser(req);
-    requireStaff(ctx);
+    requirePermission(ctx, "files.manage");
 
     const body = await req.json();
     const action = String(body.action || "");
