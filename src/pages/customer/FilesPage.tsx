@@ -26,6 +26,16 @@ function fileIcon(file:any){
   return '📎'
 }
 
+function fileKind(file:any){
+  const type=(file.mime_type||file.file_type||'').toLowerCase()
+  const ext=extension(file.name).toLowerCase()
+  if(type.startsWith('video/')||['mov','mp4','mkv','avi','webm'].includes(ext))return 'video'
+  if(type.startsWith('image/')||['jpg','jpeg','png','webp','avif','gif'].includes(ext))return 'image'
+  if(type.startsWith('audio/')||['mp3','wav','aac','flac','m4a'].includes(ext))return 'audio'
+  if(type.includes('pdf')||ext==='pdf')return 'pdf'
+  return 'other'
+}
+
 export function FilesPage(){
   const toast=useToast()
   const [rows,setRows]=useState<any[]>([])
@@ -38,6 +48,10 @@ export function FilesPage(){
   const [uploadName,setUploadName]=useState('')
   const [versionGroup,setVersionGroup]=useState<string|null>(null)
   const [reviewing,setReviewing]=useState<string|null>(null)
+  const [projectSearch,setProjectSearch]=useState('')
+  const [fileSearch,setFileSearch]=useState('')
+  const [fileType,setFileType]=useState('all')
+  const [fileReview,setFileReview]=useState('all')
 
   async function load(){
     try{
@@ -63,6 +77,15 @@ export function FilesPage(){
     return Array.from(map.entries())
   },[rows,projects])
 
+  const filteredGroups=useMemo(()=>{
+    const q=projectSearch.trim().toLowerCase()
+    if(!q)return groups
+    return groups.filter(([,group])=>
+      (group.project?.title||'Arquivos gerais').toLowerCase().includes(q)
+      || group.files.some((file:any)=>(file.name||'').toLowerCase().includes(q))
+    )
+  },[groups,projectSearch])
+
   const selected=projectId?groups.find(([id])=>id===projectId)?.[1]||null:null
 
   const selectedVersionGroups=useMemo(()=>{
@@ -79,6 +102,25 @@ export function FilesPage(){
       latest:versions.sort((a,b)=>(b.version_number||1)-(a.version_number||1))[0],
     }))
   },[selected])
+
+  const filteredVersionGroups=useMemo(()=>{
+    const q=fileSearch.trim().toLowerCase()
+    return selectedVersionGroups.filter(group=>{
+      const file=group.latest
+      const matchesSearch=!q||[
+        file.name,
+        file.custom_folder?.name,
+        file.mime_type,
+      ].filter(Boolean).join(' ').toLowerCase().includes(q)
+      const matchesType=fileType==='all'||fileKind(file)===fileType
+      const matchesReview=fileReview==='all'
+        ||(fileReview==='pending'&&file.review_status==='pending')
+        ||(fileReview==='approved'&&file.review_status==='approved')
+        ||(fileReview==='changes_requested'&&file.review_status==='changes_requested')
+        ||(fileReview==='none'&&!file.review_required)
+      return matchesSearch&&matchesType&&matchesReview
+    })
+  },[selectedVersionGroups,fileSearch,fileType,fileReview])
 
   async function uploadToProject(){
     if(!projectId||projectId==='general'||!uploadFiles.length)return
@@ -145,9 +187,10 @@ export function FilesPage(){
           <h2 className="text-sm font-semibold text-white">Projetos</h2>
           <p className="text-xs text-gray-500">Entre em uma pasta para ver somente os arquivos daquele projeto.</p>
         </div>
+        <input value={projectSearch} onChange={e=>setProjectSearch(e.target.value)} placeholder="Buscar projeto ou arquivo..." className="w-full min-h-11 px-4 rounded-xl bg-[#141416] border border-white/10 text-sm mb-4"/>
 
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
-          {groups.map(([id,group])=><button key={id} type="button" onClick={()=>{setProjectId(id);setVersionGroup(null);setUploadFiles([]);setUploadProgress(0)}} className="group text-left p-3 sm:p-4 min-h-[112px] rounded-2xl border border-white/8 bg-[#121214] hover:bg-[#171719] hover:border-white/15 transition-all">
+          {filteredGroups.map(([id,group])=><button key={id} type="button" onClick={()=>{setProjectId(id);setVersionGroup(null);setFileSearch('');setFileType('all');setFileReview('all');setUploadFiles([]);setUploadProgress(0)}} className="group text-left p-3 sm:p-4 min-h-[112px] rounded-2xl border border-white/8 bg-[#121214] hover:bg-[#171719] hover:border-white/15 transition-all">
             <div className="flex items-start gap-3">
               <div className="w-11 h-11 rounded-xl bg-[#E30613]/10 text-[#E30613] flex items-center justify-center shrink-0">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h6l2 2h8v10H4z"/><path d="M8 12h8"/></svg>
@@ -199,8 +242,27 @@ export function FilesPage(){
             </div>
             {uploading&&<div className="h-2 bg-white/10 rounded-full overflow-hidden mt-3"><div className="h-full bg-[#E30613] transition-[width]" style={{width:uploadProgress+'%'}}/></div>}
           </div>}
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
-            {selectedVersionGroups.map(group=>{
+          <div className="grid sm:grid-cols-3 gap-2 mb-4">
+            <input value={fileSearch} onChange={e=>setFileSearch(e.target.value)} placeholder="Buscar arquivo..." className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs"/>
+            <select value={fileType} onChange={e=>setFileType(e.target.value)} className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs">
+              <option value="all">Todos os formatos</option>
+              <option value="image">Imagens</option>
+              <option value="video">Vídeos</option>
+              <option value="audio">Áudios</option>
+              <option value="pdf">PDF</option>
+              <option value="other">Outros</option>
+            </select>
+            <select value={fileReview} onChange={e=>setFileReview(e.target.value)} className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs">
+              <option value="all">Todos os status</option>
+              <option value="pending">Aguardando aprovação</option>
+              <option value="approved">Aprovados</option>
+              <option value="changes_requested">Ajustes solicitados</option>
+              <option value="none">Sem aprovação</option>
+            </select>
+          </div>
+
+          {filteredVersionGroups.length===0?<div className="py-12 text-center text-sm text-gray-600 border border-dashed border-white/8 rounded-2xl">Nenhum arquivo corresponde aos filtros.</div>:<div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
+            {filteredVersionGroups.map(group=>{
               const file=group.latest
               const status=reviewLabel(file)
               return <div key={group.groupId} className="p-2.5 sm:p-3 min-h-[178px] rounded-xl bg-[#171719] border border-white/8">
@@ -223,7 +285,7 @@ export function FilesPage(){
                 </div>
               </div>
             })}
-          </div>
+          </div>}
         </div>
       </div>
     </div>}
