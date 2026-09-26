@@ -73,7 +73,7 @@ export const conversationsApi = {
   },
   async team(): Promise<ConversationTeamMember[]> {
     const { data,error }=await supabase.from('profiles')
-      .select('id,first_name,last_name,email,role,staff:staff_profiles(job_title,department,permissions,active)')
+      .select('id,first_name,last_name,email,role,staff:staff_profiles!staff_profiles_user_id_fkey(job_title,department,permissions,active)')
       .in('role',['admin','staff']).eq('status','active').order('first_name')
     if(error)throw error
     return (data||[]).map((row:any)=>({
