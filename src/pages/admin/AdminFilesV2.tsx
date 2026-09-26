@@ -4,6 +4,7 @@ import { fileManagementApi } from '../../api/fileManagement'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
+import { settingsApi } from '../../api/settings'
 
 const folderOptions=[
   ['received','01 - Arquivos recebidos'],
@@ -68,6 +69,7 @@ export function AdminFilesV2(){
   const [customFolder,setCustomFolder]=useState('')
   const [creatingFolder,setCreatingFolder]=useState(false)
   const [clientVisible,setClientVisible]=useState(false)
+  const [driveLimitGb,setDriveLimitGb]=useState(50)
   const [name,setName]=useState('')
   const [url,setUrl]=useState('')
   const [selectedFiles,setSelectedFiles]=useState<File[]>([])
@@ -91,7 +93,14 @@ export function AdminFilesV2(){
     }finally{setLoading(false)}
   }
 
-  useEffect(()=>{void load()},[])
+  useEffect(()=>{
+    void load()
+    settingsApi.appSettings().then(settings=>{
+      if(!settings)return
+      setClientVisible(settings.default_client_file_visibility)
+      setDriveLimitGb(Math.min(50,Math.max(1,settings.drive_upload_limit_gb||50)))
+    }).catch(()=>undefined)
+  },[])
 
   const customerProjects=useMemo(()=>projects.filter((p:any)=>p.customer_id===customer),[projects,customer])
   const selectedProject=customerProjects.find((p:any)=>p.id===project)
@@ -388,9 +397,9 @@ export function AdminFilesV2(){
         <label className="block rounded-2xl border border-dashed border-white/15 bg-white/[0.025] p-4 sm:p-5 hover:border-[#E30613]/50 transition-colors cursor-pointer">
           <input type="file" multiple onChange={e=>{
             const picked=Array.from(e.target.files||[])
-            const invalid=provider==='google_drive'?picked.find(item=>item.size>50*1024*1024*1024):null
+            const invalid=provider==='google_drive'?picked.find(item=>item.size>driveLimitGb*1024*1024*1024):null
             if(invalid){
-              toast('Cada arquivo do Google Drive pode ter até 50 GB.','error');e.currentTarget.value='';setSelectedFiles([]);return
+              toast('Cada arquivo do Google Drive pode ter até '+driveLimitGb+' GB.','error');e.currentTarget.value='';setSelectedFiles([]);return
             }
             setSelectedFiles(current=>{
               const merged=[...current,...picked]
@@ -404,7 +413,7 @@ export function AdminFilesV2(){
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold">{selectedFiles.length?selectedFiles.length+' arquivo(s) na fila':'Selecionar vários arquivos'}</p>
-              <p className="text-xs text-gray-500 mt-1">{provider==='google_drive'?'Seleção múltipla · até 50 GB por arquivo · somente Google Drive':'Você pode selecionar vários arquivos de uma vez'}</p>
+              <p className="text-xs text-gray-500 mt-1">{provider==='google_drive'?'Seleção múltipla · até '+driveLimitGb+' GB por arquivo · somente Google Drive':'Você pode selecionar vários arquivos de uma vez'}</p>
             </div>
           </div>
         </label>
@@ -417,7 +426,7 @@ export function AdminFilesV2(){
         </div>}
       </div>}
 
-      {provider==='google_drive'&&<p className="text-xs text-gray-500">Até 50 GB por arquivo no Google Drive. Os arquivos são enviados em fila, diretamente do navegador para o Drive, em partes de 16 MB.</p>}
+      {provider==='google_drive'&&<p className="text-xs text-gray-500">Até {driveLimitGb} GB por arquivo no Google Drive. Os arquivos são enviados em fila, diretamente do navegador para o Drive, em partes de 16 MB.</p>}
       {saving&&progress>0&&<div className="rounded-xl bg-black/20 border border-white/8 p-3"><div className="flex justify-between gap-3 text-xs text-gray-500"><span className="truncate">{currentFileName||'Enviando arquivos'}</span><span className="shrink-0">{progress}% · {completedFiles}/{selectedFiles.length}</span></div><div className="h-2 rounded bg-white/10 mt-2 overflow-hidden"><div className="h-2 rounded bg-[#E30613] transition-[width]" style={{width:progress+'%'}}/></div></div>}
       <Button type="submit" loading={saving} className="w-full sm:w-auto min-h-12">{provider==='google_drive'?(selectedFiles.length>1?'Enviar '+selectedFiles.length+' arquivos':'Enviar para o Google Drive'):'Salvar arquivo'}</Button>
     </form>

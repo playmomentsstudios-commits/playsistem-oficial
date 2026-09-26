@@ -4,6 +4,7 @@ import { portalApi } from '../../api/portal'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { rotulo,statusOrcamento } from '../../lib/labels.ptBR'
+import { settingsApi } from '../../api/settings'
 
 const money=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format((v||0)/100)
 
@@ -23,7 +24,15 @@ export function AdminQuotes(){
     setCustomers(clients.filter((c:any)=>c.status==='active'))
   }
 
-  useEffect(()=>{void load()},[])
+  useEffect(()=>{
+    void load()
+    settingsApi.appSettings().then(settings=>{
+      if(!settings)return
+      const date=new Date()
+      date.setDate(date.getDate()+settings.default_quote_valid_days)
+      setForm(current=>({...current,valid_until:date.toISOString().slice(0,10)}))
+    }).catch(()=>undefined)
+  },[])
 
   const filtered=useMemo(()=>rows.filter(q=>{
     const text=(q.quote_number+' '+q.title+' '+(q.customer?.first_name||'')+' '+(q.customer?.last_name||'')+' '+(q.customer?.email||'')).toLowerCase()

@@ -1,0 +1,147 @@
+import { useEffect,useState } from 'react'
+import { settingsApi,type AppSettings } from '../../api/settings'
+import { useToast } from '../../contexts/ToastContext'
+
+const DEFAULTS:AppSettings={
+  id:true,
+  business_name:'Play Moments',
+  currency:'BRL',
+  timezone:'America/Sao_Paulo',
+  default_project_priority:'medium',
+  default_quote_valid_days:7,
+  default_client_file_visibility:false,
+  drive_upload_limit_gb:50,
+  updated_at:'',
+  updated_by:null,
+}
+
+export function AdminSettings(){
+  const toast=useToast()
+  const [settings,setSettings]=useState<AppSettings>(DEFAULTS)
+  const [loading,setLoading]=useState(true)
+  const [saving,setSaving]=useState(false)
+
+  useEffect(()=>{
+    let active=true
+    settingsApi.appSettings()
+      .then(row=>{if(active&&row)setSettings(row)})
+      .catch(error=>toast(error.message||'Não foi possível carregar as configurações.','error'))
+      .finally(()=>{if(active)setLoading(false)})
+    return()=>{active=false}
+  },[])
+
+  async function save(){
+    try{
+      setSaving(true)
+      const saved=await settingsApi.saveAppSettings({
+        business_name:settings.business_name.trim()||'Play Moments',
+        currency:settings.currency,
+        timezone:settings.timezone,
+        default_project_priority:settings.default_project_priority,
+        default_quote_valid_days:Number(settings.default_quote_valid_days)||7,
+        default_client_file_visibility:settings.default_client_file_visibility,
+        drive_upload_limit_gb:Number(settings.drive_upload_limit_gb)||50,
+      })
+      setSettings(saved)
+      toast('Configurações administrativas salvas.','success')
+    }catch(error:any){toast(error.message||'Não foi possível salvar as configurações.','error')}
+    finally{setSaving(false)}
+  }
+
+  if(loading)return <div className="py-16 text-center text-sm text-gray-500">Carregando configurações...</div>
+
+  return <div className="max-w-5xl">
+    <div className="mb-6">
+      <p className="text-[11px] uppercase tracking-[0.18em] text-[#E30613] font-semibold">Sistema</p>
+      <h1 className="text-2xl font-bold mt-1">Configurações Administrativas</h1>
+      <p className="text-sm text-gray-500 mt-1">Defina padrões operacionais usados pelo painel.</p>
+    </div>
+
+    <div className="grid lg:grid-cols-2 gap-5">
+      <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
+        <h2 className="font-semibold">Negócio</h2>
+        <p className="text-xs text-gray-500 mt-1">Informações-base usadas nos módulos internos.</p>
+        <div className="space-y-4 mt-5">
+          <label className="block text-xs text-gray-500">Nome do negócio
+            <input value={settings.business_name} onChange={e=>setSettings({...settings,business_name:e.target.value})} className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
+          </label>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <label className="block text-xs text-gray-500">Moeda
+              <select value={settings.currency} onChange={e=>setSettings({...settings,currency:e.target.value})} className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10">
+                <option value="BRL">BRL — Real</option>
+              </select>
+            </label>
+            <label className="block text-xs text-gray-500">Fuso horário
+              <select value={settings.timezone} onChange={e=>setSettings({...settings,timezone:e.target.value})} className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10">
+                <option value="America/Sao_Paulo">Brasil — Brasília</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
+        <h2 className="font-semibold">Projetos e orçamentos</h2>
+        <p className="text-xs text-gray-500 mt-1">Valores usados como padrão ao criar novos registros.</p>
+        <div className="space-y-4 mt-5">
+          <label className="block text-xs text-gray-500">Prioridade padrão de projeto
+            <select value={settings.default_project_priority} onChange={e=>setSettings({...settings,default_project_priority:e.target.value as AppSettings['default_project_priority']})} className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10">
+              <option value="low">Baixa</option>
+              <option value="medium">Média</option>
+              <option value="high">Alta</option>
+              <option value="urgent">Urgente</option>
+            </select>
+          </label>
+          <label className="block text-xs text-gray-500">Validade padrão do orçamento
+            <div className="mt-1 flex items-center gap-2">
+              <input type="number" min={1} max={90} value={settings.default_quote_valid_days} onChange={e=>setSettings({...settings,default_quote_valid_days:Number(e.target.value)})} className="w-28 min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
+              <span className="text-xs text-gray-500">dias</span>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
+        <h2 className="font-semibold">Arquivos</h2>
+        <p className="text-xs text-gray-500 mt-1">Padrões da central de arquivos e Google Drive.</p>
+        <div className="space-y-4 mt-5">
+          <label className="flex items-center justify-between gap-4 p-3 rounded-xl bg-white/[0.035] border border-white/8 cursor-pointer">
+            <div><p className="text-sm font-medium">Novo arquivo visível ao cliente</p><p className="text-[10px] text-gray-500 mt-1">Usar visibilidade pública como padrão no upload administrativo.</p></div>
+            <input type="checkbox" checked={settings.default_client_file_visibility} onChange={e=>setSettings({...settings,default_client_file_visibility:e.target.checked})} className="accent-[#E30613]"/>
+          </label>
+          <label className="block text-xs text-gray-500">Limite operacional do Google Drive
+            <div className="mt-1 flex items-center gap-2">
+              <input type="number" min={1} max={50} value={settings.drive_upload_limit_gb} onChange={e=>setSettings({...settings,drive_upload_limit_gb:Number(e.target.value)})} className="w-28 min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
+              <span className="text-xs text-gray-500">GB por arquivo</span>
+            </div>
+            <p className="text-[10px] text-gray-600 mt-2">O backend continua limitado ao teto técnico de 50 GB por arquivo.</p>
+          </label>
+        </div>
+      </section>
+
+      <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
+        <h2 className="font-semibold">Segurança e gestão</h2>
+        <p className="text-xs text-gray-500 mt-1">Atalhos para áreas administrativas sensíveis.</p>
+        <div className="grid sm:grid-cols-2 gap-3 mt-5">
+          <a href="/admin/equipe" className="p-3 rounded-xl bg-white/[0.035] border border-white/8 hover:border-white/15">
+            <p className="text-sm font-medium">Colaboradores</p><p className="text-[10px] text-gray-500 mt-1">Funções e permissões</p>
+          </a>
+          <a href="/admin/auditoria" className="p-3 rounded-xl bg-white/[0.035] border border-white/8 hover:border-white/15">
+            <p className="text-sm font-medium">Auditoria</p><p className="text-[10px] text-gray-500 mt-1">Histórico de alterações</p>
+          </a>
+          <a href="/admin/relatorios" className="p-3 rounded-xl bg-white/[0.035] border border-white/8 hover:border-white/15">
+            <p className="text-sm font-medium">Relatórios</p><p className="text-[10px] text-gray-500 mt-1">Indicadores operacionais</p>
+          </a>
+          <a href="/admin/site" className="p-3 rounded-xl bg-white/[0.035] border border-white/8 hover:border-white/15">
+            <p className="text-sm font-medium">Site</p><p className="text-[10px] text-gray-500 mt-1">Conteúdo público</p>
+          </a>
+        </div>
+      </section>
+    </div>
+
+    <div className="mt-5 flex items-center gap-3">
+      <button disabled={saving} onClick={()=>void save()} className="min-h-11 px-5 rounded-xl bg-[#E30613] text-white text-sm font-semibold disabled:opacity-40">{saving?'Salvando...':'Salvar configurações'}</button>
+      {settings.updated_at&&<span className="text-[10px] text-gray-600">Última atualização: {new Date(settings.updated_at).toLocaleString('pt-BR')}</span>}
+    </div>
+  </div>
+}

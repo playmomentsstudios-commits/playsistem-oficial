@@ -36,6 +36,7 @@ import { CustomerServicesPage } from './pages/customer/CustomerServicesPage'
 import { AnnouncementsPage } from './pages/customer/AnnouncementsPage'
 import { OrderDetailPage } from './pages/customer/OrderDetailPage'
 import { QuoteDetailPage } from './pages/customer/QuoteDetailPage'
+import { CustomerSettings } from './pages/customer/CustomerSettings'
 
 // Admin panel
 import { AdminDashboard } from './pages/admin/AdminDashboard'
@@ -62,6 +63,7 @@ import { AdminAboutPortfolio } from './pages/admin/AdminAboutPortfolio'
 import { AdminCRM } from './pages/admin/AdminCRM'
 import { AdminReports } from './pages/admin/AdminReports'
 import { AdminAudit } from './pages/admin/AdminAudit'
+import { AdminSettings } from './pages/admin/AdminSettings'
 import { AdminPermissionGate } from './components/admin/AdminPermissionGate'
 
 // Placeholder for unbuilt pages
@@ -130,7 +132,7 @@ export default function AppV2() {
                 <Route path="projetos" element={<ProjectsPage />} />
                 <Route path="projetos/:id" element={<ProjectsPage />} />
                 <Route path="comunicados" element={<AnnouncementsPage />} />
-                <Route path="configuracoes" element={<PlaceholderPage title="Configurações da Conta" />} />
+                <Route path="configuracoes" element={<CustomerSettings />} />
               </Route>
 
               {/* Admin panel */}
@@ -158,7 +160,7 @@ export default function AppV2() {
                 <Route path="comunicados" element={<AdminPermissionGate permission="community.manage"><AdminAnnouncements /></AdminPermissionGate>} />
                 <Route path="equipe" element={<AdminPermissionGate adminOnly><AdminTeam /></AdminPermissionGate>} />
                 <Route path="site" element={<AdminPermissionGate permission="site.manage"><AdminSiteSettings /></AdminPermissionGate>} />
-                <Route path="configuracoes" element={<AdminPermissionGate adminOnly><PlaceholderPage title="Configurações (Admin)" /></AdminPermissionGate>} />
+                <Route path="configuracoes" element={<AdminPermissionGate adminOnly><AdminSettings /></AdminPermissionGate>} />
                 <Route path="auditoria" element={<AdminPermissionGate adminOnly><AdminAudit /></AdminPermissionGate>} />
                 <Route path="relatorios" element={<AdminPermissionGate permission="reports.view"><AdminReports /></AdminPermissionGate>} />
               </Route>

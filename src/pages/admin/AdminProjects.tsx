@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
 import { prioridade,rotulo,statusProjeto,tipoProjeto } from '../../lib/labels.ptBR'
+import { settingsApi } from '../../api/settings'
 
 const tipos=['internal','product','service','website','design','audiovisual','other']
 const prioridades=['low','medium','high','urgent']
@@ -44,7 +45,12 @@ export function AdminProjects(){
     setLoading(false)
   }
 
-  useEffect(()=>{void load()},[])
+  useEffect(()=>{
+    void load()
+    settingsApi.appSettings().then(settings=>{
+      if(settings)setForm(current=>({...current,priority:settings.default_project_priority}))
+    }).catch(()=>undefined)
+  },[])
 
   const filtered=useMemo(()=>rows.filter(project=>{
     const matchesText=!search.trim()||(project.title||'').toLowerCase().includes(search.toLowerCase())
