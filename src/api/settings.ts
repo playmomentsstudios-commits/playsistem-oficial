@@ -4,6 +4,12 @@ export type UserPreferences={
   user_id:string
   sidebar_expanded:boolean
   floating_chat_enabled:boolean
+  notify_portal:boolean
+  notify_email:boolean
+  notify_project_updates:boolean
+  notify_file_updates:boolean
+  notify_commercial_updates:boolean
+  profile_contact_visible_to_team:boolean
   updated_at:string
 }
 
@@ -20,6 +26,8 @@ export type AppSettings={
   updated_by:string|null
 }
 
+type PreferenceChanges=Partial<Omit<UserPreferences,'user_id'|'updated_at'>>
+
 export const settingsApi={
   userPreferences:async():Promise<UserPreferences|null>=>{
     const {data:{user}}=await supabase.auth.getUser()
@@ -30,7 +38,7 @@ export const settingsApi={
     return data as UserPreferences|null
   },
 
-  saveUserPreferences:async(values:Partial<Pick<UserPreferences,'sidebar_expanded'|'floating_chat_enabled'>>)=>{
+  saveUserPreferences:async(values:PreferenceChanges)=>{
     const {data:{user}}=await supabase.auth.getUser()
     if(!user)throw new Error('Sessão não encontrada.')
     const {data,error}=await supabase.from('user_preferences')
