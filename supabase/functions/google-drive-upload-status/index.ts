@@ -1,4 +1,4 @@
-import { corsHeaders, getDriveAccessToken, json, requireUser } from "../_shared/googleDrive.ts";
+import { corsHeaders, getDriveAccessToken, hasPermission, json, requireUser } from "../_shared/googleDrive.ts";
 
 function isAllowedUploadUrl(value:string) {
   try {
@@ -34,8 +34,8 @@ Deno.serve(async (req) => {
       .single();
     if (projectError || !project) throw new Error("Project not found");
 
-    const staff = ["admin","staff"].includes(ctx.role);
-    if (!staff && project.customer_id !== ctx.userId) throw new Error("Forbidden");
+    const staffAllowed = ctx.role === "admin" || hasPermission(ctx, "files.manage");
+    if (!staffAllowed && project.customer_id !== ctx.userId) throw new Error("Forbidden");
 
     const token = await getDriveAccessToken();
     const response = await fetch(uploadUrl, {
