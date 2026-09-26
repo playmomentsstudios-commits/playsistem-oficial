@@ -53,6 +53,9 @@ export function AdminFilesV2(){
   const [project,setProject]=useState('')
   const [task,setTask]=useState('')
   const [folderKind,setFolderKind]=useState('received')
+  const [customFolders,setCustomFolders]=useState<any[]>([])
+  const [customFolder,setCustomFolder]=useState('')
+  const [creatingFolder,setCreatingFolder]=useState(false)
   const [clientVisible,setClientVisible]=useState(false)
   const [name,setName]=useState('')
   const [url,setUrl]=useState('')
@@ -76,6 +79,15 @@ export function AdminFilesV2(){
   const customerProjects=useMemo(()=>projects.filter((p:any)=>p.customer_id===customer),[projects,customer])
   const selectedProject=customerProjects.find((p:any)=>p.id===project)
   const tasks=selectedProject?.tasks||[]
+  const foldersForKind=customFolders.filter((item:any)=>item.parent_kind===folderKind)
+
+  useEffect(()=>{
+    setCustomFolder('')
+    if(!project){setCustomFolders([]);return}
+    portalApi.customDriveFolders(project)
+      .then(setCustomFolders)
+      .catch(()=>setCustomFolders([]))
+  },[project])
   const recent=files.slice(0,8)
 
   const grouped=useMemo(()=>{
@@ -107,6 +119,26 @@ export function AdminFilesV2(){
     finally{setTesting(false)}
   }
 
+  async function createFolder(){
+    if(!project)return toast('Selecione um projeto primeiro.','error')
+    const folderName=window.prompt('Nome da nova pasta dentro de "'+(folderOptions.find(([value])=>value===folderKind)?.[1]||folderKind)+'":')
+    if(!folderName?.trim())return
+    try{
+      setCreatingFolder(true)
+      const folder=await portalApi.createCustomDriveFolder({
+        project_id:project,
+        parent_kind:folderKind,
+        name:folderName.trim(),
+        client_visible:clientVisible,
+      })
+      const rows=await portalApi.customDriveFolders(project)
+      setCustomFolders(rows)
+      setCustomFolder(folder.id)
+      toast('Pasta criada no Google Drive.','success')
+    }catch(error:any){toast(error.message||'Não foi possível criar a pasta.','error')}
+    finally{setCreatingFolder(false)}
+  }
+
   async function save(e:React.FormEvent){
     e.preventDefault()
     if(!user||!customer)return
@@ -122,6 +154,7 @@ export function AdminFilesV2(){
             project_id:project,
             task_id:task||null,
             folder_kind:folderKind,
+            custom_folder_id:customFolder||null,
             client_visible:clientVisible,
           },current,value=>setProgress(Math.round(((index+(value/100))/selectedFiles.length)*100)))
           setCompletedFiles(index+1)
@@ -174,6 +207,14 @@ export function AdminFilesV2(){
     try{
       await fileManagementApi.move(row.id,kind)
       toast('Arquivo movido no Google Drive.','success')
+      await load()
+    }catch(error:any){toast(error.message||'Não foi possível mover o arquivo.','error')}
+  }
+
+  async function moveToCustom(row:any,folderId:string){
+    try{
+      await fileManagementApi.moveToCustom(row.id,folderId)
+      toast('Arquivo movido para a pasta personalizada.','success')
       await load()
     }catch(error:any){toast(error.message||'Não foi possível mover o arquivo.','error')}
   }
@@ -241,7 +282,7 @@ export function AdminFilesV2(){
           </select>
         </label>
         <label className="text-xs text-gray-500">Projeto
-          <select value={project} onChange={e=>{setProject(e.target.value);setTask('')}} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+          <select value={project} onChange={e=>{setProject(e.target.value);setTask('');setCustomFolder('')}} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
             <option value="">Sem projeto</option>
             {customerProjects.map((p:any)=><option key={p.id} value={p.id}>{p.title}</option>)}
           </select>
@@ -256,7 +297,7 @@ export function AdminFilesV2(){
           </select>
         </label>
         {provider==='google_drive'&&<label className="text-xs text-gray-500">Pasta do projeto
-          <select value={folderKind} onChange={e=>setFolderKind(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+          <select value={folderKind} onChange={e=>{setFolderKind(e.target.value);setCustomFolder('')}} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
             {folderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
           </select>
         </label>}
@@ -267,6 +308,16 @@ export function AdminFilesV2(){
           </select>
         </label>
       </div>
+
+      {provider==='google_drive'&&project&&<div className="grid md:grid-cols-[1fr_auto] gap-3 items-end">
+        <label className="text-xs text-gray-500">Subpasta personalizada
+          <select value={customFolder} onChange={e=>setCustomFolder(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+            <option value="">Sem subpasta — usar {folderOptions.find(([value])=>value===folderKind)?.[1]||'pasta padrão'}</option>
+            {foldersForKind.map((folder:any)=><option key={folder.id} value={folder.id}>📁 {folder.name}</option>)}
+          </select>
+        </label>
+        <button type="button" disabled={creatingFolder} onClick={()=>void createFolder()} className="min-h-10 px-3 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold disabled:opacity-50">+ Criar pasta aqui</button>
+      </div>}
 
       {provider==='external'?<div className="grid md:grid-cols-2 gap-3">
         <input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome do arquivo ou material" className="min-h-11 px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
