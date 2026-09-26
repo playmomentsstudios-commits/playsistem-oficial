@@ -81,6 +81,38 @@ Deno.serve(async (req) => {
       return json({ ok: true, name: nextName });
     }
 
+    if (action === "publish") {
+      if (file.storage_provider !== "google_drive" || !file.drive_file_id) {
+        throw new Error("Only Google Drive files can be published");
+      }
+
+      const token = await getDriveAccessToken();
+      const response = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.drive_file_id)}/permissions?sendNotificationEmail=false`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ type: "anyone", role: "reader" }),
+        },
+      );
+
+      if (!response.ok && response.status !== 409) {
+        const detail = await response.text();
+        throw new Error(`Could not publish Drive file: ${response.status} ${detail}`);
+      }
+
+      const { error: updateError } = await ctx.db
+        .from("client_files")
+        .update({ client_visible: true })
+        .eq("id", fileId);
+      if (updateError) throw updateError;
+
+      return json({ ok: true });
+    }
+
     if (action === "move") {
       const folderKind = String(body.folder_kind || "");
       if (file.storage_provider !== "google_drive" || !file.drive_file_id || !file.project_id) {
