@@ -399,7 +399,7 @@ export function AdminFilesV2(){
             const picked=Array.from(e.target.files||[])
             const invalid=provider==='google_drive'?picked.find(item=>item.size>driveLimitGb*1024*1024*1024):null
             if(invalid){
-              toast('Cada arquivo do Google Drive pode ter até ${driveLimitGb} GB.','error');e.currentTarget.value='';setSelectedFiles([]);return
+              toast('Cada arquivo do Google Drive pode ter até '+driveLimitGb+' GB.','error');e.currentTarget.value='';setSelectedFiles([]);return
             }
             setSelectedFiles(current=>{
               const merged=[...current,...picked]
@@ -413,7 +413,7 @@ export function AdminFilesV2(){
             </div>
             <div className="min-w-0">
               <p className="text-sm font-semibold">{selectedFiles.length?selectedFiles.length+' arquivo(s) na fila':'Selecionar vários arquivos'}</p>
-              <p className="text-xs text-gray-500 mt-1">{provider==='google_drive'?'Seleção múltipla · até ${driveLimitGb} GB por arquivo · somente Google Drive':'Você pode selecionar vários arquivos de uma vez'}</p>
+              <p className="text-xs text-gray-500 mt-1">{provider==='google_drive'?'Seleção múltipla · até '+driveLimitGb+' GB por arquivo · somente Google Drive':'Você pode selecionar vários arquivos de uma vez'}</p>
             </div>
           </div>
         </label>
@@ -426,7 +426,7 @@ export function AdminFilesV2(){
         </div>}
       </div>}
 
-      {provider==='google_drive'&&<p className="text-xs text-gray-500">Até ${driveLimitGb} GB por arquivo no Google Drive. Os arquivos são enviados em fila, diretamente do navegador para o Drive, em partes de 16 MB.</p>}
+      {provider==='google_drive'&&<p className="text-xs text-gray-500">Até {driveLimitGb} GB por arquivo no Google Drive. Os arquivos são enviados em fila, diretamente do navegador para o Drive, em partes de 16 MB.</p>}
       {saving&&progress>0&&<div className="rounded-xl bg-black/20 border border-white/8 p-3"><div className="flex justify-between gap-3 text-xs text-gray-500"><span className="truncate">{currentFileName||'Enviando arquivos'}</span><span className="shrink-0">{progress}% · {completedFiles}/{selectedFiles.length}</span></div><div className="h-2 rounded bg-white/10 mt-2 overflow-hidden"><div className="h-2 rounded bg-[#E30613] transition-[width]" style={{width:progress+'%'}}/></div></div>}
       <Button type="submit" loading={saving} className="w-full sm:w-auto min-h-12">{provider==='google_drive'?(selectedFiles.length>1?'Enviar '+selectedFiles.length+' arquivos':'Enviar para o Google Drive'):'Salvar arquivo'}</Button>
     </form>
