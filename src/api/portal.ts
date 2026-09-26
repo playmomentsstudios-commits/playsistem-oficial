@@ -168,7 +168,7 @@ export const portalApi = {
   },
   teamMembers: async () => {
     const { data,error } = await supabase.from('profiles')
-      .select('id,email,first_name,last_name,role,status,created_at,staff:staff_profiles(user_id,job_title,department,permissions,active,color,updated_at)')
+      .select('id,email,first_name,last_name,role,status,created_at,staff:staff_profiles!staff_profiles_user_id_fkey(user_id,job_title,department,permissions,active,color,updated_at)')
       .in('role',['admin','staff'])
       .order('first_name')
     if(error) throw error
