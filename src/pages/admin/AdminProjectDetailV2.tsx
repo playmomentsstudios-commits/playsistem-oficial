@@ -58,6 +58,9 @@ export function AdminProjectDetailV2(){
   const [fileProgress,setFileProgress]=useState(0)
   const [fileProgressName,setFileProgressName]=useState('')
   const [fileMenu,setFileMenu]=useState<string|null>(null)
+  const [reviewHistoryFile,setReviewHistoryFile]=useState<any>(null)
+  const [reviewHistory,setReviewHistory]=useState<any[]>([])
+  const [loadingReviews,setLoadingReviews]=useState(false)
   const [taskForm,setTaskForm]=useState({title:'',stage_id:'',assigned_to:'',priority:'medium',due_date:'',client_visible:true})
 
   const load=async()=>{
@@ -223,6 +226,24 @@ export function AdminProjectDetailV2(){
     return null
   }
 
+  async function showReviewHistory(file:any){
+    try{
+      setReviewHistoryFile(file)
+      setLoadingReviews(true)
+      setFileMenu(null)
+      setReviewHistory(await portalApi.fileReviews(file.id))
+    }catch(error:any){toast(error.message||'Não foi possível carregar o histórico de aprovação.','error')}
+    finally{setLoadingReviews(false)}
+  }
+
+  function reviewActionLabel(action:string){
+    if(action==='requested')return 'Aprovação solicitada'
+    if(action==='approved')return 'Aprovado pelo cliente'
+    if(action==='changes_requested')return 'Cliente solicitou ajustes'
+    if(action==='cancelled')return 'Solicitação cancelada'
+    return action
+  }
+
   async function deleteProjectFile(file:any){
     if(!window.confirm('Excluir "'+file.name+'"?'))return
     try{
@@ -362,6 +383,7 @@ export function AdminProjectDetailV2(){
                     {!file.review_required&&<button type="button" onClick={()=>void requestReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-[#E30613]/10 text-[#ff5d68] text-xs text-left">Solicitar aprovação do cliente</button>}
                     {file.review_required&&file.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-white/[0.05] text-gray-300 text-xs text-left">Cancelar solicitação de aprovação</button>}
                     {file.review_required&&['approved','changes_requested'].includes(file.review_status)&&<button type="button" onClick={()=>void requestReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-white/[0.05] text-gray-300 text-xs text-left">Solicitar nova avaliação</button>}
+                    {file.review_required&&<button type="button" onClick={()=>void showReviewHistory(file)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-gray-400 text-xs text-left">Ver histórico e comentários</button>}
                   </div>
                   <label className="block text-[10px] text-gray-500">Tarefa
                     <select value={file.task_id||''} onChange={async e=>{await portalApi.assignClientFileTask(file.id,e.target.value||null);setFileMenu(null);await load()}} className="mt-1 w-full px-2 py-1.5 rounded-lg bg-black border border-white/10 text-xs">
@@ -441,5 +463,29 @@ export function AdminProjectDetailV2(){
         </div>
       })}</div>
     </section>
+  {reviewHistoryFile&&<div className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4" onMouseDown={e=>{if(e.currentTarget===e.target)setReviewHistoryFile(null)}}>
+    <div className="w-full max-w-xl max-h-[80vh] overflow-hidden rounded-2xl bg-[#111113] border border-white/10 shadow-2xl">
+      <div className="h-14 px-4 border-b border-white/10 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-semibold text-sm truncate">Histórico de aprovação · {reviewHistoryFile.name}</p>
+          <p className="text-[10px] text-gray-500">Versão {reviewHistoryFile.version_number||1}</p>
+        </div>
+        <button onClick={()=>setReviewHistoryFile(null)} className="w-9 h-9 rounded-lg bg-white/[0.05]">×</button>
+      </div>
+      <div className="p-4 overflow-y-auto max-h-[calc(80vh-56px)]">
+        {loadingReviews?<p className="text-sm text-gray-500">Carregando...</p>:reviewHistory.length===0?<p className="text-sm text-gray-500">Nenhum registro ainda.</p>:<div className="space-y-3">
+          {reviewHistory.map(item=><div key={item.id} className="p-3 rounded-xl bg-white/[0.035] border border-white/8">
+            <div className="flex justify-between gap-3">
+              <p className="text-sm font-semibold">{reviewActionLabel(item.action)}</p>
+              <span className="text-[10px] text-gray-600 shrink-0">{new Date(item.created_at).toLocaleString('pt-BR')}</span>
+            </div>
+            {item.comment&&<p className="text-sm text-gray-300 mt-2 whitespace-pre-wrap">{item.comment}</p>}
+            <p className="text-[10px] text-gray-600 mt-2">{item.author?[item.author.first_name,item.author.last_name].filter(Boolean).join(' ')||item.author.email:'Sistema'}</p>
+          </div>)}
+        </div>}
+      </div>
+    </div>
+  </div>}
+
   </div>
 }
