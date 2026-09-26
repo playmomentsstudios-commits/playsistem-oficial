@@ -253,14 +253,18 @@ export function AdminFilesV2(){
             if(invalid){
               toast('Cada arquivo do Google Drive pode ter até 50 GB.','error');e.currentTarget.value='';setSelectedFiles([]);return
             }
-            setSelectedFiles(picked)
+            setSelectedFiles(current=>{
+              const merged=[...current,...picked]
+              return merged.filter((item,index,list)=>list.findIndex(other=>other.name===item.name&&other.size===item.size&&other.lastModified===item.lastModified)===index)
+            })
+            e.currentTarget.value=''
           }} className="sr-only"/>
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-[#E30613]/10 text-[#E30613] flex items-center justify-center shrink-0">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 16V4m0 0-4 4m4-4 4 4M5 14v5h14v-5"/></svg>
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-semibold">{selectedFiles.length?selectedFiles.length+' arquivo(s) selecionado(s)':'Selecionar vários arquivos'}</p>
+              <p className="text-sm font-semibold">{selectedFiles.length?selectedFiles.length+' arquivo(s) na fila':'Selecionar vários arquivos'}</p>
               <p className="text-xs text-gray-500 mt-1">{provider==='google_drive'?'Seleção múltipla · até 50 GB por arquivo · somente Google Drive':'Você pode selecionar vários arquivos de uma vez'}</p>
             </div>
           </div>
