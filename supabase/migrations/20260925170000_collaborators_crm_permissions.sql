@@ -601,3 +601,210 @@ begin
   return new;
 end;
 $$;
+
+
+-- Keep project submodules aligned with project permissions.
+drop policy if exists project_stages_read on public.project_stages;
+create policy project_stages_read
+on public.project_stages for select to authenticated
+using (
+  public.current_user_is_admin()
+  or public.current_user_has_permission('projects.view')
+  or public.current_user_has_permission('projects.manage')
+  or (
+    client_visible
+    and exists(select 1 from public.projects p where p.id=project_id and p.customer_id=auth.uid())
+  )
+);
+
+drop policy if exists project_stages_staff_write on public.project_stages;
+create policy project_stages_staff_write
+on public.project_stages for all to authenticated
+using (public.current_user_is_admin() or public.current_user_has_permission('projects.manage'))
+with check (public.current_user_is_admin() or public.current_user_has_permission('projects.manage'));
+
+drop policy if exists tasks_read on public.tasks;
+create policy tasks_read
+on public.tasks for select to authenticated
+using (
+  public.current_user_is_admin()
+  or public.current_user_has_permission('projects.view')
+  or public.current_user_has_permission('projects.manage')
+  or (
+    client_visible
+    and exists(select 1 from public.projects p where p.id=project_id and p.customer_id=auth.uid())
+  )
+);
+
+drop policy if exists tasks_staff_write on public.tasks;
+create policy tasks_staff_write
+on public.tasks for all to authenticated
+using (public.current_user_is_admin() or public.current_user_has_permission('projects.manage'))
+with check (public.current_user_is_admin() or public.current_user_has_permission('projects.manage'));
+
+drop policy if exists checklist_staff_write on public.task_checklist_items;
+create policy checklist_staff_write
+on public.task_checklist_items for all to authenticated
+using (public.current_user_is_admin() or public.current_user_has_permission('projects.manage'))
+with check (public.current_user_is_admin() or public.current_user_has_permission('projects.manage'));
+
+drop policy if exists task_links_staff_write on public.task_links;
+create policy task_links_staff_write
+on public.task_links for all to authenticated
+using (public.current_user_is_admin() or public.current_user_has_permission('projects.manage'))
+with check (public.current_user_is_admin() or public.current_user_has_permission('projects.manage'));
+
+-- Payment receipt access follows finance permissions.
+drop policy if exists payment_receipts_read on public.payment_receipts;
+create policy payment_receipts_read
+on public.payment_receipts for select to authenticated
+using (
+  customer_id=auth.uid()
+  or public.current_user_is_admin()
+  or public.current_user_has_permission('payments.view')
+  or public.current_user_has_permission('payments.manage')
+);
+
+drop policy if exists payment_receipts_staff_update on public.payment_receipts;
+create policy payment_receipts_staff_update
+on public.payment_receipts for update to authenticated
+using (public.current_user_is_admin() or public.current_user_has_permission('payments.manage'))
+with check (public.current_user_is_admin() or public.current_user_has_permission('payments.manage'));
+
+-- Storage access must follow the same module permissions.
+drop policy if exists client_file_objects_staff on storage.objects;
+create policy client_file_objects_staff
+on storage.objects for all to authenticated
+using (
+  bucket_id='client-files'
+  and (public.current_user_is_admin() or public.current_user_has_permission('files.manage'))
+)
+with check (
+  bucket_id='client-files'
+  and (public.current_user_is_admin() or public.current_user_has_permission('files.manage'))
+);
+
+drop policy if exists product_image_objects_staff_insert on storage.objects;
+create policy product_image_objects_staff_insert
+on storage.objects for insert to authenticated
+with check (
+  bucket_id='product-images'
+  and (public.current_user_is_admin() or public.current_user_has_permission('catalog.manage'))
+);
+
+drop policy if exists product_image_objects_staff_update on storage.objects;
+create policy product_image_objects_staff_update
+on storage.objects for update to authenticated
+using (
+  bucket_id='product-images'
+  and (public.current_user_is_admin() or public.current_user_has_permission('catalog.manage'))
+)
+with check (
+  bucket_id='product-images'
+  and (public.current_user_is_admin() or public.current_user_has_permission('catalog.manage'))
+);
+
+drop policy if exists product_image_objects_staff_delete on storage.objects;
+create policy product_image_objects_staff_delete
+on storage.objects for delete to authenticated
+using (
+  bucket_id='product-images'
+  and (public.current_user_is_admin() or public.current_user_has_permission('catalog.manage'))
+);
+
+-- Per-user read state obeys the same CRM assignment model.
+drop policy if exists conversation_reads_own on public.conversation_reads;
+create policy conversation_reads_own
+on public.conversation_reads
+for all to authenticated
+using (user_id=auth.uid())
+with check (
+  user_id=auth.uid()
+  and exists(
+    select 1 from public.conversations c
+    where c.id=conversation_id
+      and (
+        (c.customer_id=auth.uid() and public.current_user_is_active_customer())
+        or public.current_user_is_admin()
+        or public.current_user_has_permission('conversations.view_all')
+        or (
+          c.assigned_to=auth.uid()
+          and public.current_user_has_permission('conversations.access')
+        )
+      )
+  )
+);
+
+create or replace function public.mark_conversation_read_v2(p_conversation_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path=public
+as $$
+begin
+  if not exists(
+    select 1
+    from public.conversations c
+    where c.id=p_conversation_id
+      and (
+        (c.customer_id=auth.uid() and public.current_user_is_active_customer())
+        or public.current_user_is_admin()
+        or public.current_user_has_permission('conversations.view_all')
+        or (
+          c.assigned_to=auth.uid()
+          and public.current_user_has_permission('conversations.access')
+        )
+      )
+  ) then
+    raise exception 'Conversation access denied' using errcode='42501';
+  end if;
+
+  insert into public.conversation_reads(conversation_id,user_id,last_read_at)
+  values(p_conversation_id,auth.uid(),now())
+  on conflict(conversation_id,user_id)
+  do update set last_read_at=excluded.last_read_at;
+end;
+$$;
+
+-- When a collaborator is removed from staff, disable the collaborator profile too.
+create or replace function public.admin_set_member_role(
+  p_user_id uuid,
+  p_role text
+)
+returns void
+language plpgsql
+security definer
+set search_path=public
+as $$
+declare
+  caller_role text;
+begin
+  select role into caller_role
+  from public.profiles
+  where id=auth.uid() and status='active';
+
+  if caller_role<>'admin' then
+    raise exception 'Administrator access required' using errcode='42501';
+  end if;
+
+  if p_role not in ('customer','staff','admin') then
+    raise exception 'Invalid role' using errcode='22023';
+  end if;
+
+  if p_user_id=auth.uid() and p_role<>'admin' then
+    raise exception 'You cannot remove your own administrator role' using errcode='22023';
+  end if;
+
+  update public.profiles set role=p_role where id=p_user_id;
+  if not found then raise exception 'User not found' using errcode='P0002'; end if;
+
+  if p_role='customer' then
+    update public.staff_profiles set active=false,updated_by=auth.uid(),updated_at=now()
+    where user_id=p_user_id;
+  elsif p_role='staff' then
+    insert into public.staff_profiles(user_id,job_title,department,permissions,active,updated_by)
+    values(p_user_id,'Colaborador','custom','{}'::text[],true,auth.uid())
+    on conflict(user_id) do update set active=true,updated_by=auth.uid(),updated_at=now();
+  end if;
+end;
+$$;
