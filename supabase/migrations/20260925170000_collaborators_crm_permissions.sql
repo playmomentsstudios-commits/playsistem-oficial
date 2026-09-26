@@ -1019,3 +1019,78 @@ begin
   );
 end;
 $$;
+
+
+-- Remaining administrative content follows module permissions.
+drop policy if exists payment_settings_staff_write on public.payment_settings;
+create policy payment_settings_staff_write
+on public.payment_settings for all to authenticated
+using (public.current_user_is_admin() or public.current_user_has_permission('payments.manage'))
+with check (public.current_user_is_admin() or public.current_user_has_permission('payments.manage'));
+
+drop policy if exists loyalty_settings_staff_write on public.loyalty_settings;
+create policy loyalty_settings_staff_write
+on public.loyalty_settings for all to authenticated
+using (public.current_user_is_admin() or public.current_user_has_permission('payments.manage'))
+with check (public.current_user_is_admin() or public.current_user_has_permission('payments.manage'));
+
+drop policy if exists customer_status_history_staff_read on public.customer_status_history;
+create policy customer_status_history_staff_read
+on public.customer_status_history for select to authenticated
+using (
+  public.current_user_is_admin()
+  or public.current_user_has_permission('customers.view')
+  or public.current_user_has_permission('customers.manage')
+);
+
+drop policy if exists announcements_staff_write on public.announcements;
+create policy announcements_staff_write
+on public.announcements for all to authenticated
+using (public.current_user_is_admin() or public.current_user_has_permission('community.manage'))
+with check (public.current_user_is_admin() or public.current_user_has_permission('community.manage'));
+
+drop policy if exists "staff manage site profile" on public.site_profile;
+create policy "staff manage site profile"
+on public.site_profile for all to authenticated
+using (public.current_user_is_admin() or public.current_user_has_permission('site.manage'))
+with check (public.current_user_is_admin() or public.current_user_has_permission('site.manage'));
+
+drop policy if exists "staff manage portfolio categories" on public.portfolio_categories;
+create policy "staff manage portfolio categories"
+on public.portfolio_categories for all to authenticated
+using (public.current_user_is_admin() or public.current_user_has_permission('site.manage'))
+with check (public.current_user_is_admin() or public.current_user_has_permission('site.manage'));
+
+drop policy if exists "staff manage portfolio items" on public.portfolio_items;
+create policy "staff manage portfolio items"
+on public.portfolio_items for all to authenticated
+using (public.current_user_is_admin() or public.current_user_has_permission('site.manage'))
+with check (public.current_user_is_admin() or public.current_user_has_permission('site.manage'));
+
+drop policy if exists "staff insert site assets" on storage.objects;
+create policy "staff insert site assets"
+on storage.objects for insert to authenticated
+with check (
+  bucket_id='site-assets'
+  and (public.current_user_is_admin() or public.current_user_has_permission('site.manage'))
+);
+
+drop policy if exists "staff update site assets" on storage.objects;
+create policy "staff update site assets"
+on storage.objects for update to authenticated
+using (
+  bucket_id='site-assets'
+  and (public.current_user_is_admin() or public.current_user_has_permission('site.manage'))
+)
+with check (
+  bucket_id='site-assets'
+  and (public.current_user_is_admin() or public.current_user_has_permission('site.manage'))
+);
+
+drop policy if exists "staff delete site assets" on storage.objects;
+create policy "staff delete site assets"
+on storage.objects for delete to authenticated
+using (
+  bucket_id='site-assets'
+  and (public.current_user_is_admin() or public.current_user_has_permission('site.manage'))
+);
