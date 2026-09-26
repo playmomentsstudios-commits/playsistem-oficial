@@ -38,6 +38,17 @@ function fileIcon(row:any){
   return '📎'
 }
 
+function fileKind(row:any){
+  const type=(row.mime_type||row.file_type||'').toLowerCase()
+  const ext=extension(row.name).toLowerCase()
+  if(type.startsWith('video/')||['mov','mp4','mkv','avi','webm'].includes(ext))return 'video'
+  if(type.startsWith('image/')||['jpg','jpeg','png','webp','avif','gif'].includes(ext))return 'image'
+  if(type.startsWith('audio/')||['mp3','wav','aac','flac','m4a'].includes(ext))return 'audio'
+  if(type.includes('pdf')||ext==='pdf')return 'pdf'
+  if(type.includes('zip')||['zip','rar','7z'].includes(ext))return 'archive'
+  return 'other'
+}
+
 export function AdminFilesV2(){
   const {user}=useAuth()
   const toast=useToast()
@@ -65,6 +76,11 @@ export function AdminFilesV2(){
   const [libraryCustomer,setLibraryCustomer]=useState<string|null>(null)
   const [libraryProject,setLibraryProject]=useState<string|null>(null)
   const [libraryCustomFolders,setLibraryCustomFolders]=useState<any[]>([])
+  const [librarySearch,setLibrarySearch]=useState('')
+  const [libraryType,setLibraryType]=useState('all')
+  const [libraryReview,setLibraryReview]=useState('all')
+  const [libraryFolder,setLibraryFolder]=useState('all')
+  const [customerSearch,setCustomerSearch]=useState('')
   const [menuFile,setMenuFile]=useState<string|null>(null)
 
   const load=async()=>{
@@ -110,6 +126,43 @@ export function AdminFilesV2(){
   const selectedLibraryProject=selectedLibraryGroup&&libraryProject
     ? selectedLibraryGroup.projects.get(libraryProject)||null
     : null
+
+  const filteredGrouped=useMemo(()=>grouped.filter(([,group])=>{
+    if(!customerSearch.trim())return true
+    const q=customerSearch.trim().toLowerCase()
+    const customerText=[
+      group.customer?.first_name,
+      group.customer?.last_name,
+      group.customer?.email,
+    ].filter(Boolean).join(' ').toLowerCase()
+    if(customerText.includes(q))return true
+    return Array.from(group.projects.values()).some(item=>
+      (item.project?.title||'').toLowerCase().includes(q)
+      || item.files.some((file:any)=>(file.name||'').toLowerCase().includes(q))
+    )
+  }),[grouped,customerSearch])
+
+  const filteredLibraryFiles=useMemo(()=>{
+    if(!selectedLibraryProject)return []
+    const q=librarySearch.trim().toLowerCase()
+    return selectedLibraryProject.files.filter((row:any)=>{
+      const matchesSearch=!q||[
+        row.name,
+        row.task?.title,
+        row.custom_folder?.name,
+        row.project?.title,
+        row.mime_type,
+      ].filter(Boolean).join(' ').toLowerCase().includes(q)
+      const matchesType=libraryType==='all'||fileKind(row)===libraryType
+      const matchesReview=libraryReview==='all'
+        ||(libraryReview==='none'&&!row.review_required)
+        ||row.review_status===libraryReview
+      const matchesFolder=libraryFolder==='all'
+        ||(libraryFolder==='root'&&!row.custom_folder_id)
+        ||row.custom_folder_id===libraryFolder
+      return matchesSearch&&matchesType&&matchesReview&&matchesFolder
+    })
+  },[selectedLibraryProject,librarySearch,libraryType,libraryReview,libraryFolder])
 
   useEffect(()=>{
     if(!libraryProject||libraryProject==='sem-projeto'){setLibraryCustomFolders([]);return}
@@ -392,14 +445,17 @@ export function AdminFilesV2(){
         <h2 className="text-lg font-bold">Clientes</h2>
         <p className="text-xs text-gray-500">Abra um cliente para navegar pelos projetos e arquivos sem sair desta tela.</p>
       </div>
+      <div className="mb-4">
+        <input value={customerSearch} onChange={e=>setCustomerSearch(e.target.value)} placeholder="Buscar cliente, projeto ou arquivo..." className="w-full min-h-11 px-4 rounded-xl bg-[#141416] border border-white/10 text-sm"/>
+      </div>
 
-      {loading?<p className="text-gray-500">Carregando...</p>:grouped.length===0?<p className="text-sm text-gray-500">Nenhum arquivo registrado.</p>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-        {grouped.map(([customerId,group])=>{
+      {loading?<p className="text-gray-500">Carregando...</p>:filteredGrouped.length===0?<p className="text-sm text-gray-500">Nenhum cliente, projeto ou arquivo encontrado.</p>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        {filteredGrouped.map(([customerId,group])=>{
           const totalFiles=Array.from(group.projects.values()).reduce((sum,item)=>sum+item.files.length,0)
           return <button
             key={customerId}
             type="button"
-            onClick={()=>{setLibraryCustomer(customerId);setLibraryProject(null);setMenuFile(null)}}
+            onClick={()=>{setLibraryCustomer(customerId);setLibraryProject(null);setLibrarySearch('');setLibraryType('all');setLibraryReview('all');setLibraryFolder('all');setMenuFile(null)}}
             className="text-left rounded-xl border border-white/8 bg-[#121214] hover:bg-[#171719] hover:border-white/15 transition-colors p-4"
           >
             <div className="flex items-center gap-3">
@@ -443,7 +499,7 @@ export function AdminFilesV2(){
               {Array.from(selectedLibraryGroup.projects.entries()).map(([projectId,projectGroup])=><button
                 key={projectId}
                 type="button"
-                onClick={()=>{setLibraryProject(projectId);setMenuFile(null)}}
+                onClick={()=>{setLibraryProject(projectId);setLibrarySearch('');setLibraryType('all');setLibraryReview('all');setLibraryFolder('all');setMenuFile(null)}}
                 className="text-left p-4 rounded-xl border border-white/8 bg-[#171719] hover:bg-[#1d1d20] hover:border-white/15 transition-colors"
               >
                 <div className="flex items-center gap-3">
@@ -459,11 +515,36 @@ export function AdminFilesV2(){
           </div>:selectedLibraryProject?<div>
             <div className="flex items-center justify-between mb-3">
               <p className="text-xs uppercase tracking-wide text-gray-500">Arquivos</p>
-              <span className="text-[10px] text-gray-600">{selectedLibraryProject.files.length} item(ns)</span>
+              <span className="text-[10px] text-gray-600">{filteredLibraryFiles.length} de {selectedLibraryProject.files.length} item(ns)</span>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {selectedLibraryProject.files.map(row=>{
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
+              <input value={librarySearch} onChange={e=>setLibrarySearch(e.target.value)} placeholder="Buscar arquivo..." className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs"/>
+              <select value={libraryType} onChange={e=>setLibraryType(e.target.value)} className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs">
+                <option value="all">Todos os formatos</option>
+                <option value="image">Imagens</option>
+                <option value="video">Vídeos</option>
+                <option value="audio">Áudios</option>
+                <option value="pdf">PDF</option>
+                <option value="archive">Compactados</option>
+                <option value="other">Outros</option>
+              </select>
+              <select value={libraryReview} onChange={e=>setLibraryReview(e.target.value)} className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs">
+                <option value="all">Toda aprovação</option>
+                <option value="pending">Aguardando cliente</option>
+                <option value="approved">Aprovados</option>
+                <option value="changes_requested">Ajustes solicitados</option>
+                <option value="none">Sem aprovação</option>
+              </select>
+              <select value={libraryFolder} onChange={e=>setLibraryFolder(e.target.value)} className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs">
+                <option value="all">Todas as pastas</option>
+                <option value="root">Sem subpasta</option>
+                {libraryCustomFolders.map((folder:any)=><option key={folder.id} value={folder.id}>{folder.name}</option>)}
+              </select>
+            </div>
+
+            {filteredLibraryFiles.length===0?<div className="py-12 text-center text-sm text-gray-600 border border-dashed border-white/8 rounded-2xl">Nenhum arquivo corresponde aos filtros.</div>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {filteredLibraryFiles.map(row=>{
                 const review=reviewBadge(row)
                 return <div key={row.id} className="relative p-3 rounded-xl bg-[#171719] border border-white/8 hover:border-white/15 transition-colors">
                   <button type="button" onClick={()=>open(row)} className="w-full text-left">
@@ -506,7 +587,7 @@ export function AdminFilesV2(){
                   </div>}
                 </div>
               })}
-            </div>
+            </div>}
           </div>:null}
         </div>
       </div>
