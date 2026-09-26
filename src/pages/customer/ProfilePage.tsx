@@ -1,6 +1,5 @@
 import { useEffect,useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { portalApi } from '../../api/portal'
 import { supabase } from '../../lib/supabase'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
@@ -20,10 +19,14 @@ export function ProfilePage(){
 
  useEffect(()=>{if(!user)return
    let active=true
-   supabase.from('profiles').select('first_name,last_name,phone,document_number,postal_code,street,address_number,address_complement,neighborhood,city,state').eq('id',user.id).single()
-    .then(({data,error})=>{if(error)throw error;if(active&&data)setForm(Object.fromEntries(Object.entries({...empty,...data}).map(([k,v])=>[k,v??''])) as ProfileForm)})
-    .catch((err:any)=>toast(err.message||'Não foi possível carregar seu perfil.','error'))
-    .finally(()=>{if(active)setFetching(false)})
+   void (async()=>{
+     try{
+       const {data,error}=await supabase.from('profiles').select('first_name,last_name,phone,document_number,postal_code,street,address_number,address_complement,neighborhood,city,state').eq('id',user.id).single()
+       if(error)throw error
+       if(active&&data)setForm(Object.fromEntries(Object.entries({...empty,...data}).map(([k,v])=>[k,v??''])) as ProfileForm)
+     }catch(err:any){toast(err.message||'Não foi possível carregar seu perfil.','error')}
+     finally{if(active)setFetching(false)}
+   })()
    return()=>{active=false}
  },[user?.id])
 
@@ -31,8 +34,21 @@ export function ProfilePage(){
  async function save(e:React.FormEvent){
    e.preventDefault();if(!user)return;setLoading(true)
    try{
-     const values=Object.fromEntries(Object.entries(form).map(([k,v])=>[k,v.trim()||null]))
-     await portalApi.updateProfile(user.id,values)
+     const nullable=(value:string)=>value.trim()||null
+     const {error}=await supabase.from('profiles').update({
+       first_name:form.first_name.trim(),
+       last_name:form.last_name.trim(),
+       phone:nullable(form.phone),
+       document_number:nullable(form.document_number),
+       postal_code:nullable(form.postal_code),
+       street:nullable(form.street),
+       address_number:nullable(form.address_number),
+       address_complement:nullable(form.address_complement),
+       neighborhood:nullable(form.neighborhood),
+       city:nullable(form.city),
+       state:nullable(form.state),
+     }).eq('id',user.id)
+     if(error)throw error
      toast('Cadastro atualizado com sucesso.','success')
    }catch(err:any){toast(err.message||'Não foi possível atualizar o cadastro.','error')}finally{setLoading(false)}
  }
