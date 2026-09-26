@@ -16,9 +16,9 @@ Deno.serve(async (req) => {
       throw new Error("Invalid upload metadata");
     }
 
-    const maxFileSize = 10 * 1024 * 1024 * 1024;
+    const maxFileSize = 50 * 1024 * 1024 * 1024;
     if (fileSize > maxFileSize) {
-      throw new Error("File exceeds the 10 GB limit");
+      throw new Error("File exceeds the 50 GB limit");
     }
 
     const uploadId = crypto.randomUUID();
