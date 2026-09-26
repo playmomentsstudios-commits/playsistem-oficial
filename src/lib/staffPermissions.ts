@@ -19,6 +19,7 @@ export const STAFF_PERMISSIONS=[
   ['files.manage','Arquivos — enviar, mover e excluir'],
   ['payments.view','Pagamentos — visualizar'],
   ['payments.manage','Pagamentos — revisar e editar'],
+  ['reports.view','Relatórios — visualizar'],
   ['community.manage','Comunidade — gerenciar'],
   ['site.manage','Site — gerenciar conteúdo'],
 ] as const
@@ -62,12 +63,12 @@ export const STAFF_PRESETS:Record<StaffDepartment,string[]>={
     'quotes.view','sales.view',
   ],
   finance:[
-    'customers.view','sales.view','quotes.view','payments.view','payments.manage',
+    'customers.view','sales.view','quotes.view','payments.view','payments.manage','reports.view',
   ],
   operations:[
     'customers.view','customers.manage','catalog.view','sales.view','quotes.view',
     'conversations.access','conversations.view_all','conversations.manage','conversations.transfer',
-    'projects.view','projects.manage','files.view','files.manage','payments.view',
+    'projects.view','projects.manage','files.view','files.manage','payments.view','reports.view',
   ],
   custom:[],
 }
