@@ -97,8 +97,9 @@ export function AdminTeam(){
         permissions:draft.permissions,
         active:draft.active,
       })
+      await load()
       toast(editing?'Colaborador atualizado.':'Colaborador adicionado à equipe.','success')
-      reset();await load()
+      reset()
     }catch(error:any){toast(error.message||'Não foi possível salvar o colaborador.','error')}
     finally{setSaving(false)}
   }
@@ -115,8 +116,9 @@ export function AdminTeam(){
         department:draft.department,
         permissions:draft.permissions,
       })
+      await load()
       toast(result.invited?'Convite enviado e colaborador criado.':'Conta existente adicionada à equipe.','success')
-      reset();await load()
+      reset()
     }catch(error:any){toast(error.message||'Não foi possível convidar o colaborador.','error')}
     finally{setSaving(false)}
   }
