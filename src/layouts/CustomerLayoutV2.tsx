@@ -82,6 +82,17 @@ export function CustomerLayoutV2() {
     return()=>{active=false}
   },[user?.id,location.pathname])
 
+  useEffect(()=>{
+    const apply=(event:Event)=>{
+      const prefs=(event as CustomEvent).detail
+      if(!prefs)return
+      setExpanded(Boolean(prefs.sidebar_expanded))
+      setFloatingChatEnabled(prefs.floating_chat_enabled!==false)
+    }
+    window.addEventListener('playmoments:preferences',apply)
+    return()=>window.removeEventListener('playmoments:preferences',apply)
+  },[])
+
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center bg-[#0a0a0b]">
       <div className="w-8 h-8 rounded-full border-2 border-[#E30613] border-t-transparent animate-spin" />
