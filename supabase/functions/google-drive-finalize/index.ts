@@ -10,6 +10,7 @@ Deno.serve(async (req) => {
     const uploadId = String(body.upload_id || "");
     const taskId = body.task_id ? String(body.task_id) : null;
     const clientVisible = Boolean(body.client_visible);
+    const customFolderId = body.custom_folder_id ? String(body.custom_folder_id) : null;
 
     if (!projectId || (!driveFileId && !uploadId)) throw new Error("Missing file metadata");
 
@@ -33,9 +34,20 @@ Deno.serve(async (req) => {
     }
 
     const folders = await ensureProjectFolder(ctx.db, ctx.userId, projectId);
+    const { data: customFolders, error: customFoldersError } = await ctx.db
+      .from("project_custom_folders")
+      .select("id,project_id,drive_folder_id")
+      .eq("project_id", projectId);
+    if (customFoldersError) throw customFoldersError;
+
+    if (customFolderId && !(customFolders || []).some((row:any) => row.id === customFolderId)) {
+      throw new Error("Custom folder does not belong to this project");
+    }
+
     const allowedFolderIds = new Set<string>([
       folders.projectFolderId,
       ...folders.folders.map((row:any) => row.drive_folder_id),
+      ...(customFolders || []).map((row:any) => row.drive_folder_id),
     ]);
 
     let file:any = null;
@@ -103,6 +115,7 @@ Deno.serve(async (req) => {
       drive_folder_id: parentId,
       file_size: file.size ? Number(file.size) : null,
       mime_type: file.mimeType || null,
+      custom_folder_id: customFolderId,
     };
 
     const { data, error } = await ctx.db
