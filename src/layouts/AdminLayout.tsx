@@ -17,6 +17,7 @@ const MENU = [
   { label: 'Pedidos', href: '/admin/pedidos', icon: '🛒', permission: ['sales.view','sales.manage'] },
   { label: 'Orçamentos', href: '/admin/orcamentos', icon: '📋', permission: ['quotes.view','quotes.manage'] },
   { label: 'Pagamentos', href: '/admin/pagamentos', icon: '💳', permission: ['payments.view','payments.manage'] },
+  { label: 'Relatórios', href: '/admin/relatorios', icon: '▥', permission: 'reports.view' },
   { label: 'Conversas', href: '/admin/conversas', icon: '💬', permission: ['conversations.access','conversations.view_all'] },
   { label: 'Arquivos', href: '/admin/arquivos', icon: '📁', permission: ['files.view','files.manage'] },
   { label: 'Quem Somos', href: '/admin/portfolio', icon: '🎨', permission: 'site.manage' },
