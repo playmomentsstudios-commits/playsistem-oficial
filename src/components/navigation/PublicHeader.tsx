@@ -4,13 +4,14 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useCart } from '../../contexts/CartContext'
 import { conversationLink } from '../../lib/navigation'
 import logoUrl from '../../assets/logo-play-moments.png'
+import type { SiteSettings } from '../../services/siteContent'
 
 const PUBLIC_NAV_LINKS = [
   { label: 'Produtos & Serviços', href: '/produtos' },
   { label: 'Quem Somos', href: '/quem-somos' },
 ]
 
-export function PublicHeader() {
+export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const { isAuthenticated, user, logout } = useAuth()
   const { itemCount } = useCart()
@@ -21,6 +22,8 @@ export function PublicHeader() {
     : PUBLIC_NAV_LINKS
 
   const handleLogout = async () => { await logout(); navigate('/') }
+  const primaryColor=settings?.primary_color||'#E30613'
+  const ctaLabel=settings?.hero_cta||'Falar agora'
 
   return (
     <header className="sticky top-0 z-40" style={{
@@ -54,7 +57,7 @@ export function PublicHeader() {
 
         {/* Actions */}
         <div className="hidden lg:flex items-center gap-3">
-          <Link to={conversationLink(user?.role ?? null)} className="px-4 py-3 rounded-full text-sm font-semibold" style={{ background: '#E30613', color: '#fff' }}>Falar agora</Link>
+          <Link to={conversationLink(user?.role ?? null)} className="px-4 py-3 rounded-full text-sm font-semibold" style={{ background: primaryColor, color: '#fff' }}>{ctaLabel}</Link>
           {/* Cart */}
           <Link to="/carrinho" className="relative p-2 rounded-xl transition-colors" style={{ color: '#9090a0' }}>
             <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -92,7 +95,7 @@ export function PublicHeader() {
                 Entrar
               </Link>
               <Link to="/cadastro" className="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200"
-                style={{ background: '#E30613', color: '#fff' }}>
+                style={{ background: primaryColor, color: '#fff' }}>
                 Criar conta
               </Link>
             </>
@@ -119,7 +122,7 @@ export function PublicHeader() {
               {link.label}
             </Link>
           ))}
-          <Link to={conversationLink(user?.role ?? null)} onClick={() => setMobileOpen(false)} className="py-3 text-center rounded-full font-semibold" style={{ background: '#E30613', color: '#fff' }}>Falar agora</Link>
+          <Link to={conversationLink(user?.role ?? null)} onClick={() => setMobileOpen(false)} className="py-3 text-center rounded-full font-semibold" style={{ background: primaryColor, color: '#fff' }}>{ctaLabel}</Link>
           <div className="flex flex-col gap-2 pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             {isAuthenticated ? (
               <>
@@ -133,7 +136,7 @@ export function PublicHeader() {
               <>
                 <Link to="/login" onClick={() => setMobileOpen(false)} className="py-3 text-sm text-center" style={{ color: '#9090a0' }}>Entrar</Link>
                 <Link to="/cadastro" onClick={() => setMobileOpen(false)} className="py-3 text-sm font-semibold text-center rounded-full"
-                  style={{ background: '#E30613', color: '#fff' }}>
+                  style={{ background: primaryColor, color: '#fff' }}>
                   Criar conta
                 </Link>
               </>
