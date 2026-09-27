@@ -9,24 +9,32 @@ Deno.serve(async(req)=>{
   const eventId=String(payload.id||[event,charge.id,charge.status].filter(Boolean).join(":"));
   if(!eventId||!charge.id)throw new Error("Invalid webhook payload");
   const db=serviceDb();
-  const {error:eventError}=await db.from("payment_webhook_events").insert({id:eventId,provider:"asaas",event_type:event,provider_reference:charge.id,payload});
-  if(eventError?.code==="23505")return json({ok:true,duplicate:true});
-  if(eventError)throw eventError;
+  const {data:processed}=await db.from("payment_webhook_events").select("id").eq("id",eventId).maybeSingle();
+  if(processed)return json({ok:true,duplicate:true});
+
   const paid=["PAYMENT_CONFIRMED","PAYMENT_RECEIVED"].includes(event);
   const refunded=event==="PAYMENT_REFUNDED";
-  const cancelled=["PAYMENT_DELETED","PAYMENT_RESTORED"].includes(event)?event==="PAYMENT_DELETED":false;
-  const rejected=["PAYMENT_CREDIT_CARD_CAPTURE_REFUSED"].includes(event);
+  const cancelled=event==="PAYMENT_DELETED";
+  const rejected=event==="PAYMENT_CREDIT_CARD_CAPTURE_REFUSED";
   const status=paid?"paid":refunded?"refunded":cancelled?"cancelled":rejected?"rejected":"pending";
   const update:any={status,provider_payload:charge,updated_at:new Date().toISOString()};
   if(paid)update.paid_at=new Date().toISOString();
   const {data:payment,error}=await db.from("payments").update(update).eq("provider","asaas").eq("provider_reference",charge.id).select("id,order_id,customer_id").maybeSingle();
   if(error)throw error;
-  if(payment?.order_id){
+  if(!payment)throw new Error("Payment not found for webhook");
+  if(payment.order_id){
    const orderUpdate:any={payment_status:status};
    if(paid){orderUpdate.status="paid";orderUpdate.payment_status="paid"}
-   await db.from("orders").update(orderUpdate).eq("id",payment.order_id);
-   if(paid)await db.from("notifications").insert({user_id:payment.customer_id,type:"payment_confirmed",title:"Pagamento confirmado",message:"Seu pagamento foi confirmado.",link:"/app/pedidos/"+payment.order_id,metadata:{order_id:payment.order_id,payment_id:payment.id}});
+   const {error:orderError}=await db.from("orders").update(orderUpdate).eq("id",payment.order_id);
+   if(orderError)throw orderError;
+   if(paid){
+    const {error:notificationError}=await db.from("notifications").insert({user_id:payment.customer_id,type:"payment_confirmed",title:"Pagamento confirmado",message:"Seu pagamento foi confirmado.",link:"/app/pedidos/"+payment.order_id,metadata:{order_id:payment.order_id,payment_id:payment.id}});
+    if(notificationError)throw notificationError;
+   }
   }
+  const {error:eventError}=await db.from("payment_webhook_events").insert({id:eventId,provider:"asaas",event_type:event,provider_reference:charge.id,payload});
+  if(eventError?.code==="23505")return json({ok:true,duplicate:true});
+  if(eventError)throw eventError;
   return json({ok:true});
  }catch(error){return json({ok:false,error:error instanceof Error?error.message:"Unknown error"},400)}
 });
