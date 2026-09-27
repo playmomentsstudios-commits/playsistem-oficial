@@ -93,7 +93,7 @@ Deno.serve(async(req)=>{
    return new Response(drive.body,{status:200,headers:out});
   }
 
-  const ctx=await requireUser(req);const body=await req.json();const kind=String(body.kind||"");const id=String(body.id||"");let driveFileId="";
+  const ctx=await requireUser(req);const body=await req.json();const kind=String(body.kind||"");const id=String(body.id||"");let driveFileId="";let mediaMimeType="";let mediaSize=0;let mediaDurationMs=0;
   if(kind==="lesson"){
    const {data,error}=await ctx.db.from("course_lessons").select("id,video_source,video_url,video_drive_file_id,module_id,status,is_preview").eq("id",id).single();
    if(error)throw new Error("Could not read lesson media: "+(error.message||error.code||"database error"));
@@ -107,7 +107,7 @@ Deno.serve(async(req)=>{
    const meta=await metaResponse.json();
    if(!String(meta.mimeType||"").startsWith("video/"))throw new Error("O arquivo está no Drive, mas foi armazenado como "+(meta.mimeType||"tipo desconhecido")+" em vez de vídeo.");
    if(!meta.size)throw new Error("O arquivo de vídeo está vazio no Google Drive.");
-   if(meta.capabilities?.canDownload===false)throw new Error("O Google Drive bloqueou a leitura deste vídeo.");
+   if(meta.capabilities?.canDownload===false)throw new Error("O Google Drive bloqueou a leitura deste vídeo.");\n   mediaMimeType=String(meta.mimeType||"video/mp4");mediaSize=Number(meta.size||0);mediaDurationMs=Number(meta.videoMediaMetadata?.durationMillis||0);
   }else if(kind==="material"){
    const {data,error}=await ctx.db.from("lesson_materials").select("id,drive_file_id").eq("id",id).single();if(error||!data?.drive_file_id)throw new Error("Material not available");driveFileId=data.drive_file_id;
   }else throw new Error("Invalid media kind");
@@ -138,7 +138,7 @@ Deno.serve(async(req)=>{
   const expiresAt=new Date(Date.now()+4*60*60*1000).toISOString();
   const {data:t,error:ticketError}=await ctx.db.from("academy_media_tickets").insert({user_id:ctx.userId,drive_file_id:driveFileId,purpose:kind==="lesson"?"lesson_video":"material",expires_at:expiresAt}).select("token,expires_at").single();
   if(ticketError)throw new Error("Could not create media ticket: "+(ticketError.message||ticketError.code||"database error"));
-  return json({ok:true,ticket:t.token,expires_at:t.expires_at,url:`${url.origin}${url.pathname}?ticket=${t.token}`});
+  return json({ok:true,ticket:t.token,expires_at:t.expires_at,url:`${url.origin}${url.pathname}?ticket=${t.token}`,mime_type:mediaMimeType||undefined,size:mediaSize||undefined,duration_ms:mediaDurationMs||undefined});
  }catch(error){
   const message=error instanceof Error?error.message:(typeof error==="object"&&error&&"message" in error?String((error as any).message):String(error||"Unknown error"));
   console.error("academy-drive-media",message,error);return json({ok:false,error:message},400);
