@@ -1,4 +1,4 @@
-import { asaas, corsHeaders, json, serviceDb } from "../_shared/asaas.ts";
+import { asaas, asaasEnvironment, corsHeaders, json, serviceDb } from "../_shared/asaas.ts";
 
 async function requireAdmin(req:Request){
  const token=(req.headers.get("Authorization")||"").replace(/^Bearer\s+/i,"");
@@ -17,7 +17,7 @@ Deno.serve(async(req)=>{
   const db=await requireAdmin(req);
   const {payment_id}=await req.json();
   if(!payment_id)throw new Error("payment_id is required");
-  const {data:payment,error}=await db.from("payments").select("id,provider,provider_reference,status,order_id").eq("id",payment_id).single();
+  const {data:payment,error}=await db.from("payments").select("id,provider,provider_reference,status,order_id,environment").eq("id",payment_id).single();
   if(error||!payment)throw new Error("Payment not found");
   if(["paid","refunded"].includes(payment.status))throw new Error("Pagamentos recebidos ou reembolsados permanecem no histórico e não podem ser excluídos.");
   if(payment.provider==="asaas"&&payment.provider_reference){
@@ -27,7 +27,9 @@ Deno.serve(async(req)=>{
    await asaas("/checkouts/"+encodeURIComponent(payment.provider_reference)+"/cancel",{method:"POST"});
   }
   const now=new Date().toISOString();
-  const {error:updateError}=await db.from("payments").update({status:"cancelled",updated_at:now}).eq("id",payment.id);
+  const update:any={status:"cancelled",updated_at:now};
+  if(["asaas","asaas_checkout"].includes(payment.provider)&&payment.environment==="unknown")update.environment=asaasEnvironment();
+  const {error:updateError}=await db.from("payments").update(update).eq("id",payment.id);
   if(updateError)throw updateError;
   if(payment.order_id){
    const {error:orderError}=await db.from("orders").update({payment_status:"cancelled"}).eq("id",payment.order_id).neq("payment_status","paid");
