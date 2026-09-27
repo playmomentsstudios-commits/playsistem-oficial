@@ -64,8 +64,14 @@ export function ProductDetailPage() {
     try {
       setBuying(true)
       const orderId=await portalApi.createProductOrder(product.id)
-      try{await portalApi.createAsaasPayment(orderId,'PIX')}catch(paymentError){console.error(paymentError)}
-      toast('Pedido criado. Finalize o pagamento na sua área.','success')
+      try{
+        await portalApi.createAsaasPayment(orderId,'PIX')
+      }catch(paymentError:any){
+        toast('Pedido criado, mas o PIX Asaas falhou: '+(paymentError.message||'erro desconhecido'),'error')
+        navigate('/app/pagamentos')
+        return
+      }
+      toast('Pedido criado. PIX Asaas gerado com sucesso.','success')
       navigate('/app/pagamentos')
     } catch (error: any) { toast(error.message || 'Não foi possível criar o pedido.','error') }
     finally { setBuying(false) }
