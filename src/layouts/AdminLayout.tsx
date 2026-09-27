@@ -144,19 +144,27 @@ export function AdminLayout() {
             </button>
             <span className="text-sm font-semibold" style={{ color: '#f0f0f2' }}>Play Moments</span>
           </div>
-          <div className="relative">
-            <button type="button" onClick={()=>setAccountOpen(v=>!v)} className="flex items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.025] px-2.5 py-1.5 hover:bg-white/[0.05] transition-colors">
-              <span className="w-8 h-8 rounded-lg bg-[#E30613] text-white text-xs font-bold flex items-center justify-center">{(user?.name||'A').trim().charAt(0).toUpperCase()}</span>
-              <span className="hidden sm:block text-left"><span className="block text-xs font-semibold text-gray-200 max-w-[150px] truncate">{user?.name||'Administrador'}</span><span className="block text-[9px] text-gray-600">{user?.role==='admin'?'Administrador':'Equipe'}</span></span>
-              <span className="text-gray-600 text-xs">⌄</span>
-            </button>
-            {accountOpen&&<><button aria-label="Fechar menu" onClick={()=>setAccountOpen(false)} className="fixed inset-0 z-40 cursor-default"/><div className="absolute right-0 top-[calc(100%+8px)] z-50 w-56 rounded-xl border border-white/10 bg-[#111113] p-1.5 shadow-2xl">
-              <Link to="/admin/portfolio" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="about" size={15}/><span>Quem Somos</span></Link>
-              <Link to="/admin/configuracoes" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="settings" size={15}/><span>Configurações</span></Link>
-              <Link to="/" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="site" size={15}/><span>Ver site</span></Link>
-              <div className="my-1 border-t border-white/[0.07]"/>
-              <button onClick={()=>{setAccountOpen(false);void handleLogout()}} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-[#ff6573] hover:bg-[#E30613]/10"><span>↩</span><span>Sair</span></button>
-            </div></>}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Link to="/admin/conversas" aria-label="Mensagens" title="Mensagens" className="relative w-10 h-10 rounded-xl border border-white/[0.07] bg-white/[0.025] text-gray-400 hover:text-white hover:bg-white/[0.05] transition-colors flex items-center justify-center">
+              <MenuIcon name="conversations" size={17}/>
+              {counts.messages>0&&<span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-[#0a0a0b]">{counts.messages>99?'99+':counts.messages}</span>}
+            </Link>
+            <Link to="/admin/notificacoes" aria-label="Notificações" title="Notificações" className="relative w-10 h-10 rounded-xl border border-white/[0.07] bg-white/[0.025] text-gray-400 hover:text-white hover:bg-white/[0.05] transition-colors flex items-center justify-center">
+              <MenuIcon name="notifications" size={17}/>
+              {counts.notifications>0&&<span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-[#0a0a0b]">{counts.notifications>99?'99+':counts.notifications}</span>}
+            </Link>
+            <div className="relative">
+              <button type="button" onClick={()=>setAccountOpen(v=>!v)} className="flex items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.025] px-2.5 py-1.5 hover:bg-white/[0.05] transition-colors">
+                <span className="w-8 h-8 rounded-lg bg-[#E30613] text-white text-xs font-bold flex items-center justify-center">{(user?.name||'A').trim().charAt(0).toUpperCase()}</span>
+                <span className="hidden sm:block text-left"><span className="block text-xs font-semibold text-gray-200 max-w-[150px] truncate">{user?.name||'Administrador'}</span><span className="block text-[9px] text-gray-600">{user?.role==='admin'?'Administrador':'Equipe'}</span></span>
+                <span className="text-gray-600 text-xs">⌄</span>
+              </button>
+              {accountOpen&&<><button aria-label="Fechar menu" onClick={()=>setAccountOpen(false)} className="fixed inset-0 z-40 cursor-default"/><div className="absolute right-0 top-[calc(100%+8px)] z-50 w-56 rounded-xl border border-white/10 bg-[#111113] p-1.5 shadow-2xl">
+                <Link to="/admin/configuracoes" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="settings" size={15}/><span>Configurações</span></Link>
+                <div className="my-1 border-t border-white/[0.07]"/>
+                <button onClick={()=>{setAccountOpen(false);void handleLogout()}} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-[#ff6573] hover:bg-[#E30613]/10"><span>↩</span><span>Sair</span></button>
+              </div></>}
+            </div>
           </div>
         </div>
 
