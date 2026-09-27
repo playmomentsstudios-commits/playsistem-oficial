@@ -287,26 +287,26 @@ export function AdminProjectDetailV2(){
   if(!project)return <div><p>Projeto não encontrado.</p><Link to="/admin/projetos" className="text-[#E30613]">Voltar</Link></div>
 
   return <div>
-    <Link to="/admin/projetos" className="text-sm text-[#E30613]">← Projetos</Link>
+    <Link to="/admin/projetos" className="inline-flex items-center min-h-10 text-sm text-gray-400 hover:text-white">← Voltar para projetos</Link>
 
-    <div className="flex flex-wrap justify-between gap-4 mt-4">
+    <div className="pm-surface p-5 flex flex-wrap justify-between gap-4 mt-3">
       <div>
         <h1 className="text-2xl font-bold">{project.title}</h1>
         <p className="text-sm text-gray-500 mt-1">{rotulo(tipoProjeto,project.project_type)} · prioridade {rotulo(prioridade,project.priority)}</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <select value={project.status} onChange={e=>updateProject({status:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10">{projectStatuses.map(value=><option key={value} value={value}>{rotulo(statusProjeto,value)}</option>)}</select>
+        <select value={project.status} onChange={e=>updateProject({status:e.target.value})} className="pm-control px-3">{projectStatuses.map(value=><option key={value} value={value}>{rotulo(statusProjeto,value)}</option>)}</select>
         <select value={project.priority} onChange={e=>updateProject({priority:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10">{priorities.map(value=><option key={value} value={value}>{rotulo(prioridade,value)}</option>)}</select>
       </div>
     </div>
 
     <div className="grid lg:grid-cols-3 gap-4 mt-6">
-      <div className="lg:col-span-2 p-5 rounded-2xl bg-[#141416] border border-white/10">
+      <div className="lg:col-span-2 pm-surface p-5">
         <div className="flex justify-between"><span>Progresso geral</span><b>{progress(project)}%</b></div>
-        <div className="h-2 bg-white/10 rounded mt-2"><div className="h-2 bg-[#E30613] rounded" style={{width:progress(project)+'%'}}/></div>
+        <div className="h-2 bg-white/[0.07] rounded-full mt-3 overflow-hidden" role="progressbar" aria-label="Progresso do projeto" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress(project)}><div className="h-full bg-[#E30613] rounded-full transition-[width] duration-300" style={{width:progress(project)+'%'}}/></div>
         <p className="text-sm text-gray-400 mt-4 whitespace-pre-wrap">{project.description||'Sem descrição.'}</p>
       </div>
-      <div className="p-5 rounded-2xl bg-[#141416] border border-white/10 text-sm space-y-2">
+      <div className="pm-surface p-5 text-sm space-y-3">
         <p><span className="text-gray-500">Início:</span> {project.start_date?new Date(project.start_date+'T12:00').toLocaleDateString('pt-BR'):'—'}</p>
         <p><span className="text-gray-500">Prazo:</span> {project.due_date?new Date(project.due_date+'T12:00').toLocaleDateString('pt-BR'):'—'}</p>
         {project.drive_folder_url&&<a href={project.drive_folder_url} target="_blank" rel="noreferrer" className="inline-block text-[#E30613]">Abrir pasta do projeto ↗</a>}
@@ -322,7 +322,7 @@ export function AdminProjectDetailV2(){
         <Link to="/admin/arquivos" className="text-sm text-[#E30613]">Abrir Central de Arquivos →</Link>
       </div>
 
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10 mt-4">
+      <div className="pm-surface p-4 mt-4">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
           <label className="text-sm text-gray-400">Direcionar para
             <select value={fileTask} onChange={e=>setFileTask(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
@@ -409,7 +409,7 @@ export function AdminProjectDetailV2(){
       <h2 className="text-xl font-bold">Etapas</h2>
       <p className="text-sm text-gray-500 mb-3">Organize o fluxo e o que o cliente pode acompanhar</p>
       <form onSubmit={addStage} className="flex gap-2 mb-4"><input value={stageName} onChange={e=>setStageName(e.target.value)} placeholder="Nova etapa" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 flex-1"/><Button type="submit">Adicionar etapa</Button></form>
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">{sortedStages.map((stage:any)=><div key={stage.id} className="p-4 rounded-2xl bg-[#141416] border border-white/10">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">{sortedStages.map((stage:any)=><div key={stage.id} className="pm-surface p-4">
         <div className="flex justify-between gap-2"><b>{stage.name}</b><button onClick={async()=>{if(window.confirm('Excluir esta etapa? As tarefas permanecem sem etapa.')){await portalApi.deleteStage(stage.id);await load()}}} className="text-xs text-red-400">Excluir</button></div>
         <select value={stage.status} onChange={async e=>{await portalApi.saveStage({status:e.target.value},stage.id);await load()}} className="mt-3 w-full px-3 py-2 rounded-lg bg-black border border-white/10 text-sm">{stageStatuses.map(value=><option key={value} value={value}>{rotulo(statusEtapa,value)}</option>)}</select>
         <label className="mt-3 flex items-center gap-2 text-xs text-gray-400"><input type="checkbox" checked={stage.client_visible} onChange={async e=>{await portalApi.saveStage({client_visible:e.target.checked},stage.id);await load()}}/> Visível para o cliente</label>
@@ -420,7 +420,7 @@ export function AdminProjectDetailV2(){
       <h2 className="text-xl font-bold">Tarefas</h2>
       <p className="text-sm text-gray-500 mb-4">Responsáveis, prazos, checklist e links</p>
 
-      <form onSubmit={addTask} className="p-4 rounded-2xl bg-[#141416] border border-white/10 mb-5 grid md:grid-cols-2 lg:grid-cols-5 gap-3">
+      <form onSubmit={addTask} className="pm-surface p-4 mb-5 grid md:grid-cols-2 lg:grid-cols-5 gap-3">
         <input value={taskForm.title} onChange={e=>setTaskForm({...taskForm,title:e.target.value})} placeholder="Nova tarefa" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 lg:col-span-2"/>
         <select value={taskForm.stage_id} onChange={e=>setTaskForm({...taskForm,stage_id:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10"><option value="">Sem etapa</option>{sortedStages.map((stage:any)=><option key={stage.id} value={stage.id}>{stage.name}</option>)}</select>
         <select value={taskForm.assigned_to} onChange={e=>setTaskForm({...taskForm,assigned_to:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10"><option value="">Sem responsável</option>{team.map(member=><option key={member.id} value={member.id}>{member.first_name} {member.last_name}</option>)}</select>
@@ -433,7 +433,7 @@ export function AdminProjectDetailV2(){
       <div className="space-y-3">{tasks.map((task:any)=>{
         const member=team.find(item=>item.id===task.assigned_to)
         const stage=sortedStages.find((item:any)=>item.id===task.stage_id)
-        return <div key={task.id} className="p-4 rounded-2xl bg-[#141416] border border-white/10">
+        return <div key={task.id} className="pm-surface p-4">
           <div className="flex flex-wrap justify-between gap-3">
             <div>
               <b>{task.title}</b>
