@@ -330,6 +330,12 @@ export const portalApi = {
     if(!data?.ok) throw new Error(data?.error||'Não foi possível mover o arquivo.')
     return data
   },
+  createAsaasPayment: async (orderId:string,billingType:'PIX'|'CREDIT_CARD'='PIX') => {
+    const { data,error }=await supabase.functions.invoke('asaas-create-payment',{body:{order_id:orderId,billing_type:billingType}})
+    if(error)throw error
+    if(!data?.ok)throw new Error(data?.error||'Não foi possível criar a cobrança no Asaas.')
+    return data
+  },
   payments: async () => {
     const { data,error } = await supabase.from('payments')
       .select('*,order:orders(order_number),customer:profiles!payments_customer_id_fkey(id,email,first_name,last_name),receipt:payment_receipts(*)')
