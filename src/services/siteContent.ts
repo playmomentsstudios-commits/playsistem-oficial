@@ -31,6 +31,9 @@ export type HomeServiceArea={
   icon:string|null
   accent_color:string
   image_url:string|null
+  image_drive_file_id:string|null
+  image_mime_type:string|null
+  image_file_size:number|null
   href:string
   topics:string[]
   display_order:number
