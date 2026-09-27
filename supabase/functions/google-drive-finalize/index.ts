@@ -81,25 +81,8 @@ Deno.serve(async (req) => {
       throw new Error("Drive file is outside this project");
     }
 
-    if ((staff ? clientVisible : true)) {
-      const token = await getDriveAccessToken();
-      const permissionResponse = await fetch(
-        `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.id)}/permissions?sendNotificationEmail=false`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ type: "anyone", role: "reader" }),
-        },
-      );
-      if (!permissionResponse.ok) {
-        const detail = await permissionResponse.text();
-        throw new Error(`Could not publish client-visible Drive link: ${detail}`);
-      }
-    }
-
+    // Drive objects stay private. Visibility is enforced by Play Moments and
+    // authenticated downloads are proxied by google-drive-file-download.
     const values = {
       customer_id: project.customer_id,
       project_id: projectId,
