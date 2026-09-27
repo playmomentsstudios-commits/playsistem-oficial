@@ -16,14 +16,21 @@ export function ProjectsPage(){
   const [project,setProject]=useState<any>(null)
   const [files,setFiles]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
+  const [error,setError]=useState('')
 
   useEffect(()=>{
+    setLoading(true)
+    setError('')
     if(id){
       Promise.all([portalApi.project(id),portalApi.projectFiles(id)])
         .then(([item,projectFiles])=>{setProject(item);setFiles(projectFiles)})
+        .catch((e:any)=>setError(e.message||'Não foi possível carregar o projeto.'))
         .finally(()=>setLoading(false))
     }else{
-      portalApi.projects().then(setRows).finally(()=>setLoading(false))
+      portalApi.projects()
+        .then(setRows)
+        .catch((e:any)=>setError(e.message||'Não foi possível carregar seus projetos.'))
+        .finally(()=>setLoading(false))
     }
   },[id])
 
@@ -40,6 +47,7 @@ export function ProjectsPage(){
   const nextStage=currentStage?stages.find((stage:any)=>stage.position>currentStage.position&&stage.status!=='completed'):null
 
   if(loading)return <p className="text-gray-400">Carregando...</p>
+  if(error)return <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5"><p className="text-red-300">{error}</p><button onClick={()=>window.location.reload()} className="text-sm text-[#E30613] mt-2">Tentar novamente</button></div>
 
   if(id){
     if(!project)return <div><p>Projeto não encontrado.</p><Link to="/app/projetos" className="text-[#E30613]">Voltar</Link></div>
