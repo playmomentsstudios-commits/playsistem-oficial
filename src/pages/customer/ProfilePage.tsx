@@ -13,7 +13,7 @@ type ProfileForm={
 const empty:ProfileForm={first_name:'',last_name:'',phone:'',document_number:'',postal_code:'',street:'',address_number:'',address_complement:'',neighborhood:'',city:'',state:''}
 
 export function ProfilePage(){
- const {user}=useAuth(),toast=useToast()
+ const {user,refreshUser}=useAuth(),toast=useToast()
  const [loading,setLoading]=useState(false),[fetching,setFetching]=useState(true),[avatarLoading,setAvatarLoading]=useState(false),[avatarUrl,setAvatarUrl]=useState<string|null>(null)
  const [form,setForm]=useState<ProfileForm>({...empty,first_name:user?.name||'',last_name:user?.lastName||'',phone:user?.phone||''})
 
@@ -46,6 +46,7 @@ export function ProfilePage(){
      const {error:updateError}=await supabase.from('profiles').update({avatar_url:publicData.publicUrl}).eq('id',user.id)
      if(updateError){await supabase.storage.from('avatars').remove([path]);throw updateError}
      setAvatarUrl(publicData.publicUrl)
+     await refreshUser()
      if(previous){
        const marker='/storage/v1/object/public/avatars/'
        const oldPath=previous.includes(marker)?decodeURIComponent(previous.split(marker)[1]):null
@@ -63,6 +64,7 @@ export function ProfilePage(){
      const {error}=await supabase.from('profiles').update({avatar_url:null}).eq('id',user.id)
      if(error)throw error
      setAvatarUrl(null)
+     await refreshUser()
      const marker='/storage/v1/object/public/avatars/'
      const oldPath=previous.includes(marker)?decodeURIComponent(previous.split(marker)[1]):null
      if(oldPath?.startsWith(user.id+'/'))await supabase.storage.from('avatars').remove([oldPath])
