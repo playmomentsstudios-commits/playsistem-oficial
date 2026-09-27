@@ -126,16 +126,24 @@ export function AdminFilesV2(){
 
   const grouped=useMemo(()=>{
     const map=new Map<string,{customer:any;projects:Map<string,{project:any;files:any[]}>}>()
+    for(const customerRow of customers){
+      map.set(customerRow.id,{customer:customerRow,projects:new Map()})
+    }
+    for(const projectRow of projects){
+      const customerKey=projectRow.customer_id||'sem-cliente'
+      if(!map.has(customerKey))map.set(customerKey,{customer:null,projects:new Map()})
+      map.get(customerKey)!.projects.set(projectRow.id,{project:projectRow,files:[]})
+    }
     for(const row of files){
-      const customerKey=row.customer_id||'sem-cliente'
-      if(!map.has(customerKey))map.set(customerKey,{customer:row.customer,projects:new Map()})
+      const customerKey=row.customer_id||row.project?.customer_id||'sem-cliente'
+      if(!map.has(customerKey))map.set(customerKey,{customer:row.customer||null,projects:new Map()})
       const group=map.get(customerKey)!
       const projectKey=row.project_id||'sem-projeto'
-      if(!group.projects.has(projectKey))group.projects.set(projectKey,{project:row.project,files:[]})
+      if(!group.projects.has(projectKey))group.projects.set(projectKey,{project:row.project||null,files:[]})
       group.projects.get(projectKey)!.files.push(row)
     }
     return Array.from(map.entries())
-  },[files])
+  },[files,customers,projects])
 
   const selectedLibraryGroup=libraryCustomer
     ? grouped.find(([customerId])=>customerId===libraryCustomer)?.[1]||null
@@ -265,6 +273,7 @@ export function AdminFilesV2(){
       }
       setName('');setUrl('');setSelectedFiles([]);setTask('');setProgress(0);setCompletedFiles(0);setCurrentFileName('')
       await load()
+      setUploadOpen(false)
     }catch(error:any){toast(error.message||'Não foi possível salvar o arquivo.','error')}
     finally{setSaving(false)}
   }
