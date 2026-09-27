@@ -27,6 +27,9 @@ Deno.serve(async(req)=>{
   const {data:order,error}=await db.from("orders").select("id,order_number,total,payment_status").eq("id",order_id).eq("customer_id",userId).single();
   if(error||!order)throw new Error("Pedido não encontrado.");
   if(order.payment_status==="paid")throw new Error("Pedido já está pago.");
+  const {data:existing}=await db.from("payments").select("id,status,provider_reference").eq("order_id",order.id).eq("provider","asaas").eq("method","card").in("status",["pending","paid"]).order("created_at",{ascending:false}).limit(1).maybeSingle();
+  if(existing?.status==="paid")throw new Error("Pedido já está pago.");
+  if(existing?.provider_reference)throw new Error("Já existe uma cobrança de cartão em processamento para este pedido.");
 
   const customer=await ensureAsaasCustomer(db,profile);
   const dueDate=new Date().toISOString().slice(0,10);
