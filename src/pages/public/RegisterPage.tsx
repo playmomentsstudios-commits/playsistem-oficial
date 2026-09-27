@@ -13,6 +13,7 @@ export function RegisterPage() {
   const [states, setStates] = useState<Array<{ id: number; sigla: string; nome: string }>>([])
   const [cities, setCities] = useState<Array<{ id: number; nome: string }>>([])
   const [loadingCities, setLoadingCities] = useState(false)
+  const [loadingCep, setLoadingCep] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const { register, user, isLoading } = useAuth()
   const toast = useToast()
@@ -35,8 +36,51 @@ export function RegisterPage() {
       .then(setCities).catch(() => setCities([])).finally(() => setLoadingCities(false))
   }, [form.state])
 
+  const digits = (value: string) => value.replace(/\D/g, '')
+  const formatPhone = (value: string) => {
+    const d = digits(value).slice(0, 11)
+    if (d.length <= 2) return d
+    if (d.length <= 6) return '(' + d.slice(0,2) + ') ' + d.slice(2)
+    if (d.length <= 10) return '(' + d.slice(0,2) + ') ' + d.slice(2,6) + '-' + d.slice(6)
+    return '(' + d.slice(0,2) + ') ' + d.slice(2,7) + '-' + d.slice(7)
+  }
+  const formatDocument = (value: string) => {
+    const d = digits(value).slice(0,14)
+    if (d.length <= 11) return d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')
+    return d.replace(/(\d{2})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1/$2').replace(/(\d{4})(\d{1,2})$/,'$1-$2')
+  }
+  const formatCep = (value: string) => {
+    const d = digits(value).slice(0,8)
+    return d.length > 5 ? d.slice(0,5) + '-' + d.slice(5) : d
+  }
+
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(prev => ({ ...prev, [k]: e.target.value }))
+
+  const lookupCep = async () => {
+    const cep = digits(form.postalCode)
+    if (cep.length !== 8) return
+    try {
+      setLoadingCep(true)
+      const response = await fetch('https://viacep.com.br/ws/' + cep + '/json/')
+      if (!response.ok) throw new Error()
+      const data = await response.json()
+      if (data.erro) throw new Error()
+      setForm(prev => ({
+        ...prev,
+        postalCode: formatCep(cep),
+        street: data.logradouro || prev.street,
+        neighborhood: data.bairro || prev.neighborhood,
+        state: data.uf || prev.state,
+        city: data.localidade || prev.city,
+      }))
+      setErrors(prev => ({...prev, postalCode: ''}))
+    } catch {
+      setErrors(prev => ({...prev, postalCode: 'CEP não encontrado. Preencha o endereço manualmente.'}))
+    } finally {
+      setLoadingCep(false)
+    }
+  }
 
   const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const state = e.target.value
@@ -110,22 +154,22 @@ export function RegisterPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input label="Nome" placeholder="João" value={form.name} onChange={set('name')} error={errors.name} />
             <Input label="Sobrenome" placeholder="Silva" value={form.lastName} onChange={set('lastName')} error={errors.lastName} />
           </div>
           <Input label="E-mail" type="email" placeholder="seu@email.com" value={form.email} onChange={set('email')} error={errors.email} />
-          <Input label="Telefone" type="tel" placeholder="(11) 99999-9999" value={form.phone} onChange={set('phone')} error={errors.phone} />
-          <Input label="CPF/CNPJ" placeholder="Somente números ou formatado" value={form.documentNumber} onChange={set('documentNumber')} error={errors.documentNumber} />
-          <div className="grid grid-cols-2 gap-3"><Input label="CEP" placeholder="00000-000" value={form.postalCode} onChange={set('postalCode')} error={errors.postalCode} /><Input label="Rua / Avenida" value={form.street} onChange={set('street')} error={errors.street} /></div>
+          <Input label="Telefone" type="tel" inputMode="tel" autoComplete="tel" placeholder="(11) 99999-9999" value={form.phone} onChange={e=>setForm(prev=>({...prev,phone:formatPhone(e.target.value)}))} error={errors.phone} />
+          <Input label="CPF/CNPJ" inputMode="numeric" placeholder="CPF ou CNPJ" value={form.documentNumber} onChange={e=>setForm(prev=>({...prev,documentNumber:formatDocument(e.target.value)}))} error={errors.documentNumber} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><Input label="CEP" inputMode="numeric" autoComplete="postal-code" placeholder="00000-000" value={form.postalCode} onChange={e=>setForm(prev=>({...prev,postalCode:formatCep(e.target.value)}))} onBlur={()=>void lookupCep()} error={errors.postalCode} hint={loadingCep?'Buscando endereço...':'Digite o CEP para preencher o endereço'} /><Input label="Rua / Avenida" autoComplete="street-address" value={form.street} onChange={set('street')} error={errors.street} /></div>
           <div className="grid grid-cols-2 gap-3"><Input label="Número" value={form.addressNumber} onChange={set('addressNumber')} error={errors.addressNumber} /><Input label="Complemento (opcional)" value={form.addressComplement} onChange={set('addressComplement')} /></div>
           <Input label="Bairro" value={form.neighborhood} onChange={set('neighborhood')} error={errors.neighborhood} />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className="flex flex-col gap-2"><span className="text-xs font-semibold" style={{ color: '#9090a0' }}>Estado</span><select value={form.state} onChange={handleStateChange} className="w-full rounded-xl px-4" style={{ height: 48, background: '#141416', border: '1px solid rgba(255,255,255,.12)', color: '#f0f0f2' }}><option value="">Selecione</option>{states.map(state => <option key={state.id} value={state.sigla}>{state.nome} - {state.sigla}</option>)}</select>{errors.state && <span className="text-xs" style={{ color: '#ff6b7a' }}>{errors.state}</span>}</label>
             <label className="flex flex-col gap-2"><span className="text-xs font-semibold" style={{ color: '#9090a0' }}>Cidade</span><select value={form.city} onChange={e => setForm(prev => ({ ...prev, city: e.target.value }))} disabled={!form.state || loadingCities} className="w-full rounded-xl px-4 disabled:opacity-50" style={{ height: 48, background: '#141416', border: '1px solid rgba(255,255,255,.12)', color: '#f0f0f2' }}><option value="">{loadingCities ? 'Carregando...' : 'Selecione'}</option>{cities.map(city => <option key={city.id} value={city.nome}>{city.nome}</option>)}</select>{errors.city && <span className="text-xs" style={{ color: '#ff6b7a' }}>{errors.city}</span>}</label>
           </div>
-          <Input label="Senha" type="password" placeholder="Mínimo 6 caracteres" value={form.password} onChange={set('password')} error={errors.password} />
-          <Input label="Confirmar senha" type="password" placeholder="Repita a senha" value={form.confirm} onChange={set('confirm')} error={errors.confirm} />
+          <Input label="Senha" type="password" autoComplete="new-password" placeholder="Mínimo 6 caracteres" value={form.password} onChange={set('password')} error={errors.password} />
+          <Input label="Confirmar senha" type="password" autoComplete="new-password" placeholder="Repita a senha" value={form.confirm} onChange={set('confirm')} error={errors.confirm} />
 
           <Button type="submit" fullWidth loading={loading} size="lg">
             Criar conta
