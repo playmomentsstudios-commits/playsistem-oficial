@@ -39,7 +39,7 @@ export function AdminProductivity(){
   const [projects,setProjects]=useState<any[]>([])
   const [team,setTeam]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
-  const [view,setView]=useState<'kanban'|'lista'|'calendario'>('kanban')
+  const [view,setView]=useState<'kanban'|'lista'|'calendario'>('calendario')
   const [projectFilter,setProjectFilter]=useState('todos')
   const [assigneeFilter,setAssigneeFilter]=useState('todos')
   const [priorityFilter,setPriorityFilter]=useState('todos')
@@ -93,22 +93,22 @@ export function AdminProductivity(){
         <p className="text-sm text-gray-500 mt-1">Prioridades da equipe, prazos e entregas.</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        {(['kanban','lista','calendario'] as const).map(option=><button key={option} onClick={()=>setView(option)} className={'px-3 py-2 rounded-xl text-sm border '+(view===option?'bg-[#E30613]/15 text-red-200 border-[#E30613]/30':'bg-white/[0.03] text-gray-400 border-white/10')}>{option==='kanban'?'Kanban':option==='lista'?'Lista':'Calendário'}</button>)}
+        {(['calendario','kanban','lista'] as const).map(option=><button key={option} onClick={()=>setView(option)} className={'px-3 py-2 rounded-xl text-sm border '+(view===option?'bg-[#E30613]/15 text-red-200 border-[#E30613]/30':'bg-white/[0.03] text-gray-400 border-white/10')}>{option==='calendario'?'▦  Calendário':option==='kanban'?'◫  Kanban':'☷  Lista'}</button>)}
       </div>
     </div>
 
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Para hoje</p><b className="text-xl mt-2 block">{dueToday}</b></div>
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Atrasadas</p><b className="text-xl mt-2 block text-red-300">{overdue}</b></div>
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Em andamento</p><b className="text-xl mt-2 block text-blue-300">{inProgress}</b></div>
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Em revisão</p><b className="text-xl mt-2 block text-violet-300">{review}</b></div>
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
+      <div className="px-4 py-3 rounded-xl bg-[#121214] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Para hoje</p><b className="text-xl mt-2 block">{dueToday}</b></div>
+      <div className="px-4 py-3 rounded-xl bg-[#121214] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Atrasadas</p><b className="text-xl mt-2 block text-red-300">{overdue}</b></div>
+      <div className="px-4 py-3 rounded-xl bg-[#121214] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Em andamento</p><b className="text-xl mt-2 block text-blue-300">{inProgress}</b></div>
+      <div className="px-4 py-3 rounded-xl bg-[#121214] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Em revisão</p><b className="text-xl mt-2 block text-violet-300">{review}</b></div>
     </div>
 
-    <div className="p-3 rounded-2xl bg-[#111113] border border-white/10 flex flex-wrap gap-2 mb-5">
-      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar tarefa ou projeto..." className="px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
-      <select value={projectFilter} onChange={e=>setProjectFilter(e.target.value)} className="px-3 py-2 rounded-xl bg-black border border-white/10"><option value="todos">Todos os projetos</option>{projects.map(project=><option key={project.id} value={project.id}>{project.title}</option>)}</select>
-      <select value={assigneeFilter} onChange={e=>setAssigneeFilter(e.target.value)} className="px-3 py-2 rounded-xl bg-black border border-white/10"><option value="todos">Todos os responsáveis</option><option value="sem_responsavel">Sem responsável</option>{team.map(member=><option key={member.id} value={member.id}>{member.first_name} {member.last_name}</option>)}</select>
-      <select value={priorityFilter} onChange={e=>setPriorityFilter(e.target.value)} className="px-3 py-2 rounded-xl bg-black border border-white/10"><option value="todos">Todas as prioridades</option>{['low','medium','high','urgent'].map(value=><option key={value} value={value}>{rotulo(prioridade,value)}</option>)}</select>
+    <div className="px-3 py-2.5 rounded-xl bg-[#111113] border border-white/8 flex flex-wrap gap-2 mb-4">
+      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar tarefa ou projeto..." className="min-h-10 flex-1 min-w-[220px] px-3 py-2 rounded-lg bg-white/[.04] border border-white/10 text-sm"/>
+      <select value={projectFilter} onChange={e=>setProjectFilter(e.target.value)} className="min-h-10 px-3 py-2 rounded-lg bg-black border border-white/10 text-sm"><option value="todos">Todos os projetos</option>{projects.map(project=><option key={project.id} value={project.id}>{project.title}</option>)}</select>
+      <select value={assigneeFilter} onChange={e=>setAssigneeFilter(e.target.value)} className="min-h-10 px-3 py-2 rounded-lg bg-black border border-white/10 text-sm"><option value="todos">Todos os responsáveis</option><option value="sem_responsavel">Sem responsável</option>{team.map(member=><option key={member.id} value={member.id}>{member.first_name} {member.last_name}</option>)}</select>
+      <select value={priorityFilter} onChange={e=>setPriorityFilter(e.target.value)} className="min-h-10 px-3 py-2 rounded-lg bg-black border border-white/10 text-sm"><option value="todos">Todas as prioridades</option>{['low','medium','high','urgent'].map(value=><option key={value} value={value}>{rotulo(prioridade,value)}</option>)}</select>
     </div>
 
     {loading?<p className="text-gray-400">Carregando...</p>:view==='kanban'?<div className="grid xl:grid-cols-4 gap-3">{columns.map(column=><section key={column.key} className={'rounded-2xl border min-h-56 '+column.accent}>
@@ -124,11 +124,11 @@ export function AdminProductivity(){
       <div><Link to={'/admin/projetos/'+task.projectId} className="font-semibold">{task.title}</Link><p className="text-xs text-gray-500">{task.projectTitle} · {assigneeName(task.assigned_to)}</p></div>
       <div className="flex items-center gap-3"><span className="text-xs">{rotulo(prioridade,task.priority)}</span><span className="text-xs">{rotulo(statusTarefa,task.status)}</span>{task.due_date&&<span className="text-xs text-gray-500">{new Date(task.due_date+'T12:00').toLocaleDateString('pt-BR')}</span>}</div>
     </div>)}</div>:<div className="grid xl:grid-cols-[1fr_360px] gap-4">
-      <section className="rounded-2xl bg-[#101012] border border-white/10 overflow-hidden">
-        <div className="p-4 flex items-center justify-between gap-3 border-b border-white/10">
-          <button onClick={()=>setCalendarMonth(new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1))} className="px-3 py-2 rounded-lg bg-white/5">←</button>
-          <h2 className="font-bold capitalize">{calendarMonth.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</h2>
-          <button onClick={()=>setCalendarMonth(new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,1))} className="px-3 py-2 rounded-lg bg-white/5">→</button>
+      <section className="rounded-2xl bg-[#101012] border border-white/10 overflow-hidden min-w-0">
+        <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-3 border-b border-white/10">
+          <div className="flex items-center gap-2"><button onClick={()=>{const now=new Date();setCalendarMonth(new Date(now.getFullYear(),now.getMonth(),1));setSelectedDate(isoDate(now))}} className="min-h-9 px-3 rounded-lg border border-white/10 text-xs font-semibold hover:bg-white/5">Hoje</button><button aria-label="Mês anterior" onClick={()=>setCalendarMonth(new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1))} className="w-9 h-9 rounded-lg hover:bg-white/5 text-gray-400">‹</button><button aria-label="Próximo mês" onClick={()=>setCalendarMonth(new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,1))} className="w-9 h-9 rounded-lg hover:bg-white/5 text-gray-400">›</button></div>
+          <h2 className="font-bold capitalize text-base">{calendarMonth.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</h2>
+          <div className="hidden md:flex items-center gap-3 text-[9px] text-gray-500"><span>● Pendente</span><span className="text-blue-400">● Em andamento</span><span className="text-yellow-400">● Revisão</span><span className="text-green-400">● Concluída</span></div>
         </div>
         <div className="grid grid-cols-7 border-b border-white/10">{['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(day=><div key={day} className="p-2 text-center text-xs text-gray-500">{day}</div>)}</div>
         <div className="grid grid-cols-7">{cells.map((date,index)=>{
@@ -136,16 +136,16 @@ export function AdminProductivity(){
           const dayTasks=filtered.filter((task:any)=>task.due_date===key)
           const sameMonth=date.getMonth()===calendarMonth.getMonth()
           const selected=selectedDate===key
-          return <button key={key+'-'+index} onClick={()=>setSelectedDate(key)} className={'min-h-24 p-2 border-r border-b border-white/5 text-left align-top transition '+(sameMonth?'':'opacity-30 ')+(selected?'bg-white/10':'hover:bg-white/5')}>
+          return <button key={key+'-'+index} onClick={()=>setSelectedDate(key)} className={'min-h-28 p-2 border-r border-b border-white/5 text-left align-top transition '+(sameMonth?'':'opacity-30 ')+(selected?'bg-white/10':'hover:bg-white/5')}>
             <span className={'text-xs '+(key===today?'inline-flex w-6 h-6 items-center justify-center rounded-full bg-[#E30613] text-white':'text-gray-400')}>{date.getDate()}</span>
-            {dayTasks.length>0&&<div className="mt-2"><span className="inline-flex px-2 py-1 rounded-full bg-[#E30613]/15 text-[#ff6b7a] text-[10px] font-semibold">{dayTasks.length} {dayTasks.length===1?'tarefa':'tarefas'}</span><div className="flex gap-1 mt-2">{columns.map(column=>dayTasks.some((task:any)=>task.status===column.key)&&<span key={column.key} className={'w-2 h-2 rounded-full '+(column.key==='pending'?'bg-red-500':column.key==='in_progress'?'bg-blue-500':column.key==='review'?'bg-yellow-400':'bg-green-500')}/>)}</div></div>}
+            {dayTasks.length>0&&<div className="mt-2 space-y-1">{dayTasks.slice(0,3).map((task:any)=><div key={task.id} className={'truncate rounded-md px-1.5 py-1 text-[9px] font-medium '+(task.status==='pending'?'bg-red-500/10 text-red-300':task.status==='in_progress'?'bg-blue-500/10 text-blue-300':task.status==='review'?'bg-yellow-500/10 text-yellow-200':'bg-green-500/10 text-green-300')}>{task.title}</div>)}{dayTasks.length>3&&<div className="text-[9px] text-gray-500 px-1">+ {dayTasks.length-3} mais</div>}</div>}
           </button>
         })}</div>
       </section>
-      <aside className="rounded-2xl bg-[#141416] border border-white/10 p-4 h-fit">
+      <aside className="rounded-2xl bg-[#141416] border border-white/10 h-fit overflow-hidden xl:sticky xl:top-20"><div className="px-4 py-3 border-b border-white/8"><p className="text-[9px] uppercase tracking-[.14em] text-gray-600">Agenda do dia</p>
         <h3 className="font-bold">{new Date(selectedDate+'T12:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'})}</h3>
-        <p className="text-xs text-gray-500 mt-1">{selectedTasks.length} {selectedTasks.length===1?'tarefa prevista':'tarefas previstas'}</p>
-        <div className="mt-4 space-y-3">{selectedTasks.length===0?<p className="text-sm text-gray-500">Nenhuma entrega nessa data.</p>:selectedTasks.map((task:any)=><div key={task.id} className={'p-3 rounded-xl border '+(statusStyle[task.status]||'border-white/10')}>
+        <p className="text-xs text-gray-500 mt-1">{selectedTasks.length} {selectedTasks.length===1?'tarefa prevista':'tarefas previstas'}</p></div>
+        <div className="p-4 space-y-3">{selectedTasks.length===0?<p className="text-sm text-gray-500">Nenhuma entrega nessa data.</p>:selectedTasks.map((task:any)=><div key={task.id} className={'p-3 rounded-xl border '+(statusStyle[task.status]||'border-white/10')}>
           <Link to={'/admin/projetos/'+task.projectId} className="font-semibold text-sm">{task.title}</Link>
           <p className="text-xs text-gray-500 mt-1">{task.projectTitle}</p>
           <p className="text-xs text-gray-500 mt-1">{assigneeName(task.assigned_to)} · {rotulo(statusTarefa,task.status)}</p>
