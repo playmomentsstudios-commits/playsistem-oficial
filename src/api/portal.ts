@@ -298,14 +298,26 @@ export const portalApi = {
     if(error) throw error
     return data
   },
-  submitFileReview: async (fileId:string,action:'approved'|'changes_requested',comment?:string) => {
-    const { data,error }=await supabase.rpc('submit_file_review',{
-      p_file_id:fileId,
-      p_action:action,
-      p_comment:comment?.trim()||null,
-    })
+  submitFileReview: async (fileId:string,action:'approved'|'changes_requested',comment?:string,details?:{subject?:string;items?:string[];attachments?:Array<{name:string;path:string;mime_type:string;size:number}>}) => {
+    if(details){
+      const { data,error }=await supabase.rpc('submit_file_review_v2',{
+        p_file_id:fileId,p_action:action,p_comment:comment?.trim()||null,p_subject:details.subject?.trim()||null,
+        p_items:details.items||[],p_attachments:details.attachments||[],
+      })
+      if(error) throw error
+      return data
+    }
+    const { data,error }=await supabase.rpc('submit_file_review',{p_file_id:fileId,p_action:action,p_comment:comment?.trim()||null})
     if(error) throw error
     return data
+  },
+  uploadFileReviewAttachment: async (customerId:string,fileId:string,file:File) => {
+    if(file.size>10*1024*1024) throw new Error('Cada anexo pode ter no máximo 10 MB.')
+    const safeName=file.name.replace(/[^a-zA-Z0-9._-]+/g,'-')
+    const path=`${customerId}/${fileId}/${crypto.randomUUID()}-${safeName}`
+    const { error }=await supabase.storage.from('file-review-attachments').upload(path,file,{upsert:false,contentType:file.type||'application/octet-stream'})
+    if(error) throw error
+    return {name:file.name,path,mime_type:file.type||'application/octet-stream',size:file.size}
   },
   linkFileVersion: async (newFileId:string,previousFileId:string) => {
     const { data,error }=await supabase.rpc('link_file_version',{
