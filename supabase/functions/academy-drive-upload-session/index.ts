@@ -3,7 +3,15 @@ Deno.serve(async(req)=>{
  if(req.method==="OPTIONS")return new Response("ok",{headers:corsHeaders});
  try{
   const ctx=await requireUser(req);if(ctx.role!=="admin")throw new Error("Admin access required");
-  const body=await req.json();const courseId=String(body.course_id||"");const moduleId=body.module_id?String(body.module_id):undefined;const fileName=String(body.file_name||"").trim();const mimeType=String(body.mime_type||"application/octet-stream");const fileSize=Number(body.file_size||0);const action=String(body.action||"start");const materialFolder=String(body.material_folder||"").trim().replace(/[\\/]/g,"-").slice(0,80);
+  const body=await req.json();
+  const action=String(body.action||"start");
+  if(action==="delete"){
+   const fileId=String(body.drive_file_id||"");if(!fileId)throw new Error("Missing Drive file id");
+   const token=await getDriveAccessToken();const removed=await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}`,{method:"DELETE",headers:{Authorization:`Bearer ${token}`}});
+   if(!removed.ok&&removed.status!==404)throw new Error("Could not delete Drive file: "+await removed.text());
+   return json({ok:true});
+  }
+  const courseId=String(body.course_id||"");const moduleId=body.module_id?String(body.module_id):undefined;const fileName=String(body.file_name||"").trim();const mimeType=String(body.mime_type||"application/octet-stream");const fileSize=Number(body.file_size||0);const materialFolder=String(body.material_folder||"").trim().replace(/[\\/]/g,"-").slice(0,80);
   if(!courseId||!fileName||!Number.isFinite(fileSize)||fileSize<=0)throw new Error("Invalid upload metadata");
   if(fileSize>50*1024*1024*1024)throw new Error("File exceeds the 50 GB limit");
   const folders=await ensureAcademyFolder(ctx.db,ctx.userId,courseId,moduleId);const token=await getDriveAccessToken();
