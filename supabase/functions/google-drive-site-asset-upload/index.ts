@@ -10,8 +10,14 @@ Deno.serve(async (req) => {
     const mimeType = String(body.mime_type || "").trim();
     const fileSize = Number(body.file_size || 0);
     const section = String(body.section || "HOME");
-    if (!fileName || !mimeType.startsWith("image/") || !Number.isFinite(fileSize) || fileSize <= 0) throw new Error("Invalid image metadata");
-    if (fileSize > 25 * 1024 * 1024) throw new Error("Image exceeds the 25 MB limit");
+    const normalizedSection = section.trim().toUpperCase();
+    const imageSection = ["HOME","PROFILE","PORTFOLIO","COURSES"].includes(normalizedSection);
+    const resumeSection = normalizedSection === "RESUME";
+    if (!fileName || !Number.isFinite(fileSize) || fileSize <= 0) throw new Error("Invalid file metadata");
+    if (imageSection && !mimeType.startsWith("image/")) throw new Error("This section only accepts images");
+    if (resumeSection && mimeType !== "application/pdf") throw new Error("Resume must be a PDF");
+    if (!imageSection && !resumeSection) throw new Error("Unsupported site asset section");
+    if (fileSize > 25 * 1024 * 1024) throw new Error("File exceeds the 25 MB limit");
     const target = await ensureSiteAssetFolder(ctx.db, ctx.userId, section);
     const token = await getDriveAccessToken();
     const metadata = { name:fileName, parents:[target.folderId], appProperties:{playMomentsKind:"site-public-asset",playMomentsSection:target.section} };
