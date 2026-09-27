@@ -1,4 +1,4 @@
-import { asaas, corsHeaders, ensureAsaasCustomer, json, requireCustomer } from "../_shared/asaas.ts";
+import { asaas, asaasEnvironment, corsHeaders, ensureAsaasCustomer, json, requireCustomer } from "../_shared/asaas.ts";
 
 Deno.serve(async(req)=>{
  if(req.method==="OPTIONS")return new Response("ok",{headers:corsHeaders});
@@ -24,7 +24,7 @@ Deno.serve(async(req)=>{
   if(billing_type==="PIX")pixQrCode=await asaas("/payments/"+charge.id+"/pixQrCode");
   const providerPayload={...charge,...(pixQrCode?{pixQrCode}:{})};
   const paymentValues={
-    customer_id:userId,order_id:order.id,amount:order.total,method,status:"pending",provider:"asaas",
+    customer_id:userId,order_id:order.id,amount:order.total,method,status:"pending",provider:"asaas",environment:asaasEnvironment(),
     provider_reference:charge.id,provider_customer_id:customerId,provider_payload:providerPayload,due_date:charge.dueDate||null
   };
   const {data:manual}=await db.from("payments").select("id").eq("order_id",order.id).eq("provider","manual").in("status",["pending","awaiting_confirmation"]).order("created_at",{ascending:false}).limit(1).maybeSingle();
