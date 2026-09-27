@@ -29,8 +29,28 @@ export function PaymentsPage(){
   return <div>
     <div className="mb-6">
       <h1 className="text-2xl font-bold text-white">Pagamentos</h1>
-      <p className="text-sm text-gray-500">Acompanhe valores e confirmações automáticas</p>
+      <p className="text-sm text-gray-500">Acompanhe valores, confirmações e suas formas de pagamento</p>
     </div>
+
+    <section className="mb-6 p-5 rounded-2xl bg-[#141416] border border-white/10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.18em] text-[#E30613] font-semibold">Carteira</p>
+          <h2 className="font-semibold text-white mt-1">Formas de pagamento</h2>
+          <p className="text-xs text-gray-500 mt-1">Seus cartões poderão ser usados nas próximas compras sem preencher tudo novamente.</p>
+        </div>
+        <button type="button" onClick={()=>toast('O cadastro seguro de cartão será liberado assim que a tokenização do provedor estiver ativa.','info')} className="min-h-11 px-4 rounded-xl bg-white/[0.06] border border-white/10 text-sm font-semibold text-white">
+          + Adicionar cartão
+        </button>
+      </div>
+      <div className="mt-4 p-4 rounded-xl bg-black/20 border border-white/5 flex gap-3">
+        <span aria-hidden="true">🔒</span>
+        <div>
+          <p className="text-sm text-white font-medium">Cartão protegido pelo provedor de pagamento</p>
+          <p className="text-xs text-gray-500 mt-1">A Play Moments não armazenará número completo do cartão nem código de segurança. O cartão será salvo por tokenização.</p>
+        </div>
+      </div>
+    </section>
 
     {loading
       ? <p className="text-gray-400">Carregando...</p>
