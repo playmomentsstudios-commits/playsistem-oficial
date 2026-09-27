@@ -221,7 +221,7 @@ export function CustomerLayoutV2() {
       </div>
 
       <main className="flex-1 overflow-auto p-4 md:p-8">
-        <CustomerRouteBoundary route={location.pathname}><Outlet/></CustomerRouteBoundary>
+        <CustomerRouteBoundary key={location.pathname} route={location.pathname}><Outlet/></CustomerRouteBoundary>
       </main>
     </div>
     {floatingChatEnabled&&<FloatingCustomerChat unread={counts.messages}/>} 

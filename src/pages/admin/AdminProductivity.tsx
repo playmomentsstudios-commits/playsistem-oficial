@@ -46,6 +46,9 @@ export function AdminProductivity(){
   const [search,setSearch]=useState('')
   const [calendarMonth,setCalendarMonth]=useState(()=>new Date(new Date().getFullYear(),new Date().getMonth(),1))
   const [selectedDate,setSelectedDate]=useState(()=>isoDate(new Date()))
+  const [taskModal,setTaskModal]=useState(false)
+  const [taskForm,setTaskForm]=useState<any>({title:'',project_id:'',assigned_to:'',priority:'medium',due_date:isoDate(new Date())})
+  const [savingTask,setSavingTask]=useState(false)
 
   const load=async()=>{
     const [p,t]=await Promise.all([portalApi.projects(),portalApi.teamMembers()])
@@ -74,6 +77,9 @@ export function AdminProductivity(){
   const review=filtered.filter((task:any)=>task.status==='review').length
   const cells=useMemo(()=>monthCells(calendarMonth),[calendarMonth])
   const selectedTasks=filtered.filter((task:any)=>task.due_date===selectedDate)
+
+  function openTask(date=selectedDate){setSelectedDate(date);setTaskForm({title:'',project_id:projectFilter!=='todos'?projectFilter:'',assigned_to:'',priority:'medium',due_date:date});setTaskModal(true)}
+  async function createTask(){if(!taskForm.title.trim()||!taskForm.project_id)return;setSavingTask(true);try{await portalApi.saveTask({...taskForm,title:taskForm.title.trim(),assigned_to:taskForm.assigned_to||null,status:'pending'});await load();setCalendarMonth(new Date(taskForm.due_date+'T12:00'));setSelectedDate(taskForm.due_date);setTaskModal(false)}finally{setSavingTask(false)}}
 
   async function changeStatus(id:string,status:string){
     await portalApi.saveTask({status,completed_at:status==='completed'?new Date().toISOString():null},id)
@@ -126,7 +132,7 @@ export function AdminProductivity(){
     </div>)}</div>:<div className="grid xl:grid-cols-[1fr_360px] gap-4">
       <section className="rounded-2xl bg-[#101012] border border-white/10 overflow-hidden min-w-0">
         <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-3 border-b border-white/10">
-          <div className="flex items-center gap-2"><button onClick={()=>{const now=new Date();setCalendarMonth(new Date(now.getFullYear(),now.getMonth(),1));setSelectedDate(isoDate(now))}} className="min-h-9 px-3 rounded-lg border border-white/10 text-xs font-semibold hover:bg-white/5">Hoje</button><button aria-label="Mês anterior" onClick={()=>setCalendarMonth(new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1))} className="w-9 h-9 rounded-lg hover:bg-white/5 text-gray-400">‹</button><button aria-label="Próximo mês" onClick={()=>setCalendarMonth(new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,1))} className="w-9 h-9 rounded-lg hover:bg-white/5 text-gray-400">›</button></div>
+          <div className="flex items-center gap-2"><button onClick={()=>openTask()} className="min-h-9 px-3 rounded-lg bg-[#E30613] text-white text-xs font-bold">＋ Nova tarefa</button><button onClick={()=>{const now=new Date();setCalendarMonth(new Date(now.getFullYear(),now.getMonth(),1));setSelectedDate(isoDate(now))}} className="min-h-9 px-3 rounded-lg border border-white/10 text-xs font-semibold hover:bg-white/5">Hoje</button><button aria-label="Mês anterior" onClick={()=>setCalendarMonth(new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()-1,1))} className="w-9 h-9 rounded-lg hover:bg-white/5 text-gray-400">‹</button><button aria-label="Próximo mês" onClick={()=>setCalendarMonth(new Date(calendarMonth.getFullYear(),calendarMonth.getMonth()+1,1))} className="w-9 h-9 rounded-lg hover:bg-white/5 text-gray-400">›</button></div>
           <h2 className="font-bold capitalize text-base">{calendarMonth.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}</h2>
           <div className="hidden md:flex items-center gap-3 text-[9px] text-gray-500"><span>● Pendente</span><span className="text-blue-400">● Em andamento</span><span className="text-yellow-400">● Revisão</span><span className="text-green-400">● Concluída</span></div>
         </div>
@@ -136,7 +142,7 @@ export function AdminProductivity(){
           const dayTasks=filtered.filter((task:any)=>task.due_date===key)
           const sameMonth=date.getMonth()===calendarMonth.getMonth()
           const selected=selectedDate===key
-          return <button key={key+'-'+index} onClick={()=>setSelectedDate(key)} className={'min-h-28 p-2 border-r border-b border-white/5 text-left align-top transition '+(sameMonth?'':'opacity-30 ')+(selected?'bg-white/10':'hover:bg-white/5')}>
+          return <button key={key+'-'+index} onClick={()=>setSelectedDate(key)} onDoubleClick={()=>openTask(key)} className={'min-h-28 p-2 border-r border-b border-white/5 text-left align-top transition '+(sameMonth?'':'opacity-30 ')+(selected?'bg-white/10':'hover:bg-white/5')}>
             <span className={'text-xs '+(key===today?'inline-flex w-6 h-6 items-center justify-center rounded-full bg-[#E30613] text-white':'text-gray-400')}>{date.getDate()}</span>
             {dayTasks.length>0&&<div className="mt-2 space-y-1">{dayTasks.slice(0,3).map((task:any)=><div key={task.id} className={'truncate rounded-md px-1.5 py-1 text-[9px] font-medium '+(task.status==='pending'?'bg-red-500/10 text-red-300':task.status==='in_progress'?'bg-blue-500/10 text-blue-300':task.status==='review'?'bg-yellow-500/10 text-yellow-200':'bg-green-500/10 text-green-300')}>{task.title}</div>)}{dayTasks.length>3&&<div className="text-[9px] text-gray-500 px-1">+ {dayTasks.length-3} mais</div>}</div>}
           </button>
@@ -152,5 +158,6 @@ export function AdminProductivity(){
         </div>)}</div>
       </aside>
     </div>}
+    {taskModal&&<div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4" onMouseDown={e=>{if(e.target===e.currentTarget)setTaskModal(false)}}><div className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#141416] p-5 shadow-2xl"><div className="flex justify-between items-start"><div><p className="text-[10px] uppercase tracking-[.15em] text-[#ff5364]">Calendário</p><h2 className="text-lg font-bold mt-1">Nova tarefa</h2><p className="text-xs text-gray-500 mt-1">{new Date(taskForm.due_date+'T12:00').toLocaleDateString('pt-BR')}</p></div><button onClick={()=>setTaskModal(false)} className="text-gray-500 hover:text-white">✕</button></div><div className="grid gap-3 mt-5"><input autoFocus value={taskForm.title} onChange={e=>setTaskForm((v:any)=>({...v,title:e.target.value}))} placeholder="Título da tarefa" className="min-h-11 px-3 rounded-xl bg-black border border-white/10 text-sm"/><select value={taskForm.project_id} onChange={e=>setTaskForm((v:any)=>({...v,project_id:e.target.value}))} className="min-h-11 px-3 rounded-xl bg-black border border-white/10 text-sm"><option value="">Selecione o projeto</option>{projects.map(p=><option key={p.id} value={p.id}>{p.title}</option>)}</select><div className="grid sm:grid-cols-2 gap-3"><select value={taskForm.assigned_to} onChange={e=>setTaskForm((v:any)=>({...v,assigned_to:e.target.value}))} className="min-h-11 px-3 rounded-xl bg-black border border-white/10 text-sm"><option value="">Sem responsável</option>{team.map(m=><option key={m.id} value={m.id}>{m.first_name} {m.last_name}</option>)}</select><select value={taskForm.priority} onChange={e=>setTaskForm((v:any)=>({...v,priority:e.target.value}))} className="min-h-11 px-3 rounded-xl bg-black border border-white/10 text-sm">{['low','medium','high','urgent'].map(v=><option key={v} value={v}>{rotulo(prioridade,v)}</option>)}</select></div><input type="date" value={taskForm.due_date} onChange={e=>setTaskForm((v:any)=>({...v,due_date:e.target.value}))} className="min-h-11 px-3 rounded-xl bg-black border border-white/10 text-sm"/><button disabled={savingTask||!taskForm.title.trim()||!taskForm.project_id} onClick={()=>void createTask()} className="min-h-11 rounded-xl bg-[#E30613] disabled:opacity-40 text-white text-sm font-bold">{savingTask?'Salvando...':'Criar tarefa'}</button><p className="text-[10px] text-gray-600">Dê dois cliques em um dia para criar diretamente naquela data.</p></div></div></div>}
   </div>
 }
