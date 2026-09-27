@@ -50,7 +50,15 @@ export interface RegisterPayload {
   lastName: string
   email: string
   password: string
-  phone?: string
+  phone: string
+  documentNumber: string
+  postalCode: string
+  street: string
+  addressNumber: string
+  addressComplement?: string
+  neighborhood: string
+  city: string
+  state: string
 }
 
 // ─── Category ─────────────────────────────────────────────────────────────────
