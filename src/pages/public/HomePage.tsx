@@ -1,36 +1,9 @@
 import { Link } from 'react-router-dom'
 import { useEffect,useState } from 'react'
-import { siteContentApi,type PortfolioItem,type SiteProfile,type SiteSettings } from '../../services/siteContent'
+import { siteContentApi,type HomeServiceArea,type PortfolioItem,type SiteProfile,type SiteSettings } from '../../services/siteContent'
 import { PublicLayout } from '../../layouts/PublicLayout'
 import { useAuth } from '../../contexts/AuthContext'
 import { conversationLink } from '../../lib/navigation'
-
-const FEATURED_SERVICES = [
-  {
-    area: 'Studio & Criação',
-    icon: '🎬',
-    color: '#ff6b35',
-    services: ['Produção de Vídeo', 'Fotografia Profissional', 'Motion Design', 'Streaming'],
-    href: '/studio',
-    image: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=600&h=400&fit=crop&auto=format',
-  },
-  {
-    area: 'Design & Digital',
-    icon: '✦',
-    color: '#4cc9f0',
-    services: ['Identidade Visual', 'UI/UX Design', 'Criação de Sites', 'Marketing Digital'],
-    href: '/design',
-    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=400&fit=crop&auto=format',
-  },
-  {
-    area: 'Tech & Equipamentos',
-    icon: '⚡',
-    color: '#06d6a0',
-    services: ['Aluguel de Câmeras', 'Setup de Estúdio', 'Infraestrutura AV', 'Suporte Técnico'],
-    href: '/tech',
-    image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600&h=400&fit=crop&auto=format',
-  },
-]
 
 
 export function HomePage() {
@@ -38,7 +11,8 @@ export function HomePage() {
   const [profile,setProfile]=useState<SiteProfile|null>(null)
   const [portfolio,setPortfolio]=useState<PortfolioItem[]>([])
   const [siteSettings,setSiteSettings]=useState<SiteSettings|null>(null)
-  useEffect(()=>{Promise.all([siteContentApi.profile(),siteContentApi.portfolioItems(),siteContentApi.settings()]).then(([p,i,s])=>{setProfile(p);setPortfolio(i.filter(item=>item.featured).slice(0,3));setSiteSettings(s);if(s.meta_description){document.title=s.company_name;document.querySelector('meta[name="description"]')?.setAttribute('content',s.meta_description)}}).catch(()=>undefined)},[])
+  const [serviceAreas,setServiceAreas]=useState<HomeServiceArea[]>([])
+  useEffect(()=>{Promise.all([siteContentApi.profile(),siteContentApi.portfolioItems(),siteContentApi.settings(),siteContentApi.homeServiceAreas()]).then(([p,i,s,a])=>{setProfile(p);setPortfolio(i.filter(item=>item.featured).slice(0,3));setSiteSettings(s);setServiceAreas(a);if(s.meta_description){document.title=s.company_name;document.querySelector('meta[name="description"]')?.setAttribute('content',s.meta_description)}}).catch(()=>undefined)},[])
   const contact = conversationLink(role)
   const quote = conversationLink(role, 'orcamento')
   const quickLinks = [
@@ -106,31 +80,31 @@ export function HomePage() {
         <div className="mx-auto" style={{ maxWidth: 1100 }}>
           <div className="text-center mb-12">
             <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#E30613' }}>
-              Nossas áreas
+              {siteSettings?.home_areas_eyebrow||'Nossas áreas'}
             </p>
             <h2 className="text-4xl font-bold" style={{ color: '#f0f0f2' }}>
-              Tudo em um só lugar
+              {siteSettings?.home_areas_title||'Tudo em um só lugar'}
             </h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {FEATURED_SERVICES.map(area => (
-              <Link key={area.area} to={area.href}
+            {serviceAreas.map(area => (
+              <Link key={area.id} to={area.href}
                 className="group relative overflow-hidden rounded-2xl transition-transform duration-300 hover:-translate-y-1"
                 style={{ background: '#141416', border: '1px solid rgba(255,255,255,0.07)' }}>
                 <div className="relative overflow-hidden" style={{ height: 200 }}>
-                  <img src={area.image} alt={area.area} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <img src={area.image_url||''} alt={area.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(20,20,22,0.95) 0%, rgba(20,20,22,0.3) 100%)' }} />
-                  <span className="absolute top-4 left-4 text-3xl">{area.icon}</span>
+                  <span className="absolute top-4 left-4 text-3xl">{area.icon||'◆'}</span>
                 </div>
                 <div className="p-5">
-                  <p className="font-bold text-base mb-3" style={{ color: '#f0f0f2' }}>{area.area}</p>
+                  <p className="font-bold text-base mb-3" style={{ color: '#f0f0f2' }}>{area.title}</p>
                   <div className="flex flex-col gap-1.5">
-                    {area.services.map(s => (
+                    {area.topics.map(s => (
                       <p key={s} className="text-sm" style={{ color: '#6b6b78' }}>· {s}</p>
                     ))}
                   </div>
-                  <div className="mt-4 flex items-center gap-2 text-sm font-semibold" style={{ color: area.color }}>
+                  <div className="mt-4 flex items-center gap-2 text-sm font-semibold" style={{ color: area.accent_color }}>
                     Conhecer →
                   </div>
                 </div>
