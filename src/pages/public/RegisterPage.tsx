@@ -8,7 +8,7 @@ import { afterAuthPath, authLink, safeReturnPath } from '../../lib/navigation'
 import logoUrl from '../../assets/logo-play-moments.png'
 
 export function RegisterPage() {
-  const [form, setForm] = useState({ name: '', lastName: '', email: '', phone: '', password: '', confirm: '' })
+  const [form, setForm] = useState({ name: '', lastName: '', email: '', phone: '', documentNumber: '', postalCode: '', street: '', addressNumber: '', addressComplement: '', neighborhood: '', city: '', state: '', password: '', confirm: '' })
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const { register, user, isLoading } = useAuth()
@@ -26,6 +26,15 @@ export function RegisterPage() {
     if (!form.name) errs.name = 'Informe o nome'
     if (!form.lastName) errs.lastName = 'Informe o sobrenome'
     if (!form.email) errs.email = 'Informe o e-mail'
+    if (!form.phone.replace(/\D/g, '')) errs.phone = 'Informe o telefone'
+    const document = form.documentNumber.replace(/\D/g, '')
+    if (![11, 14].includes(document.length)) errs.documentNumber = 'Informe um CPF ou CNPJ válido'
+    if (form.postalCode.replace(/\D/g, '').length !== 8) errs.postalCode = 'Informe um CEP válido'
+    if (!form.street.trim()) errs.street = 'Informe a rua ou avenida'
+    if (!form.addressNumber.trim()) errs.addressNumber = 'Informe o número'
+    if (!form.neighborhood.trim()) errs.neighborhood = 'Informe o bairro'
+    if (!form.city.trim()) errs.city = 'Informe a cidade'
+    if (form.state.trim().length !== 2) errs.state = 'Informe a UF'
     if (!form.password || form.password.length < 6) errs.password = 'Mínimo 6 caracteres'
     if (form.password !== form.confirm) errs.confirm = 'As senhas não coincidem'
     return errs
@@ -42,6 +51,14 @@ export function RegisterPage() {
         lastName: form.lastName,
         email: form.email,
         phone: form.phone,
+        documentNumber: form.documentNumber,
+        postalCode: form.postalCode,
+        street: form.street,
+        addressNumber: form.addressNumber,
+        addressComplement: form.addressComplement,
+        neighborhood: form.neighborhood,
+        city: form.city,
+        state: form.state,
         password: form.password,
       }, next)
 
@@ -76,7 +93,12 @@ export function RegisterPage() {
             <Input label="Sobrenome" placeholder="Silva" value={form.lastName} onChange={set('lastName')} error={errors.lastName} />
           </div>
           <Input label="E-mail" type="email" placeholder="seu@email.com" value={form.email} onChange={set('email')} error={errors.email} />
-          <Input label="Telefone (opcional)" type="tel" placeholder="(11) 99999-9999" value={form.phone} onChange={set('phone')} />
+          <Input label="Telefone" type="tel" placeholder="(11) 99999-9999" value={form.phone} onChange={set('phone')} error={errors.phone} />
+          <Input label="CPF/CNPJ" placeholder="Somente números ou formatado" value={form.documentNumber} onChange={set('documentNumber')} error={errors.documentNumber} />
+          <div className="grid grid-cols-2 gap-3"><Input label="CEP" placeholder="00000-000" value={form.postalCode} onChange={set('postalCode')} error={errors.postalCode} /><Input label="Rua / Avenida" value={form.street} onChange={set('street')} error={errors.street} /></div>
+          <div className="grid grid-cols-2 gap-3"><Input label="Número" value={form.addressNumber} onChange={set('addressNumber')} error={errors.addressNumber} /><Input label="Complemento (opcional)" value={form.addressComplement} onChange={set('addressComplement')} /></div>
+          <Input label="Bairro" value={form.neighborhood} onChange={set('neighborhood')} error={errors.neighborhood} />
+          <div className="grid grid-cols-[1fr_90px] gap-3"><Input label="Cidade" value={form.city} onChange={set('city')} error={errors.city} /><Input label="UF" placeholder="GO" maxLength={2} value={form.state} onChange={set('state')} error={errors.state} /></div>
           <Input label="Senha" type="password" placeholder="Mínimo 6 caracteres" value={form.password} onChange={set('password')} error={errors.password} />
           <Input label="Confirmar senha" type="password" placeholder="Repita a senha" value={form.confirm} onChange={set('confirm')} error={errors.confirm} />
 
