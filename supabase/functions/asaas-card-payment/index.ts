@@ -1,4 +1,4 @@
-import { asaas, corsHeaders, ensureAsaasCustomer, json, requireCustomer } from "../_shared/asaas.ts";
+import { asaas, asaasEnvironment, corsHeaders, ensureAsaasCustomer, json, requireCustomer } from "../_shared/asaas.ts";
 
 const digits=(value:unknown)=>String(value||"").replace(/\D/g,"");
 const clientIp=(req:Request)=>{
@@ -41,7 +41,7 @@ Deno.serve(async(req)=>{
   else{payload.installmentCount=count;payload.totalValue=order.total/100}
 
   const charge=await asaas("/payments",{method:"POST",body:JSON.stringify(payload)});
-  const paymentValues={customer_id:userId,order_id:order.id,amount:order.total,method:"card",status:"pending",provider:"asaas",provider_reference:charge.id,provider_customer_id:customer,provider_payload:{id:charge.id,status:charge.status,installment:charge.installment||null,installmentCount:count,last4:card.number.slice(-4)}};
+  const paymentValues={customer_id:userId,order_id:order.id,amount:order.total,method:"card",status:"pending",provider:"asaas",environment:asaasEnvironment(),provider_reference:charge.id,provider_customer_id:customer,provider_payload:{id:charge.id,status:charge.status,installment:charge.installment||null,installmentCount:count,last4:card.number.slice(-4)}};
   const {data:manual}=await db.from("payments").select("id").eq("order_id",order.id).eq("provider","manual").in("status",["pending","awaiting_confirmation"]).order("created_at",{ascending:false}).limit(1).maybeSingle();
   const write=manual?.id?db.from("payments").update(paymentValues).eq("id",manual.id):db.from("payments").insert(paymentValues);
   const {error:paymentError}=await write;if(paymentError)throw paymentError;

@@ -367,6 +367,10 @@ export const portalApi = {
     if(error) throw error
     return data ?? []
   },
+  setPaymentArchived: async (paymentId:string,archived:boolean) => {
+    const { error }=await supabase.rpc('admin_set_payment_archived',{p_payment_id:paymentId,p_archived:archived})
+    if(error) throw error
+  },
   paymentSettings: async () => {
     const { data,error } = await supabase.from('payment_settings').select('*').eq('id',true).maybeSingle()
     if(error) throw error
