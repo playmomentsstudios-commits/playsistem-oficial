@@ -62,6 +62,8 @@ const AdminCRM = lazy(() => import('./pages/admin/AdminCRM').then(m => ({ defaul
 const AdminReports = lazy(() => import('./pages/admin/AdminReports').then(m => ({ default:m.AdminReports })))
 const AdminAudit = lazy(() => import('./pages/admin/AdminAudit').then(m => ({ default:m.AdminAudit })))
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings').then(m => ({ default:m.AdminSettings })))
+const AdminAcademy = lazy(() => import('./pages/admin/AdminAcademy').then(m => ({ default:m.AdminAcademy })))
+const AcademyPage = lazy(() => import('./pages/customer/AcademyPage').then(m => ({ default:m.AcademyPage })))
 const AdminPermissionGate = lazy(() => import('./components/admin/AdminPermissionGate').then(m => ({ default:m.AdminPermissionGate })))
 
 function RouteFallback(){
@@ -124,6 +126,7 @@ export default function AppV2() {
                 <Route path="projetos" element={<ProjectsPage />} />
                 <Route path="projetos/:id" element={<ProjectsPage />} />
                 <Route path="comunicados" element={<AnnouncementsPage />} />
+                <Route path="academia" element={<AcademyPage />} />
                 <Route path="configuracoes" element={<CustomerSettings />} />
               </Route>
 
@@ -155,6 +158,7 @@ export default function AppV2() {
                 <Route path="configuracoes" element={<AdminPermissionGate adminOnly><AdminSettings /></AdminPermissionGate>} />
                 <Route path="auditoria" element={<AdminPermissionGate adminOnly><AdminAudit /></AdminPermissionGate>} />
                 <Route path="relatorios" element={<AdminPermissionGate permission="reports.view"><AdminReports /></AdminPermissionGate>} />
+                <Route path="academia" element={<AdminPermissionGate adminOnly><AdminAcademy /></AdminPermissionGate>} />
               </Route>
 
               {/* Fallback */}
