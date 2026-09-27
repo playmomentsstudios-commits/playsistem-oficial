@@ -12,6 +12,11 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    rolldownOptions: {
+      output: {
+        codeSplitting: true,
+      },
+    },
   },
   server: {
     port: 8443,
