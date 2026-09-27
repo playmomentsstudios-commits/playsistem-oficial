@@ -5,29 +5,40 @@ import logoUrl from '../assets/logo-play-moments.png'
 import { portalApi } from '../api/portal'
 import { hasStaffPermission } from '../lib/staffPermissions'
 
-const MENU = [
-  { label: 'Painel', href: '/admin', icon: '⊞', exact: true },
-  { label: 'Clientes', href: '/admin/clientes', icon: '👥', permission: 'customers.view' },
-  { label: 'CRM Comercial', href: '/admin/crm', icon: '◫', permission: ['customers.view','customers.manage'] },
-  { label: 'Produtos', href: '/admin/produtos', icon: '📦', permission: ['catalog.view','catalog.manage'] },
-  { label: 'Projetos', href: '/admin/projetos', icon: '📈', permission: ['projects.view','projects.manage'] },
-  { label: 'Produtividade', href: '/admin/produtividade', icon: '✅', permission: ['projects.view','projects.manage'] },
-  { label: 'Categorias', href: '/admin/categorias', icon: '🏷', permission: ['catalog.view','catalog.manage'] },
-  { label: 'Serviços', href: '/admin/servicos', icon: '⚡', permission: ['catalog.view','catalog.manage'] },
-  { label: 'Pedidos', href: '/admin/pedidos', icon: '🛒', permission: ['sales.view','sales.manage'] },
-  { label: 'Orçamentos', href: '/admin/orcamentos', icon: '📋', permission: ['quotes.view','quotes.manage'] },
-  { label: 'Pagamentos', href: '/admin/pagamentos', icon: '💳', permission: ['payments.view','payments.manage'] },
-  { label: 'Relatórios', href: '/admin/relatorios', icon: '▥', permission: 'reports.view' },
-  { label: 'Conversas', href: '/admin/conversas', icon: '💬', permission: ['conversations.access','conversations.view_all'] },
-  { label: 'Arquivos', href: '/admin/arquivos', icon: '📁', permission: ['files.view','files.manage'] },
-  { label: 'Quem Somos', href: '/admin/portfolio', icon: '🎨', permission: 'site.manage' },
-  { label: 'Comunidade', href: '/admin/comunidade', icon: '📢', permission: 'community.manage' },
-  { label: 'Notificações', href: '/admin/notificacoes', icon: '🔔' },
-  { label: 'Comunicados', href: '/admin/comunicados', icon: '📣', permission: 'community.manage' },
-  { label: 'Colaboradores', href: '/admin/equipe', icon: '🧑‍💼', adminOnly: true },
-  { label: 'Site', href: '/admin/site', icon: '🌐', permission: 'site.manage' },
-  { label: 'Configurações', href: '/admin/configuracoes', icon: '⚙', adminOnly: true },
-  { label: 'Auditoria', href: '/admin/auditoria', icon: '📝', adminOnly: true },
+const MENU_GROUPS = [
+  { label:'Comercial', icon:'◆', items:[
+    { label:'Clientes', href:'/admin/clientes', icon:'●', permission:'customers.view' },
+    { label:'CRM Comercial', href:'/admin/crm', icon:'●', permission:['customers.view','customers.manage'] },
+    { label:'Orçamentos', href:'/admin/orcamentos', icon:'●', permission:['quotes.view','quotes.manage'] },
+    { label:'Pedidos', href:'/admin/pedidos', icon:'●', permission:['sales.view','sales.manage'] },
+  ]},
+  { label:'Operação', icon:'◆', items:[
+    { label:'Projetos', href:'/admin/projetos', icon:'●', permission:['projects.view','projects.manage'] },
+    { label:'Produtividade', href:'/admin/produtividade', icon:'●', permission:['projects.view','projects.manage'] },
+    { label:'Arquivos', href:'/admin/arquivos', icon:'●', permission:['files.view','files.manage'] },
+    { label:'Conversas', href:'/admin/conversas', icon:'●', permission:['conversations.access','conversations.view_all'] },
+  ]},
+  { label:'Financeiro', icon:'◆', items:[
+    { label:'Pagamentos', href:'/admin/pagamentos', icon:'●', permission:['payments.view','payments.manage'] },
+    { label:'Relatórios', href:'/admin/relatorios', icon:'●', permission:'reports.view' },
+  ]},
+  { label:'Catálogo', icon:'◆', items:[
+    { label:'Produtos', href:'/admin/produtos', icon:'●', permission:['catalog.view','catalog.manage'] },
+    { label:'Serviços', href:'/admin/servicos', icon:'●', permission:['catalog.view','catalog.manage'] },
+    { label:'Categorias', href:'/admin/categorias', icon:'●', permission:['catalog.view','catalog.manage'] },
+  ]},
+  { label:'Comunicação', icon:'◆', items:[
+    { label:'Notificações', href:'/admin/notificacoes', icon:'●' },
+    { label:'Comunicados', href:'/admin/comunicados', icon:'●', permission:'community.manage' },
+    { label:'Comunidade', href:'/admin/comunidade', icon:'●', permission:'community.manage' },
+  ]},
+  { label:'Gestão', icon:'◆', items:[
+    { label:'Colaboradores', href:'/admin/equipe', icon:'●', adminOnly:true },
+    { label:'Quem Somos', href:'/admin/portfolio', icon:'●', permission:'site.manage' },
+    { label:'Site', href:'/admin/site', icon:'●', permission:'site.manage' },
+    { label:'Configurações', href:'/admin/configuracoes', icon:'●', adminOnly:true },
+    { label:'Auditoria', href:'/admin/auditoria', icon:'●', adminOnly:true },
+  ]},
 ]
 
 export function AdminLayout() {
@@ -37,6 +48,7 @@ export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [counts, setCounts] = useState({ messages: 0, notifications: 0 })
   const [staffPermissions,setStaffPermissions]=useState<string[]>([])
+  const [openGroups,setOpenGroups]=useState<string[]>([])
   useEffect(() => {
     if (!user?.id) return
     const load = () => portalApi.unreadCounts(user.id).then(setCounts).catch(() => undefined)
@@ -90,25 +102,29 @@ export function AdminLayout() {
       </div>
 
       <nav className="flex-1 px-2 pt-3 overflow-y-auto pb-4">
-        {MENU.filter(item => {
-          if(user?.role==='admin')return true
-          if((item as any).adminOnly)return false
-          return hasStaffPermission(user?.role,staffPermissions,(item as any).permission)
-        }).map(item => {
-          const active = isActive(item.href, item.exact)
-          return (
-            <Link key={item.href} to={item.href}
-              onClick={() => setSidebarOpen(false)}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-lg mb-0.5 text-sm font-medium transition-all"
-              style={{
-                background: active ? 'rgba(227,6,19,0.12)' : 'transparent',
-                color: active ? '#ff6b7a' : '#9090a0',
-              }}>
-              <span>{item.icon}</span> {item.label}
-              {item.href === '/admin/conversas' && counts.messages > 0 && <span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.messages}</span>}
-              {item.href === '/admin/notificacoes' && counts.notifications > 0 && <span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.notifications}</span>}
-            </Link>
-          )
+        <Link to="/admin" onClick={()=>setSidebarOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-2 text-sm font-semibold transition-all" style={{background:isActive('/admin',true)?'rgba(227,6,19,0.14)':'transparent',color:isActive('/admin',true)?'#ff6b7a':'#a0a0ad',border:isActive('/admin',true)?'1px solid rgba(227,6,19,0.22)':'1px solid transparent'}}><span className="text-[#E30613]">◆</span>Painel</Link>
+        {MENU_GROUPS.map(group=>{
+          const visibleItems=group.items.filter((item:any)=>{
+            if(user?.role==='admin')return true
+            if(item.adminOnly)return false
+            return hasStaffPermission(user?.role,staffPermissions,item.permission)
+          })
+          if(!visibleItems.length)return null
+          const groupActive=visibleItems.some((item:any)=>isActive(item.href))
+          const open=openGroups.includes(group.label)||groupActive
+          return <div key={group.label} className="mb-1">
+            <button type="button" onClick={()=>setOpenGroups(current=>current.includes(group.label)?current.filter(value=>value!==group.label):[...current,group.label])} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all" style={{color:groupActive?'#ff6b7a':'#9090a0',background:groupActive?'rgba(227,6,19,0.06)':'transparent'}}>
+              <span className="text-[#E30613] text-[10px]">{group.icon}</span><span>{group.label}</span><span className="ml-auto text-[10px] text-gray-600">{open?'−':'+'}</span>
+            </button>
+            {open&&<div className="ml-4 pl-3 border-l border-[#E30613]/20 mt-0.5 mb-2">{visibleItems.map((item:any)=>{
+              const active=isActive(item.href)
+              return <Link key={item.href} to={item.href} onClick={()=>setSidebarOpen(false)} className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all" style={{background:active?'rgba(227,6,19,0.12)':'transparent',color:active?'#ff6b7a':'#777784'}}>
+                <span className="text-[#E30613] text-[7px]">{item.icon}</span>{item.label}
+                {item.href==='/admin/conversas'&&counts.messages>0&&<span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.messages}</span>}
+                {item.href==='/admin/notificacoes'&&counts.notifications>0&&<span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.notifications}</span>}
+              </Link>
+            })}</div>}
+          </div>
         })}
       </nav>
 
