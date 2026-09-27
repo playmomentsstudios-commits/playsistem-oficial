@@ -32,6 +32,7 @@ function getCover(product: PublicCatalogProduct) {
 export function ProductDetailPage() {
   const { slug = '' } = useParams()
   const { user } = useAuth()
+  const toast = useToast()
   const navigate = useNavigate()
   const { addItem } = useCart()
 
