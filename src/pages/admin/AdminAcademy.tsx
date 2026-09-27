@@ -4,7 +4,7 @@ import { useToast } from '../../contexts/ToastContext'
 
 const labels:Record<string,string>={course:'Curso',video_class:'Videoaula',webinar:'Webinar',lecture:'Palestra',training:'Treinamento',draft:'Rascunho',published:'Publicado',archived:'Arquivado'}
 export function AdminAcademy(){
- const {toast}=useToast();const [courses,setCourses]=useState<Course[]>([]);const [selected,setSelected]=useState<Course|null>(null);const [modules,setModules]=useState<any[]>([]);const [loading,setLoading]=useState(true)
+ const toast=useToast();const [courses,setCourses]=useState<Course[]>([]);const [selected,setSelected]=useState<Course|null>(null);const [modules,setModules]=useState<any[]>([]);const [loading,setLoading]=useState(true)
  const load=async()=>{try{setCourses(await academyApi.adminCourses())}catch(e:any){toast(e.message,'error')}finally{setLoading(false)}}
  useEffect(()=>{void load()},[])
  const open=async(course:Course)=>{setSelected(course);try{setModules(await academyApi.modules(course.id))}catch(e:any){toast(e.message,'error')}}
