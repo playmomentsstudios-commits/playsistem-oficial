@@ -11,7 +11,7 @@ Deno.serve(async(req)=>{
   if(order.payment_status==="paid")throw new Error("Pedido já está pago.");
   const {data:existing}=await db.from("payments").select("*").eq("order_id",order.id).eq("provider","asaas_checkout").eq("status","pending").order("created_at",{ascending:false}).limit(1).maybeSingle();
   if(existing?.provider_reference){
-   return json({ok:true,checkoutId:existing.provider_reference,checkoutUrl:"https://asaas.com/checkoutSession/show?id="+existing.provider_reference,reused:true});
+   return json({ok:true,checkoutId:existing.provider_reference,checkoutUrl:existing.provider_payload?.checkoutLink||("https://sandbox.asaas.com/checkoutSession/show/"+existing.provider_reference),reused:true});
   }
   const base=String(return_url||"").replace(/\/$/,"");
   if(!base.startsWith("https://")&&!base.startsWith("http://localhost"))throw new Error("URL de retorno inválida.");
@@ -30,10 +30,10 @@ Deno.serve(async(req)=>{
   })});
   if(!checkout?.id)throw new Error("O Asaas não retornou o checkout.");
   const {data:manual}=await db.from("payments").select("id").eq("order_id",order.id).eq("provider","manual").in("status",["pending","awaiting_confirmation"]).order("created_at",{ascending:false}).limit(1).maybeSingle();
-  const values={customer_id:userId,order_id:order.id,amount:order.total,method:"card",status:"pending",provider:"asaas_checkout",provider_reference:checkout.id,provider_payload:{checkoutId:checkout.id,maxInstallmentCount:12}};
+  const values={customer_id:userId,order_id:order.id,amount:order.total,method:"card",status:"pending",provider:"asaas_checkout",provider_reference:checkout.id,provider_payload:{checkoutId:checkout.id,checkoutLink:checkout.link||null,maxInstallmentCount:12}};
   const write=manual?.id?db.from("payments").update(values).eq("id",manual.id):db.from("payments").insert(values);
   const {error:paymentError}=await write;
   if(paymentError)throw paymentError;
-  return json({ok:true,checkoutId:checkout.id,checkoutUrl:"https://asaas.com/checkoutSession/show?id="+checkout.id});
+  return json({ok:true,checkoutId:checkout.id,checkoutUrl:checkout.link||("https://sandbox.asaas.com/checkoutSession/show/"+checkout.id)});
  }catch(error){return json({ok:false,error:error instanceof Error?error.message:"Unknown error"},400)}
 });
