@@ -319,6 +319,11 @@ export const portalApi = {
     if(error) throw error
     return {name:file.name,path,mime_type:file.type||'application/octet-stream',size:file.size}
   },
+  fileReviewAttachmentUrl: async (path:string) => {
+    const { data,error }=await supabase.storage.from('file-review-attachments').createSignedUrl(path,600)
+    if(error) throw error
+    return data.signedUrl
+  },
   linkFileVersion: async (newFileId:string,previousFileId:string) => {
     const { data,error }=await supabase.rpc('link_file_version',{
       p_new_file_id:newFileId,
