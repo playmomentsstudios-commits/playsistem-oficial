@@ -4,7 +4,7 @@ import { CartProvider } from './contexts/CartContext'
 import { ToastProvider } from './contexts/ToastContext'
 
 // Layouts
-import { CustomerLayout } from './layouts/CustomerLayout'
+import { CustomerLayoutV2 } from './layouts/CustomerLayoutV2'
 import { AdminLayout } from './layouts/AdminLayout'
 
 // Public pages
@@ -35,6 +35,7 @@ import { CustomerServicesPage } from './pages/customer/CustomerServicesPage'
 import { AnnouncementsPage } from './pages/customer/AnnouncementsPage'
 import { OrderDetailPage } from './pages/customer/OrderDetailPage'
 import { QuoteDetailPage } from './pages/customer/QuoteDetailPage'
+import { CustomerSettings } from './pages/customer/CustomerSettings'
 
 // Admin panel
 import { AdminDashboard } from './pages/admin/AdminDashboard'
@@ -58,6 +59,9 @@ import { AdminOrderDetail } from './pages/admin/AdminOrderDetail'
 import { AdminCategories } from './pages/admin/AdminCategories'
 import { AdminFiles } from './pages/admin/AdminFiles'
 import { AdminAboutPortfolio } from './pages/admin/AdminAboutPortfolio'
+import { AdminSettings } from './pages/admin/AdminSettings'
+import { AdminAudit } from './pages/admin/AdminAudit'
+import { AdminReports } from './pages/admin/AdminReports'
 
 // Placeholder for unbuilt pages
 function PlaceholderPage({ title }: { title: string }) {
@@ -100,7 +104,7 @@ export default function App() {
               <Route path="/carrinho" element={<CartPage />} />
 
               {/* Customer portal */}
-              <Route path="/app" element={<CustomerLayout />}>
+              <Route path="/app" element={<CustomerLayoutV2 />}>
                 <Route index element={<Navigate to="/app/dashboard" replace />} />
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="perfil" element={<ProfilePage />} />
@@ -117,7 +121,7 @@ export default function App() {
                 <Route path="projetos" element={<ProjectsPage />} />
                 <Route path="projetos/:id" element={<ProjectsPage />} />
                 <Route path="comunicados" element={<AnnouncementsPage />} />
-                <Route path="configuracoes" element={<PlaceholderPage title="Configurações da Conta" />} />
+                <Route path="configuracoes" element={<CustomerSettings />} />
               </Route>
 
               {/* Admin panel */}
@@ -144,9 +148,9 @@ export default function App() {
                 <Route path="comunicados" element={<AdminAnnouncements />} />
                 <Route path="equipe" element={<AdminTeam />} />
                 <Route path="site" element={<AdminSiteSettings />} />
-                <Route path="configuracoes" element={<PlaceholderPage title="Configurações (Admin)" />} />
-                <Route path="auditoria" element={<PlaceholderPage title="Auditoria" />} />
-                <Route path="relatorios" element={<PlaceholderPage title="Relatórios" />} />
+                <Route path="configuracoes" element={<AdminSettings />} />
+                <Route path="auditoria" element={<AdminAudit />} />
+                <Route path="relatorios" element={<AdminReports />} />
               </Route>
 
               {/* Fallback */}
