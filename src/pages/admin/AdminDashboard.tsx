@@ -96,7 +96,7 @@ export function AdminDashboard(){
     ['Mensagens não lidas',metrics.unread,'/admin/conversas'],
   ] as const
 
-  if(loading)return <div className="py-20 text-center text-sm text-gray-500">Carregando operação...</div>
+  if(loading)return <div aria-busy="true" aria-label="Carregando painel" className="space-y-5"><div className="pm-skeleton h-20 rounded-2xl"/><div className="grid grid-cols-2 lg:grid-cols-3 gap-3">{Array.from({length:6}).map((_,i)=><div key={i} className="pm-skeleton h-24 rounded-2xl"/>)}</div><div className="grid xl:grid-cols-3 gap-4">{Array.from({length:3}).map((_,i)=><div key={i} className="pm-skeleton h-64 rounded-2xl"/>)}</div></div>
 
   return <div>
     {error&&<div className="mb-4 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 text-sm text-amber-200">{error}</div>}
@@ -106,23 +106,23 @@ export function AdminDashboard(){
         <h1 className="text-2xl font-bold mt-1">Painel Play Moments</h1>
         <p className="text-sm text-gray-500 mt-1">O que precisa de atenção agora, sem precisar abrir módulo por módulo.</p>
       </div>
-      <Link to="/admin/crm" className="min-h-11 px-4 rounded-xl bg-[#E30613] text-white text-sm font-semibold flex items-center">Abrir CRM comercial</Link>
+      <Link to="/admin/crm" className="min-h-11 px-4 rounded-xl bg-[#E30613] hover:bg-[#f01826] shadow-[0_8px_24px_rgba(227,6,19,.16)] text-white text-sm font-semibold flex items-center justify-center">Abrir CRM comercial</Link>
     </div>
 
     <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-      {cards.map(([label,value,href])=><Link key={label} to={href} className="p-4 rounded-2xl bg-[#141416] border border-white/10 hover:border-white/15 transition-colors">
+      {cards.map(([label,value,href])=><Link key={label} to={href} className="pm-surface pm-surface-interactive p-4 group">
         <p className="text-[10px] uppercase tracking-wide text-gray-500">{label}</p>
-        <p className="text-2xl font-bold mt-2">{value}</p>
+        <div className="flex items-end justify-between gap-2 mt-2"><p className="text-2xl font-bold">{value}</p><span className="text-gray-700 group-hover:text-gray-400" aria-hidden="true">→</span></div>
       </Link>)}
     </div>
 
     <div className="grid md:grid-cols-2 gap-3 mt-3">
-      <Link to="/admin/crm" className="p-4 rounded-2xl bg-[#141416] border border-white/10">
+      <Link to="/admin/crm" className="pm-surface p-4">
         <p className="text-[10px] uppercase text-gray-500">Pipeline em negociação</p>
         <p className="text-xl font-bold text-[#E30613] mt-2">{money(metrics.pipelineValue)}</p>
         <p className="text-xs text-gray-600 mt-1">Orçamentos, negociações e clientes fechados no CRM</p>
       </Link>
-      <Link to="/admin/crm" className="p-4 rounded-2xl bg-[#141416] border border-white/10">
+      <Link to="/admin/crm" className="pm-surface p-4">
         <p className="text-[10px] uppercase text-gray-500">Próximas ações atrasadas</p>
         <p className={'text-xl font-bold mt-2 '+(metrics.overdueActions?'text-orange-400':'text-emerald-400')}>{metrics.overdueActions}</p>
         <p className="text-xs text-gray-600 mt-1">Clientes que já deveriam ter recebido retorno</p>
@@ -130,7 +130,7 @@ export function AdminDashboard(){
     </div>
 
     <div className="grid xl:grid-cols-3 gap-4 mt-6">
-      <section className="xl:col-span-1 rounded-2xl bg-[#141416] border border-white/10 overflow-hidden">
+      <section className="xl:col-span-1 pm-surface overflow-hidden">
         <div className="p-4 border-b border-white/8 flex items-center justify-between gap-3">
           <div><h2 className="font-semibold">Próximas ações</h2><p className="text-[10px] text-gray-500 mt-1">CRM comercial</p></div>
           <Link to="/admin/crm" className="text-xs text-[#E30613]">Ver pipeline</Link>
@@ -149,12 +149,12 @@ export function AdminDashboard(){
         </div>
       </section>
 
-      <section className="rounded-2xl bg-[#141416] border border-white/10 overflow-hidden">
+      <section className="pm-surface overflow-hidden">
         <div className="p-4 border-b border-white/8 flex items-center justify-between"><h2 className="font-semibold">Projetos ativos</h2><Link to="/admin/projetos" className="text-xs text-[#E30613]">Ver todos</Link></div>
         {latestProjects.length===0?<p className="p-4 text-xs text-gray-600">Nenhum projeto ativo.</p>:latestProjects.map((project:any)=><Link key={project.id} to={'/admin/projetos/'+project.id} className="block p-4 border-b border-white/6 last:border-b-0 hover:bg-white/[0.025]"><p className="text-sm font-semibold truncate">{project.title}</p><p className="text-[10px] text-gray-500 mt-1">{project.status||'Sem status'} · {project.priority||'sem prioridade'}</p></Link>)}
       </section>
 
-      <section className="rounded-2xl bg-[#141416] border border-white/10 overflow-hidden">
+      <section className="pm-surface overflow-hidden">
         <div className="p-4 border-b border-white/8 flex items-center justify-between"><h2 className="font-semibold">Orçamentos recentes</h2><Link to="/admin/orcamentos" className="text-xs text-[#E30613]">Ver todos</Link></div>
         {latestQuotes.length===0?<p className="p-4 text-xs text-gray-600">Nenhum orçamento em aberto.</p>:latestQuotes.map((quote:any)=><Link key={quote.id} to={'/admin/orcamentos/'+quote.id} className="block p-4 border-b border-white/6 last:border-b-0 hover:bg-white/[0.025]"><div className="flex justify-between gap-3"><p className="text-sm font-semibold truncate">{quote.title||quote.quote_number||'Orçamento'}</p><span className="text-[10px] text-[#E30613] shrink-0">{quote.status}</span></div><p className="text-[10px] text-gray-500 mt-1">{quote.total?money(quote.total):'Valor não informado'}</p></Link>)}
       </section>
