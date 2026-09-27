@@ -7,9 +7,10 @@ import { portalApi } from '../api/portal'
 import { FloatingCustomerChat } from '../components/chat/FloatingCustomerChat'
 import { settingsApi } from '../api/settings'
 
-type IconName='home'|'user'|'orders'|'projects'|'services'|'quotes'|'payments'|'chat'|'files'|'community'|'notifications'|'announcements'|'settings'|'logout'|'chevron'
+type IconName='academy'|'home'|'user'|'orders'|'projects'|'services'|'quotes'|'payments'|'chat'|'files'|'community'|'notifications'|'announcements'|'settings'|'logout'|'chevron'
 
 const ICONS:Record<IconName,React.ReactNode>={
+  academy:<><path d="M4 5h16v14H4z"/><path d="m8 9 4 3 4-3v6l-4 3-4-3z"/></>,
   home:<><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></>,
   user:<><circle cx="12" cy="8" r="3"/><path d="M5 20c.8-4 3.2-6 7-6s6.2 2 7 6"/></>,
   orders:<><path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="M4 7v10l8 4 8-4V7"/><path d="M12 11v10"/></>,
@@ -41,6 +42,7 @@ const MENU:{label:string;href:string;icon:IconName}[]=[
   { label: 'Pagamentos', href: '/app/pagamentos', icon: 'payments' },
   { label: 'Conversas', href: '/app/conversas', icon: 'chat' },
   { label: 'Arquivos', href: '/app/arquivos', icon: 'files' },
+  { label: 'Academia', href: '/app/academia', icon: 'academy' },
   { label: 'Comunidade', href: '/comunidade', icon: 'community' },
   { label: 'Notificações', href: '/app/notificacoes', icon: 'notifications' },
   { label: 'Comunicados', href: '/app/comunicados', icon: 'announcements' },
