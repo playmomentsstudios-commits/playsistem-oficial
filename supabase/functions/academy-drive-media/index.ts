@@ -107,7 +107,10 @@ Deno.serve(async(req)=>{
    const meta=await metaResponse.json();
    if(!String(meta.mimeType||"").startsWith("video/"))throw new Error("O arquivo está no Drive, mas foi armazenado como "+(meta.mimeType||"tipo desconhecido")+" em vez de vídeo.");
    if(!meta.size)throw new Error("O arquivo de vídeo está vazio no Google Drive.");
-   if(meta.capabilities?.canDownload===false)throw new Error("O Google Drive bloqueou a leitura deste vídeo.");\n   mediaMimeType=String(meta.mimeType||"video/mp4");mediaSize=Number(meta.size||0);mediaDurationMs=Number(meta.videoMediaMetadata?.durationMillis||0);
+   if(meta.capabilities?.canDownload===false)throw new Error("O Google Drive bloqueou a leitura deste vídeo.");
+   mediaMimeType=String(meta.mimeType||"video/mp4");
+   mediaSize=Number(meta.size||0);
+   mediaDurationMs=Number(meta.videoMediaMetadata?.durationMillis||0);
   }else if(kind==="material"){
    const {data,error}=await ctx.db.from("lesson_materials").select("id,drive_file_id").eq("id",id).single();if(error||!data?.drive_file_id)throw new Error("Material not available");driveFileId=data.drive_file_id;
   }else throw new Error("Invalid media kind");
