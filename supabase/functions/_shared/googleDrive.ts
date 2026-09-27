@@ -2,8 +2,8 @@ import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supa
 
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, range",
+  "Access-Control-Allow-Methods": "GET, HEAD, POST, OPTIONS",
 };
 
 export function json(data: unknown, status = 200) {
