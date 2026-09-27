@@ -40,6 +40,7 @@ import { CustomerSettings } from './pages/customer/CustomerSettings'
 // Admin panel
 import { AdminDashboard } from './pages/admin/AdminDashboard'
 import { AdminCustomers } from './pages/admin/AdminCustomers'
+import { AdminCRM } from './pages/admin/AdminCRM'
 import { AdminProducts } from './pages/admin/AdminProducts'
 import { AdminOrders } from './pages/admin/AdminOrders'
 import { AdminConversations } from './pages/admin/AdminConversations'
@@ -129,6 +130,7 @@ export default function App() {
                 <Route index element={<AdminDashboard />} />
                 <Route path="clientes" element={<AdminCustomers />} />
                 <Route path="clientes/:id" element={<AdminCustomerDetail />} />
+                <Route path="crm" element={<AdminCRM />} />
                 <Route path="produtos" element={<AdminProducts />} />
                 <Route path="categorias" element={<AdminCategories />} />
                 <Route path="servicos" element={<AdminServices />} />
