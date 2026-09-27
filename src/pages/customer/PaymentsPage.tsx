@@ -68,7 +68,8 @@ export function PaymentsPage(){
         : <div className="space-y-4">{rows.map(payment=>{
           const receipts=payment.receipt||[]
           const latest=receipts[0]
-          const canUpload=!['paid','cancelled','refunded'].includes(payment.status)
+          const manualPix=payment.provider==='manual'&&payment.method==='pix_manual'
+          const canUpload=manualPix&&!['paid','cancelled','refunded'].includes(payment.status)
           const asaasPix=payment.provider==='asaas'&&payment.method==='pix_gateway'?payment.provider_payload?.pixQrCode:null
           return <div key={payment.id} className="p-5 rounded-2xl bg-[#141416] border border-white/10">
             <div className="flex flex-wrap justify-between gap-4">
@@ -82,7 +83,7 @@ export function PaymentsPage(){
               </div>
             </div>
 
-            <div className="mt-4 p-4 rounded-xl bg-white/[0.04] border border-white/5">
+            {manualPix&&<div className="mt-4 p-4 rounded-xl bg-white/[0.04] border border-white/5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-wide text-gray-500">Comprovante</p>
@@ -94,7 +95,7 @@ export function PaymentsPage(){
                 </div>
                 {latest?.storage_path && <button onClick={()=>openReceipt(latest.storage_path)} className="px-3 py-2 rounded-lg bg-white/5 text-sm">Ver comprovante</button>}
               </div>
-            </div>
+            </div>}
 
             {payment.status==='paid'
               ? <p className="mt-4 text-emerald-400">✓ Pagamento recebido e confirmado</p>
