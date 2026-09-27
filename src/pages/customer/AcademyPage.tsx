@@ -1,0 +1,9 @@
+import { useEffect,useState } from 'react'
+import { Link } from 'react-router-dom'
+import { academyApi } from '../../api/academy'
+export function AcademyPage(){
+ const [rows,setRows]=useState<any[]>([]);const [loading,setLoading]=useState(true)
+ useEffect(()=>{academyApi.myCourses().then(setRows).finally(()=>setLoading(false))},[])
+ return <div className="max-w-6xl mx-auto"><div className="mb-7"><p className="text-[10px] uppercase tracking-[.18em] text-[#E30613] font-bold">Área do Aluno</p><h1 className="text-2xl md:text-3xl font-bold mt-1">Minha Academia</h1><p className="text-sm text-gray-500 mt-1">Continue seus cursos, aulas e treinamentos.</p></div>
+ {loading?<p className="text-sm text-gray-500">Carregando...</p>:rows.length===0?<div className="pm-surface p-8 md:p-12 text-center"><div className="w-12 h-12 rounded-2xl bg-[#E30613]/10 text-[#ff5364] flex items-center justify-center mx-auto text-xl">▶</div><h2 className="font-semibold mt-4">Nenhum conteúdo liberado ainda</h2><p className="text-sm text-gray-600 mt-2">Quando um curso ou treinamento for liberado para sua conta, ele aparecerá aqui.</p></div>:<div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">{rows.map((row:any)=><Link key={row.id} to={'/app/academia/'+row.course.id} className="pm-surface pm-surface-interactive overflow-hidden"><div className="aspect-video bg-white/[.025]">{row.course.cover_url?<img src={row.course.cover_url} alt="" className="w-full h-full object-cover"/>:<div className="w-full h-full flex items-center justify-center text-3xl text-gray-700">▶</div>}</div><div className="p-4"><p className="text-[9px] uppercase tracking-wider text-[#ff5364]">{row.course.content_type.replace('_',' ')}</p><h2 className="font-semibold mt-1">{row.course.title}</h2><p className="text-xs text-gray-600 mt-2">{row.status==='completed'?'Concluído':'Em andamento'}</p></div></Link>)}</div>}</div>
+}
