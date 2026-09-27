@@ -20,6 +20,9 @@ import { ProductsPage } from './pages/public/ProductsPage'
 import { ProductDetailPage } from './pages/public/ProductDetailPage'
 import { AboutPage } from './pages/public/AboutPage'
 import { CategoryPage } from './pages/public/CategoryPage'
+import { ServicesPage } from './pages/public/ServicesPage'
+import { ServiceDetailPage } from './pages/public/ServiceDetailPage'
+import { ContactPage } from './pages/public/ContactPage'
 
 // Customer portal
 import { DashboardPage } from './pages/customer/DashboardPage'
@@ -91,8 +94,8 @@ export default function App() {
               <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
               <Route path="/produtos" element={<ProductsPage />} />
               <Route path="/produtos/:slug" element={<ProductDetailPage />} />
-              <Route path="/servicos" element={<Navigate to="/produtos" replace />} />
-              <Route path="/servicos/:slug" element={<Navigate to="/produtos" replace />} />
+              <Route path="/servicos" element={<ServicesPage />} />
+              <Route path="/servicos/:slug" element={<ServiceDetailPage />} />
               <Route path="/quem-somos" element={<AboutPage />} />
               <Route path="/portfolio" element={<Navigate to="/quem-somos#portfolio" replace />} />
               <Route path="/portfolio/:slug" element={<Navigate to="/quem-somos#portfolio" replace />} />
@@ -101,7 +104,7 @@ export default function App() {
               <Route path="/tech" element={<CategoryPage />} />
               <Route path="/comunidade" element={<CommunityPage />} />
               <Route path="/sobre" element={<Navigate to="/quem-somos" replace />} />
-              <Route path="/contato" element={<PlaceholderPage title="Contato" />} />
+              <Route path="/contato" element={<ContactPage />} />
               <Route path="/carrinho" element={<CartPage />} />
 
               {/* Customer portal */}
