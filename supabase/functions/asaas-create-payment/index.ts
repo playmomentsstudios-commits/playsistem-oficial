@@ -10,7 +10,15 @@ Deno.serve(async(req)=>{
   if(error||!order)throw new Error("Order not found");
   if(order.payment_status==="paid")throw new Error("Order already paid");
   const {data:existing}=await db.from("payments").select("*").eq("order_id",order.id).eq("provider","asaas").in("status",["pending","awaiting_confirmation","paid"]).order("created_at",{ascending:false}).limit(1).maybeSingle();
-  if(existing?.provider_reference)return json({ok:true,payment:existing,reused:true});
+  if(existing?.provider_reference){
+    const environment=asaasEnvironment();
+    if(existing.environment!==environment){
+      const {data:classified,error:classifyError}=await db.from("payments").update({environment,updated_at:new Date().toISOString()}).eq("id",existing.id).eq("provider","asaas").select("*").single();
+      if(classifyError)throw classifyError;
+      return json({ok:true,payment:classified,reused:true});
+    }
+    return json({ok:true,payment:existing,reused:true});
+  }
 
   const customerId=await ensureAsaasCustomer(db,profile);
   const dueDate=new Date();dueDate.setDate(dueDate.getDate()+1);
