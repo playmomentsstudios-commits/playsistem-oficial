@@ -180,28 +180,28 @@ export function AdminCustomerDetailV2(){
   if(!customer)return <p className="text-gray-400">Carregando cliente...</p>
 
   return <div>
-    <Link to="/admin/clientes" className="text-sm text-[#E30613]">← Clientes</Link>
-    <div className="flex flex-wrap justify-between gap-4 mt-4">
+    <Link to="/admin/clientes" className="inline-flex items-center min-h-10 text-sm text-gray-400 hover:text-white">← Voltar para clientes</Link>
+    <div className="pm-surface p-5 flex flex-wrap justify-between gap-4 mt-3">
       <div>
         <h1 className="text-2xl font-bold">{customer.first_name} {customer.last_name}</h1>
         <p className="text-gray-400">{customer.email} · {customer.phone||'Sem telefone'}</p>
       </div>
       <div className="text-right">
-        <p className="text-xs text-gray-500">Status</p>
-        <p className={'font-semibold '+(customer.status==='active'?'text-green-400':customer.status==='blocked'?'text-red-400':'text-yellow-300')}>{rotulo(statusCliente,customer.status)}</p>
+        <p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Status da conta</p>
+        <span className={'inline-flex mt-1 px-2.5 py-1 rounded-full border text-xs font-semibold '+(customer.status==='active'?'bg-emerald-500/10 text-emerald-300 border-emerald-500/20':customer.status==='blocked'?'bg-red-500/10 text-red-300 border-red-500/20':'bg-amber-500/10 text-amber-300 border-amber-500/20')}>{rotulo(statusCliente,customer.status)}</span>
         {customer.status_reason_code&&<p className="text-xs text-gray-500 mt-1">{rotulo(motivoStatusCliente,customer.status_reason_code)}</p>}
       </div>
     </div>
 
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-6">
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-xs text-gray-500">Cliente há</p><b className="text-lg">{customerAge(customer.created_at)}</b></div>
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-xs text-gray-500">Serviços pagos</p><b className="text-2xl">{servicesDone}</b></div>
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-xs text-gray-500">Total pago</p><b className="text-lg">{money(totalPaid)}</b></div>
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-xs text-gray-500">Nível</p><b className="text-lg">{rotulo(nivelCliente,loyalty?.level||'bronze')}</b></div>
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-xs text-gray-500">Play Cash disponível</p><b className="text-lg text-[#E30613]">{money(availableCash)}</b></div>
+      <div className="pm-surface p-4"><p className="text-[10px] uppercase tracking-[.1em] text-gray-500">Cliente há</p><b className="text-lg">{customerAge(customer.created_at)}</b></div>
+      <div className="pm-surface p-4"><p className="text-[10px] uppercase tracking-[.1em] text-gray-500">Serviços pagos</p><b className="text-2xl">{servicesDone}</b></div>
+      <div className="pm-surface p-4"><p className="text-[10px] uppercase tracking-[.1em] text-gray-500">Total pago</p><b className="text-lg">{money(totalPaid)}</b></div>
+      <div className="pm-surface p-4"><p className="text-[10px] uppercase tracking-[.1em] text-gray-500">Nível</p><b className="text-lg">{rotulo(nivelCliente,loyalty?.level||'bronze')}</b></div>
+      <div className="pm-surface p-4"><p className="text-[10px] uppercase tracking-[.1em] text-gray-500">Play Cash disponível</p><b className="text-lg text-[#E30613]">{money(availableCash)}</b></div>
     </div>
 
-    {crm&&<section className="mt-6 p-5 rounded-2xl bg-[#141416] border border-white/10">
+    {crm&&<section className="mt-6 pm-surface p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-[10px] uppercase tracking-[0.16em] text-[#E30613] font-semibold">CRM</p>
@@ -311,7 +311,7 @@ export function AdminCustomerDetailV2(){
       </section>
     </div>
 
-    <section className="mt-6 p-5 rounded-2xl bg-[#141416] border border-white/10">
+    <section className="mt-6 pm-surface p-5">
       <h2 className="font-bold">Caminho do cliente</h2>
       <p className="text-sm text-gray-500 mb-4">Linha do tempo do relacionamento com a Play Moments</p>
       <div className="relative pl-5 border-l border-white/10 space-y-5">{timeline.map((event,index)=><div key={event.date+event.title+index} className="relative">
