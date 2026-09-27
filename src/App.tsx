@@ -48,17 +48,17 @@ import { AdminSiteSettings } from './pages/admin/AdminSiteSettings'
 import { AdminCommunity } from './pages/admin/AdminCommunity'
 import { AdminPayments } from './pages/admin/AdminPayments'
 import { AdminProjects } from './pages/admin/AdminProjects'
-import { AdminProjectDetail } from './pages/admin/AdminProjectDetail'
+import { AdminProjectDetailV2 } from './pages/admin/AdminProjectDetailV2'
 import { AdminProductivity } from './pages/admin/AdminProductivity'
 import { AdminServices } from './pages/admin/AdminServices'
 import { AdminQuotes } from './pages/admin/AdminQuotes'
 import { AdminQuoteDetail } from './pages/admin/AdminQuoteDetail'
 import { AdminTeam } from './pages/admin/AdminTeam'
 import { AdminAnnouncements } from './pages/admin/AdminAnnouncements'
-import { AdminCustomerDetail } from './pages/admin/AdminCustomerDetail'
+import { AdminCustomerDetailV2 } from './pages/admin/AdminCustomerDetailV2'
 import { AdminOrderDetail } from './pages/admin/AdminOrderDetail'
 import { AdminCategories } from './pages/admin/AdminCategories'
-import { AdminFiles } from './pages/admin/AdminFiles'
+import { AdminFilesV2 } from './pages/admin/AdminFilesV2'
 import { AdminAboutPortfolio } from './pages/admin/AdminAboutPortfolio'
 import { AdminSettings } from './pages/admin/AdminSettings'
 import { AdminAudit } from './pages/admin/AdminAudit'
@@ -129,7 +129,7 @@ export default function App() {
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
                 <Route path="clientes" element={<AdminCustomers />} />
-                <Route path="clientes/:id" element={<AdminCustomerDetail />} />
+                <Route path="clientes/:id" element={<AdminCustomerDetailV2 />} />
                 <Route path="crm" element={<AdminCRM />} />
                 <Route path="produtos" element={<AdminProducts />} />
                 <Route path="categorias" element={<AdminCategories />} />
@@ -140,12 +140,12 @@ export default function App() {
                 <Route path="orcamentos/:id" element={<AdminQuoteDetail />} />
                 <Route path="pagamentos" element={<AdminPayments />} />
                 <Route path="conversas" element={<AdminConversations />} />
-                <Route path="arquivos" element={<AdminFiles />} />
+                <Route path="arquivos" element={<AdminFilesV2 />} />
                 <Route path="portfolio" element={<AdminAboutPortfolio />} />
                 <Route path="comunidade" element={<AdminCommunity />} />
                 <Route path="notificacoes" element={<NotificationsPage />} />
                 <Route path="projetos" element={<AdminProjects />} />
-                <Route path="projetos/:id" element={<AdminProjectDetail />} />
+                <Route path="projetos/:id" element={<AdminProjectDetailV2 />} />
                 <Route path="produtividade" element={<AdminProductivity />} />
                 <Route path="comunicados" element={<AdminAnnouncements />} />
                 <Route path="equipe" element={<AdminTeam />} />
