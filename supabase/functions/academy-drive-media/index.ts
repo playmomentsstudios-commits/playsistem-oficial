@@ -17,7 +17,12 @@ Deno.serve(async(req)=>{
   }
   const ctx=await requireUser(req);const body=await req.json();const kind=String(body.kind||"");const id=String(body.id||"");let driveFileId="";
   if(kind==="lesson"){
-   const {data,error}=await ctx.db.from("course_lessons").select("id,video_drive_file_id,module:course_modules!inner(course_id)").eq("id",id).single();if(error||!data?.video_drive_file_id)throw new Error("Lesson media not available");driveFileId=data.video_drive_file_id;
+   const {data,error}=await ctx.db.from("course_lessons").select("id,video_source,video_url,video_drive_file_id,module_id,status,is_preview").eq("id",id).single();
+   if(error)throw new Error("Could not read lesson media: "+(error.message||error.code||"database error"));
+   if(!data)throw new Error("Lesson not found");
+   if(data.video_source!=="drive")throw new Error("Lesson is not configured as a Drive video");
+   if(!data.video_drive_file_id)throw new Error("Lesson has no Drive file linked. Save the uploaded video in the lesson again.");
+   driveFileId=data.video_drive_file_id;
   }else if(kind==="material"){
    const {data,error}=await ctx.db.from("lesson_materials").select("id,drive_file_id").eq("id",id).single();if(error||!data?.drive_file_id)throw new Error("Material not available");driveFileId=data.drive_file_id;
   }else throw new Error("Invalid media kind");
@@ -44,6 +49,6 @@ Deno.serve(async(req)=>{
    }
   }
   const {data:t,error:ticketError}=await ctx.db.from("academy_media_tickets").insert({user_id:ctx.userId,drive_file_id:driveFileId,purpose:kind==="lesson"?"lesson_video":"material"}).select("token,expires_at").single();
-  if(ticketError)throw ticketError;return json({ok:true,ticket:t.token,expires_at:t.expires_at,url:`${url.origin}${url.pathname}?ticket=${t.token}`});
- }catch(error){return json({ok:false,error:error instanceof Error?error.message:"Unknown error"},400)}
+  if(ticketError)throw new Error("Could not create media ticket: "+(ticketError.message||ticketError.code||"database error"));return json({ok:true,ticket:t.token,expires_at:t.expires_at,url:`${url.origin}${url.pathname}?ticket=${t.token}`});
+ }catch(error){const message=error instanceof Error?error.message:(typeof error==="object"&&error&&"message" in error?String((error as any).message):String(error||"Unknown error"));console.error("academy-drive-media",message,error);return json({ok:false,error:message},400)}
 });
