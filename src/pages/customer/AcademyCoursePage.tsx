@@ -6,14 +6,14 @@ import { useToast } from '../../contexts/ToastContext'
 function embedUrl(source:string,url:string){
  if(source==='youtube'){const id=url.match(/(?:youtu\.be\/|v=|embed\/)([^?&/]+)/)?.[1];return id?`https://www.youtube.com/embed/${id}`:url}
  if(source==='vimeo'){const id=url.match(/vimeo\.com\/(?:video\/)?(\d+)/)?.[1];return id?`https://player.vimeo.com/video/${id}`:url}
- if(source==='drive'){const id=url.match(/drive\.google\.com\/file\/d\/([^/]+)/)?.[1]||url.match(/[?&]id=([^&]+)/)?.[1];return id?`https://drive.google.com/file/d/${id}/preview`:url}
+ if(source==='drive'){const id=url.match(/drive\.google\.com\/file\/d\/([^/?]+)/)?.[1]||url.match(/[?&]id=([^&]+)/)?.[1];return id?`https://drive.google.com/file/d/${id}/preview`:url}
  return url
 }
 export function AcademyCoursePage(){
  const {id}=useParams();const toast=useToast();const [data,setData]=useState<any>(null);const [active,setActive]=useState<any>(null);const [loading,setLoading]=useState(true);const [driveUrl,setDriveUrl]=useState('');const [mediaLoading,setMediaLoading]=useState(false);const [mediaError,setMediaError]=useState('');const [mediaRetry,setMediaRetry]=useState(0);const [materials,setMaterials]=useState<any[]>([])
  const load=async()=>{if(!id)return;try{const value=await academyApi.courseForStudent(id);setData(value);const lessons=value.modules.flatMap((m:any)=>m.lessons||[]);setActive((current:any)=>current&&lessons.find((l:any)=>l.id===current.id)||lessons[0]||null)}catch(e:any){toast(e.message,'error')}finally{setLoading(false)}}
  useEffect(()=>{void load()},[id])
- useEffect(()=>{setDriveUrl('');setMediaError('');setMediaLoading(false);setMaterials([]);if(active?.id)academyApi.lessonMaterials(active.id).then(setMaterials).catch(()=>{});if(active?.id&&active?.video_source==='drive'){const fileId=active.video_drive_file_id||active.video_url?.match(/drive\.google\.com\/file\/d\/([^/]+)/)?.[1]||active.video_url?.match(/[?&]id=([^&]+)/)?.[1];if(fileId)setDriveUrl('https://drive.google.com/file/d/'+encodeURIComponent(fileId)+'/preview');else setMediaError('Vídeo do Drive sem identificador válido.')}},[active?.id,active?.video_source,active?.video_drive_file_id,active?.video_url])
+ useEffect(()=>{setDriveUrl('');setMediaError('');setMediaLoading(false);setMaterials([]);if(active?.id)academyApi.lessonMaterials(active.id).then(setMaterials).catch(()=>{});if(active?.id&&active?.video_source==='drive'){const fileId=active.video_drive_file_id||active.video_url?.match(/drive\.google\.com\/file\/d\/([^/?]+)/)?.[1]||active.video_url?.match(/[?&]id=([^&]+)/)?.[1];if(fileId)setDriveUrl('https://drive.google.com/file/d/'+encodeURIComponent(fileId)+'/preview');else if(active.video_url)setDriveUrl(active.video_url);else setMediaError('Vídeo do Drive sem identificador válido.')}},[active?.id,active?.video_source,active?.video_drive_file_id,active?.video_url])
  const completed=useMemo(()=>new Set((data?.progress||[]).filter((p:any)=>p.completed).map((p:any)=>p.lesson_id)),[data])
  const lessons=data?.modules?.flatMap((m:any)=>m.lessons||[])||[];const percent=lessons.length?Math.round(completed.size/lessons.length*100):0
  const toggle=async()=>{if(!active||!data?.enrollment)return;try{await academyApi.setLessonComplete(data.enrollment.id,active.id,!completed.has(active.id));await load()}catch(e:any){toast(e.message,'error')}}
