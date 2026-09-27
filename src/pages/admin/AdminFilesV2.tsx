@@ -54,6 +54,7 @@ export function AdminFilesV2(){
   const {user}=useAuth()
   const toast=useToast()
   const [files,setFiles]=useState<any[]>([])
+  const [uploadOpen,setUploadOpen]=useState(false)
   const [customers,setCustomers]=useState<any[]>([])
   const [projects,setProjects]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
@@ -122,7 +123,6 @@ export function AdminFilesV2(){
       .then(setCustomFolders)
       .catch(()=>setCustomFolders([]))
   },[project])
-  const recent=files.slice(0,8)
 
   const grouped=useMemo(()=>{
     const map=new Map<string,{customer:any;projects:Map<string,{project:any;files:any[]}>}>()
@@ -391,7 +391,10 @@ export function AdminFilesV2(){
         <h1 className="text-2xl font-bold mt-1">Central de Arquivos</h1>
         <p className="text-sm text-gray-500 mt-1">Cliente → Projeto → Tarefa → aprovação → entrega.</p>
       </div>
-      <Button type="button" variant="secondary" loading={testing} onClick={testDrive}>Testar Google Drive</Button>
+      <div className="flex items-center gap-2">
+        <Button type="button" variant="secondary" loading={testing} onClick={testDrive}>Testar Drive</Button>
+        <button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='sem-cliente')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-11 px-4 rounded-xl bg-[#E30613] hover:bg-[#f01826] text-white text-sm font-bold flex items-center gap-2"><span className="text-lg leading-none">＋</span>Novo</button>
+      </div>
     </div>
 
     {uploadResult&&<div className="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 flex items-start gap-3">
@@ -399,119 +402,6 @@ export function AdminFilesV2(){
       <div className="min-w-0 flex-1"><p className="text-sm font-bold text-emerald-300">{uploadResult.count} {uploadResult.count===1?'arquivo enviado':'arquivos enviados'} com sucesso</p><p className="text-xs text-gray-500 mt-1 truncate">{uploadResult.names.join(' • ')}</p><p className="text-[10px] text-gray-600 mt-1">A lista abaixo foi atualizada com os arquivos finalizados.</p></div>
       <button type="button" onClick={()=>setUploadResult(null)} className="text-gray-600 hover:text-white">×</button>
     </div>}
-
-    <form onSubmit={save} className="pm-surface p-5 mb-8 space-y-4">
-      <div className="grid md:grid-cols-3 gap-3">
-        <label className="text-xs text-gray-500">Armazenamento
-          <select value={provider} onChange={e=>setProvider(e.target.value as typeof provider)} className="pm-control mt-1 w-full px-3 bg-black">
-            <option value="google_drive">Google Drive — recomendado</option>
-            <option value="supabase">Portal / Supabase — arquivos pequenos</option>
-            <option value="external">Link externo</option>
-          </select>
-        </label>
-        <label className="text-xs text-gray-500">Cliente
-          <select value={customer} onChange={e=>{setCustomer(e.target.value);setProject('');setTask('')}} className="pm-control mt-1 w-full px-3 bg-black">
-            <option value="">Selecione o cliente</option>
-            {customers.map(c=><option key={c.id} value={c.id}>{c.first_name} {c.last_name} — {c.email}</option>)}
-          </select>
-        </label>
-        <label className="text-xs text-gray-500">Projeto
-          <select value={project} onChange={e=>{setProject(e.target.value);setTask('');setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
-            <option value="">Sem projeto</option>
-            {customerProjects.map((p:any)=><option key={p.id} value={p.id}>{p.title}</option>)}
-          </select>
-        </label>
-      </div>
-
-      <div className="grid md:grid-cols-3 gap-3">
-        <label className="text-xs text-gray-500">Tarefa
-          <select value={task} onChange={e=>setTask(e.target.value)} disabled={!project} className="pm-control mt-1 w-full px-3 bg-black disabled:opacity-40">
-            <option value="">Arquivo geral do projeto</option>
-            {tasks.map((t:any)=><option key={t.id} value={t.id}>{t.title}</option>)}
-          </select>
-        </label>
-        {provider==='google_drive'&&<label className="text-xs text-gray-500">Pasta do projeto
-          <select value={folderKind} onChange={e=>{setFolderKind(e.target.value);setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
-            {folderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
-          </select>
-        </label>}
-        <label className="text-xs text-gray-500">Visibilidade
-          <select value={clientVisible?'client':'internal'} onChange={e=>setClientVisible(e.target.value==='client')} className="pm-control mt-1 w-full px-3 bg-black">
-            <option value="client">Visível ao cliente</option>
-            <option value="internal">Somente equipe</option>
-          </select>
-        </label>
-      </div>
-
-      {provider==='google_drive'&&project&&<div className="grid md:grid-cols-[1fr_auto] gap-3 items-end">
-        <label className="text-xs text-gray-500">Subpasta personalizada
-          <select value={customFolder} onChange={e=>setCustomFolder(e.target.value)} className="pm-control mt-1 w-full px-3 bg-black">
-            <option value="">Sem subpasta — usar {folderOptions.find(([value])=>value===folderKind)?.[1]||'pasta padrão'}</option>
-            {foldersForKind.map((folder:any)=><option key={folder.id} value={folder.id}>📁 {folder.name}</option>)}
-          </select>
-        </label>
-        <button type="button" disabled={creatingFolder} onClick={()=>void createFolder()} className="min-h-10 px-3 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold disabled:opacity-50">+ Criar pasta aqui</button>
-      </div>}
-
-      {provider==='external'?<div className="grid md:grid-cols-2 gap-3">
-        <input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome do arquivo ou material" className="pm-control px-3 bg-white/[0.03]"/>
-        <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://..." className="pm-control px-3 bg-white/[0.03]"/>
-      </div>:<div className="space-y-3">
-        {provider==='supabase'&&<input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome personalizado (opcional quando selecionar 1 arquivo)" className="w-full min-h-11 px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>}
-        <label className="block rounded-2xl border border-dashed border-white/15 bg-white/[0.025] p-5 sm:p-6 hover:border-[#E30613]/50 hover:bg-[#E30613]/[0.025] transition-colors cursor-pointer">
-          <input type="file" multiple onChange={e=>{
-            const picked=Array.from(e.target.files||[])
-            const invalid=provider==='google_drive'?picked.find(item=>item.size>driveLimitGb*1024*1024*1024):null
-            if(invalid){
-              toast('Cada arquivo do Google Drive pode ter até '+driveLimitGb+' GB.','error');e.currentTarget.value='';setSelectedFiles([]);return
-            }
-            setSelectedFiles(current=>{
-              const merged=[...current,...picked]
-              return merged.filter((item,index,list)=>list.findIndex(other=>other.name===item.name&&other.size===item.size&&other.lastModified===item.lastModified)===index)
-            })
-            e.currentTarget.value=''
-          }} className="sr-only"/>
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-[#E30613]/10 text-[#E30613] flex items-center justify-center shrink-0">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 16V4m0 0-4 4m4-4 4 4M5 14v5h14v-5"/></svg>
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold">{selectedFiles.length?selectedFiles.length+' arquivo(s) na fila':'Selecionar vários arquivos'}</p>
-              <p className="text-xs text-gray-500 mt-1">{provider==='google_drive'?'Seleção múltipla · até '+driveLimitGb+' GB por arquivo · somente Google Drive':'Você pode selecionar vários arquivos de uma vez'}</p>
-            </div>
-          </div>
-        </label>
-        {selectedFiles.length>0&&<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          {selectedFiles.slice(0,12).map(item=><div key={item.name+item.lastModified} className="px-3 py-2 rounded-xl bg-black/20 border border-white/8 min-w-0">
-            <p className="text-xs font-medium truncate">{item.name}</p>
-            <p className="text-[10px] text-gray-500 mt-1">{sizeLabel(item.size)}</p>
-          </div>)}
-          {selectedFiles.length>12&&<div className="px-3 py-2 rounded-xl bg-black/20 border border-white/8 text-xs text-gray-500">+ {selectedFiles.length-12} arquivo(s)</div>}
-        </div>}
-      </div>}
-
-      {provider==='google_drive'&&<p className="text-xs text-gray-500">Até {driveLimitGb} GB por arquivo no Google Drive. Os arquivos são enviados em fila, diretamente do navegador para o Drive, em partes de 16 MB.</p>}
-      {saving&&<div className="rounded-xl bg-black/30 border border-[#E30613]/20 p-3"><div className="flex justify-between gap-3 text-xs"><span className="truncate text-gray-300">{currentFileName||'Preparando upload...'}</span><span className="shrink-0 text-[#ff6b7a] font-bold">{progress}%</span></div><div className="h-2 rounded bg-white/10 mt-2 overflow-hidden"><div className="h-2 rounded bg-[#E30613] transition-[width] duration-200" style={{width:progress+'%'}}/></div><p className="text-[10px] text-gray-600 mt-2">{completedFiles} de {selectedFiles.length} finalizados · não feche esta página durante o envio.</p></div>}
-      <Button type="submit" loading={saving} className="w-full sm:w-auto min-h-12">{provider==='google_drive'?(selectedFiles.length>1?'Enviar '+selectedFiles.length+' arquivos':'Enviar para o Google Drive'):'Salvar arquivo'}</Button>
-    </form>
-
-    <section className="mb-9">
-      <div className="mb-3">
-        <h2 className="text-lg font-bold">Recentes</h2>
-        <p className="text-xs text-gray-500">Acesso rápido aos últimos arquivos.</p>
-      </div>
-      {loading?<div aria-busy="true" aria-label="Carregando arquivos recentes" className="space-y-3"><div className="pm-skeleton h-20 rounded-2xl"/><div className="pm-skeleton h-20 rounded-2xl"/><div className="pm-skeleton h-20 rounded-2xl"/></div>:recent.length===0?<p className="text-sm text-gray-500">Nenhum arquivo ainda.</p>:<div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
-        {recent.map(row=><button key={row.id} type="button" onClick={()=>open(row)} className="group text-left p-2.5 rounded-xl bg-[#141416] border border-white/8 hover:border-white/20 transition-colors min-w-0">
-          <div className="h-11 rounded-lg bg-white/[0.04] flex items-center justify-center text-2xl mb-2">{fileIcon(row)}</div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[9px] text-[#E30613] font-bold tracking-wide">{extension(row.name)} · v{row.version_number||1}</span>
-            <span className="text-[9px] text-gray-600">{sizeLabel(row.file_size)}</span>
-          </div>
-          <div className="text-[11px] font-semibold truncate mt-1" title={row.name}>{row.name}</div>
-          <div className="text-[9px] text-gray-500 mt-1 truncate">{row.customer?.first_name||'Sem cliente'}</div>
-        </button>)}
-      </div>}
-    </section>
 
     <section>
       <div className="mb-4">
@@ -708,6 +598,111 @@ export function AdminFilesV2(){
             </div>}
           </div>:null}
         </div>
+      </div>
+    </div>}
+
+    {uploadOpen&&<div className="fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4" onMouseDown={e=>{if(e.currentTarget===e.target&&!saving)setUploadOpen(false)}}>
+      <div className="w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-[#111113] border border-white/10 shadow-2xl">
+        <div className="sticky top-0 z-10 px-4 sm:px-5 h-16 bg-[#111113]/95 backdrop-blur border-b border-white/8 flex items-center justify-between gap-3">
+          <div><p className="text-[10px] uppercase tracking-[.16em] text-[#E30613] font-bold">Central de arquivos</p><h2 className="text-lg font-bold mt-0.5">Novo arquivo</h2></div>
+          <button type="button" disabled={saving} onClick={()=>setUploadOpen(false)} className="w-9 h-9 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-40 text-gray-400 text-lg">×</button>
+        </div>
+        <div className="p-4 sm:p-5">    <form onSubmit={save} className="space-y-4">
+      <div className="grid md:grid-cols-3 gap-3">
+        <label className="text-xs text-gray-500">Armazenamento
+          <select value={provider} onChange={e=>setProvider(e.target.value as typeof provider)} className="pm-control mt-1 w-full px-3 bg-black">
+            <option value="google_drive">Google Drive — recomendado</option>
+            <option value="supabase">Portal / Supabase — arquivos pequenos</option>
+            <option value="external">Link externo</option>
+          </select>
+        </label>
+        <label className="text-xs text-gray-500">Cliente
+          <select value={customer} onChange={e=>{setCustomer(e.target.value);setProject('');setTask('')}} className="pm-control mt-1 w-full px-3 bg-black">
+            <option value="">Selecione o cliente</option>
+            {customers.map(c=><option key={c.id} value={c.id}>{c.first_name} {c.last_name} — {c.email}</option>)}
+          </select>
+        </label>
+        <label className="text-xs text-gray-500">Projeto
+          <select value={project} onChange={e=>{setProject(e.target.value);setTask('');setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
+            <option value="">Sem projeto</option>
+            {customerProjects.map((p:any)=><option key={p.id} value={p.id}>{p.title}</option>)}
+          </select>
+        </label>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-3">
+        <label className="text-xs text-gray-500">Tarefa
+          <select value={task} onChange={e=>setTask(e.target.value)} disabled={!project} className="pm-control mt-1 w-full px-3 bg-black disabled:opacity-40">
+            <option value="">Arquivo geral do projeto</option>
+            {tasks.map((t:any)=><option key={t.id} value={t.id}>{t.title}</option>)}
+          </select>
+        </label>
+        {provider==='google_drive'&&<label className="text-xs text-gray-500">Pasta do projeto
+          <select value={folderKind} onChange={e=>{setFolderKind(e.target.value);setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
+            {folderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
+          </select>
+        </label>}
+        <label className="text-xs text-gray-500">Visibilidade
+          <select value={clientVisible?'client':'internal'} onChange={e=>setClientVisible(e.target.value==='client')} className="pm-control mt-1 w-full px-3 bg-black">
+            <option value="client">Visível ao cliente</option>
+            <option value="internal">Somente equipe</option>
+          </select>
+        </label>
+      </div>
+
+      {provider==='google_drive'&&project&&<div className="grid md:grid-cols-[1fr_auto] gap-3 items-end">
+        <label className="text-xs text-gray-500">Subpasta personalizada
+          <select value={customFolder} onChange={e=>setCustomFolder(e.target.value)} className="pm-control mt-1 w-full px-3 bg-black">
+            <option value="">Sem subpasta — usar {folderOptions.find(([value])=>value===folderKind)?.[1]||'pasta padrão'}</option>
+            {foldersForKind.map((folder:any)=><option key={folder.id} value={folder.id}>📁 {folder.name}</option>)}
+          </select>
+        </label>
+        <button type="button" disabled={creatingFolder} onClick={()=>void createFolder()} className="min-h-10 px-3 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold disabled:opacity-50">+ Criar pasta aqui</button>
+      </div>}
+
+      {provider==='external'?<div className="grid md:grid-cols-2 gap-3">
+        <input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome do arquivo ou material" className="pm-control px-3 bg-white/[0.03]"/>
+        <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://..." className="pm-control px-3 bg-white/[0.03]"/>
+      </div>:<div className="space-y-3">
+        {provider==='supabase'&&<input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome personalizado (opcional quando selecionar 1 arquivo)" className="w-full min-h-11 px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>}
+        <label className="block rounded-2xl border border-dashed border-white/15 bg-white/[0.025] p-5 sm:p-6 hover:border-[#E30613]/50 hover:bg-[#E30613]/[0.025] transition-colors cursor-pointer">
+          <input type="file" multiple onChange={e=>{
+            const picked=Array.from(e.target.files||[])
+            const invalid=provider==='google_drive'?picked.find(item=>item.size>driveLimitGb*1024*1024*1024):null
+            if(invalid){
+              toast('Cada arquivo do Google Drive pode ter até '+driveLimitGb+' GB.','error');e.currentTarget.value='';setSelectedFiles([]);return
+            }
+            setSelectedFiles(current=>{
+              const merged=[...current,...picked]
+              return merged.filter((item,index,list)=>list.findIndex(other=>other.name===item.name&&other.size===item.size&&other.lastModified===item.lastModified)===index)
+            })
+            e.currentTarget.value=''
+          }} className="sr-only"/>
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-[#E30613]/10 text-[#E30613] flex items-center justify-center shrink-0">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 16V4m0 0-4 4m4-4 4 4M5 14v5h14v-5"/></svg>
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">{selectedFiles.length?selectedFiles.length+' arquivo(s) na fila':'Selecionar vários arquivos'}</p>
+              <p className="text-xs text-gray-500 mt-1">{provider==='google_drive'?'Seleção múltipla · até '+driveLimitGb+' GB por arquivo · somente Google Drive':'Você pode selecionar vários arquivos de uma vez'}</p>
+            </div>
+          </div>
+        </label>
+        {selectedFiles.length>0&&<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {selectedFiles.slice(0,12).map(item=><div key={item.name+item.lastModified} className="px-3 py-2 rounded-xl bg-black/20 border border-white/8 min-w-0">
+            <p className="text-xs font-medium truncate">{item.name}</p>
+            <p className="text-[10px] text-gray-500 mt-1">{sizeLabel(item.size)}</p>
+          </div>)}
+          {selectedFiles.length>12&&<div className="px-3 py-2 rounded-xl bg-black/20 border border-white/8 text-xs text-gray-500">+ {selectedFiles.length-12} arquivo(s)</div>}
+        </div>}
+      </div>}
+
+      {provider==='google_drive'&&<p className="text-xs text-gray-500">Até {driveLimitGb} GB por arquivo no Google Drive. Os arquivos são enviados em fila, diretamente do navegador para o Drive, em partes de 16 MB.</p>}
+      {saving&&<div className="rounded-xl bg-black/30 border border-[#E30613]/20 p-3"><div className="flex justify-between gap-3 text-xs"><span className="truncate text-gray-300">{currentFileName||'Preparando upload...'}</span><span className="shrink-0 text-[#ff6b7a] font-bold">{progress}%</span></div><div className="h-2 rounded bg-white/10 mt-2 overflow-hidden"><div className="h-2 rounded bg-[#E30613] transition-[width] duration-200" style={{width:progress+'%'}}/></div><p className="text-[10px] text-gray-600 mt-2">{completedFiles} de {selectedFiles.length} finalizados · não feche esta página durante o envio.</p></div>}
+      <Button type="submit" loading={saving} className="w-full sm:w-auto min-h-12">{provider==='google_drive'?(selectedFiles.length>1?'Enviar '+selectedFiles.length+' arquivos':'Enviar para o Google Drive'):'Salvar arquivo'}</Button>
+    </form>
+
+</div>
       </div>
     </div>}
   </div>
