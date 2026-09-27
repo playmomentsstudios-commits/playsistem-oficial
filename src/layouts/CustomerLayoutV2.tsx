@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Component, type ErrorInfo, type ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { afterAuthPath } from '../lib/navigation'
@@ -44,6 +44,24 @@ const MENU:{label:string;href:string;icon:IconName;group:string}[]=[
   { label: 'Comunidade', href: '/comunidade', icon: 'community', group: 'experiencia' },
   { label: 'Comunicados', href: '/app/comunicados', icon: 'announcements', group: 'experiencia' },
 ]
+
+
+class CustomerRouteBoundary extends Component<{children:ReactNode;route:string},{error:Error|null}>{
+  state:{error:Error|null}={error:null}
+  static getDerivedStateFromError(error:Error){return {error}}
+  componentDidCatch(error:Error,info:ErrorInfo){console.error('[CustomerPortal] route crashed',this.props.route,error,info)}
+  componentDidUpdate(prev:{route:string}){if(prev.route!==this.props.route&&this.state.error)this.setState({error:null})}
+  render(){
+    if(!this.state.error)return this.props.children
+    return <div className="max-w-2xl mx-auto mt-10 p-6 rounded-2xl border border-red-500/20 bg-red-500/[.04]">
+      <p className="text-[10px] uppercase tracking-[.16em] font-bold text-[#ff5364]">Área do cliente</p>
+      <h1 className="text-xl font-bold text-white mt-2">Não foi possível abrir esta tela</h1>
+      <p className="text-sm text-[#8d8d98] mt-2">A navegação continua disponível. Tente carregar novamente; se persistir, o erro abaixo identifica a origem.</p>
+      <pre className="mt-4 p-3 rounded-xl bg-black/30 text-xs text-red-200 whitespace-pre-wrap break-words">{this.state.error.message||'Erro inesperado'}</pre>
+      <button onClick={()=>window.location.reload()} className="mt-4 h-10 px-4 rounded-xl bg-[#E30613] text-white text-xs font-bold">Recarregar tela</button>
+    </div>
+  }
+}
 
 export function CustomerLayoutV2() {
   const { user, isAuthenticated, isLoading, logout } = useAuth()
@@ -203,7 +221,7 @@ export function CustomerLayoutV2() {
       </div>
 
       <main className="flex-1 overflow-auto p-4 md:p-8">
-        <Outlet/>
+        <CustomerRouteBoundary route={location.pathname}><Outlet/></CustomerRouteBoundary>
       </main>
     </div>
     {floatingChatEnabled&&<FloatingCustomerChat unread={counts.messages}/>} 
