@@ -319,13 +319,6 @@ export const portalApi = {
     if(error) throw error
     return {name:file.name,path,mime_type:file.type||'application/octet-stream',size:file.size}
   },
-  fileReviews: async (fileId:string) => {
-    const { data,error }=await supabase.from('file_reviews')
-      .select('id,file_id,action,comment,subject,items,attachments,created_at')
-      .eq('file_id',fileId).order('created_at',{ascending:false})
-    if(error) throw error
-    return data ?? []
-  },
   fileReviewAttachmentUrl: async (path:string) => {
     const { data,error }=await supabase.storage.from('file-review-attachments').createSignedUrl(path,600)
     if(error) throw error
