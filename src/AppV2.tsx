@@ -64,6 +64,7 @@ const AdminAudit = lazy(() => import('./pages/admin/AdminAudit').then(m => ({ de
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings').then(m => ({ default:m.AdminSettings })))
 const AdminAcademy = lazy(() => import('./pages/admin/AdminAcademy').then(m => ({ default:m.AdminAcademy })))
 const AcademyPage = lazy(() => import('./pages/customer/AcademyPage').then(m => ({ default:m.AcademyPage })))
+const AcademyCoursePage = lazy(() => import('./pages/customer/AcademyCoursePage').then(m => ({ default:m.AcademyCoursePage })))
 const AdminPermissionGate = lazy(() => import('./components/admin/AdminPermissionGate').then(m => ({ default:m.AdminPermissionGate })))
 
 function RouteFallback(){
@@ -127,6 +128,7 @@ export default function AppV2() {
                 <Route path="projetos/:id" element={<ProjectsPage />} />
                 <Route path="comunicados" element={<AnnouncementsPage />} />
                 <Route path="academia" element={<AcademyPage />} />
+                <Route path="academia/:id" element={<AcademyCoursePage />} />
                 <Route path="configuracoes" element={<CustomerSettings />} />
               </Route>
 
