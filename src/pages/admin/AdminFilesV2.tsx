@@ -260,6 +260,12 @@ export function AdminFilesV2(){
     finally{setSaving(false)}
   }
   async function open(row:any){
+    if(row.storage_provider==='google_drive'&&row.drive_file_id){
+      const blobUrl=await portalApi.driveFileBlobUrl(row.id)
+      window.open(blobUrl,'_blank','noopener')
+      window.setTimeout(()=>URL.revokeObjectURL(blobUrl),60000)
+      return
+    }
     if(row.external_url){window.open(row.external_url,'_blank','noopener');return}
     if(row.storage_path){window.open(await portalApi.fileUrl(row.storage_path),'_blank','noopener')}
   }

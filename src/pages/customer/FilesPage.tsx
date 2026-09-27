@@ -145,9 +145,14 @@ export function FilesPage(){
   }
 
   async function open(file:any){
+    if(file.storage_provider==='google_drive'&&file.drive_file_id){
+      const blobUrl=await portalApi.driveFileBlobUrl(file.id)
+      window.open(blobUrl,'_blank','noopener')
+      window.setTimeout(()=>URL.revokeObjectURL(blobUrl),60000)
+      return
+    }
     if(file.external_url){window.open(file.external_url,'_blank','noopener');return}
     if(file.storage_path){window.open(await portalApi.fileUrl(file.storage_path),'_blank','noopener');return}
-    if(file.drive_file_id){window.open('https://drive.google.com/file/d/'+file.drive_file_id+'/view','_blank','noopener')}
   }
 
   async function review(file:any,action:'approved'|'changes_requested'){

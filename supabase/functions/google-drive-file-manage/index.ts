@@ -86,24 +86,7 @@ Deno.serve(async (req) => {
         throw new Error("Only Google Drive files can be published");
       }
 
-      const token = await getDriveAccessToken();
-      const response = await fetch(
-        `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.drive_file_id)}/permissions?sendNotificationEmail=false`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ type: "anyone", role: "reader" }),
-        },
-      );
-
-      if (!response.ok && response.status !== 409) {
-        const detail = await response.text();
-        throw new Error(`Could not publish Drive file: ${response.status} ${detail}`);
-      }
-
+      // Client visibility is controlled by Play Moments. The Drive object remains private.
       const { error: updateError } = await ctx.db
         .from("client_files")
         .update({ client_visible: true })
