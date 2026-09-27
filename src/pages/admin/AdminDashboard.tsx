@@ -106,7 +106,10 @@ export function AdminDashboard(){
         <h1 className="text-2xl md:text-3xl font-bold mt-1">Painel administrativo</h1>
         <p className="text-sm text-gray-500 mt-1">Acompanhe operação, comercial e financeiro em uma única visão.</p>
       </div>
-      <Link to="/admin/crm" className="min-h-11 px-4 rounded-xl bg-[#E30613] hover:bg-[#f01826] shadow-[0_8px_24px_rgba(227,6,19,.16)] text-white text-sm font-semibold flex items-center justify-center">Abrir CRM comercial</Link>
+      <div className="flex flex-wrap gap-2">
+        <Link to="/admin/projetos" className="min-h-11 px-4 rounded-xl border border-white/[0.08] bg-white/[0.025] hover:bg-white/[0.05] text-gray-300 text-sm font-semibold flex items-center justify-center">Ver operação</Link>
+        <Link to="/admin/crm" className="min-h-11 px-4 rounded-xl bg-[#E30613] hover:bg-[#f01826] shadow-[0_8px_24px_rgba(227,6,19,.16)] text-white text-sm font-semibold flex items-center justify-center">Abrir CRM</Link>
+      </div>
     </div>
 
     <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -137,33 +140,56 @@ export function AdminDashboard(){
     </div>
 
     <div className="grid xl:grid-cols-3 gap-4 mt-6">
-      <section className="xl:col-span-1 pm-surface overflow-hidden">
-        <div className="p-4 border-b border-white/8 flex items-center justify-between gap-3">
-          <div><h2 className="font-semibold">Próximas ações</h2><p className="text-[10px] text-gray-500 mt-1">CRM comercial</p></div>
-          <Link to="/admin/crm" className="text-xs text-[#E30613]">Ver pipeline</Link>
+      <section className="pm-surface overflow-hidden">
+        <div className="p-4 md:p-5 border-b border-white/8 flex items-center justify-between gap-3">
+          <div><p className="text-[10px] uppercase tracking-[0.14em] text-gray-600">Comercial</p><h2 className="font-semibold mt-1">Próximas ações</h2></div>
+          <Link to="/admin/crm" className="text-xs text-[#ff5364] hover:text-[#ff7a86]">Pipeline →</Link>
         </div>
-        <div>
-          {attention.length===0?<p className="p-4 text-xs text-gray-600">Nenhuma próxima ação cadastrada.</p>:attention.map(item=>{
+        <div className="divide-y divide-white/[0.05]">
+          {attention.length===0?<div className="p-5"><p className="text-sm text-gray-400">Agenda comercial em dia.</p><p className="text-xs text-gray-600 mt-1">Nenhum retorno programado exige atenção agora.</p></div>:attention.map(item=>{
             const overdue=item.next_action_at&&new Date(item.next_action_at).getTime()<now
-            return <Link key={item.customer_id} to={'/admin/clientes/'+item.customer_id} className="block p-4 border-b border-white/6 last:border-b-0 hover:bg-white/[0.025]">
+            return <Link key={item.customer_id} to={'/admin/clientes/'+item.customer_id} className="block p-4 hover:bg-white/[0.025] transition-colors">
               <div className="flex justify-between gap-3">
-                <div className="min-w-0"><p className="text-sm font-semibold truncate">{nameOf(item.customer)}</p><p className="text-[10px] text-gray-500 mt-1 truncate">{item.next_action}</p></div>
-                <span className={'text-[10px] shrink-0 '+(overdue?'text-orange-400':'text-gray-500')}>{item.next_action_at?new Date(item.next_action_at).toLocaleDateString('pt-BR'):''}</span>
+                <div className="min-w-0"><p className="text-sm font-semibold truncate">{nameOf(item.customer)}</p><p className="text-xs text-gray-500 mt-1 truncate">{item.next_action||'Próximo contato'}</p></div>
+                <span className={'text-[10px] shrink-0 px-2 py-1 h-fit rounded-full '+(overdue?'bg-amber-500/10 text-amber-300':'bg-white/[0.04] text-gray-500')}>{item.next_action_at?new Date(item.next_action_at).toLocaleDateString('pt-BR'):''}</span>
               </div>
-              <p className="text-[10px] text-[#E30613] mt-2">{CRM_STAGE_LABELS[item.stage]}</p>
+              <p className="text-[10px] text-[#ff5364] mt-2">{CRM_STAGE_LABELS[item.stage]}</p>
             </Link>
           })}
         </div>
       </section>
 
       <section className="pm-surface overflow-hidden">
-        <div className="p-4 border-b border-white/8 flex items-center justify-between"><h2 className="font-semibold">Projetos ativos</h2><Link to="/admin/projetos" className="text-xs text-[#E30613]">Ver todos</Link></div>
-        {latestProjects.length===0?<p className="p-4 text-xs text-gray-600">Nenhum projeto ativo.</p>:latestProjects.map((project:any)=><Link key={project.id} to={'/admin/projetos/'+project.id} className="block p-4 border-b border-white/6 last:border-b-0 hover:bg-white/[0.025]"><p className="text-sm font-semibold truncate">{project.title}</p><p className="text-[10px] text-gray-500 mt-1">{project.status||'Sem status'} · {project.priority||'sem prioridade'}</p></Link>)}
+        <div className="p-4 md:p-5 border-b border-white/8 flex items-center justify-between">
+          <div><p className="text-[10px] uppercase tracking-[0.14em] text-gray-600">Operação</p><h2 className="font-semibold mt-1">Projetos ativos</h2></div>
+          <Link to="/admin/projetos" className="text-xs text-[#ff5364] hover:text-[#ff7a86]">Todos →</Link>
+        </div>
+        <div className="divide-y divide-white/[0.05]">
+          {latestProjects.length===0?<div className="p-5"><p className="text-sm text-gray-400">Nenhum projeto ativo.</p><p className="text-xs text-gray-600 mt-1">Novos projetos aparecerão aqui automaticamente.</p></div>:latestProjects.map((project:any)=>{
+            const status=String(project.status||'planning')
+            const statusTone=status==='review'?'bg-violet-500/10 text-violet-300':status==='in_progress'?'bg-sky-500/10 text-sky-300':'bg-white/[0.04] text-gray-400'
+            return <Link key={project.id} to={'/admin/projetos/'+project.id} className="block p-4 hover:bg-white/[0.025] transition-colors">
+              <div className="flex items-start justify-between gap-3"><p className="text-sm font-semibold truncate">{project.title}</p><span className={'text-[9px] uppercase tracking-wide px-2 py-1 rounded-full shrink-0 '+statusTone}>{status.replaceAll('_',' ')}</span></div>
+              <div className="flex gap-3 mt-2 text-[10px] text-gray-600"><span>Prioridade: {project.priority||'normal'}</span>{project.due_date&&<span>Prazo: {new Date(project.due_date+'T12:00:00').toLocaleDateString('pt-BR')}</span>}</div>
+            </Link>
+          })}
+        </div>
       </section>
 
       <section className="pm-surface overflow-hidden">
-        <div className="p-4 border-b border-white/8 flex items-center justify-between"><h2 className="font-semibold">Orçamentos recentes</h2><Link to="/admin/orcamentos" className="text-xs text-[#E30613]">Ver todos</Link></div>
-        {latestQuotes.length===0?<p className="p-4 text-xs text-gray-600">Nenhum orçamento em aberto.</p>:latestQuotes.map((quote:any)=><Link key={quote.id} to={'/admin/orcamentos/'+quote.id} className="block p-4 border-b border-white/6 last:border-b-0 hover:bg-white/[0.025]"><div className="flex justify-between gap-3"><p className="text-sm font-semibold truncate">{quote.title||quote.quote_number||'Orçamento'}</p><span className="text-[10px] text-[#E30613] shrink-0">{quote.status}</span></div><p className="text-[10px] text-gray-500 mt-1">{quote.total?money(quote.total):'Valor não informado'}</p></Link>)}
+        <div className="p-4 md:p-5 border-b border-white/8 flex items-center justify-between">
+          <div><p className="text-[10px] uppercase tracking-[0.14em] text-gray-600">Vendas</p><h2 className="font-semibold mt-1">Orçamentos em aberto</h2></div>
+          <Link to="/admin/orcamentos" className="text-xs text-[#ff5364] hover:text-[#ff7a86]">Todos →</Link>
+        </div>
+        <div className="divide-y divide-white/[0.05]">
+          {latestQuotes.length===0?<div className="p-5"><p className="text-sm text-gray-400">Nenhum orçamento em aberto.</p><p className="text-xs text-gray-600 mt-1">Sua fila comercial está limpa neste momento.</p></div>:latestQuotes.map((quote:any)=>{
+            const quoteTone=quote.status==='accepted'?'bg-emerald-500/10 text-emerald-300':quote.status==='viewed'?'bg-sky-500/10 text-sky-300':'bg-violet-500/10 text-violet-300'
+            return <Link key={quote.id} to={'/admin/orcamentos/'+quote.id} className="block p-4 hover:bg-white/[0.025] transition-colors">
+              <div className="flex justify-between gap-3"><p className="text-sm font-semibold truncate">{quote.title||quote.quote_number||'Orçamento'}</p><span className={'text-[9px] uppercase px-2 py-1 rounded-full shrink-0 '+quoteTone}>{quote.status}</span></div>
+              <p className="text-sm font-semibold text-gray-300 mt-2">{quote.total?money(quote.total):'Valor não informado'}</p>
+            </Link>
+          })}
+        </div>
       </section>
     </div>
   </div>
