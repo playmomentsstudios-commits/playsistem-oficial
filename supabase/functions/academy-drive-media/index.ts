@@ -5,13 +5,19 @@ Deno.serve(async(req)=>{
  if(req.method==="OPTIONS")return new Response("ok",{headers:corsHeaders});
  try{
   const url=new URL(req.url);const ticket=url.searchParams.get("ticket");
-  if(req.method==="GET"&&ticket){
+  if((req.method==="GET"||req.method==="HEAD")&&ticket){
    const db=createClient(env("SUPABASE_URL"),env("SUPABASE_SERVICE_ROLE_KEY"),{auth:{persistSession:false}});
    const {data:t,error}=await db.from("academy_media_tickets").select("*").eq("token",ticket).gt("expires_at",new Date().toISOString()).single();
    if(error||!t)return new Response("Expired or invalid media ticket",{status:403});
-   const token=await getDriveAccessToken();const headers:any={Authorization:`Bearer ${token}`};
-   // HTML5 video needs byte-range responses to discover duration and seek reliably. Some browsers/proxies omit Range on the first metadata request, so start with a small partial response instead of streaming the entire Drive file.
-   const requestedRange=req.headers.get("Range");headers.Range=requestedRange||"bytes=0-1048575";
+   const token=await getDriveAccessToken();
+   if(req.method==="HEAD"){
+    const meta=await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(t.drive_file_id)}?fields=size,mimeType`,{headers:{Authorization:`Bearer ${token}`}});
+    if(!meta.ok)return new Response("Could not read media metadata",{status:meta.status});
+    const info=await meta.json();const head=new Headers({"Access-Control-Allow-Origin":"*","Access-Control-Expose-Headers":"Content-Length, Accept-Ranges, Content-Type","Accept-Ranges":"bytes","Cache-Control":"private, max-age=60"});
+    if(info.mimeType)head.set("Content-Type",info.mimeType);if(info.size)head.set("Content-Length",String(info.size));
+    return new Response(null,{status:200,headers:head});
+   }
+   const headers:any={Authorization:`Bearer ${token}`};const requestedRange=req.headers.get("Range");if(requestedRange)headers.Range=requestedRange;
    const drive=await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(t.drive_file_id)}?alt=media`,{headers});
    const outHeaders=new Headers();for(const h of ["content-type","content-length","content-range","accept-ranges","content-disposition"])if(drive.headers.get(h))outHeaders.set(h,drive.headers.get(h)!);
    outHeaders.set("Access-Control-Allow-Origin","*");outHeaders.set("Access-Control-Expose-Headers","Content-Length, Content-Range, Accept-Ranges, Content-Type");outHeaders.set("Accept-Ranges","bytes");outHeaders.set("Cache-Control","private, max-age=60");outHeaders.delete("content-disposition");
