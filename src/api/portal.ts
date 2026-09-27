@@ -565,6 +565,14 @@ export const portalApi = {
     if(error) throw error
     return data.signedUrl
   },
+  driveFileBlobUrl: async (fileId:string) => {
+    const { data,error }=await supabase.functions.invoke('google-drive-file-download',{
+      body:{file_id:fileId},
+    })
+    if(error) throw error
+    const blob=data instanceof Blob?data:new Blob([data])
+    return URL.createObjectURL(blob)
+  },
   announcements: async () => {
     const { data,error }=await supabase.from('announcements').select('*').order('published_at',{ascending:false})
     if(error) throw error
