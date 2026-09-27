@@ -37,6 +37,14 @@ Deno.serve(async(req)=>{
    if(data.video_source!=="drive")throw new Error("Lesson is not configured as a Drive video");
    if(!data.video_drive_file_id)throw new Error("Lesson has no Drive file linked. Save the uploaded video in the lesson again.");
    driveFileId=data.video_drive_file_id;
+   // Validate that Drive actually sees this as a playable video before issuing a ticket.
+   // This catches uploads that exist but are still processing or were stored with a non-video MIME type.
+   const driveToken=await getDriveAccessToken();
+   const metaResponse=await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(driveFileId)}?fields=id,name,size,mimeType,videoMediaMetadata`,{headers:{Authorization:`Bearer ${driveToken}`}});
+   if(!metaResponse.ok)throw new Error("Google Drive could not read the uploaded video metadata ("+metaResponse.status+").");
+   const meta=await metaResponse.json();
+   if(!String(meta.mimeType||"").startsWith("video/"))throw new Error("O arquivo está no Drive, mas foi armazenado como "+(meta.mimeType||"tipo desconhecido")+" em vez de vídeo.");
+   if(!meta.size)throw new Error("O arquivo de vídeo está vazio no Google Drive.");
   }else if(kind==="material"){
    const {data,error}=await ctx.db.from("lesson_materials").select("id,drive_file_id").eq("id",id).single();if(error||!data?.drive_file_id)throw new Error("Material not available");driveFileId=data.drive_file_id;
   }else throw new Error("Invalid media kind");
