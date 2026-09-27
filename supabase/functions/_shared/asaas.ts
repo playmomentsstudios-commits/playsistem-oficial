@@ -8,7 +8,7 @@ export function serviceDb(){return createClient(env("SUPABASE_URL"),env("SUPABAS
 export async function requireCustomer(req:Request){
  const token=(req.headers.get("Authorization")||"").replace(/^Bearer\s+/i,"");if(!token)throw new Error("Unauthorized");
  const db=serviceDb();const {data,error}=await db.auth.getUser(token);if(error||!data.user)throw new Error("Unauthorized");
- const {data:profile,error:pe}=await db.from("profiles").select("id,email,first_name,last_name,role,status").eq("id",data.user.id).single();
+ const {data:profile,error:pe}=await db.from("profiles").select("id,email,first_name,last_name,phone,document_number,role,status").eq("id",data.user.id).single();
  if(pe||!profile||profile.role!=="customer"||profile.status!=="active")throw new Error("Customer access required");
  return {db,userId:data.user.id,profile};
 }
@@ -20,8 +20,16 @@ export async function asaas(path:string,init:RequestInit={}){
  return payload;
 }
 export async function ensureAsaasCustomer(db:SupabaseClient,profile:any){
+ const cpfCnpj=String(profile.document_number||"").replace(/\D/g,"");
+ if(![11,14].includes(cpfCnpj.length))throw new Error("Preencha um CPF ou CNPJ válido em Meu Perfil antes de finalizar o pagamento.");
  const {data:existing}=await db.from("payments").select("provider_customer_id").eq("customer_id",profile.id).eq("provider","asaas").not("provider_customer_id","is",null).limit(1).maybeSingle();
  if(existing?.provider_customer_id)return existing.provider_customer_id;
- const customer=await asaas("/customers",{method:"POST",body:JSON.stringify({name:[profile.first_name,profile.last_name].filter(Boolean).join(" ")||profile.email,email:profile.email,externalReference:profile.id})});
+ const customer=await asaas("/customers",{method:"POST",body:JSON.stringify({
+  name:[profile.first_name,profile.last_name].filter(Boolean).join(" ")||profile.email,
+  email:profile.email,
+  phone:profile.phone||undefined,
+  cpfCnpj,
+  externalReference:profile.id
+ })});
  return customer.id as string;
 }
