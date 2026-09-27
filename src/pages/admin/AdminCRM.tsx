@@ -92,22 +92,22 @@ export function AdminCRM(){
     </div>
 
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase text-gray-500">Oportunidades ativas</p><b className="text-2xl">{totals.active}</b></div>
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase text-gray-500">Valor em negociação</p><b className="text-lg text-[#E30613]">{money(totals.value)}</b></div>
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase text-gray-500">Ações atrasadas</p><b className={'text-2xl '+(totals.due?'text-orange-400':'')}>{totals.due}</b></div>
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase text-gray-500">Fechados</p><b className="text-2xl text-emerald-400">{totals.won}</b></div>
+      <div className="pm-surface p-4"><p className="text-[10px] uppercase text-gray-500">Oportunidades ativas</p><b className="text-2xl">{totals.active}</b></div>
+      <div className="pm-surface p-4"><p className="text-[10px] uppercase text-gray-500">Valor em negociação</p><b className="text-lg text-[#E30613]">{money(totals.value)}</b></div>
+      <div className="pm-surface p-4"><p className="text-[10px] uppercase text-gray-500">Ações atrasadas</p><b className={'text-2xl '+(totals.due?'text-orange-400':'')}>{totals.due}</b></div>
+      <div className="pm-surface p-4"><p className="text-[10px] uppercase text-gray-500">Fechados</p><b className="text-2xl text-emerald-400">{totals.won}</b></div>
     </div>
 
-    <div className="flex flex-col sm:flex-row gap-3 mb-5">
-      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar cliente, e-mail, origem ou próxima ação..." className="flex-1 min-h-11 px-4 rounded-xl bg-white/5 border border-white/10"/>
-      <select value={owner} onChange={e=>setOwner(e.target.value)} className="min-h-11 px-3 rounded-xl bg-black border border-white/10">
+    <div className="pm-surface p-3 flex flex-col sm:flex-row gap-3 mb-5">
+      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar cliente, e-mail, origem ou próxima ação..." className="pm-control flex-1 px-4"/>
+      <select value={owner} onChange={e=>setOwner(e.target.value)} className="pm-control px-3 bg-black">
         <option value="all">Todos os responsáveis</option>
         <option value="none">Sem responsável</option>
         {team.map(member=><option key={member.id} value={member.id}>{personName(member)}</option>)}
       </select>
     </div>
 
-    {loading?<p className="text-gray-500">Carregando pipeline...</p>:<div className="overflow-x-auto pb-4">
+    {loading?<div aria-busy="true" className="flex gap-3 overflow-hidden">{Array.from({length:4}).map((_,i)=><div key={i} className="pm-skeleton w-[280px] shrink-0 h-[420px] rounded-2xl"/>)}</div>:<div className="pm-scroll-x pb-4">
       <div className="flex gap-3 min-w-max">
         {CRM_STAGES.map(stage=>{
           const items=filtered.filter(row=>row.stage===stage)
@@ -116,7 +116,7 @@ export function AdminCRM(){
             key={stage}
             onDragOver={e=>e.preventDefault()}
             onDrop={()=>{if(dragging)void move(dragging,stage);setDragging(null)}}
-            className="w-[280px] rounded-2xl bg-[#101012] border border-white/8 overflow-hidden"
+            className={'w-[280px] rounded-2xl bg-[#101012] border overflow-hidden transition-colors '+(dragging?'border-white/15':'border-white/8')}
           >
             <div className="p-3 border-b border-white/8 sticky top-0 bg-[#101012] z-10">
               <div className="flex items-center justify-between gap-2">
@@ -132,7 +132,7 @@ export function AdminCRM(){
                 onDragEnd={()=>setDragging(null)}
                 key={row.customer_id}
                 to={'/admin/clientes/'+row.customer_id}
-                className="block p-3 rounded-xl bg-[#171719] border border-white/8 hover:border-white/15 transition-colors"
+                className={'block p-3 rounded-xl bg-[#171719] border hover:border-white/20 hover:bg-[#1b1b1e] transition-colors '+(dragging===row.customer_id?'opacity-50 border-[#E30613]/30':'border-white/8')}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -150,7 +150,7 @@ export function AdminCRM(){
                   </div>
                 </div>
               </Link>)}
-              {items.length===0&&<div className="py-8 text-center text-[11px] text-gray-700">Solte um cliente aqui</div>}
+              {items.length===0&&<div className="m-2 min-h-24 rounded-xl border border-dashed border-white/[0.08] flex items-center justify-center text-center px-4 text-[11px] text-gray-600">{dragging?'Solte aqui para mover':'Nenhum cliente nesta etapa'}</div>}
             </div>
           </section>
         })}
