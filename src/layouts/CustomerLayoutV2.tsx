@@ -10,7 +10,7 @@ import { settingsApi } from '../api/settings'
 type IconName='academy'|'home'|'user'|'orders'|'projects'|'services'|'quotes'|'payments'|'chat'|'files'|'community'|'notifications'|'announcements'|'settings'|'logout'|'chevron'
 
 const ICONS:Record<IconName,React.ReactNode>={
-  academy:<><path d="M4 5h16v14H4z"/><path d="m8 9 4 3 4-3v6l-4 3-4-3z"/></>,
+  academy:<><path d="M3 6.5 12 2l9 4.5-9 4.5-9-4.5Z"/><path d="M6 9v5.5c0 1.8 2.7 3.5 6 3.5s6-1.7 6-3.5V9"/><path d="M21 7v7"/></>,
   home:<><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></>,
   user:<><circle cx="12" cy="8" r="3"/><path d="M5 20c.8-4 3.2-6 7-6s6.2 2 7 6"/></>,
   orders:<><path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="M4 7v10l8 4 8-4V7"/><path d="M12 11v10"/></>,
@@ -42,7 +42,6 @@ const MENU:{label:string;href:string;icon:IconName;group:string}[]=[
   { label: 'Arquivos', href: '/app/arquivos', icon: 'files', group: 'principal' },
   { label: 'Academia', href: '/app/academia', icon: 'academy', group: 'experiencia' },
   { label: 'Comunidade', href: '/comunidade', icon: 'community', group: 'experiencia' },
-  { label: 'Comunicados', href: '/app/comunicados', icon: 'announcements', group: 'experiencia' },
 ]
 
 
@@ -68,9 +67,7 @@ export function CustomerLayoutV2() {
   const location = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [expanded,setExpanded]=useState(()=>{
-    try{return window.localStorage.getItem('playmoments.customer.sidebar')!=='collapsed'}catch{return true}
-  })
+  const [expanded,setExpanded]=useState(true)
   const [counts, setCounts] = useState({ messages: 0, notifications: 0 })
   const [floatingChatEnabled,setFloatingChatEnabled]=useState(true)
   const [accountMenuOpen,setAccountMenuOpen]=useState(false)
@@ -92,7 +89,6 @@ export function CustomerLayoutV2() {
     let active=true
     settingsApi.userPreferences().then(prefs=>{
       if(!active||!prefs)return
-      setExpanded(prefs.sidebar_expanded)
       setFloatingChatEnabled(prefs.floating_chat_enabled)
       try{window.localStorage.setItem('playmoments.customer.sidebar',prefs.sidebar_expanded?'expanded':'collapsed')}catch{}
     }).catch(()=>undefined)
