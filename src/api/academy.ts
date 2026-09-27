@@ -1,12 +1,12 @@
 import { supabase } from '../lib/supabase'
 
-export type Course={id:string;title:string;slug:string;description:string|null;content_type:'course'|'video_class'|'webinar'|'lecture'|'training';status:'draft'|'published'|'archived';access_type:'free'|'manual'|'product';cover_url:string|null;cover_drive_file_id:string|null;category:string|null;instructor_name:string|null;estimated_minutes:number|null;created_at:string}
+export type Course={id:string;title:string;slug:string;description:string|null;display_order?:number;content_type:'course'|'video_class'|'webinar'|'lecture'|'training';status:'draft'|'published'|'archived';access_type:'free'|'manual'|'product';cover_url:string|null;cover_drive_file_id:string|null;category:string|null;instructor_name:string|null;estimated_minutes:number|null;created_at:string}
 async function functionError(error:any,fallback:string){
   try{const response=error?.context;if(response instanceof Response){const payload=await response.clone().json();return payload?.error||payload?.message||fallback}}catch{}
   return error?.message&&error.message!=='Edge Function returned a non-2xx status code'?error.message:fallback
 }
 export const academyApi={
-  async adminCourses(){const {data,error}=await supabase.from('courses').select('*').order('created_at',{ascending:false});if(error)throw error;return (data||[]) as Course[]},
+  async adminCourses(){const {data,error}=await supabase.from('courses').select('*').order('display_order').order('created_at',{ascending:false});if(error)throw error;return (data||[]) as Course[]},
   async freeCourses(){const {data,error}=await supabase.from('courses').select('*').eq('status','published').eq('access_type','free').order('published_at',{ascending:false});if(error)throw error;return data||[]},
   async selfEnroll(courseId:string){const {data:{user}}=await supabase.auth.getUser();if(!user)throw new Error('Sessão inválida.');const {data,error}=await supabase.from('course_enrollments').upsert({course_id:courseId,user_id:user.id,status:'active',source:'free'},{onConflict:'course_id,user_id'}).select().single();if(error)throw error;return data},
   async myCourses(){const {data,error}=await supabase.from('course_enrollments').select('*,course:courses(*)').in('status',['active','completed']).order('enrolled_at',{ascending:false});if(error)throw error;return data||[]},
@@ -20,6 +20,9 @@ export const academyApi={
   async addLesson(moduleId:string,title:string){const {data,error}=await supabase.from('course_lessons').insert({module_id:moduleId,title}).select().single();if(error)throw error;return data},
   async deleteLesson(id:string){const {error}=await supabase.from('course_lessons').delete().eq('id',id);if(error)throw error},
   async duplicateLesson(lesson:any){const {id:_id,created_at:_created,updated_at:_updated,...copy}=lesson;const {data,error}=await supabase.from('course_lessons').insert({...copy,title:lesson.title+' — Cópia'}).select().single();if(error)throw error;return data},
+  async reorderCourses(ids:string[]){const results=await Promise.all(ids.map((id,i)=>supabase.from('courses').update({display_order:i,updated_at:new Date().toISOString()}).eq('id',id)));const failed=results.find(r=>r.error);if(failed?.error)throw failed.error},
+  async reorderModules(ids:string[]){const results=await Promise.all(ids.map((id,i)=>supabase.from('course_modules').update({display_order:i,updated_at:new Date().toISOString()}).eq('id',id)));const failed=results.find(r=>r.error);if(failed?.error)throw failed.error},
+  async reorderLessons(ids:string[]){const results=await Promise.all(ids.map((id,i)=>supabase.from('course_lessons').update({display_order:i,updated_at:new Date().toISOString()}).eq('id',id)));const failed=results.find(r=>r.error);if(failed?.error)throw failed.error},
   async saveModule(module:any){const {id,...changes}=module;const {data,error}=await supabase.from('course_modules').update({...changes,updated_at:new Date().toISOString()}).eq('id',id).select().single();if(error)throw error;return data},
   async saveLesson(lesson:any){const {id,...changes}=lesson;const {data,error}=await supabase.from('course_lessons').update({...changes,updated_at:new Date().toISOString()}).eq('id',id).select().single();if(error)throw error;return data},
   async lessonMaterials(lessonId:string){const {data,error}=await supabase.from('lesson_materials').select('*').eq('lesson_id',lessonId).order('display_order');if(error)throw error;return data||[]},
