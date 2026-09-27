@@ -500,7 +500,7 @@ export function AdminFilesV2(){
         <h2 className="text-lg font-bold">Recentes</h2>
         <p className="text-xs text-gray-500">Acesso rápido aos últimos arquivos.</p>
       </div>
-      {loading?<div aria-busy="true" className="space-y-3"><div className="pm-skeleton h-20 rounded-2xl"/><div className="pm-skeleton h-20 rounded-2xl"/><div className="pm-skeleton h-20 rounded-2xl"/></div>:<p className="text-gray-500">Carregando...</p>:recent.length===0?<p className="text-sm text-gray-500">Nenhum arquivo ainda.</p>:<div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
+      {loading?<div aria-busy="true" aria-label="Carregando arquivos recentes" className="space-y-3"><div className="pm-skeleton h-20 rounded-2xl"/><div className="pm-skeleton h-20 rounded-2xl"/><div className="pm-skeleton h-20 rounded-2xl"/></div>:recent.length===0?<p className="text-sm text-gray-500">Nenhum arquivo ainda.</p>:<div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
         {recent.map(row=><button key={row.id} type="button" onClick={()=>open(row)} className="group text-left p-2.5 rounded-xl bg-[#141416] border border-white/8 hover:border-white/20 transition-colors min-w-0">
           <div className="h-11 rounded-lg bg-white/[0.04] flex items-center justify-center text-2xl mb-2">{fileIcon(row)}</div>
           <div className="flex items-center justify-between gap-2">
