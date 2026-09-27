@@ -8,8 +8,10 @@ export function AdminCustomers(){
   const [search,setSearch]=useState('')
   const [status,setStatus]=useState('todos')
   const [loading,setLoading]=useState(true)
+  const [error,setError]=useState('')
 
-  useEffect(()=>{portalApi.customers().then(setRows).finally(()=>setLoading(false))},[])
+  const load=()=>{setError('');return portalApi.customers().then(setRows).catch((e:any)=>setError(e.message||'Não foi possível carregar os clientes.')).finally(()=>setLoading(false))}
+  useEffect(()=>{void load()},[])
 
   const filtered=useMemo(()=>rows.filter(customer=>{
     const text=((customer.first_name||'')+' '+(customer.last_name||'')+' '+customer.email).toLowerCase()
@@ -51,7 +53,7 @@ export function AdminCustomers(){
       </select>
     </div>
 
-    {loading?<p>Carregando...</p>:filtered.length===0?<div className="p-6 rounded-2xl border border-white/10 bg-[#141416] text-sm text-gray-500">Nenhum cliente encontrado.</div>:<div className="rounded-2xl border border-white/10 bg-[#111113] overflow-hidden">
+    {loading?<p>Carregando...</p>:error?<div className="p-6 rounded-2xl border border-red-500/20 bg-red-500/5 text-sm"><p className="text-red-300">{error}</p><button onClick={()=>{setLoading(true);void load()}} className="text-[#E30613] mt-2">Tentar novamente</button></div>:filtered.length===0?<div className="p-6 rounded-2xl border border-white/10 bg-[#141416] text-sm text-gray-500">Nenhum cliente encontrado.</div>:<div className="rounded-2xl border border-white/10 bg-[#111113] overflow-hidden">
       {filtered.map((customer,index)=><Link key={customer.id} to={'/admin/clientes/'+customer.id} className={'flex items-center gap-4 p-4 hover:bg-white/[0.03] transition-colors '+(index?'border-t border-white/8':'')}>
         <div className="w-10 h-10 rounded-xl bg-white/[0.05] flex items-center justify-center font-bold text-sm">{((customer.first_name||'?').charAt(0)+(customer.last_name||'').charAt(0)).toUpperCase()}</div>
         <div className="min-w-0 flex-1">

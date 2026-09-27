@@ -14,6 +14,7 @@ function nameOf(customer:any){
 export function AdminDashboard(){
   const {user}=useAuth()
   const [loading,setLoading]=useState(true)
+  const [error,setError]=useState('')
   const [data,setData]=useState({
     customers:[] as any[],
     projects:[] as any[],
@@ -29,6 +30,7 @@ export function AdminDashboard(){
     let active=true
     async function load(){
       setLoading(true)
+      setError('')
       const results=await Promise.allSettled([
         portalApi.customers(),
         portalApi.projects(),
@@ -39,6 +41,9 @@ export function AdminDashboard(){
         portalApi.unreadCounts(user!.id),
       ])
       if(!active)return
+      const failed=results.filter(result=>result.status==='rejected').length
+      if(failed===results.length){setError('Não foi possível carregar os dados operacionais do painel.')}
+      else if(failed>0){setError('Alguns indicadores não puderam ser carregados. Os demais dados continuam disponíveis.')}
       const value=<T,>(index:number,fallback:T):T=>results[index].status==='fulfilled'?(results[index] as PromiseFulfilledResult<any>).value:fallback
       setData({
         customers:value(0,[]),
@@ -94,6 +99,7 @@ export function AdminDashboard(){
   if(loading)return <div className="py-20 text-center text-sm text-gray-500">Carregando operação...</div>
 
   return <div>
+    {error&&<div className="mb-4 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 text-sm text-amber-200">{error}</div>}
     <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
       <div>
         <p className="text-[11px] uppercase tracking-[0.18em] text-[#E30613] font-semibold">Operação</p>
