@@ -99,6 +99,17 @@ Deno.serve(async (req) => {
     const uploadUrl = response.headers.get("Location");
     if (!uploadUrl) throw new Error("Google Drive did not return an upload session");
 
+    const { error: sessionError } = await ctx.db.from("drive_upload_sessions").insert({
+      id: uploadId,
+      user_id: ctx.userId,
+      project_id: projectId,
+      upload_url: uploadUrl,
+      file_name: fileName,
+      file_size: fileSize,
+      status: "active",
+    });
+    if (sessionError) throw sessionError;
+
     return json({
       ok: true,
       upload_url: uploadUrl,
