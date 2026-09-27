@@ -33,6 +33,17 @@ Deno.serve(async (req) => {
       if (taskError || task?.project_id !== projectId) throw new Error("Task does not belong to project");
     }
 
+    if (uploadId) {
+      const { data: session, error: sessionError } = await ctx.db
+        .from("drive_upload_sessions")
+        .select("id,user_id,project_id,status")
+        .eq("id", uploadId)
+        .eq("project_id", projectId)
+        .eq("user_id", ctx.userId)
+        .maybeSingle();
+      if (sessionError || !session) throw new Error("Upload session does not belong to this user and project");
+    }
+
     const folders = await ensureProjectFolder(ctx.db, ctx.userId, projectId);
     const { data: customFolders, error: customFoldersError } = await ctx.db
       .from("project_custom_folders")
