@@ -1,14 +1,16 @@
-import { useState } from 'react'
+import { useEffect,useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { useToast } from '../../contexts/ToastContext'
+import { siteContentApi } from '../../services/siteContent'
 
 const TABS = ['Geral', 'Quem Somos', 'Aparência', 'Redes Sociais', 'Contato', 'SEO']
 
 export function AdminSiteSettings() {
   const [tab, setTab] = useState('Geral')
   const [loading, setLoading] = useState(false)
+  const [initialLoading,setInitialLoading]=useState(true)
   const toast = useToast()
   const [settings, setSettings] = useState({
     companyName: 'Play Moments',
@@ -27,15 +29,53 @@ export function AdminSiteSettings() {
     metaDescription: 'Play Moments — Studio criativo de vídeo, design e tecnologia.',
   })
 
+  useEffect(()=>{
+    siteContentApi.settings().then(row=>setSettings({
+      companyName:row.company_name,
+      description:row.description,
+      heroHeadline:row.hero_headline,
+      heroCta:row.hero_cta,
+      primaryColor:row.primary_color,
+      instagram:row.instagram_url||'',
+      youtube:row.youtube_url||'',
+      tiktok:row.tiktok_url||'',
+      linkedin:row.linkedin_url||'',
+      whatsapp:row.whatsapp||'',
+      email:row.contact_email||'',
+      phone:row.contact_phone||'',
+      address:row.address||'',
+      metaDescription:row.meta_description,
+    })).catch(()=>toast('Não foi possível carregar as configurações do site.','error')).finally(()=>setInitialLoading(false))
+  },[])
+
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setSettings(prev => ({ ...prev, [k]: e.target.value }))
 
   const save = async () => {
     setLoading(true)
-    await new Promise(r => setTimeout(r, 700))
-    toast('Configurações salvas!', 'success')
-    setLoading(false)
+    try{
+      await siteContentApi.updateSettings({
+        company_name:settings.companyName.trim(),
+        description:settings.description.trim(),
+        hero_headline:settings.heroHeadline.trim(),
+        hero_cta:settings.heroCta.trim(),
+        primary_color:settings.primaryColor,
+        instagram_url:settings.instagram.trim()||null,
+        youtube_url:settings.youtube.trim()||null,
+        tiktok_url:settings.tiktok.trim()||null,
+        linkedin_url:settings.linkedin.trim()||null,
+        whatsapp:settings.whatsapp.trim()||null,
+        contact_email:settings.email.trim()||null,
+        contact_phone:settings.phone.trim()||null,
+        address:settings.address.trim()||null,
+        meta_description:settings.metaDescription.trim(),
+      })
+      toast('Configurações salvas!','success')
+    }catch(error:any){toast(error.message||'Não foi possível salvar as configurações.','error')}
+    finally{setLoading(false)}
   }
+
+  if(initialLoading)return <p className="text-gray-400">Carregando configurações...</p>
 
   return (
     <div>
