@@ -67,17 +67,6 @@ import { AdminSettings } from './pages/admin/AdminSettings'
 import { AdminAudit } from './pages/admin/AdminAudit'
 import { AdminReports } from './pages/admin/AdminReports'
 
-// Placeholder for unbuilt pages
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center px-6">
-      <div className="text-4xl mb-4">🚧</div>
-      <h2 className="text-xl font-bold mb-2" style={{ color: '#f0f0f2' }}>{title}</h2>
-      <p className="text-sm" style={{ color: '#6b6b78' }}>Página em desenvolvimento. Em breve disponível.</p>
-    </div>
-  )
-}
-
 export default function App() {
   return (
     <BrowserRouter>
