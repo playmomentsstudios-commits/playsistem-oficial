@@ -37,6 +37,17 @@ Deno.serve(async (req) => {
     const staffAllowed = ctx.role === "admin" || hasPermission(ctx, "files.manage");
     if (!staffAllowed && project.customer_id !== ctx.userId) throw new Error("Forbidden");
 
+    const { data: session, error: sessionError } = await ctx.db
+      .from("drive_upload_sessions")
+      .select("id,user_id,project_id,file_size,status")
+      .eq("upload_url", uploadUrl)
+      .eq("project_id", projectId)
+      .eq("user_id", ctx.userId)
+      .maybeSingle();
+    if (sessionError || !session || session.status !== "active" || Number(session.file_size) !== fileSize) {
+      throw new Error("Upload session does not belong to this user and project");
+    }
+
     const token = await getDriveAccessToken();
     const response = await fetch(uploadUrl, {
       method: "PUT",
@@ -56,10 +67,12 @@ Deno.serve(async (req) => {
 
     if (response.ok) {
       const file = await response.json().catch(() => null);
+      await ctx.db.from("drive_upload_sessions").update({ status:"completed", completed_at:new Date().toISOString() }).eq("id", session.id);
       return json({ ok:true, complete:true, file });
     }
 
     if (response.status === 404) {
+      await ctx.db.from("drive_upload_sessions").update({ status:"expired" }).eq("id", session.id);
       return json({ ok:false, expired:true, error:"Upload session expired" }, 410);
     }
 
