@@ -59,7 +59,14 @@ export function AdminPayments(){
     if(!window.confirm('Cancelar esta cobrança? Pagamentos Asaas pendentes também serão cancelados no provedor.'))return
     try{
       const {data,error}=await supabase.functions.invoke('asaas-admin-cancel',{body:{payment_id:payment.id}})
-      if(error)throw error
+      if(error){
+        let message='Não foi possível cancelar a cobrança.'
+        try{
+          const payload=await (error as any)?.context?.json?.()
+          if(payload?.error)message=payload.error
+        }catch{}
+        throw new Error(message)
+      }
       if(!data?.ok)throw new Error(data?.error||'Não foi possível cancelar a cobrança.')
       toast('Cobrança cancelada.','success');setSelected(null);await load()
     }catch(e:any){toast(e.message||'Não foi possível cancelar a cobrança.','error')}
