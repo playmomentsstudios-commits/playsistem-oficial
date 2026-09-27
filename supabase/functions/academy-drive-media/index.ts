@@ -17,11 +17,17 @@ Deno.serve(async(req)=>{
     if(info.mimeType)head.set("Content-Type",info.mimeType);if(info.size)head.set("Content-Length",String(info.size));
     return new Response(null,{status:200,headers:head});
    }
-   const headers:any={Authorization:`Bearer ${token}`};const requestedRange=req.headers.get("Range");if(requestedRange)headers.Range=requestedRange;
+   const headers:any={Authorization:`Bearer ${token}`};const requestedRange=req.headers.get("Range");
+   // Chromium may start with a normal GET. Force a byte-range in that case so the response
+   // has the 206/Content-Range semantics required by the native HTML5 player.
+   headers.Range=requestedRange||"bytes=0-1048575";
    const drive=await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(t.drive_file_id)}?alt=media`,{headers});
    const outHeaders=new Headers();for(const h of ["content-type","content-length","content-range","accept-ranges","content-disposition"])if(drive.headers.get(h))outHeaders.set(h,drive.headers.get(h)!);
    outHeaders.set("Access-Control-Allow-Origin","*");outHeaders.set("Access-Control-Expose-Headers","Content-Length, Content-Range, Accept-Ranges, Content-Type");outHeaders.set("Accept-Ranges","bytes");outHeaders.set("Cache-Control","private, max-age=60");outHeaders.delete("content-disposition");
-   return new Response(drive.body,{status:drive.status,headers:outHeaders});
+   // Never advertise a partial body as a complete 200 response. Drive normally returns 206;
+   // keep that status explicit whenever Content-Range confirms a partial payload.
+   const status=outHeaders.has("content-range")?206:drive.status;
+   return new Response(drive.body,{status,headers:outHeaders});
   }
   const ctx=await requireUser(req);const body=await req.json();const kind=String(body.kind||"");const id=String(body.id||"");let driveFileId="";
   if(kind==="lesson"){
