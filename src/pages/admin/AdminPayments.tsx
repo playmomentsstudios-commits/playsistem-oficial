@@ -25,6 +25,7 @@ export function AdminPayments(){
   const [scopeFilter,setScopeFilter]=useState('operacionais')
   const [search,setSearch]=useState('')
   const [selected,setSelected]=useState<any|null>(null)
+  const [showLegacy,setShowLegacy]=useState(false)
 
   const load=async()=>{setLoading(true);try{setRows(await portalApi.payments())}finally{setLoading(false)}}
   useEffect(()=>{void load()},[])
@@ -33,14 +34,15 @@ export function AdminPayments(){
     const customer=((payment.customer?.first_name||'')+' '+(payment.customer?.last_name||'')+' '+(payment.customer?.email||'')).toLowerCase()
     const order=(payment.order?.order_number||'').toLowerCase()
     const needle=search.trim().toLowerCase()
-    const scopeOk=scopeFilter==='todos'||(scopeFilter==='operacionais'?!payment.archived_at&&payment.environment!=='sandbox':scopeFilter==='testes'?payment.environment==='sandbox'&&!payment.archived_at:scopeFilter==='arquivados'?Boolean(payment.archived_at):true)
+    const scopeOk=scopeFilter==='todos'||(scopeFilter==='operacionais'?!payment.archived_at&&payment.environment!=='sandbox'&&!['cancelled','failed','expired','overdue'].includes(payment.status):scopeFilter==='testes'?payment.environment==='sandbox'&&!payment.archived_at:scopeFilter==='arquivados'?Boolean(payment.archived_at)||['cancelled','failed','expired','overdue'].includes(payment.status):true)
     return scopeOk&&(!needle||customer.includes(needle)||order.includes(needle)||(payment.id||'').toLowerCase().includes(needle))&&(statusFilter==='todos'||payment.status===statusFilter)
   }),[rows,statusFilter,scopeFilter,search])
 
-  const operationalRows=useMemo(()=>rows.filter(p=>!p.archived_at&&p.environment!=='sandbox'),[rows])
+  const operationalRows=useMemo(()=>rows.filter(p=>!p.archived_at&&p.environment!=='sandbox'&&!['cancelled','failed','expired','overdue'].includes(p.status)),[rows])
   const sandboxCount=useMemo(()=>rows.filter(p=>p.environment==='sandbox'&&!p.archived_at).length,[rows])
   const archivedCount=useMemo(()=>rows.filter(p=>Boolean(p.archived_at)).length,[rows])
   const unknownCount=useMemo(()=>rows.filter(p=>p.environment==='unknown'&&!p.archived_at).length,[rows])
+  const inactiveCount=useMemo(()=>rows.filter(p=>Boolean(p.archived_at)||['cancelled','failed','expired','overdue'].includes(p.status)).length,[rows])
   const totals=useMemo(()=>({
     received:operationalRows.filter(p=>p.status==='paid').reduce((sum,p)=>sum+(p.amount||0),0),
     pending:operationalRows.filter(p=>['pending','awaiting_confirmation'].includes(p.status)).reduce((sum,p)=>sum+(p.amount||0),0),
@@ -49,10 +51,10 @@ export function AdminPayments(){
   }),[operationalRows])
 
   async function setArchived(payment:any,archived:boolean){
-    if(payment.environment!=='sandbox')return toast('Somente pagamentos confirmados como Sandbox podem ser arquivados.','error')
-    if(!window.confirm(archived?'Arquivar este pagamento Sandbox? Ele sairá dos indicadores operacionais.':'Restaurar este pagamento Sandbox?'))return
-    try{await portalApi.setPaymentArchived(payment.id,archived);toast(archived?'Pagamento de teste arquivado.':'Pagamento de teste restaurado.','success');setSelected(null);await load()}
-    catch(e:any){toast(e.message||'Não foi possível atualizar o pagamento de teste.','error')}
+    if(payment.environment!=='sandbox'&&!['cancelled','failed','expired','overdue'].includes(payment.status))return toast('Somente testes ou cobranças encerradas podem ser arquivados.','error')
+    if(!window.confirm(archived?'Arquivar este registro? Ele sairá da visão operacional, mas continuará no histórico.':'Restaurar este registro ao histórico visível?'))return
+    try{await portalApi.setPaymentArchived(payment.id,archived);toast(archived?'Registro arquivado.':'Registro restaurado.','success');setSelected(null);await load()}
+    catch(e:any){toast(e.message||'Não foi possível atualizar o registro.','error')}
   }
 
   async function cancelPayment(payment:any){
@@ -85,19 +87,21 @@ export function AdminPayments(){
       <Metric label="Precisam de atenção" value={totals.attention} tone={totals.attention?'text-amber-300':'text-emerald-300'}/>
     </div>
 
-    <div className="grid sm:grid-cols-3 gap-2 mb-4">
-      <button onClick={()=>setScopeFilter('testes')} className="text-left px-4 py-3 rounded-xl bg-sky-500/[0.05] border border-sky-500/15 hover:bg-sky-500/[0.08]"><span className="text-xs text-sky-300 font-semibold">Sandbox</span><span className="block text-lg font-bold mt-1">{sandboxCount}</span></button>
-      <button onClick={()=>setScopeFilter('arquivados')} className="text-left px-4 py-3 rounded-xl bg-white/[0.025] border border-white/[0.07] hover:bg-white/[0.04]"><span className="text-xs text-gray-400 font-semibold">Arquivados</span><span className="block text-lg font-bold mt-1">{archivedCount}</span></button>
-      <button onClick={()=>setScopeFilter('todos')} className="text-left px-4 py-3 rounded-xl bg-amber-500/[0.04] border border-amber-500/10 hover:bg-amber-500/[0.07]"><span className="text-xs text-amber-300 font-semibold">Legado sem ambiente</span><span className="block text-lg font-bold mt-1">{unknownCount}</span></button>
+    <div className="flex flex-wrap items-center gap-2 mb-4">
+      <button onClick={()=>setScopeFilter('operacionais')} className="px-3 py-2 rounded-xl bg-white/[0.035] border border-white/[0.08] text-xs text-gray-300 hover:bg-white/[0.06]">Em operação <strong className="ml-1 text-white">{operationalRows.length}</strong></button>
+      <button onClick={()=>setScopeFilter('arquivados')} className="px-3 py-2 rounded-xl bg-white/[0.025] border border-white/[0.07] text-xs text-gray-400 hover:bg-white/[0.05]">Encerrados / arquivados <strong className="ml-1 text-white">{inactiveCount}</strong></button>
+      <button onClick={()=>setScopeFilter('testes')} className="px-3 py-2 rounded-xl bg-sky-500/[0.04] border border-sky-500/10 text-xs text-sky-300">Sandbox <strong className="ml-1 text-white">{sandboxCount}</strong></button>
+      <button onClick={()=>setShowLegacy(v=>!v)} className="ml-auto px-3 py-2 text-[11px] text-gray-600 hover:text-gray-400">Legado sem ambiente: {unknownCount}</button>
     </div>
+    {showLegacy&&<div className="mb-4 px-4 py-3 rounded-xl bg-amber-500/[0.035] border border-amber-500/10 text-xs text-amber-200">Existem {unknownCount} registros antigos sem ambiente identificado. Eles permanecem preservados para auditoria e podem ser consultados em “Todos os registros”.</div>}
 
     <div className="p-3 rounded-2xl bg-[#111113] border border-white/10 flex flex-wrap gap-3 mb-5">
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar cliente, pedido ou ID..." className="min-h-11 flex-1 min-w-64 px-4 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-[#E30613]/50"/>
       <select value={scopeFilter} onChange={e=>setScopeFilter(e.target.value)} className="min-h-11 px-3 rounded-xl bg-black border border-white/10">
-        <option value="operacionais">Operacionais</option><option value="testes">Testes Sandbox</option><option value="arquivados">Arquivados</option><option value="todos">Todos os registros</option>
+        <option value="operacionais">Em operação</option><option value="arquivados">Encerrados / arquivados</option><option value="testes">Testes Sandbox</option><option value="todos">Todos os registros</option>
       </select>
       <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} className="min-h-11 px-3 rounded-xl bg-black border border-white/10">
-        <option value="todos">Todos os status</option><option value="pending">Aguardando pagamento</option><option value="paid">Pagamento recebido</option><option value="cancelled">Cancelado</option><option value="refunded">Reembolsado</option>
+        <option value="todos">Todos os status</option><option value="pending">Aguardando pagamento</option><option value="awaiting_confirmation">Aguardando confirmação</option><option value="paid">Pagamento recebido</option><option value="cancelled">Cancelado</option><option value="failed">Falhou</option><option value="expired">Vencido</option><option value="refunded">Reembolsado</option>
       </select>
     </div>
 
@@ -127,8 +131,8 @@ export function AdminPayments(){
         {selected.environment==='production'&&<div className="mt-4 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15 text-xs text-emerald-200"><strong className="block mb-1">Ambiente de produção</strong>Este registro faz parte do histórico financeiro real e não oferece ação de limpeza.</div>}
         {selected.provider==='manual'&&<div className="mt-4 p-4 rounded-xl bg-amber-500/5 border border-amber-500/15 text-xs text-amber-200">Pagamento manual legado — preservado apenas para histórico.</div>}
         {!selected.archived_at&&!['paid','refunded','cancelled'].includes(selected.status)&&<button onClick={()=>void cancelPayment(selected)} className="mt-5 w-full min-h-11 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm font-semibold">Cancelar cobrança</button>}
-        {selected.environment==='sandbox'&&<button onClick={()=>void setArchived(selected,!selected.archived_at)} className="mt-3 w-full min-h-11 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-300 text-sm font-semibold">{selected.archived_at?'Restaurar pagamento de teste':'Arquivar pagamento de teste'}</button>}
-        <div className="mt-5 p-4 rounded-xl bg-white/[0.025] border border-white/[0.07]"><p className="text-xs font-semibold text-gray-300">Histórico protegido</p><p className="text-[11px] text-gray-600 mt-1">Registros financeiros não são apagados. Somente cobranças comprovadamente Sandbox podem ser arquivadas e restauradas, mantendo auditoria.</p></div>
+        {(selected.environment==='sandbox'||['cancelled','failed','expired','overdue'].includes(selected.status))&&<button onClick={()=>void setArchived(selected,!selected.archived_at)} className="mt-3 w-full min-h-11 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-300 text-sm font-semibold">{selected.archived_at?'Restaurar registro':'Arquivar registro'}</button>}
+        <div className="mt-5 p-4 rounded-xl bg-white/[0.025] border border-white/[0.07]"><p className="text-xs font-semibold text-gray-300">Histórico protegido</p><p className="text-[11px] text-gray-600 mt-1">Registros financeiros não são apagados. Cobranças encerradas e testes podem sair da visão operacional sem apagar o registro, preservando a auditoria.</p></div>
       </aside>
     </div>}
   </div>
