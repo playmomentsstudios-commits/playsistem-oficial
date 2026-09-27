@@ -76,22 +76,25 @@ export function AdminLayout() {
       flexDirection: 'column',
       ...(mobile ? { position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 50 } : {}),
     }}>
-      <div className="flex items-center justify-between px-5 py-4 border-b"
+      <div className="flex items-center justify-between px-5 py-5 border-b"
         style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
         <Link to="/"><img src={logoUrl} alt="Play Moments" style={{ height: 24 }} /></Link>
         {mobile && <button onClick={() => setSidebarOpen(false)} style={{ color: '#6b6b78' }}>✕</button>}
       </div>
 
-      <div className="px-4 py-2 mx-2 mt-2 rounded-lg"
+      <div className="px-4 py-3 mx-3 mt-3 rounded-xl"
         style={{ background: 'rgba(227,6,19,0.1)', border: '1px solid rgba(227,6,19,0.2)' }}>
-        <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#E30613' }}>
-          {user?.role === 'admin' ? '● Administrador' : '● Colaborador'}
-        </p>
-        <p className="text-xs truncate" style={{ color: '#9090a0' }}>{user?.name}</p>
+        <div className="flex items-center gap-2">
+          <span className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#E30613]/15 text-[#ff5364]"><MenuIcon name="team" size={14} /></span>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: '#E30613' }}>{user?.role === 'admin' ? 'Administrador' : 'Colaborador'}</p>
+            <p className="text-xs truncate mt-0.5" style={{ color: '#b0b0bb' }}>{user?.name}</p>
+          </div>
+        </div>
       </div>
 
-      <nav className="flex-1 px-2 pt-3 overflow-y-auto pb-4">
-        <Link to="/admin" onClick={()=>setSidebarOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-2 text-sm font-semibold transition-all" style={{background:isActive('/admin',true)?'rgba(227,6,19,0.14)':'transparent',color:isActive('/admin',true)?'#ff6b7a':'#a0a0ad',border:isActive('/admin',true)?'1px solid rgba(227,6,19,0.22)':'1px solid transparent'}}><span className="text-[#E30613]"><MenuIcon name="dashboard" /></span>Painel</Link>
+      <nav className="flex-1 px-3 pt-4 overflow-y-auto pb-5">
+        <Link to="/admin" onClick={()=>setSidebarOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-3 text-sm font-semibold transition-all" style={{background:isActive('/admin',true)?'rgba(227,6,19,0.14)':'transparent',color:isActive('/admin',true)?'#ff6b7a':'#a0a0ad',border:isActive('/admin',true)?'1px solid rgba(227,6,19,0.22)':'1px solid transparent'}}><span className="text-[#E30613]"><MenuIcon name="dashboard" /></span>Painel</Link>
         {MENU_GROUPS.map(group=>{
           const visibleItems=group.items.filter((item:any)=>{
             if(user?.role==='admin')return true
@@ -101,13 +104,13 @@ export function AdminLayout() {
           if(!visibleItems.length)return null
           const groupActive=visibleItems.some((item:any)=>isActive(item.href))
           const open=openGroups.includes(group.label)||groupActive
-          return <div key={group.label} className="mb-1">
-            <button type="button" onClick={()=>setOpenGroups(current=>current.includes(group.label)?current.filter(value=>value!==group.label):[...current,group.label])} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all" style={{color:groupActive?'#ff6b7a':'#9090a0',background:groupActive?'rgba(227,6,19,0.06)':'transparent'}}>
+          return <div key={group.label} className="mb-1.5">
+            <button type="button" onClick={()=>setOpenGroups(current=>current.includes(group.label)?current.filter(value=>value!==group.label):[...current,group.label])} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all hover:bg-white/[0.025]" style={{color:groupActive?'#ff6b7a':'#9090a0',background:groupActive?'rgba(227,6,19,0.06)':'transparent'}}>
               <span className="text-[#E30613]"><MenuIcon name={group.icon} size={16} /></span><span>{group.label}</span><span className="ml-auto text-[10px] text-gray-600">{open?'−':'+'}</span>
             </button>
-            {open&&<div className="ml-4 pl-3 border-l border-[#E30613]/20 mt-0.5 mb-2">{visibleItems.map((item:any)=>{
+            {open&&<div className="ml-[18px] pl-3 border-l border-white/[0.07] mt-1 mb-2">{visibleItems.map((item:any)=>{
               const active=isActive(item.href)
-              return <Link key={item.href} to={item.href} onClick={()=>setSidebarOpen(false)} className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all" style={{background:active?'rgba(227,6,19,0.12)':'transparent',color:active?'#ff6b7a':'#777784'}}>
+              return <Link key={item.href} to={item.href} onClick={()=>setSidebarOpen(false)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all hover:bg-white/[0.025]" style={{background:active?'rgba(227,6,19,0.12)':'transparent',color:active?'#ff6b7a':'#777784'}}>
                 <span className={active?'text-[#ff5364]':'text-gray-600'}><MenuIcon name={item.icon} size={15} /></span><span className="truncate">{item.label}</span>
                 {item.href==='/admin/conversas'&&counts.messages>0&&<span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.messages}</span>}
                 {item.href==='/admin/notificacoes'&&counts.notifications>0&&<span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.notifications}</span>}
@@ -117,11 +120,11 @@ export function AdminLayout() {
         })}
       </nav>
 
-      <div className="p-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-        <Link to="/" className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ color: '#6b6b78' }}>
+      <div className="p-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+        <Link to="/" className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs hover:bg-white/[0.03] transition-colors" style={{ color: '#6b6b78' }}>
           ← Ver site
         </Link>
-        <button onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs" style={{ color: '#6b6b78' }}>
+        <button onClick={handleLogout} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs hover:bg-white/[0.03] transition-colors" style={{ color: '#6b6b78' }}>
           ↩ Sair
         </button>
       </div>
