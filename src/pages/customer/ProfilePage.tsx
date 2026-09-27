@@ -90,6 +90,7 @@ export function ProfilePage(){
        state:nullable(form.state),
      }).eq('id',user.id)
      if(error)throw error
+     await refreshUser()
      toast('Cadastro atualizado com sucesso.','success')
    }catch(err:any){toast(err.message||'Não foi possível atualizar o cadastro.','error')}finally{setLoading(false)}
  }
