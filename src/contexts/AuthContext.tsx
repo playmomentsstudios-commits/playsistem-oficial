@@ -31,6 +31,7 @@ interface AuthContextValue {
   logout: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
   updatePassword: (password: string) => Promise<void>
+  refreshUser: () => Promise<void>
 }
 
 interface ProfileRow {
@@ -176,6 +177,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { requiresEmailConfirmation: false }
   }, [])
 
+  const refreshUser = useCallback(async () => {
+    if (!session?.user) return
+    setUser(await fetchProfile(session.user))
+  }, [session])
+
   const logout = useCallback(async () => {
     const { error } = await supabase.auth.signOut()
     if (error) throw new Error(error.message)
@@ -208,6 +214,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       resetPassword,
       updatePassword,
+      refreshUser,
     }}>
       {children}
     </AuthContext.Provider>
