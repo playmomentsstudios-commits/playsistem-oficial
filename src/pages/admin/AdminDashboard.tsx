@@ -88,13 +88,13 @@ export function AdminDashboard(){
     .slice(0,5),[data.quotes])
 
   const cards=[
-    ['Clientes',metrics.customers,'/admin/clientes'],
-    ['Projetos ativos',metrics.activeProjects,'/admin/projetos'],
-    ['Pedidos ativos',metrics.openOrders,'/admin/pedidos'],
-    ['Pagamentos pendentes',metrics.pendingPayments,'/admin/pagamentos'],
-    ['Orçamentos abertos',metrics.openQuotes,'/admin/orcamentos'],
-    ['Mensagens não lidas',metrics.unread,'/admin/conversas'],
-  ] as const
+    {label:'Clientes',value:metrics.customers,href:'/admin/clientes',tone:'text-gray-100',hint:'base cadastrada'},
+    {label:'Projetos ativos',value:metrics.activeProjects,href:'/admin/projetos',tone:'text-sky-400',hint:'em operação'},
+    {label:'Pedidos ativos',value:metrics.openOrders,href:'/admin/pedidos',tone:'text-sky-400',hint:'em andamento'},
+    {label:'Pagamentos pendentes',value:metrics.pendingPayments,href:'/admin/pagamentos',tone:metrics.pendingPayments?'text-amber-400':'text-emerald-400',hint:metrics.pendingPayments?'pedem conferência':'financeiro em dia'},
+    {label:'Orçamentos abertos',value:metrics.openQuotes,href:'/admin/orcamentos',tone:'text-violet-400',hint:'oportunidades'},
+    {label:'Mensagens não lidas',value:metrics.unread,href:'/admin/conversas',tone:metrics.unread?'text-emerald-400':'text-gray-100',hint:metrics.unread?'aguardando resposta':'caixa em dia'},
+  ]
 
   if(loading)return <div aria-busy="true" aria-label="Carregando painel" className="space-y-5"><div className="pm-skeleton h-20 rounded-2xl"/><div className="grid grid-cols-2 lg:grid-cols-3 gap-3">{Array.from({length:6}).map((_,i)=><div key={i} className="pm-skeleton h-24 rounded-2xl"/>)}</div><div className="grid xl:grid-cols-3 gap-4">{Array.from({length:3}).map((_,i)=><div key={i} className="pm-skeleton h-64 rounded-2xl"/>)}</div></div>
 
@@ -102,19 +102,26 @@ export function AdminDashboard(){
     {error&&<div className="mb-4 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 text-sm text-amber-200">{error}</div>}
     <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
       <div>
-        <p className="text-[11px] uppercase tracking-[0.18em] text-[#E30613] font-semibold">Operação</p>
-        <h1 className="text-2xl font-bold mt-1">Painel Play Moments</h1>
-        <p className="text-sm text-gray-500 mt-1">O que precisa de atenção agora, sem precisar abrir módulo por módulo.</p>
+        <p className="text-[11px] uppercase tracking-[0.18em] text-[#E30613] font-semibold">Visão geral</p>
+        <h1 className="text-2xl md:text-3xl font-bold mt-1">Painel administrativo</h1>
+        <p className="text-sm text-gray-500 mt-1">Acompanhe operação, comercial e financeiro em uma única visão.</p>
       </div>
       <Link to="/admin/crm" className="min-h-11 px-4 rounded-xl bg-[#E30613] hover:bg-[#f01826] shadow-[0_8px_24px_rgba(227,6,19,.16)] text-white text-sm font-semibold flex items-center justify-center">Abrir CRM comercial</Link>
     </div>
 
-    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-      {cards.map(([label,value,href])=><Link key={label} to={href} className="pm-surface pm-surface-interactive p-4 group">
-        <p className="text-[10px] uppercase tracking-wide text-gray-500">{label}</p>
-        <div className="flex items-end justify-between gap-2 mt-2"><p className="text-2xl font-bold">{value}</p><span className="text-gray-700 group-hover:text-gray-400" aria-hidden="true">→</span></div>
+    <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
+      {cards.map(card=><Link key={card.label} to={card.href} className="pm-surface pm-surface-interactive p-4 md:p-5 group relative overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+        <div className="flex items-start justify-between gap-3"><p className="text-[10px] uppercase tracking-[0.12em] text-gray-500">{card.label}</p><span className="text-gray-700 group-hover:text-gray-300 transition-colors" aria-hidden="true">↗</span></div>
+        <p className={'text-3xl font-bold mt-3 '+card.tone}>{card.value}</p>
+        <p className="text-[10px] text-gray-600 mt-1.5">{card.hint}</p>
       </Link>)}
     </div>
+
+    {(metrics.pendingPayments>0||metrics.overdueActions>0||metrics.unread>0)&&<div className="mt-4 p-4 rounded-2xl border border-amber-500/15 bg-amber-500/[0.035] flex flex-wrap items-center gap-3">
+      <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-amber-100">Pontos que pedem atenção</p><p className="text-xs text-gray-500 mt-1">{[metrics.pendingPayments&&`${metrics.pendingPayments} pagamento(s) pendente(s)`,metrics.overdueActions&&`${metrics.overdueActions} retorno(s) comercial(is) atrasado(s)`,metrics.unread&&`${metrics.unread} mensagem(ns) não lida(s)`].filter(Boolean).join(' · ')}</p></div>
+      <Link to={metrics.overdueActions?'/admin/crm':metrics.pendingPayments?'/admin/pagamentos':'/admin/conversas'} className="text-xs font-semibold text-amber-300 hover:text-amber-200">Resolver agora →</Link>
+    </div>}
 
     <div className="grid md:grid-cols-2 gap-3 mt-3">
       <Link to="/admin/crm" className="pm-surface p-4">
