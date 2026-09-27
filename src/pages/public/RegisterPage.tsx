@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
@@ -10,6 +10,9 @@ import logoUrl from '../../assets/logo-play-moments.png'
 export function RegisterPage() {
   const [form, setForm] = useState({ name: '', lastName: '', email: '', phone: '', documentNumber: '', postalCode: '', street: '', addressNumber: '', addressComplement: '', neighborhood: '', city: '', state: '', password: '', confirm: '' })
   const [loading, setLoading] = useState(false)
+  const [states, setStates] = useState<Array<{ id: number; sigla: string; nome: string }>>([])
+  const [cities, setCities] = useState<Array<{ id: number; nome: string }>>([])
+  const [loadingCities, setLoadingCities] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const { register, user, isLoading } = useAuth()
   const toast = useToast()
@@ -18,8 +21,27 @@ export function RegisterPage() {
   const next = safeReturnPath(new URLSearchParams(location.search).get('next'))
   if (!isLoading && user) return <Navigate to={afterAuthPath(next, user.role)} replace />
 
+  useEffect(() => {
+    fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome')
+      .then(response => response.ok ? response.json() : Promise.reject())
+      .then(setStates).catch(() => setStates([]))
+  }, [])
+
+  useEffect(() => {
+    if (!form.state) { setCities([]); return }
+    setLoadingCities(true)
+    fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/' + form.state + '/municipios?orderBy=nome')
+      .then(response => response.ok ? response.json() : Promise.reject())
+      .then(setCities).catch(() => setCities([])).finally(() => setLoadingCities(false))
+  }, [form.state])
+
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(prev => ({ ...prev, [k]: e.target.value }))
+
+  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const state = e.target.value
+    setForm(prev => ({ ...prev, state, city: '' }))
+  }
 
   const validate = () => {
     const errs: Record<string, string> = {}
@@ -98,7 +120,10 @@ export function RegisterPage() {
           <div className="grid grid-cols-2 gap-3"><Input label="CEP" placeholder="00000-000" value={form.postalCode} onChange={set('postalCode')} error={errors.postalCode} /><Input label="Rua / Avenida" value={form.street} onChange={set('street')} error={errors.street} /></div>
           <div className="grid grid-cols-2 gap-3"><Input label="Número" value={form.addressNumber} onChange={set('addressNumber')} error={errors.addressNumber} /><Input label="Complemento (opcional)" value={form.addressComplement} onChange={set('addressComplement')} /></div>
           <Input label="Bairro" value={form.neighborhood} onChange={set('neighborhood')} error={errors.neighborhood} />
-          <div className="grid grid-cols-[1fr_90px] gap-3"><Input label="Cidade" value={form.city} onChange={set('city')} error={errors.city} /><Input label="UF" placeholder="GO" maxLength={2} value={form.state} onChange={set('state')} error={errors.state} /></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label className="flex flex-col gap-2"><span className="text-xs font-semibold" style={{ color: '#9090a0' }}>Estado</span><select value={form.state} onChange={handleStateChange} className="w-full rounded-xl px-4" style={{ height: 48, background: '#141416', border: '1px solid rgba(255,255,255,.12)', color: '#f0f0f2' }}><option value="">Selecione</option>{states.map(state => <option key={state.id} value={state.sigla}>{state.nome} - {state.sigla}</option>)}</select>{errors.state && <span className="text-xs" style={{ color: '#ff6b7a' }}>{errors.state}</span>}</label>
+            <label className="flex flex-col gap-2"><span className="text-xs font-semibold" style={{ color: '#9090a0' }}>Cidade</span><select value={form.city} onChange={e => setForm(prev => ({ ...prev, city: e.target.value }))} disabled={!form.state || loadingCities} className="w-full rounded-xl px-4 disabled:opacity-50" style={{ height: 48, background: '#141416', border: '1px solid rgba(255,255,255,.12)', color: '#f0f0f2' }}><option value="">{loadingCities ? 'Carregando...' : 'Selecione'}</option>{cities.map(city => <option key={city.id} value={city.nome}>{city.nome}</option>)}</select>{errors.city && <span className="text-xs" style={{ color: '#ff6b7a' }}>{errors.city}</span>}</label>
+          </div>
           <Input label="Senha" type="password" placeholder="Mínimo 6 caracteres" value={form.password} onChange={set('password')} error={errors.password} />
           <Input label="Confirmar senha" type="password" placeholder="Repita a senha" value={form.confirm} onChange={set('confirm')} error={errors.confirm} />
 
