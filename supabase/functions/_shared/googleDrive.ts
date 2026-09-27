@@ -353,3 +353,21 @@ export async function ensureProjectFolder(
     folders: folders || [],
   };
 }
+
+
+export async function ensureSiteAssetFolder(db: SupabaseClient, userId: string, section = "HOME") {
+  const { rootFolderId } = await ensureDriveRoot(db, userId);
+  let siteRoot = await findDriveFolder(rootFolderId, "site-assets-root");
+  if (!siteRoot) {
+    siteRoot = await createDriveFolder("SITE", rootFolderId, { playMomentsKind: "site-assets-root" });
+  }
+  const safeSection = section.trim().toUpperCase().replace(/[^A-Z0-9 _-]/g, "").slice(0, 40) || "GERAL";
+  let folder = await findDriveFolder(siteRoot.id, "site-assets-section", safeSection);
+  if (!folder) {
+    folder = await createDriveFolder(safeSection, siteRoot.id, {
+      playMomentsKind: "site-assets-section",
+      playMomentsEntityId: safeSection,
+    });
+  }
+  return { siteRootId: siteRoot.id, folderId: folder.id, section: safeSection };
+}

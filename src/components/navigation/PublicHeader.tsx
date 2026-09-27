@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useCart } from '../../contexts/CartContext'
-import { conversationLink } from '../../lib/navigation'
 import logoUrl from '../../assets/logo-play-moments.png'
 import type { SiteSettings } from '../../services/siteContent'
 
@@ -24,7 +23,6 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
 
   const handleLogout = async () => { await logout(); navigate('/') }
   const primaryColor=settings?.primary_color||'#E30613'
-  const ctaLabel=settings?.hero_cta||'Falar agora'
 
   return (
     <header className="sticky top-0 z-40" style={{
@@ -57,10 +55,9 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
         </nav>
 
         {/* Actions */}
-        <div className="hidden lg:flex items-center gap-3">
-          <Link to={conversationLink(user?.role ?? null)} className="px-4 py-3 rounded-full text-sm font-semibold" style={{ background: primaryColor, color: '#fff' }}>{ctaLabel}</Link>
+        <div className="hidden lg:flex items-center gap-1.5 rounded-2xl p-1.5" style={{background:'rgba(255,255,255,0.035)',border:'1px solid rgba(255,255,255,0.07)'}}>
           {/* Cart */}
-          <Link to="/carrinho" className="relative p-2 rounded-xl transition-colors" style={{ color: '#9090a0' }}>
+          <Link to="/carrinho" className="relative p-2.5 rounded-xl transition-colors hover:bg-white/[0.06]" aria-label="Carrinho" style={{ color: '#9090a0' }}>
             <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
             </svg>
@@ -75,27 +72,27 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
           {isAuthenticated ? (
             <>
               {user?.role === 'admin' || user?.role === 'staff' ? (
-                <Link to="/admin" className="px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors"
+                <Link to="/admin" className="px-3 py-2 rounded-xl text-sm font-semibold transition-colors"
                   style={{ background: 'rgba(227,6,19,0.15)', color: '#ff6b7a', border: '1px solid rgba(227,6,19,0.3)' }}>
                   Admin
                 </Link>
               ) : (
-                <Link to="/app/dashboard" className="px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors"
-                  style={{ background: 'rgba(255,255,255,0.08)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <Link to="/app/dashboard" className="px-3 py-2 rounded-xl text-sm font-semibold transition-colors"
+                  style={{ background: 'rgba(255,255,255,0.06)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.1)' }}>
                   Minha conta
                 </Link>
               )}
-              <button onClick={handleLogout} className="px-3 py-1.5 rounded-lg text-sm font-medium"
+              <button onClick={handleLogout} className="px-3 py-2 rounded-xl text-sm font-medium hover:bg-white/[0.04]"
                 style={{ color: '#6b6b78' }}>
                 Sair
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" className="text-sm font-medium transition-colors" style={{ color: '#9090a0' }}>
+              <Link to="/login" className="px-3 py-2 text-sm font-medium transition-colors" style={{ color: '#c0c0cc' }}>
                 Entrar
               </Link>
-              <Link to="/cadastro" className="px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200"
+              <Link to="/cadastro" className="px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-200"
                 style={{ background: primaryColor, color: '#fff' }}>
                 Criar conta
               </Link>
@@ -123,7 +120,6 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
               {link.label}
             </Link>
           ))}
-          <Link to={conversationLink(user?.role ?? null)} onClick={() => setMobileOpen(false)} className="py-3 text-center rounded-full font-semibold" style={{ background: primaryColor, color: '#fff' }}>{ctaLabel}</Link>
           <div className="flex flex-col gap-2 pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             {isAuthenticated ? (
               <>

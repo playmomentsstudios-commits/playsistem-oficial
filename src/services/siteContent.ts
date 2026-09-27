@@ -15,9 +15,29 @@ export type SiteSettings={
   contact_email:string|null
   contact_phone:string|null
   address:string|null
+  city:string|null
+  state:string|null
+  footer_description:string|null
+  home_areas_eyebrow:string
+  home_areas_title:string
   meta_description:string
   updated_at:string
   updated_by:string|null
+}
+
+export type HomeServiceArea={
+  id:string
+  title:string
+  icon:string|null
+  accent_color:string
+  image_url:string|null
+  image_drive_file_id:string|null
+  image_mime_type:string|null
+  image_file_size:number|null
+  href:string
+  topics:string[]
+  display_order:number
+  active:boolean
 }
 
 export type SiteProfile={
@@ -85,6 +105,31 @@ export const siteContentApi={
     const {data,error}=await supabase.from('site_settings').update({...values,updated_at:new Date().toISOString(),updated_by:user?.id||null}).eq('id',true).select().single()
     if(error)throw error
     return data as SiteSettings
+  },
+
+  homeServiceAreas:async(admin=false)=>{
+    let query=supabase.from('home_service_areas').select('*').order('display_order').order('title')
+    if(!admin)query=query.eq('active',true)
+    const {data,error}=await query
+    if(error)throw error
+    return (data||[]) as HomeServiceArea[]
+  },
+
+  saveHomeServiceArea:async(values:Partial<HomeServiceArea>&{title:string})=>{
+    const payload={...values,updated_at:new Date().toISOString()}
+    if(values.id){
+      const {data,error}=await supabase.from('home_service_areas').update(payload).eq('id',values.id).select().single()
+      if(error)throw error
+      return data as HomeServiceArea
+    }
+    const {data,error}=await supabase.from('home_service_areas').insert(payload).select().single()
+    if(error)throw error
+    return data as HomeServiceArea
+  },
+
+  deleteHomeServiceArea:async(id:string)=>{
+    const {error}=await supabase.from('home_service_areas').delete().eq('id',id)
+    if(error)throw error
   },
 
   profile:async()=>{
@@ -155,12 +200,14 @@ export const siteContentApi={
     if(error)throw error
   },
 
-  uploadSiteAsset:async(file:File,folder='general')=>{
-    const ext=file.name.includes('.')?'.'+file.name.split('.').pop():''
-    const path=folder+'/'+crypto.randomUUID()+ext
-    const {error}=await supabase.storage.from('site-assets').upload(path,file,{upsert:false})
+  uploadSiteAsset:async(file:File,section='HOME')=>{
+    const {data,error}=await supabase.functions.invoke('google-drive-site-asset-upload',{body:{file_name:file.name,mime_type:file.type||'application/octet-stream',file_size:file.size,section}})
     if(error)throw error
-    const {data}=supabase.storage.from('site-assets').getPublicUrl(path)
-    return data.publicUrl
-  },
+    if(!data?.upload_url)throw new Error(data?.error||'Não foi possível iniciar o upload no Drive.')
+    const uploaded=await fetch(data.upload_url,{method:'PUT',headers:{'Content-Type':file.type||'application/octet-stream'},body:file})
+    if(!uploaded.ok)throw new Error('Não foi possível concluir o upload no Drive.')
+    const driveFile=await uploaded.json()
+    const base=(import.meta.env.VITE_SUPABASE_URL||'').replace(/\/$/,'')
+    return {driveFileId:driveFile.id as string,url:`${base}/functions/v1/google-drive-site-asset?id=${encodeURIComponent(driveFile.id)}`,mimeType:driveFile.mimeType||file.type||null,fileSize:Number(driveFile.size||file.size)||null}
+  }
 }

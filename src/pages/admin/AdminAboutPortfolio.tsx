@@ -30,14 +30,14 @@ export function AdminAboutPortfolio(){
 
   async function uploadPhoto(file:File|null){
     if(!file||!profile)return
-    try{setSaving(true);const url=await siteContentApi.uploadSiteAsset(file,'profile');setProfile(await siteContentApi.updateProfile({photo_url:url}));toast('Foto atualizada.','success')}
+    try{setSaving(true);const asset=await siteContentApi.uploadSiteAsset(file,'PROFILE');setProfile(await siteContentApi.updateProfile({photo_url:asset.url}));toast('Foto atualizada.','success')}
     catch(error:any){toast(error.message||'Não foi possível enviar a foto.','error')}
     finally{setSaving(false)}
   }
 
   async function uploadResume(file:File|null){
     if(!file||!profile)return
-    try{setSaving(true);const url=await siteContentApi.uploadSiteAsset(file,'resume');setProfile(await siteContentApi.updateProfile({resume_url:url}));toast('Currículo anexado.','success')}
+    try{setSaving(true);const asset=await siteContentApi.uploadSiteAsset(file,'RESUME');setProfile(await siteContentApi.updateProfile({resume_url:asset.url}));toast('Currículo anexado.','success')}
     catch(error:any){toast(error.message||'Não foi possível enviar o currículo.','error')}
     finally{setSaving(false)}
   }
@@ -123,7 +123,7 @@ export function AdminAboutPortfolio(){
         <textarea value={itemForm.short_description||''} onChange={e=>setItemForm({...itemForm,short_description:e.target.value})} rows={2} placeholder="Resumo" className="w-full p-3 rounded-xl bg-black border border-white/10"/>
         <textarea value={itemForm.description||''} onChange={e=>setItemForm({...itemForm,description:e.target.value})} rows={4} placeholder="Descrição completa" className="w-full p-3 rounded-xl bg-black border border-white/10"/>
         <input value={itemForm.project_url||''} onChange={e=>setItemForm({...itemForm,project_url:e.target.value})} placeholder="Link do projeto" className="w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
-        <label className="min-h-11 rounded-xl bg-white/[0.06] flex items-center justify-center text-xs cursor-pointer"><input type="file" accept="image/*" className="sr-only" onChange={async e=>{const f=e.target.files?.[0];if(f)setItemForm({...itemForm,cover_url:await siteContentApi.uploadSiteAsset(f,'portfolio')})}}/>Enviar capa</label>
+        <label className="min-h-11 rounded-xl bg-white/[0.06] flex items-center justify-center text-xs cursor-pointer"><input type="file" accept="image/*" className="sr-only" onChange={async e=>{const f=e.target.files?.[0];if(f)setItemForm({...itemForm,cover_url:(await siteContentApi.uploadSiteAsset(f,'PORTFOLIO')).url})}}/>Enviar capa</label>
         <div className="flex gap-2"><Button onClick={saveItem} loading={saving}>{itemForm.id?'Atualizar':'Adicionar'}</Button>{itemForm.id&&<Button variant="secondary" onClick={()=>setItemForm(emptyItem)}>Cancelar</Button>}</div>
       </div>
       <div className="grid md:grid-cols-2 gap-3">{items.map(item=><div key={item.id} className="p-3 rounded-2xl bg-[#141416] border border-white/10"><div className="aspect-[16/9] rounded-xl overflow-hidden bg-black/20">{item.cover_url&&<img src={item.cover_url} className="w-full h-full object-cover"/>}</div><p className="font-semibold mt-3">{item.title}</p><p className="text-xs text-gray-500">{item.client}</p><div className="flex gap-2 mt-3"><button onClick={()=>setItemForm(item)} className="px-3 min-h-10 rounded-lg bg-white/[0.06] text-xs">Editar</button><button onClick={async()=>{if(confirm('Excluir este projeto?')){await siteContentApi.deletePortfolioItem(item.id);await load()}}} className="px-3 min-h-10 rounded-lg bg-red-500/10 text-red-400 text-xs">Excluir</button></div></div>)}</div>
