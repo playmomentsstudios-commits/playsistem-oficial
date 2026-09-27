@@ -6,7 +6,6 @@ import { Button } from '../../components/ui/Button'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { useCart } from '../../contexts/CartContext'
-import { portalApi } from '../../api/portal'
 import { authLink } from '../../lib/navigation'
 import {
   getPublicProductBySlug,
@@ -33,10 +32,8 @@ function getCover(product: PublicCatalogProduct) {
 export function ProductDetailPage() {
   const { slug = '' } = useParams()
   const { user } = useAuth()
-  const toast = useToast()
   const navigate = useNavigate()
   const { addItem } = useCart()
-  const [buying, setBuying] = useState(false)
 
   const [product, setProduct] =
     useState<PublicCatalogProduct | null>(null)
@@ -58,28 +55,11 @@ export function ProductDetailPage() {
     void load()
   }, [slug])
 
-  async function buy() {
-    addItem({ id: product!.id, name: product!.name, slug: product!.slug, price: product!.promotional_price ?? product!.sale_price ?? 0, image: getCover(product!), stock: product!.inventory_tracked ? product!.stock : 1 })
-    navigate('/carrinho')
-    return
-
-    /* legacy direct purchase retained temporarily below; unreachable while checkout is centralized */
+  function buy() {
     if (!product) return
     if (!user) { navigate(authLink('/cadastro', '/produtos/' + product.slug)); return }
-    try {
-      setBuying(true)
-      const orderId=await portalApi.createProductOrder(product.id)
-      try{
-        await portalApi.createAsaasPayment(orderId,'PIX')
-      }catch(paymentError:any){
-        toast('Pedido criado, mas o PIX Asaas falhou: '+(paymentError.message||'erro desconhecido'),'error')
-        navigate('/app/pagamentos')
-        return
-      }
-      toast('Pedido criado. PIX Asaas gerado com sucesso.','success')
-      navigate('/app/pagamentos')
-    } catch (error: any) { toast(error.message || 'Não foi possível criar o pedido.','error') }
-    finally { setBuying(false) }
+    addItem({ id: product.id, name: product.name, slug: product.slug, price: product.promotional_price ?? product.sale_price ?? 0, image: getCover(product), stock: product.inventory_tracked ? product.stock : 1 })
+    navigate('/carrinho')
   }
 
   return (
@@ -275,7 +255,7 @@ export function ProductDetailPage() {
                 </div>
 
                 {(product.commercial_mode === 'sale' || product.commercial_mode === 'sale_and_rental') && product.sale_price !== null && (
-                  <div className="mt-6 grid grid-cols-1 sm:flex gap-3"><Button size="lg" fullWidth loading={buying} disabled={product.inventory_tracked && product.stock <= 0} onClick={buy}>{product.specifications?.catalog_kind === 'service' ? 'Contratar agora' : 'Comprar agora'}</Button><Button size="lg" fullWidth variant="secondary" disabled={product.inventory_tracked && product.stock <= 0} onClick={() => { addItem({ id: product.id, name: product.name, slug: product.slug, price: product.promotional_price ?? product.sale_price ?? 0, image: getCover(product), stock: product.inventory_tracked ? product.stock : 1 }); toast(product.specifications?.catalog_kind === 'service' ? 'Serviço adicionado ao carrinho.' : 'Produto adicionado ao carrinho.','success') }}>{product.specifications?.catalog_kind === 'service' ? 'Adicionar ao carrinho' : 'Adicionar ao carrinho'}</Button></div>
+                  <div className="mt-6 grid grid-cols-1 sm:flex gap-3"><Button size="lg" fullWidth disabled={product.inventory_tracked && product.stock <= 0} onClick={buy}>{product.specifications?.catalog_kind === 'service' ? 'Contratar agora' : 'Comprar agora'}</Button><Button size="lg" fullWidth variant="secondary" disabled={product.inventory_tracked && product.stock <= 0} onClick={() => { addItem({ id: product.id, name: product.name, slug: product.slug, price: product.promotional_price ?? product.sale_price ?? 0, image: getCover(product), stock: product.inventory_tracked ? product.stock : 1 }); toast(product.specifications?.catalog_kind === 'service' ? 'Serviço adicionado ao carrinho.' : 'Produto adicionado ao carrinho.','success') }}>{product.specifications?.catalog_kind === 'service' ? 'Adicionar ao carrinho' : 'Adicionar ao carrinho'}</Button></div>
                 )}
 
                 {product.sku && (
