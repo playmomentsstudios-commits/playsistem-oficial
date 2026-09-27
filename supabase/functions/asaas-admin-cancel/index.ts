@@ -23,6 +23,9 @@ Deno.serve(async(req)=>{
   if(payment.provider==="asaas"&&payment.provider_reference){
    await asaas("/payments/"+encodeURIComponent(payment.provider_reference),{method:"DELETE"});
   }
+  if(payment.provider==="asaas_checkout"&&payment.provider_reference){
+   await asaas("/checkouts/"+encodeURIComponent(payment.provider_reference)+"/cancel",{method:"POST"});
+  }
   const now=new Date().toISOString();
   const {error:updateError}=await db.from("payments").update({status:"cancelled",updated_at:now}).eq("id",payment.id);
   if(updateError)throw updateError;
