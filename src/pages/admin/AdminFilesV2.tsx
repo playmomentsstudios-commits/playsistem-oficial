@@ -88,6 +88,9 @@ export function AdminFilesV2(){
   const [versioningFile,setVersioningFile]=useState<any|null>(null)
   const [versionFile,setVersionFile]=useState<File|null>(null)
   const [versionProgress,setVersionProgress]=useState(0)
+  const [reviewDetailsFile,setReviewDetailsFile]=useState<any|null>(null)
+  const [reviewDetails,setReviewDetails]=useState<any[]>([])
+  const [reviewDetailsLoading,setReviewDetailsLoading]=useState(false)
 
   const load=async()=>{
     try{
@@ -351,6 +354,19 @@ export function AdminFilesV2(){
     }catch(error:any){toast(error.message||'Não foi possível cancelar a aprovação.','error')}
   }
 
+  async function showReviewDetails(row:any){
+    try{
+      setReviewDetailsFile(row);setReviewDetailsLoading(true)
+      setReviewDetails(await portalApi.fileReviews(row.id))
+    }catch(error:any){toast(error.message||'Não foi possível carregar os ajustes.','error');setReviewDetailsFile(null)}
+    finally{setReviewDetailsLoading(false)}
+  }
+
+  async function openReviewAttachment(path:string){
+    try{window.open(await portalApi.fileReviewAttachmentUrl(path),'_blank','noopener')}
+    catch(error:any){toast(error.message||'Não foi possível abrir o anexo.','error')}
+  }
+
   function reviewBadge(row:any){
     if(!row.review_required)return null
     if(row.review_status==='pending')return {label:'Aguardando cliente',className:'bg-yellow-500/10 text-yellow-300'}
@@ -515,6 +531,22 @@ export function AdminFilesV2(){
       </div>}
     </section>
 
+    {reviewDetailsFile&&<div className="fixed inset-0 z-[75] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
+      <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-[#111113] border border-white/10 p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-3 mb-5">
+          <div><p className="text-[10px] uppercase tracking-widest text-orange-400 font-bold">Revisão do cliente</p><h3 className="text-lg font-bold mt-1">{reviewDetailsFile.name}</h3><p className="text-xs text-gray-500 mt-1">Versão v{reviewDetailsFile.version_number||1}</p></div>
+          <button type="button" onClick={()=>setReviewDetailsFile(null)} className="w-9 h-9 rounded-lg bg-white/[0.05]">×</button>
+        </div>
+        {reviewDetailsLoading?<p className="text-sm text-gray-500 py-8 text-center">Carregando ajustes...</p>:reviewDetails.length===0?<p className="text-sm text-gray-500 py-8 text-center">Nenhum registro de revisão encontrado.</p>:<div className="space-y-3">{reviewDetails.map((review:any)=><div key={review.id} className="rounded-xl border border-white/10 bg-black/30 p-4">
+          <div className="flex items-center justify-between gap-3"><span className={'px-2 py-1 rounded-full text-[9px] font-bold '+(review.action==='approved'?'bg-emerald-500/10 text-emerald-300':'bg-orange-500/10 text-orange-300')}>{review.action==='approved'?'Aprovado':'Ajustes solicitados'}</span><span className="text-[10px] text-gray-600">{new Date(review.created_at).toLocaleString('pt-BR')}</span></div>
+          {review.subject&&<h4 className="font-bold text-sm mt-3">{review.subject}</h4>}
+          {review.comment&&<p className="text-xs text-gray-400 mt-2 whitespace-pre-wrap">{review.comment}</p>}
+          {Array.isArray(review.items)&&review.items.length>0&&<div className="mt-4 space-y-2">{review.items.map((item:string,index:number)=><div key={index} className="flex gap-2 text-xs"><span className="w-5 h-5 shrink-0 rounded-full bg-orange-500/10 text-orange-300 flex items-center justify-center text-[9px] font-bold">{index+1}</span><span className="text-gray-300 pt-0.5">{item}</span></div>)}</div>}
+          {Array.isArray(review.attachments)&&review.attachments.length>0&&<div className="mt-4"><p className="text-[10px] uppercase tracking-wider text-gray-600 font-bold mb-2">Referências</p><div className="flex flex-wrap gap-2">{review.attachments.map((attachment:any,index:number)=><button key={index} type="button" onClick={()=>void openReviewAttachment(attachment.path)} className="px-3 py-2 rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] text-[10px] text-left"><span className="block font-semibold text-gray-300 max-w-[220px] truncate">{attachment.name}</span><span className="text-gray-600">{Math.max(1,Math.round((attachment.size||0)/1024))} KB</span></button>)}</div></div>}
+        </div>)}</div>}
+      </div>
+    </div>}
+
     {versioningFile&&<div className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111113] p-5">
         <div className="flex items-start justify-between gap-3 mb-4">
@@ -621,7 +653,10 @@ export function AdminFilesV2(){
                   <div className="mt-3 flex flex-wrap gap-2">
                     {!row.review_required&&<button type="button" disabled={reviewingFile===row.id} onClick={()=>void requestReview(row)} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] disabled:opacity-50 text-[10px] font-bold text-white">{reviewingFile===row.id?'Solicitando...':'Solicitar aprovação'}</button>}
                     {row.review_required&&row.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(row)} className="min-h-9 flex-1 px-3 rounded-lg border border-white/10 hover:bg-white/[0.05] text-[10px] font-semibold">Cancelar aprovação</button>}
-                    {row.review_required&&row.review_status==='changes_requested'&&<button type="button" onClick={()=>{setVersioningFile(row);setVersionFile(null);setVersionProgress(0)}} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] text-[10px] font-bold text-white">Enviar nova versão</button>}
+                    {row.review_required&&row.review_status==='changes_requested'&&<>
+                      <button type="button" onClick={()=>void showReviewDetails(row)} className="min-h-9 flex-1 px-3 rounded-lg border border-orange-500/20 bg-orange-500/[0.08] text-orange-300 text-[10px] font-bold">Ver ajustes</button>
+                      <button type="button" onClick={()=>{setVersioningFile(row);setVersionFile(null);setVersionProgress(0)}} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] text-[10px] font-bold text-white">Enviar nova versão</button>
+                    </>}
                     {row.review_required&&row.review_status==='approved'&&<button type="button" onClick={()=>void move(row,'delivery')} className="min-h-9 flex-1 px-3 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/20 text-[10px] font-bold">Mover para entrega</button>}
                   </div>
 
