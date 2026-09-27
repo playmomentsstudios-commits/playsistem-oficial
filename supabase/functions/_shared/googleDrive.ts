@@ -371,3 +371,33 @@ export async function ensureSiteAssetFolder(db: SupabaseClient, userId: string, 
   }
   return { siteRootId: siteRoot.id, folderId: folder.id, section: safeSection };
 }
+
+export async function ensureAcademyFolder(db: SupabaseClient, userId: string, courseId: string, moduleId?: string) {
+  const { rootFolderId } = await ensureDriveRoot(db, userId);
+  let academyRoot = await findDriveFolder(rootFolderId, "academy-root");
+  if (!academyRoot) academyRoot = await createDriveFolder("ACADEMIA", rootFolderId, { playMomentsKind: "academy-root" });
+
+  const { data: course, error: courseError } = await db.from("courses").select("id,title,drive_folder_id").eq("id",courseId).single();
+  if (courseError || !course) throw new Error("Course not found");
+  let courseFolderId = course.drive_folder_id;
+  if (!courseFolderId) {
+    const existing = await findDriveFolder(academyRoot.id,"academy-course",courseId);
+    const folder = existing || await createDriveFolder(course.title,academyRoot.id,{playMomentsKind:"academy-course",playMomentsEntityId:courseId});
+    courseFolderId = folder.id;
+    const { error } = await db.from("courses").update({drive_folder_id:courseFolderId}).eq("id",courseId);
+    if (error) throw error;
+  }
+  if (!moduleId) return { academyRootId:academyRoot.id, courseFolderId, folderId:courseFolderId };
+
+  const { data: module, error: moduleError } = await db.from("course_modules").select("id,title,course_id,drive_folder_id").eq("id",moduleId).eq("course_id",courseId).single();
+  if (moduleError || !module) throw new Error("Course module not found");
+  let moduleFolderId = module.drive_folder_id;
+  if (!moduleFolderId) {
+    const existing = await findDriveFolder(courseFolderId,"academy-module",moduleId);
+    const folder = existing || await createDriveFolder(module.title,courseFolderId,{playMomentsKind:"academy-module",playMomentsEntityId:moduleId});
+    moduleFolderId = folder.id;
+    const { error } = await db.from("course_modules").update({drive_folder_id:moduleFolderId}).eq("id",moduleId);
+    if (error) throw error;
+  }
+  return { academyRootId:academyRoot.id, courseFolderId, moduleFolderId, folderId:moduleFolderId };
+}
