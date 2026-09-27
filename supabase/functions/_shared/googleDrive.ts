@@ -374,8 +374,23 @@ export async function ensureSiteAssetFolder(db: SupabaseClient, userId: string, 
 
 export async function ensureAcademyFolder(db: SupabaseClient, userId: string, courseId: string, moduleId?: string) {
   const { rootFolderId } = await ensureDriveRoot(db, userId);
-  let academyRoot = await findDriveFolder(rootFolderId, "academy-root");
-  if (!academyRoot) academyRoot = await createDriveFolder("ACADEMIA", rootFolderId, { playMomentsKind: "academy-root" });
+  // Academy media must not inherit the sharing policy of the general PLAY MOMENTS tree.
+  // Keep it directly under My Drive and remove broad link/domain permissions.
+  let academyRoot = await findDriveFolder("root", "academy-root");
+  if (!academyRoot) {
+    const legacyRoot = await findDriveFolder(rootFolderId, "academy-root");
+    if (legacyRoot) {
+      academyRoot = await driveJson(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(legacyRoot.id)}?addParents=root&removeParents=${encodeURIComponent(rootFolderId)}&fields=id,name,parents,appProperties`,{method:"PATCH"});
+    } else {
+      academyRoot = await createDriveFolder("PLAY MOMENTS - ACADEMIA PRIVADA", "root", { playMomentsKind: "academy-root" });
+    }
+  }
+  const permissions = await driveJson(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(academyRoot.id)}/permissions?fields=permissions(id,type,role)`);
+  for (const permission of permissions?.permissions || []) {
+    if (permission.type === "anyone" || permission.type === "domain") {
+      try { await driveJson(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(academyRoot.id)}/permissions/${encodeURIComponent(permission.id)}`,{method:"DELETE"}); } catch { /* inherited permissions disappear after the root move */ }
+    }
+  }
 
   const { data: course, error: courseError } = await db.from("courses").select("id,title,drive_folder_id").eq("id",courseId).single();
   if (courseError) throw new Error(`Academy course lookup failed: ${courseError.message}`);
