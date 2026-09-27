@@ -120,7 +120,7 @@ export default function AppV2() {
                 <Route path="conversas" element={<ConversationsPage />} />
                 <Route path="conversas/:id" element={<ConversationsPage />} />
                 <Route path="arquivos" element={<FilesPage />} />
-                <Route path="notificacoes" element={<NotificationsPage />} />
+                <Route path="notificacoes" element={<AdminPermissionGate><NotificationsPage /></AdminPermissionGate>} />
                 <Route path="projetos" element={<ProjectsPage />} />
                 <Route path="projetos/:id" element={<ProjectsPage />} />
                 <Route path="comunicados" element={<AnnouncementsPage />} />
