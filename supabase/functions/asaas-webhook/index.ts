@@ -19,7 +19,13 @@ Deno.serve(async(req)=>{
   const refunded=event==="PAYMENT_REFUNDED";
   const cancelled=["PAYMENT_DELETED","CHECKOUT_CANCELED","CHECKOUT_EXPIRED"].includes(event);
   const rejected=event==="PAYMENT_CREDIT_CARD_CAPTURE_REFUSED";
-  const status=paid?"paid":refunded?"refunded":cancelled?"cancelled":rejected?"rejected":"pending";
+  const status=paid?"paid":refunded?"refunded":cancelled?"cancelled":rejected?"rejected":null;
+  if(!status){
+   const {error:eventError}=await db.from("payment_webhook_events").insert({id:eventId,provider:"asaas",event_type:event,provider_reference:providerReference,payload});
+   if(eventError?.code==="23505")return json({ok:true,duplicate:true});
+   if(eventError)throw eventError;
+   return json({ok:true,ignored:true});
+  }
   const update:any={status,provider_payload:checkout.id?checkout:charge,updated_at:new Date().toISOString()};
   if(paid)update.paid_at=new Date().toISOString();
   const {data:payment,error}=await db.from("payments").update(update).in("provider",["asaas","asaas_checkout"]).eq("provider_reference",providerReference).select("id,order_id,customer_id").maybeSingle();
