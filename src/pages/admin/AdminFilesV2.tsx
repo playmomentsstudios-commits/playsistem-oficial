@@ -84,6 +84,10 @@ export function AdminFilesV2(){
   const [libraryFolder,setLibraryFolder]=useState('all')
   const [customerSearch,setCustomerSearch]=useState('')
   const [menuFile,setMenuFile]=useState<string|null>(null)
+  const [reviewingFile,setReviewingFile]=useState<string|null>(null)
+  const [versioningFile,setVersioningFile]=useState<any|null>(null)
+  const [versionFile,setVersionFile]=useState<File|null>(null)
+  const [versionProgress,setVersionProgress]=useState(0)
 
   const load=async()=>{
     try{
@@ -308,12 +312,34 @@ export function AdminFilesV2(){
 
   async function requestReview(row:any){
     try{
+      setReviewingFile(row.id)
       if(row.storage_provider==='google_drive'&&!row.client_visible)await fileManagementApi.publish(row.id)
       await portalApi.requestFileReview(row.id)
       toast('Aprovação solicitada ao cliente.','success')
       setMenuFile(null)
       await load()
     }catch(error:any){toast(error.message||'Não foi possível solicitar aprovação.','error')}
+    finally{setReviewingFile(null)}
+  }
+
+  async function uploadNewVersion(){
+    if(!versioningFile||!versionFile)return
+    if(!versioningFile.project_id)return toast('O arquivo precisa estar vinculado a um projeto para receber uma nova versão.','error')
+    try{
+      setSaving(true);setVersionProgress(0)
+      const uploaded=await portalApi.uploadDriveFile({
+        project_id:versioningFile.project_id,
+        task_id:versioningFile.task_id||null,
+        folder_kind:'preview',
+        custom_folder_id:versioningFile.custom_folder_id||null,
+        client_visible:true,
+      },versionFile,setVersionProgress)
+      await portalApi.linkFileVersion(uploaded.id,versioningFile.id)
+      toast('Nova versão enviada. Agora você pode solicitar a aprovação do cliente.','success')
+      setVersioningFile(null);setVersionFile(null);setVersionProgress(0)
+      await load()
+    }catch(error:any){toast(error.message||'Não foi possível enviar a nova versão.','error')}
+    finally{setSaving(false)}
   }
 
   async function cancelReview(row:any){
@@ -489,6 +515,25 @@ export function AdminFilesV2(){
       </div>}
     </section>
 
+    {versioningFile&&<div className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111113] p-5">
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div><h3 className="text-base font-bold">Enviar nova versão</h3><p className="text-xs text-gray-500 mt-1">Versão atual: v{versioningFile.version_number||1} · {versioningFile.name}</p></div>
+          <button type="button" onClick={()=>{setVersioningFile(null);setVersionFile(null)}} className="w-8 h-8 rounded-lg bg-white/[0.04]">×</button>
+        </div>
+        <label className="block p-4 rounded-xl border border-dashed border-white/15 bg-white/[0.025] cursor-pointer">
+          <input type="file" className="hidden" onChange={e=>setVersionFile(e.target.files?.[0]||null)}/>
+          <span className="text-sm font-semibold">{versionFile?versionFile.name:'Selecionar arquivo da nova versão'}</span>
+          <span className="block text-xs text-gray-500 mt-1">A nova versão será vinculada ao mesmo histórico do arquivo.</span>
+        </label>
+        {saving&&<div className="mt-3"><div className="h-2 rounded-full bg-white/10 overflow-hidden"><div className="h-full bg-[#E30613]" style={{width:versionProgress+'%'}}/></div><p className="text-[10px] text-gray-500 mt-1">{versionProgress}% enviado</p></div>}
+        <div className="flex gap-2 mt-4">
+          <button type="button" onClick={()=>{setVersioningFile(null);setVersionFile(null)}} className="min-h-10 px-4 rounded-xl border border-white/10 text-xs">Cancelar</button>
+          <button type="button" disabled={!versionFile||saving} onClick={()=>void uploadNewVersion()} className="min-h-10 flex-1 px-4 rounded-xl bg-[#E30613] disabled:opacity-40 text-xs font-bold">Enviar nova versão</button>
+        </div>
+      </div>
+    </div>}
+
     {libraryCustomer&&selectedLibraryGroup&&<div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onMouseDown={e=>{if(e.currentTarget===e.target){setLibraryCustomer(null);setLibraryProject(null);setMenuFile(null)}}}>
       <div className="w-full max-w-5xl max-h-[86vh] rounded-2xl border border-white/10 bg-[#111113] shadow-2xl overflow-hidden flex flex-col">
         <div className="h-14 px-4 sm:px-5 border-b border-white/10 flex items-center gap-3 shrink-0">
@@ -572,6 +617,13 @@ export function AdminFilesV2(){
                     <p className="text-[9px] text-gray-500 truncate mt-1">{row.custom_folder?.name?('📁 '+row.custom_folder.name):(row.task?.title||'Arquivo geral')}</p>
                     {review&&<span className={'inline-flex mt-2 px-2 py-1 rounded-full text-[9px] font-semibold '+review.className}>{review.label}</span>}
                   </button>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {!row.review_required&&<button type="button" disabled={reviewingFile===row.id} onClick={()=>void requestReview(row)} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] disabled:opacity-50 text-[10px] font-bold text-white">{reviewingFile===row.id?'Solicitando...':'Solicitar aprovação'}</button>}
+                    {row.review_required&&row.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(row)} className="min-h-9 flex-1 px-3 rounded-lg border border-white/10 hover:bg-white/[0.05] text-[10px] font-semibold">Cancelar aprovação</button>}
+                    {row.review_required&&row.review_status==='changes_requested'&&<button type="button" onClick={()=>{setVersioningFile(row);setVersionFile(null);setVersionProgress(0)}} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] text-[10px] font-bold text-white">Enviar nova versão</button>}
+                    {row.review_required&&row.review_status==='approved'&&<button type="button" onClick={()=>void move(row,'delivery')} className="min-h-9 flex-1 px-3 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/20 text-[10px] font-bold">Mover para entrega</button>}
+                  </div>
 
                   <button
                     type="button"
