@@ -1,5 +1,25 @@
 import { supabase } from '../lib/supabase'
 
+export type SiteSettings={
+  id:boolean
+  company_name:string
+  description:string
+  hero_headline:string
+  hero_cta:string
+  primary_color:string
+  instagram_url:string|null
+  youtube_url:string|null
+  tiktok_url:string|null
+  linkedin_url:string|null
+  whatsapp:string|null
+  contact_email:string|null
+  contact_phone:string|null
+  address:string|null
+  meta_description:string
+  updated_at:string
+  updated_by:string|null
+}
+
 export type SiteProfile={
   id:boolean
   display_name:string
@@ -54,6 +74,19 @@ function slugify(value:string){
 }
 
 export const siteContentApi={
+  settings:async()=>{
+    const {data,error}=await supabase.from('site_settings').select('*').eq('id',true).single()
+    if(error)throw error
+    return data as SiteSettings
+  },
+
+  updateSettings:async(values:Partial<SiteSettings>)=>{
+    const {data:{user}}=await supabase.auth.getUser()
+    const {data,error}=await supabase.from('site_settings').update({...values,updated_at:new Date().toISOString(),updated_by:user?.id||null}).eq('id',true).select().single()
+    if(error)throw error
+    return data as SiteSettings
+  },
+
   profile:async()=>{
     const {data,error}=await supabase.from('site_profile').select('*').eq('id',true).single()
     if(error)throw error

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useEffect,useState } from 'react'
-import { siteContentApi,type PortfolioItem,type SiteProfile } from '../../services/siteContent'
+import { siteContentApi,type PortfolioItem,type SiteProfile,type SiteSettings } from '../../services/siteContent'
 import { PublicLayout } from '../../layouts/PublicLayout'
 import { useAuth } from '../../contexts/AuthContext'
 import { conversationLink } from '../../lib/navigation'
@@ -37,7 +37,8 @@ export function HomePage() {
   const { role } = useAuth()
   const [profile,setProfile]=useState<SiteProfile|null>(null)
   const [portfolio,setPortfolio]=useState<PortfolioItem[]>([])
-  useEffect(()=>{Promise.all([siteContentApi.profile(),siteContentApi.portfolioItems()]).then(([p,i])=>{setProfile(p);setPortfolio(i.filter(item=>item.featured).slice(0,3))}).catch(()=>undefined)},[])
+  const [siteSettings,setSiteSettings]=useState<SiteSettings|null>(null)
+  useEffect(()=>{Promise.all([siteContentApi.profile(),siteContentApi.portfolioItems(),siteContentApi.settings()]).then(([p,i,s])=>{setProfile(p);setPortfolio(i.filter(item=>item.featured).slice(0,3));setSiteSettings(s);if(s.meta_description){document.title=s.company_name;document.querySelector('meta[name="description"]')?.setAttribute('content',s.meta_description)}}).catch(()=>undefined)},[])
   const contact = conversationLink(role)
   const quote = conversationLink(role, 'orcamento')
   const quickLinks = [
@@ -52,13 +53,13 @@ export function HomePage() {
         <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at top, rgba(227,6,19,0.09), transparent 70%)' }} />
         <div className="relative max-w-4xl mx-auto">
           <h1 className="font-extrabold leading-tight mb-4" style={{ fontSize: 'clamp(2rem, 5vw, 3.75rem)', letterSpacing: '-0.02em', color: '#f0f0f2' }}>
-            O que você <span style={{ color: '#E30613' }}>precisa hoje?</span>
+            {siteSettings?.hero_headline||<>O que você <span style={{ color: siteSettings?.primary_color||'#E30613' }}>precisa hoje?</span></>}
           </h1>
           <p className="text-base sm:text-lg mb-6 max-w-xl mx-auto" style={{ color: '#9090a0' }}>
-            Criação, design, tecnologia e audiovisual. Produtos e serviços Play Moments para tirar suas ideias do papel.
+            {siteSettings?.description||'Criação, design, tecnologia e audiovisual. Produtos e serviços Play Moments para tirar suas ideias do papel.'}
           </p>
           <div className="grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-3">
-            <Link to={contact} className="col-span-2 sm:col-span-1 px-6 py-3 rounded-full font-bold" style={{ background: '#E30613', color: '#fff' }}>Falar agora</Link>
+            <Link to={contact} className="col-span-2 sm:col-span-1 px-6 py-3 rounded-full font-bold" style={{ background: '#E30613', color: '#fff' }}>{siteSettings?.hero_cta||'Falar agora'}</Link>
             <Link to={quote} className="col-span-2 sm:col-span-1 px-6 py-3 rounded-full font-semibold" style={{ border: '1px solid #E30613', color: '#ff6b7a', background: 'rgba(227,6,19,0.08)' }}>Solicitar orçamento</Link>
             <Link to="/produtos" className="px-4 py-3 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.06)', color: '#f0f0f2' }}>Produtos & Serviços</Link>
             <Link to="/quem-somos" className="px-4 py-3 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.06)', color: '#f0f0f2' }}>Quem Somos</Link>
