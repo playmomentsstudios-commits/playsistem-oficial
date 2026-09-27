@@ -21,14 +21,17 @@ Deno.serve(async(req)=>{
   })});
   const method=billing_type==="PIX"?"pix_gateway":"card";
   let pixQrCode:any=null;
-  if(billing_type==="PIX"){
-    pixQrCode=await asaas("/payments/"+charge.id+"/pixQrCode");
-  }
-  const providerPayload={...charge,...(pixQrCode?{pixQrCode}: {})};
-  const {data:payment,error:paymentError}=await db.from("payments").insert({
+  if(billing_type==="PIX")pixQrCode=await asaas("/payments/"+charge.id+"/pixQrCode");
+  const providerPayload={...charge,...(pixQrCode?{pixQrCode}:{})};
+  const paymentValues={
     customer_id:userId,order_id:order.id,amount:order.total,method,status:"pending",provider:"asaas",
     provider_reference:charge.id,provider_customer_id:customerId,provider_payload:providerPayload,due_date:charge.dueDate||null
-  }).select("*").single();
+  };
+  const {data:manual}=await db.from("payments").select("id").eq("order_id",order.id).eq("provider","manual").in("status",["pending","awaiting_confirmation"]).order("created_at",{ascending:false}).limit(1).maybeSingle();
+  const write=manual?.id
+    ? db.from("payments").update(paymentValues).eq("id",manual.id)
+    : db.from("payments").insert(paymentValues);
+  const {data:payment,error:paymentError}=await write.select("*").single();
   if(paymentError)throw paymentError;
   return json({ok:true,payment,charge,pixQrCode});
  }catch(error){return json({ok:false,error:error instanceof Error?error.message:"Unknown error"},400)}
