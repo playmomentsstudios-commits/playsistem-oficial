@@ -59,6 +59,11 @@ export function ProductDetailPage() {
   }, [slug])
 
   async function buy() {
+    addItem({ id: product!.id, name: product!.name, slug: product!.slug, price: product!.promotional_price ?? product!.sale_price ?? 0, image: getCover(product!), stock: product!.inventory_tracked ? product!.stock : 1 })
+    navigate('/carrinho')
+    return
+
+    /* legacy direct purchase retained temporarily below; unreachable while checkout is centralized */
     if (!product) return
     if (!user) { navigate(authLink('/cadastro', '/produtos/' + product.slug)); return }
     try {
