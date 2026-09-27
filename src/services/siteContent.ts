@@ -15,9 +15,26 @@ export type SiteSettings={
   contact_email:string|null
   contact_phone:string|null
   address:string|null
+  city:string|null
+  state:string|null
+  footer_description:string|null
+  home_areas_eyebrow:string
+  home_areas_title:string
   meta_description:string
   updated_at:string
   updated_by:string|null
+}
+
+export type HomeServiceArea={
+  id:string
+  title:string
+  icon:string|null
+  accent_color:string
+  image_url:string|null
+  href:string
+  topics:string[]
+  display_order:number
+  active:boolean
 }
 
 export type SiteProfile={
@@ -85,6 +102,31 @@ export const siteContentApi={
     const {data,error}=await supabase.from('site_settings').update({...values,updated_at:new Date().toISOString(),updated_by:user?.id||null}).eq('id',true).select().single()
     if(error)throw error
     return data as SiteSettings
+  },
+
+  homeServiceAreas:async(admin=false)=>{
+    let query=supabase.from('home_service_areas').select('*').order('display_order').order('title')
+    if(!admin)query=query.eq('active',true)
+    const {data,error}=await query
+    if(error)throw error
+    return (data||[]) as HomeServiceArea[]
+  },
+
+  saveHomeServiceArea:async(values:Partial<HomeServiceArea>&{title:string})=>{
+    const payload={...values,updated_at:new Date().toISOString()}
+    if(values.id){
+      const {data,error}=await supabase.from('home_service_areas').update(payload).eq('id',values.id).select().single()
+      if(error)throw error
+      return data as HomeServiceArea
+    }
+    const {data,error}=await supabase.from('home_service_areas').insert(payload).select().single()
+    if(error)throw error
+    return data as HomeServiceArea
+  },
+
+  deleteHomeServiceArea:async(id:string)=>{
+    const {error}=await supabase.from('home_service_areas').delete().eq('id',id)
+    if(error)throw error
   },
 
   profile:async()=>{
