@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 
-export type Course={id:string;title:string;slug:string;description:string|null;content_type:'course'|'video_class'|'webinar'|'lecture'|'training';status:'draft'|'published'|'archived';access_type:'free'|'manual'|'product';cover_url:string|null;cover_drive_file_id:string|null;instructor_name:string|null;estimated_minutes:number|null;created_at:string}
+export type Course={id:string;title:string;slug:string;description:string|null;content_type:'course'|'video_class'|'webinar'|'lecture'|'training';status:'draft'|'published'|'archived';access_type:'free'|'manual'|'product';cover_url:string|null;cover_drive_file_id:string|null;category:string|null;instructor_name:string|null;estimated_minutes:number|null;created_at:string}
 async function functionError(error:any,fallback:string){
   try{const response=error?.context;if(response instanceof Response){const payload=await response.clone().json();return payload?.error||payload?.message||fallback}}catch{}
   return error?.message&&error.message!=='Edge Function returned a non-2xx status code'?error.message:fallback
