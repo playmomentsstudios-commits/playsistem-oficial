@@ -7,7 +7,8 @@ import logoUrl from '../../assets/logo-play-moments.png'
 import type { SiteSettings } from '../../services/siteContent'
 
 const PUBLIC_NAV_LINKS = [
-  { label: 'Produtos & Serviços', href: '/produtos' },
+  { label: 'Produtos', href: '/produtos' },
+  { label: 'Serviços', href: '/servicos' },
   { label: 'Quem Somos', href: '/quem-somos' },
 ]
 

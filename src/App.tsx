@@ -20,6 +20,9 @@ import { ProductsPage } from './pages/public/ProductsPage'
 import { ProductDetailPage } from './pages/public/ProductDetailPage'
 import { AboutPage } from './pages/public/AboutPage'
 import { CategoryPage } from './pages/public/CategoryPage'
+import { ServicesPage } from './pages/public/ServicesPage'
+import { ServiceDetailPage } from './pages/public/ServiceDetailPage'
+import { ContactPage } from './pages/public/ContactPage'
 
 // Customer portal
 import { DashboardPage } from './pages/customer/DashboardPage'
@@ -64,17 +67,6 @@ import { AdminSettings } from './pages/admin/AdminSettings'
 import { AdminAudit } from './pages/admin/AdminAudit'
 import { AdminReports } from './pages/admin/AdminReports'
 
-// Placeholder for unbuilt pages
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center px-6">
-      <div className="text-4xl mb-4">🚧</div>
-      <h2 className="text-xl font-bold mb-2" style={{ color: '#f0f0f2' }}>{title}</h2>
-      <p className="text-sm" style={{ color: '#6b6b78' }}>Página em desenvolvimento. Em breve disponível.</p>
-    </div>
-  )
-}
-
 export default function App() {
   return (
     <BrowserRouter>
@@ -91,8 +83,8 @@ export default function App() {
               <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
               <Route path="/produtos" element={<ProductsPage />} />
               <Route path="/produtos/:slug" element={<ProductDetailPage />} />
-              <Route path="/servicos" element={<Navigate to="/produtos" replace />} />
-              <Route path="/servicos/:slug" element={<Navigate to="/produtos" replace />} />
+              <Route path="/servicos" element={<ServicesPage />} />
+              <Route path="/servicos/:slug" element={<ServiceDetailPage />} />
               <Route path="/quem-somos" element={<AboutPage />} />
               <Route path="/portfolio" element={<Navigate to="/quem-somos#portfolio" replace />} />
               <Route path="/portfolio/:slug" element={<Navigate to="/quem-somos#portfolio" replace />} />
@@ -101,7 +93,7 @@ export default function App() {
               <Route path="/tech" element={<CategoryPage />} />
               <Route path="/comunidade" element={<CommunityPage />} />
               <Route path="/sobre" element={<Navigate to="/quem-somos" replace />} />
-              <Route path="/contato" element={<PlaceholderPage title="Contato" />} />
+              <Route path="/contato" element={<ContactPage />} />
               <Route path="/carrinho" element={<CartPage />} />
 
               {/* Customer portal */}
