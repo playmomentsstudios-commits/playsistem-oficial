@@ -120,7 +120,7 @@ export default function AppV2() {
                 <Route path="conversas" element={<ConversationsPage />} />
                 <Route path="conversas/:id" element={<ConversationsPage />} />
                 <Route path="arquivos" element={<FilesPage />} />
-                <Route path="notificacoes" element={<AdminPermissionGate><NotificationsPage /></AdminPermissionGate>} />
+                <Route path="notificacoes" element={<NotificationsPage />} />
                 <Route path="projetos" element={<ProjectsPage />} />
                 <Route path="projetos/:id" element={<ProjectsPage />} />
                 <Route path="comunicados" element={<AnnouncementsPage />} />
@@ -145,7 +145,7 @@ export default function AppV2() {
                 <Route path="arquivos" element={<AdminPermissionGate permission={['files.view','files.manage']}><AdminFilesV2 /></AdminPermissionGate>} />
                 <Route path="portfolio" element={<AdminPermissionGate permission="site.manage"><AdminAboutPortfolio /></AdminPermissionGate>} />
                 <Route path="comunidade" element={<AdminPermissionGate permission="community.manage"><AdminCommunity /></AdminPermissionGate>} />
-                <Route path="notificacoes" element={<NotificationsPage />} />
+                <Route path="notificacoes" element={<AdminPermissionGate><NotificationsPage /></AdminPermissionGate>} />
                 <Route path="projetos" element={<AdminPermissionGate permission={['projects.view','projects.manage']}><AdminProjects /></AdminPermissionGate>} />
                 <Route path="projetos/:id" element={<AdminPermissionGate permission={['projects.view','projects.manage']}><AdminProjectDetailV2 /></AdminPermissionGate>} />
                 <Route path="produtividade" element={<AdminPermissionGate permission={['projects.view','projects.manage']}><AdminProductivity /></AdminPermissionGate>} />
