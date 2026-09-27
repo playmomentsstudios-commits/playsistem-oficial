@@ -8,7 +8,7 @@ export function serviceDb(){return createClient(env("SUPABASE_URL"),env("SUPABAS
 export async function requireCustomer(req:Request){
  const token=(req.headers.get("Authorization")||"").replace(/^Bearer\s+/i,"");if(!token)throw new Error("Unauthorized");
  const db=serviceDb();const {data,error}=await db.auth.getUser(token);if(error||!data.user)throw new Error("Unauthorized");
- const {data:profile,error:pe}=await db.from("profiles").select("id,email,first_name,last_name,phone,document_number,role,status").eq("id",data.user.id).single();
+ const {data:profile,error:pe}=await db.from("profiles").select("id,email,first_name,last_name,phone,document_number,postal_code,street,address_number,address_complement,neighborhood,city,state,role,status").eq("id",data.user.id).single();
  if(pe||!profile||profile.role!=="customer"||profile.status!=="active")throw new Error("Customer access required");
  return {db,userId:data.user.id,profile};
 }
