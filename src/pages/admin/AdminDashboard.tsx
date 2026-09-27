@@ -169,7 +169,7 @@ export function AdminDashboard(){
             const status=String(project.status||'planning')
             const statusTone=status==='review'?'bg-violet-500/10 text-violet-300':status==='in_progress'?'bg-sky-500/10 text-sky-300':'bg-white/[0.04] text-gray-400'
             return <Link key={project.id} to={'/admin/projetos/'+project.id} className="block p-4 hover:bg-white/[0.025] transition-colors">
-              <div className="flex items-start justify-between gap-3"><p className="text-sm font-semibold truncate">{project.title}</p><span className={'text-[9px] uppercase tracking-wide px-2 py-1 rounded-full shrink-0 '+statusTone}>{status.replaceAll('_',' ')}</span></div>
+              <div className="flex items-start justify-between gap-3"><p className="text-sm font-semibold truncate">{project.title}</p><span className={'text-[9px] uppercase tracking-wide px-2 py-1 rounded-full shrink-0 '+statusTone}>{status.replace(/_/g,' ')}</span></div>
               <div className="flex gap-3 mt-2 text-[10px] text-gray-600"><span>Prioridade: {project.priority||'normal'}</span>{project.due_date&&<span>Prazo: {new Date(project.due_date+'T12:00:00').toLocaleDateString('pt-BR')}</span>}</div>
             </Link>
           })}
