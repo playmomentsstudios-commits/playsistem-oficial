@@ -113,6 +113,8 @@ body {
 html { scroll-behavior: smooth; }
 body { min-width: 320px; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+:where(a,button,input,select,textarea,[tabindex]):focus-visible { outline: 2px solid rgba(255,77,88,.9); outline-offset: 2px; }
+::selection { background: rgba(227,6,19,.35); color: white; }
 button:not(:disabled), select:not(:disabled), input[type="checkbox"]:not(:disabled), input[type="radio"]:not(:disabled) { cursor: pointer; }
 button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: not-allowed; opacity: .58; }
 input, select, textarea { font: inherit; }
@@ -146,7 +148,10 @@ button:active:not(:disabled), a:active { transform: translateY(1px); }
 .pm-muted { color: #858590; }
 .pm-divider { border-color: rgba(255,255,255,.07); }
 .pm-control { min-height: 44px; border-radius: .75rem; border: 1px solid rgba(255,255,255,.1); background: rgba(0,0,0,.28); }
-.pm-scroll-x { overflow-x: auto; scrollbar-width: thin; }
+.pm-scroll-x { overflow-x: auto; scrollbar-width: thin; overscroll-behavior-inline: contain; }
+.pm-scroll-x::-webkit-scrollbar { height: 8px; width: 8px; }
+.pm-scroll-x::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: 999px; }
+.pm-scroll-x::-webkit-scrollbar-track { background: transparent; }
 .pm-skeleton {
   position: relative; overflow: hidden; background: rgba(255,255,255,.045);
 }
