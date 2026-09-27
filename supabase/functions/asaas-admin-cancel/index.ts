@@ -32,6 +32,8 @@ Deno.serve(async(req)=>{
   if(payment.order_id){
    const {error:orderError}=await db.from("orders").update({payment_status:"cancelled"}).eq("id",payment.order_id).neq("payment_status","paid");
    if(orderError)throw orderError;
+   const {error:stockError}=await db.rpc("release_order_stock",{p_order_id:payment.order_id});
+   if(stockError)throw stockError;
   }
   return json({ok:true});
  }catch(error){return json({ok:false,error:error instanceof Error?error.message:"Unknown error"},400)}
