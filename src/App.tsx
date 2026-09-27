@@ -1,65 +1,67 @@
-import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { CartProvider } from './contexts/CartContext'
 import { ToastProvider } from './contexts/ToastContext'
 
-// Route-level code splitting
-const CustomerLayout = lazy(() => import('./layouts/CustomerLayoutV2').then(m => ({ default: m.CustomerLayoutV2 })))
-const AdminLayout = lazy(() => import('./layouts/AdminLayout').then(m => ({ default: m.AdminLayout })))
+// Layouts
+import { CustomerLayoutV2 } from './layouts/CustomerLayoutV2'
+import { AdminLayout } from './layouts/AdminLayout'
 
-const HomePage = lazy(() => import('./pages/public/HomePage').then(m => ({ default: m.HomePage })))
-const LoginPage = lazy(() => import('./pages/public/LoginPage').then(m => ({ default: m.LoginPage })))
-const RegisterPage = lazy(() => import('./pages/public/RegisterPage').then(m => ({ default: m.RegisterPage })))
-const EmailConfirmedPage = lazy(() => import('./pages/public/EmailConfirmedPage').then(m => ({ default: m.EmailConfirmedPage })))
-const ForgotPasswordPage = lazy(() => import('./pages/public/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })))
-const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })))
-const CartPage = lazy(() => import('./pages/public/CartPage').then(m => ({ default: m.CartPage })))
-const CommunityPage = lazy(() => import('./pages/public/CommunityPage').then(m => ({ default: m.CommunityPage })))
-const ProductsPage = lazy(() => import('./pages/public/ProductsPage').then(m => ({ default: m.ProductsPage })))
-const ProductDetailPage = lazy(() => import('./pages/public/ProductDetailPage').then(m => ({ default: m.ProductDetailPage })))
-const AboutPage = lazy(() => import('./pages/public/AboutPage').then(m => ({ default: m.AboutPage })))
-const CategoryPage = lazy(() => import('./pages/public/CategoryPage').then(m => ({ default: m.CategoryPage })))
+// Public pages
+import { HomePage } from './pages/public/HomePage'
+import { LoginPage } from './pages/public/LoginPage'
+import { RegisterPage } from './pages/public/RegisterPage'
+import { EmailConfirmedPage } from './pages/public/EmailConfirmedPage'
+import { ForgotPasswordPage } from './pages/public/ForgotPasswordPage'
+import { ResetPasswordPage } from './pages/public/ResetPasswordPage'
+import { CartPage } from './pages/public/CartPage'
+import { CommunityPage } from './pages/public/CommunityPage'
+import { ProductsPage } from './pages/public/ProductsPage'
+import { ProductDetailPage } from './pages/public/ProductDetailPage'
+import { AboutPage } from './pages/public/AboutPage'
+import { CategoryPage } from './pages/public/CategoryPage'
 
-const DashboardPage = lazy(() => import('./pages/customer/DashboardPage').then(m => ({ default: m.DashboardPage })))
-const ProfilePage = lazy(() => import('./pages/customer/ProfilePage').then(m => ({ default: m.ProfilePage })))
-const OrdersPage = lazy(() => import('./pages/customer/OrdersPage').then(m => ({ default: m.OrdersPage })))
-const QuotesPage = lazy(() => import('./pages/customer/QuotesPage').then(m => ({ default: m.QuotesPage })))
-const ConversationsPage = lazy(() => import('./pages/customer/ConversationsPage').then(m => ({ default: m.ConversationsPage })))
-const FilesPage = lazy(() => import('./pages/customer/FilesPage').then(m => ({ default: m.FilesPage })))
-const NotificationsPage = lazy(() => import('./pages/customer/NotificationsPage').then(m => ({ default: m.NotificationsPage })))
-const PaymentsPage = lazy(() => import('./pages/customer/PaymentsPage').then(m => ({ default: m.PaymentsPage })))
-const ProjectsPage = lazy(() => import('./pages/customer/ProjectsPage').then(m => ({ default: m.ProjectsPage })))
-const CustomerServicesPage = lazy(() => import('./pages/customer/CustomerServicesPage').then(m => ({ default: m.CustomerServicesPage })))
-const AnnouncementsPage = lazy(() => import('./pages/customer/AnnouncementsPage').then(m => ({ default: m.AnnouncementsPage })))
-const OrderDetailPage = lazy(() => import('./pages/customer/OrderDetailPage').then(m => ({ default: m.OrderDetailPage })))
-const QuoteDetailPage = lazy(() => import('./pages/customer/QuoteDetailPage').then(m => ({ default: m.QuoteDetailPage })))
-const CustomerSettings = lazy(() => import('./pages/customer/CustomerSettings').then(m => ({ default: m.CustomerSettings })))
+// Customer portal
+import { DashboardPage } from './pages/customer/DashboardPage'
+import { ProfilePage } from './pages/customer/ProfilePage'
+import { OrdersPage } from './pages/customer/OrdersPage'
+import { QuotesPage } from './pages/customer/QuotesPage'
+import { ConversationsPage } from './pages/customer/ConversationsPage'
+import { FilesPage } from './pages/customer/FilesPage'
+import { NotificationsPage } from './pages/customer/NotificationsPage'
+import { PaymentsPage } from './pages/customer/PaymentsPage'
+import { ProjectsPage } from './pages/customer/ProjectsPage'
+import { CustomerServicesPage } from './pages/customer/CustomerServicesPage'
+import { AnnouncementsPage } from './pages/customer/AnnouncementsPage'
+import { OrderDetailPage } from './pages/customer/OrderDetailPage'
+import { QuoteDetailPage } from './pages/customer/QuoteDetailPage'
+import { CustomerSettings } from './pages/customer/CustomerSettings'
 
-const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })))
-const AdminCustomers = lazy(() => import('./pages/admin/AdminCustomers').then(m => ({ default: m.AdminCustomers })))
-const AdminProducts = lazy(() => import('./pages/admin/AdminProducts').then(m => ({ default: m.AdminProducts })))
-const AdminOrders = lazy(() => import('./pages/admin/AdminOrders').then(m => ({ default: m.AdminOrders })))
-const AdminConversations = lazy(() => import('./pages/admin/AdminConversations').then(m => ({ default: m.AdminConversations })))
-const AdminSiteSettings = lazy(() => import('./pages/admin/AdminSiteSettings').then(m => ({ default: m.AdminSiteSettings })))
-const AdminCommunity = lazy(() => import('./pages/admin/AdminCommunity').then(m => ({ default: m.AdminCommunity })))
-const AdminPayments = lazy(() => import('./pages/admin/AdminPayments').then(m => ({ default: m.AdminPayments })))
-const AdminProjects = lazy(() => import('./pages/admin/AdminProjects').then(m => ({ default: m.AdminProjects })))
-const AdminProjectDetail = lazy(() => import('./pages/admin/AdminProjectDetail').then(m => ({ default: m.AdminProjectDetail })))
-const AdminProductivity = lazy(() => import('./pages/admin/AdminProductivity').then(m => ({ default: m.AdminProductivity })))
-const AdminServices = lazy(() => import('./pages/admin/AdminServices').then(m => ({ default: m.AdminServices })))
-const AdminQuotes = lazy(() => import('./pages/admin/AdminQuotes').then(m => ({ default: m.AdminQuotes })))
-const AdminQuoteDetail = lazy(() => import('./pages/admin/AdminQuoteDetail').then(m => ({ default: m.AdminQuoteDetail })))
-const AdminTeam = lazy(() => import('./pages/admin/AdminTeam').then(m => ({ default: m.AdminTeam })))
-const AdminAnnouncements = lazy(() => import('./pages/admin/AdminAnnouncements').then(m => ({ default: m.AdminAnnouncements })))
-const AdminCustomerDetail = lazy(() => import('./pages/admin/AdminCustomerDetail').then(m => ({ default: m.AdminCustomerDetail })))
-const AdminOrderDetail = lazy(() => import('./pages/admin/AdminOrderDetail').then(m => ({ default: m.AdminOrderDetail })))
-const AdminCategories = lazy(() => import('./pages/admin/AdminCategories').then(m => ({ default: m.AdminCategories })))
-const AdminFiles = lazy(() => import('./pages/admin/AdminFiles').then(m => ({ default: m.AdminFiles })))
-const AdminAboutPortfolio = lazy(() => import('./pages/admin/AdminAboutPortfolio').then(m => ({ default: m.AdminAboutPortfolio })))
-const AdminSettings = lazy(() => import('./pages/admin/AdminSettings').then(m => ({ default: m.AdminSettings })))
-const AdminAudit = lazy(() => import('./pages/admin/AdminAudit').then(m => ({ default: m.AdminAudit })))
-const AdminReports = lazy(() => import('./pages/admin/AdminReports').then(m => ({ default: m.AdminReports })))
+// Admin panel
+import { AdminDashboard } from './pages/admin/AdminDashboard'
+import { AdminCustomers } from './pages/admin/AdminCustomers'
+import { AdminProducts } from './pages/admin/AdminProducts'
+import { AdminOrders } from './pages/admin/AdminOrders'
+import { AdminConversations } from './pages/admin/AdminConversations'
+import { AdminSiteSettings } from './pages/admin/AdminSiteSettings'
+import { AdminCommunity } from './pages/admin/AdminCommunity'
+import { AdminPayments } from './pages/admin/AdminPayments'
+import { AdminProjects } from './pages/admin/AdminProjects'
+import { AdminProjectDetail } from './pages/admin/AdminProjectDetail'
+import { AdminProductivity } from './pages/admin/AdminProductivity'
+import { AdminServices } from './pages/admin/AdminServices'
+import { AdminQuotes } from './pages/admin/AdminQuotes'
+import { AdminQuoteDetail } from './pages/admin/AdminQuoteDetail'
+import { AdminTeam } from './pages/admin/AdminTeam'
+import { AdminAnnouncements } from './pages/admin/AdminAnnouncements'
+import { AdminCustomerDetail } from './pages/admin/AdminCustomerDetail'
+import { AdminOrderDetail } from './pages/admin/AdminOrderDetail'
+import { AdminCategories } from './pages/admin/AdminCategories'
+import { AdminFiles } from './pages/admin/AdminFiles'
+import { AdminAboutPortfolio } from './pages/admin/AdminAboutPortfolio'
+import { AdminSettings } from './pages/admin/AdminSettings'
+import { AdminAudit } from './pages/admin/AdminAudit'
+import { AdminReports } from './pages/admin/AdminReports'
 
 // Placeholder for unbuilt pages
 function PlaceholderPage({ title }: { title: string }) {
@@ -78,7 +80,6 @@ export default function App() {
       <AuthProvider>
         <CartProvider>
           <ToastProvider>
-            <Suspense fallback={<div className="min-h-[50vh] flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-[#E30613] border-t-transparent animate-spin"/></div>}>
             <Routes>
               {/* Public */}
               <Route path="/" element={<HomePage />} />
@@ -103,7 +104,7 @@ export default function App() {
               <Route path="/carrinho" element={<CartPage />} />
 
               {/* Customer portal */}
-              <Route path="/app" element={<CustomerLayout />}>
+              <Route path="/app" element={<CustomerLayoutV2 />}>
                 <Route index element={<Navigate to="/app/dashboard" replace />} />
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="perfil" element={<ProfilePage />} />
@@ -155,7 +156,6 @@ export default function App() {
               {/* Fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-            </Suspense>
           </ToastProvider>
         </CartProvider>
       </AuthProvider>
