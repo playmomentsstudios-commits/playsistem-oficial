@@ -162,7 +162,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: {
           first_name: payload.name.trim(),
           last_name: payload.lastName.trim(),
-          phone: payload.phone?.trim() || null,
+          phone: payload.phone.trim(),
+          document_number: payload.documentNumber.replace(/\D/g, ''),
+          postal_code: payload.postalCode.replace(/\D/g, ''),
+          street: payload.street.trim(),
+          address_number: payload.addressNumber.trim(),
+          address_complement: payload.addressComplement?.trim() || null,
+          neighborhood: payload.neighborhood.trim(),
+          city: payload.city.trim(),
+          state: payload.state.trim().toUpperCase(),
         },
       },
     })
