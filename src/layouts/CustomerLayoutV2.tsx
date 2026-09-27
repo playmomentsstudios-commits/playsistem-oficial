@@ -119,8 +119,8 @@ export function CustomerLayoutV2() {
 
       <div className={showLabels?'p-3':'px-2 py-3'}>
         <div className={'rounded-2xl bg-white/[0.035] flex items-center transition-all '+(showLabels?'gap-3 p-3':'justify-center py-2')}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm bg-[#E30613] text-white shrink-0">
-            {user?.name?.charAt(0) ?? '?'}
+          <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center font-bold text-sm bg-[#E30613] text-white shrink-0">
+            {user?.avatar?<img src={user.avatar} alt="" className="w-full h-full object-cover"/>:(user?.name?.charAt(0) ?? '?')}
           </div>
           {showLabels&&<div className="min-w-0">
             <p className="text-sm font-semibold truncate text-[#f0f0f2]">{user?.name} {user?.lastName}</p>
