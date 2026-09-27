@@ -16,10 +16,10 @@ export function HomePage() {
   const contact = conversationLink(role)
   const quote = conversationLink(role, 'orcamento')
   const quickLinks = [
-    { title: 'Falar com a Play Moments', description: 'Converse direto com nossa equipe.', icon: '◌', href: contact },
-    { title: 'Solicitar orçamento', description: 'Conte sua ideia e o que precisa.', icon: '✎', href: quote },
-    { title: 'Produtos & Serviços', description: 'Explore a loja completa da Play Moments.', icon: '◇', href: '/produtos' },
-    { title: 'Quem Somos', description: 'Conheça a trajetória, currículo e portfólio.', icon: '✦', href: '/quem-somos' },
+    { title: 'Contratar um serviço', description: 'Design, sites, audiovisual, áudio e soluções digitais.', icon: '✦', href: '/produtos' },
+    { title: 'Comprar um produto', description: 'Veja produtos, equipamentos e soluções disponíveis.', icon: '◇', href: '/produtos' },
+    { title: 'Aprender', description: 'Cursos, conteúdos e formações da Academia Play Moments.', icon: '◌', href: role === 'customer' ? '/cliente/academia' : '/cadastro' },
+    { title: 'Área do cliente', description: 'Acompanhe projetos, arquivos, pagamentos e conversas.', icon: '↗', href: role === 'customer' ? '/cliente' : '/login' },
   ]
   return (
     <PublicLayout>
@@ -27,18 +27,18 @@ export function HomePage() {
         <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at top, rgba(227,6,19,0.09), transparent 70%)' }} />
         <div className="relative max-w-4xl mx-auto">
           <h1 className="font-extrabold leading-tight mb-4" style={{ fontSize: 'clamp(2rem, 5vw, 3.75rem)', letterSpacing: '-0.02em', color: '#f0f0f2' }}>
-            {siteSettings?.hero_headline||<>O que você <span style={{ color: siteSettings?.primary_color||'#E30613' }}>precisa hoje?</span></>}
+            O que você quer <span style={{ color: siteSettings?.primary_color||'#E30613' }}>realizar hoje?</span>
           </h1>
           <p className="text-base sm:text-lg mb-6 max-w-xl mx-auto" style={{ color: '#9090a0' }}>
-            {siteSettings?.description||'Criação, design, tecnologia e audiovisual. Produtos e serviços Play Moments para tirar suas ideias do papel.'}
+            Encontre produtos, serviços e soluções da Play Moments para o que você precisa.
           </p>
           <div className="grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-3">
-            <Link to={contact} className="col-span-2 sm:col-span-1 px-6 py-3 rounded-full font-bold" style={{ background: '#E30613', color: '#fff' }}>{siteSettings?.hero_cta||'Falar agora'}</Link>
-            <Link to={quote} className="col-span-2 sm:col-span-1 px-6 py-3 rounded-full font-semibold" style={{ border: '1px solid #E30613', color: '#ff6b7a', background: 'rgba(227,6,19,0.08)' }}>Solicitar orçamento</Link>
-            <Link to="/produtos" className="px-4 py-3 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.06)', color: '#f0f0f2' }}>Produtos & Serviços</Link>
-            <Link to="/quem-somos" className="px-4 py-3 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.06)', color: '#f0f0f2' }}>Quem Somos</Link>
+            <Link to="/produtos" className="col-span-2 sm:col-span-1 px-6 py-3 rounded-full font-bold" style={{ background: '#E30613', color: '#fff' }}>Encontrar uma solução</Link>
+            <Link to={quote} className="col-span-2 sm:col-span-1 px-6 py-3 rounded-full font-semibold" style={{ border: '1px solid #E30613', color: '#ff6b7a', background: 'rgba(227,6,19,0.08)' }}>Tenho um projeto personalizado</Link>
+            <Link to={role === 'customer' ? '/cliente/academia' : '/cadastro'} className="px-4 py-3 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.06)', color: '#f0f0f2' }}>Quero aprender</Link>
+            <Link to={role === 'customer' ? '/cliente' : '/login'} className="px-4 py-3 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.06)', color: '#f0f0f2' }}>Já sou cliente</Link>
           </div>
-          <Link to={conversationLink(role, 'duvida')} className="inline-flex items-center min-h-11 mt-3 text-sm underline underline-offset-4" style={{ color: '#c0c0cc' }}>Tirar dúvidas</Link>
+          <Link to={conversationLink(role, 'duvida')} className="inline-flex items-center min-h-11 mt-3 text-sm underline underline-offset-4" style={{ color: '#c0c0cc' }}>Preciso falar com a equipe</Link>
         </div>
       </section>
 
