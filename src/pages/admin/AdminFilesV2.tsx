@@ -369,8 +369,14 @@ export function AdminFilesV2(){
     catch(error:any){toast(error.message||'Não foi possível abrir o anexo.','error')}
   }
 
+  function isDelivered(row:any){
+    const projectRow=projects.find((item:any)=>item.id===row.project_id)
+    const deliveryFolder=projectRow?.drive_folders?.find((folder:any)=>folder.folder_kind==='delivery')
+    return Boolean(deliveryFolder?.drive_folder_id&&row.drive_folder_id===deliveryFolder.drive_folder_id)
+  }
+
   function reviewBadge(row:any){
-    if(row.review_status==='approved'&&row.drive_folder?.folder_kind==='delivery')return {label:'Entregue',className:'bg-emerald-500/15 text-emerald-300'}
+    if(row.review_status==='approved'&&isDelivered(row))return {label:'Entregue',className:'bg-emerald-500/15 text-emerald-300'}
     if(!row.review_required)return null
     if(row.review_status==='pending')return {label:'Aguardando cliente',className:'bg-yellow-500/10 text-yellow-300'}
     if(row.review_status==='approved')return {label:'Aprovado',className:'bg-emerald-500/10 text-emerald-400'}
@@ -666,7 +672,7 @@ export function AdminFilesV2(){
                       <button type="button" onClick={()=>void showReviewDetails(row)} className="min-h-9 flex-1 px-3 rounded-lg border border-orange-500/20 bg-orange-500/[0.08] text-orange-300 text-[10px] font-bold">Ver ajustes</button>
                       <button type="button" onClick={()=>{setVersioningFile(row);setVersionFile(null);setVersionProgress(0)}} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] text-[10px] font-bold text-white">Enviar nova versão</button>
                     </>}
-                    {row.review_required&&row.review_status==='approved'&&row.drive_folder?.folder_kind!=='delivery'&&<button type="button" onClick={()=>void move(row,'delivery')} className="min-h-9 flex-1 px-3 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/20 text-[10px] font-bold">Finalizar entrega</button>}
+                    {row.review_required&&row.review_status==='approved'&&!isDelivered(row)&&<button type="button" onClick={()=>void move(row,'delivery')} className="min-h-9 flex-1 px-3 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/20 text-[10px] font-bold">Finalizar entrega</button>}
                   </div>
 
                   <button
