@@ -54,6 +54,7 @@ export function AdminFilesV2(){
   const {user}=useAuth()
   const toast=useToast()
   const [files,setFiles]=useState<any[]>([])
+  const [uploadOpen,setUploadOpen]=useState(false)
   const [customers,setCustomers]=useState<any[]>([])
   const [projects,setProjects]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
@@ -122,20 +123,25 @@ export function AdminFilesV2(){
       .then(setCustomFolders)
       .catch(()=>setCustomFolders([]))
   },[project])
-  const recent=files.slice(0,8)
 
   const grouped=useMemo(()=>{
     const map=new Map<string,{customer:any;projects:Map<string,{project:any;files:any[]}>}>()
+    for(const customerRow of customers)map.set(customerRow.id,{customer:customerRow,projects:new Map()})
+    for(const projectRow of projects){
+      const customerKey=projectRow.customer_id||'sem-cliente'
+      if(!map.has(customerKey))map.set(customerKey,{customer:null,projects:new Map()})
+      map.get(customerKey)!.projects.set(projectRow.id,{project:projectRow,files:[]})
+    }
     for(const row of files){
-      const customerKey=row.customer_id||'sem-cliente'
-      if(!map.has(customerKey))map.set(customerKey,{customer:row.customer,projects:new Map()})
+      const customerKey=row.customer_id||row.project?.customer_id||'sem-cliente'
+      if(!map.has(customerKey))map.set(customerKey,{customer:row.customer||null,projects:new Map()})
       const group=map.get(customerKey)!
       const projectKey=row.project_id||'sem-projeto'
-      if(!group.projects.has(projectKey))group.projects.set(projectKey,{project:row.project,files:[]})
+      if(!group.projects.has(projectKey))group.projects.set(projectKey,{project:row.project||null,files:[]})
       group.projects.get(projectKey)!.files.push(row)
     }
     return Array.from(map.entries())
-  },[files])
+  },[files,customers,projects])
 
   const selectedLibraryGroup=libraryCustomer
     ? grouped.find(([customerId])=>customerId===libraryCustomer)?.[1]||null
@@ -391,7 +397,7 @@ export function AdminFilesV2(){
         <h1 className="text-2xl font-bold mt-1">Central de Arquivos</h1>
         <p className="text-sm text-gray-500 mt-1">Cliente → Projeto → Tarefa → aprovação → entrega.</p>
       </div>
-      <Button type="button" variant="secondary" loading={testing} onClick={testDrive}>Testar Google Drive</Button>
+      <div className="flex items-center gap-2"><Button type="button" variant="secondary" loading={testing} onClick={testDrive}>Testar Drive</Button><button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='sem-cliente')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-10 px-3.5 rounded-xl bg-[#E30613] hover:bg-[#f01826] text-white text-sm font-bold flex items-center gap-1.5"><span className="text-lg leading-none">＋</span>Novo</button></div>
     </div>
 
     {uploadResult&&<div className="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 flex items-start gap-3">
@@ -400,7 +406,203 @@ export function AdminFilesV2(){
       <button type="button" onClick={()=>setUploadResult(null)} className="text-gray-600 hover:text-white">×</button>
     </div>}
 
-    <form onSubmit={save} className="pm-surface p-5 mb-8 space-y-4">
+    <section>
+      <div className="mb-3 flex items-end justify-between gap-3"><div><p className="text-[10px] uppercase tracking-[.16em] text-gray-600">Biblioteca</p><h2 className="text-base font-bold mt-1">Clientes e projetos</h2></div><span className="text-[10px] text-gray-600">{customers.length} clientes · {projects.length} projetos · {files.length} arquivos</span></div>
+      <div className="mb-3">
+        <input value={customerSearch} onChange={e=>setCustomerSearch(e.target.value)} placeholder="Buscar cliente, projeto ou arquivo..." className="w-full min-h-10 px-3.5 rounded-xl bg-[#141416] border border-white/10 text-sm"/>
+      </div>
+
+      {loading?<p className="text-gray-500">Carregando...</p>:filteredGrouped.length===0?<p className="text-sm text-gray-500">Nenhum cliente, projeto ou arquivo encontrado.</p>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        {filteredGrouped.map(([customerId,group])=>{
+          const totalFiles=Array.from(group.projects.values()).reduce((sum,item)=>sum+item.files.length,0)
+          return <button
+            key={customerId}
+            type="button"
+            onClick={()=>{setLibraryCustomer(customerId);setLibraryProject(null);setLibrarySearch('');setLibraryType('all');setLibraryReview('all');setLibraryFolder('all');setMenuFile(null)}}
+            className="text-left rounded-xl border border-white/8 bg-[#121214] hover:bg-[#171719] hover:border-white/15 transition-colors p-3"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-white/[0.05] flex items-center justify-center">📁</div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold truncate">{group.customer?[group.customer.first_name,group.customer.last_name].filter(Boolean).join(' '):'Sem cliente'}</p>
+                <p className="text-[10px] text-gray-500 truncate">{group.customer?.email||''}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs font-semibold">{totalFiles}</p>
+                <p className="text-[9px] text-gray-600">arquivos</p>
+              </div>
+            </div>
+          </button>
+        })}
+      </div>}
+    </section>
+
+    {reviewDetailsFile&&<div className="fixed inset-0 z-[75] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
+      <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-[#111113] border border-white/10 p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-3 mb-5">
+          <div><p className="text-[10px] uppercase tracking-widest text-orange-400 font-bold">Revisão do cliente</p><h3 className="text-lg font-bold mt-1">{reviewDetailsFile.name}</h3><p className="text-xs text-gray-500 mt-1">Versão v{reviewDetailsFile.version_number||1}</p></div>
+          <button type="button" onClick={()=>setReviewDetailsFile(null)} className="w-9 h-9 rounded-lg bg-white/[0.05]">×</button>
+        </div>
+        {reviewDetailsLoading?<p className="text-sm text-gray-500 py-8 text-center">Carregando ajustes...</p>:reviewDetails.length===0?<p className="text-sm text-gray-500 py-8 text-center">Nenhum registro de revisão encontrado.</p>:<div className="space-y-3">{reviewDetails.map((review:any)=><div key={review.id} className="rounded-xl border border-white/10 bg-black/30 p-4">
+          <div className="flex items-center justify-between gap-3"><span className={'px-2 py-1 rounded-full text-[9px] font-bold '+(review.action==='approved'?'bg-emerald-500/10 text-emerald-300':'bg-orange-500/10 text-orange-300')}>{review.action==='approved'?'Aprovado':'Ajustes solicitados'}</span><span className="text-[10px] text-gray-600">{new Date(review.created_at).toLocaleString('pt-BR')}</span></div>
+          {review.subject&&<h4 className="font-bold text-sm mt-3">{review.subject}</h4>}
+          {review.comment&&<p className="text-xs text-gray-400 mt-2 whitespace-pre-wrap">{review.comment}</p>}
+          {Array.isArray(review.items)&&review.items.length>0&&<div className="mt-4 space-y-2">{review.items.map((item:string,index:number)=><div key={index} className="flex gap-2 text-xs"><span className="w-5 h-5 shrink-0 rounded-full bg-orange-500/10 text-orange-300 flex items-center justify-center text-[9px] font-bold">{index+1}</span><span className="text-gray-300 pt-0.5">{item}</span></div>)}</div>}
+          {Array.isArray(review.attachments)&&review.attachments.length>0&&<div className="mt-4"><p className="text-[10px] uppercase tracking-wider text-gray-600 font-bold mb-2">Referências</p><div className="flex flex-wrap gap-2">{review.attachments.map((attachment:any,index:number)=><button key={index} type="button" onClick={()=>void openReviewAttachment(attachment.path)} className="px-3 py-2 rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] text-[10px] text-left"><span className="block font-semibold text-gray-300 max-w-[220px] truncate">{attachment.name}</span><span className="text-gray-600">{Math.max(1,Math.round((attachment.size||0)/1024))} KB</span></button>)}</div></div>}
+        </div>)}</div>}
+      </div>
+    </div>}
+
+    {versioningFile&&<div className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111113] p-5">
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div><h3 className="text-base font-bold">Enviar nova versão</h3><p className="text-xs text-gray-500 mt-1">Versão atual: v{versioningFile.version_number||1} · {versioningFile.name}</p></div>
+          <button type="button" onClick={()=>{setVersioningFile(null);setVersionFile(null)}} className="w-8 h-8 rounded-lg bg-white/[0.04]">×</button>
+        </div>
+        <label className="block p-4 rounded-xl border border-dashed border-white/15 bg-white/[0.025] cursor-pointer">
+          <input type="file" className="hidden" onChange={e=>setVersionFile(e.target.files?.[0]||null)}/>
+          <span className="text-sm font-semibold">{versionFile?versionFile.name:'Selecionar arquivo da nova versão'}</span>
+          <span className="block text-xs text-gray-500 mt-1">A nova versão será vinculada ao mesmo histórico do arquivo.</span>
+        </label>
+        {saving&&<div className="mt-3"><div className="h-2 rounded-full bg-white/10 overflow-hidden"><div className="h-full bg-[#E30613]" style={{width:versionProgress+'%'}}/></div><p className="text-[10px] text-gray-500 mt-1">{versionProgress}% enviado</p></div>}
+        <div className="flex gap-2 mt-4">
+          <button type="button" onClick={()=>{setVersioningFile(null);setVersionFile(null)}} className="min-h-10 px-4 rounded-xl border border-white/10 text-xs">Cancelar</button>
+          <button type="button" disabled={!versionFile||saving} onClick={()=>void uploadNewVersion()} className="min-h-10 flex-1 px-4 rounded-xl bg-[#E30613] disabled:opacity-40 text-xs font-bold">Enviar nova versão</button>
+        </div>
+      </div>
+    </div>}
+
+    {libraryCustomer&&selectedLibraryGroup&&<div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onMouseDown={e=>{if(e.currentTarget===e.target){setLibraryCustomer(null);setLibraryProject(null);setMenuFile(null)}}}>
+      <div className="w-full max-w-5xl max-h-[86vh] rounded-2xl border border-white/10 bg-[#111113] shadow-2xl overflow-hidden flex flex-col">
+        <div className="h-14 px-4 sm:px-5 border-b border-white/10 flex items-center gap-3 shrink-0">
+          {libraryProject&&<button type="button" onClick={()=>{setLibraryProject(null);setMenuFile(null)}} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-300" title="Voltar" aria-label="Voltar">←</button>}
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold truncate">
+              {selectedLibraryGroup.customer?[selectedLibraryGroup.customer.first_name,selectedLibraryGroup.customer.last_name].filter(Boolean).join(' '):'Sem cliente'}
+            </p>
+            <p className="text-[10px] text-gray-500 truncate">
+              {libraryProject&&selectedLibraryProject?.project?.title?selectedLibraryProject.project.title:selectedLibraryGroup.customer?.email||'Biblioteca de arquivos'}
+            </p>
+          </div>
+          <button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='sem-cliente')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-8 px-3 rounded-lg bg-[#E30613] hover:bg-[#f01826] text-white text-[10px] font-bold">＋ Novo</button>
+          <button type="button" onClick={()=>{setLibraryCustomer(null);setLibraryProject(null);setMenuFile(null)}} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-400 text-lg" title="Fechar" aria-label="Fechar">×</button>
+        </div>
+
+        <div className="p-4 sm:p-5 overflow-y-auto">
+          {!libraryProject?<div>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[10px] uppercase tracking-[.14em] text-gray-500">Pastas de projetos</p>
+              <span className="text-[10px] text-gray-600">{selectedLibraryGroup.projects.size} pasta(s)</span>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {Array.from(selectedLibraryGroup.projects.entries()).map(([projectId,projectGroup])=><button
+                key={projectId}
+                type="button"
+                onClick={()=>{setLibraryProject(projectId);setLibrarySearch('');setLibraryType('all');setLibraryReview('all');setLibraryFolder('all');setMenuFile(null)}}
+                className="text-left p-3 rounded-xl border border-white/8 bg-[#171719] hover:bg-[#1d1d20] hover:border-white/15 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-white/[0.05] flex items-center justify-center">📂</div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold truncate">{projectGroup.project?.title||'Arquivos gerais'}</p>
+                    <p className="text-[10px] text-gray-500 mt-1">{projectGroup.files.length} arquivo(s)</p>
+                  </div>
+                  <span className="text-gray-600">›</span>
+                </div>
+              </button>)}
+            </div>
+          </div>:selectedLibraryProject?<div>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs uppercase tracking-wide text-gray-500">Arquivos</p>
+              <span className="text-[10px] text-gray-600">{filteredLibraryFiles.length} de {selectedLibraryProject.files.length} item(ns)</span>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-[minmax(180px,1.6fr)_repeat(3,minmax(130px,.8fr))] gap-2 mb-3 p-2 rounded-xl bg-black/20 border border-white/[0.06]">
+              <input value={librarySearch} onChange={e=>setLibrarySearch(e.target.value)} placeholder="Buscar arquivo..." className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs"/>
+              <select value={libraryType} onChange={e=>setLibraryType(e.target.value)} className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs">
+                <option value="all">Todos os formatos</option>
+                <option value="image">Imagens</option>
+                <option value="video">Vídeos</option>
+                <option value="audio">Áudios</option>
+                <option value="pdf">PDF</option>
+                <option value="archive">Compactados</option>
+                <option value="other">Outros</option>
+              </select>
+              <select value={libraryReview} onChange={e=>setLibraryReview(e.target.value)} className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs">
+                <option value="all">Toda aprovação</option>
+                <option value="pending">Aguardando cliente</option>
+                <option value="approved">Aprovados</option>
+                <option value="changes_requested">Ajustes solicitados</option>
+                <option value="none">Sem aprovação</option>
+              </select>
+              <select value={libraryFolder} onChange={e=>setLibraryFolder(e.target.value)} className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs">
+                <option value="all">Todas as pastas</option>
+                <option value="root">Sem subpasta</option>
+                {libraryCustomFolders.map((folder:any)=><option key={folder.id} value={folder.id}>{folder.name}</option>)}
+              </select>
+            </div>
+
+            {filteredLibraryFiles.length===0?<div className="py-12 text-center text-sm text-gray-600 border border-dashed border-white/8 rounded-2xl">Nenhum arquivo corresponde aos filtros.</div>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {filteredLibraryFiles.map(row=>{
+                const review=reviewBadge(row)
+                return <div key={row.id} className="relative p-2.5 rounded-xl bg-[#171719] border border-white/8 hover:border-white/15 transition-colors">
+                  <button type="button" onClick={()=>open(row)} className="w-full text-left">
+                    <div className="h-14 rounded-lg bg-white/[0.035] flex items-center justify-center text-2xl">{fileIcon(row)}</div>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <span className="text-[9px] font-bold text-[#E30613]">{extension(row.name)} · v{row.version_number||1}</span>
+                      <span className="text-[9px] text-gray-600">{sizeLabel(row.file_size)}</span>
+                    </div>
+                    <p className="text-xs font-semibold truncate mt-1" title={row.name}>{row.name}</p>
+                    <p className="text-[9px] text-gray-500 truncate mt-1">{row.custom_folder?.name?('📁 '+row.custom_folder.name):(row.task?.title||'Arquivo geral')}</p>
+                    {review&&<span className={'inline-flex mt-2 px-2 py-1 rounded-full text-[9px] font-semibold '+review.className}>{review.label}</span>}
+                  </button>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {!row.review_required&&<button type="button" disabled={reviewingFile===row.id} onClick={()=>void requestReview(row)} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] disabled:opacity-50 text-[10px] font-bold text-white">{reviewingFile===row.id?'Solicitando...':'Solicitar aprovação'}</button>}
+                    {row.review_required&&row.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(row)} className="min-h-9 flex-1 px-3 rounded-lg border border-white/10 hover:bg-white/[0.05] text-[10px] font-semibold">Cancelar aprovação</button>}
+                    {row.review_required&&row.review_status==='changes_requested'&&<>
+                      <button type="button" onClick={()=>void showReviewDetails(row)} className="min-h-9 flex-1 px-3 rounded-lg border border-orange-500/20 bg-orange-500/[0.08] text-orange-300 text-[10px] font-bold">Ver ajustes</button>
+                      <button type="button" onClick={()=>{setVersioningFile(row);setVersionFile(null);setVersionProgress(0)}} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] text-[10px] font-bold text-white">Enviar nova versão</button>
+                    </>}
+                    {row.review_required&&row.review_status==='approved'&&!isDelivered(row)&&<button type="button" onClick={()=>void move(row,'delivery')} className="min-h-9 flex-1 px-3 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/20 text-[10px] font-bold">Finalizar entrega</button>}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={()=>setMenuFile(menuFile===row.id?null:row.id)}
+                    className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-black/45 hover:bg-black/70 flex items-center justify-center text-gray-300"
+                    title="Ações"
+                    aria-label="Ações do arquivo"
+                  >•••</button>
+
+                  {menuFile===row.id&&<div className="absolute z-20 right-2 top-10 w-56 rounded-xl border border-white/10 bg-[#0d0d0f] shadow-2xl p-1.5" onMouseLeave={()=>setMenuFile(null)}>
+                    <div className="flex items-center gap-1">
+                      {(row.drive_file_id||row.external_url||row.storage_path)&&<button type="button" onClick={()=>{setMenuFile(null);void open(row)}} className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center text-sm" title="Abrir" aria-label="Abrir arquivo">↗</button>}
+                      <button type="button" onClick={()=>void rename(row)} className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center text-sm" title="Renomear" aria-label="Renomear arquivo">✎</button>
+                      {row.storage_provider==='google_drive'&&row.project_id&&<label className="relative w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer text-sm" title="Mover" aria-label="Mover arquivo">
+                        ⇄
+                        <select defaultValue="" onChange={e=>{if(e.target.value){void move(row,e.target.value);setMenuFile(null)}}} className="absolute inset-0 opacity-0 cursor-pointer">
+                          <option value="">Mover</option>
+                          {folderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
+                        </select>
+                      </label>}
+                      <button type="button" onClick={()=>{setMenuFile(null);void remove(row)}} className="w-9 h-9 rounded-lg hover:bg-red-500/10 text-red-400 flex items-center justify-center text-sm" title="Excluir" aria-label="Excluir arquivo">⌫</button>
+                    </div>
+                    <div className="mt-1 border-t border-white/8 pt-1">
+                      {!row.review_required&&<button type="button" onClick={()=>void requestReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Solicitar aprovação</button>}
+                      {row.review_required&&row.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Cancelar aprovação</button>}
+                      {row.review_required&&['approved','changes_requested'].includes(row.review_status)&&<button type="button" onClick={()=>void requestReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Solicitar nova avaliação</button>}
+                    </div>
+                  </div>}
+                </div>
+              })}
+            </div>}
+          </div>:null}
+        </div>
+      </div>
+    </div>}
+
+    {uploadOpen&&<div className="fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4" onMouseDown={e=>{if(e.currentTarget===e.target&&!saving)setUploadOpen(false)}}><div className="w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-[#111113] border border-white/10 shadow-2xl"><div className="sticky top-0 z-10 h-14 px-4 sm:px-5 bg-[#111113]/95 backdrop-blur border-b border-white/8 flex items-center justify-between gap-3"><div><p className="text-[9px] uppercase tracking-[.16em] text-[#E30613] font-bold">Central de arquivos</p><h2 className="text-base font-bold">Novo arquivo</h2></div><button type="button" disabled={saving} onClick={()=>setUploadOpen(false)} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-40 text-gray-400">×</button></div><div className="p-4 sm:p-5">    <form onSubmit={save} className="space-y-4">
       <div className="grid md:grid-cols-3 gap-3">
         <label className="text-xs text-gray-500">Armazenamento
           <select value={provider} onChange={e=>setProvider(e.target.value as typeof provider)} className="pm-control mt-1 w-full px-3 bg-black">
@@ -495,220 +697,6 @@ export function AdminFilesV2(){
       <Button type="submit" loading={saving} className="w-full sm:w-auto min-h-12">{provider==='google_drive'?(selectedFiles.length>1?'Enviar '+selectedFiles.length+' arquivos':'Enviar para o Google Drive'):'Salvar arquivo'}</Button>
     </form>
 
-    <section className="mb-9">
-      <div className="mb-3">
-        <h2 className="text-lg font-bold">Recentes</h2>
-        <p className="text-xs text-gray-500">Acesso rápido aos últimos arquivos.</p>
-      </div>
-      {loading?<div aria-busy="true" aria-label="Carregando arquivos recentes" className="space-y-3"><div className="pm-skeleton h-20 rounded-2xl"/><div className="pm-skeleton h-20 rounded-2xl"/><div className="pm-skeleton h-20 rounded-2xl"/></div>:recent.length===0?<p className="text-sm text-gray-500">Nenhum arquivo ainda.</p>:<div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
-        {recent.map(row=><button key={row.id} type="button" onClick={()=>open(row)} className="group text-left p-2.5 rounded-xl bg-[#141416] border border-white/8 hover:border-white/20 transition-colors min-w-0">
-          <div className="h-11 rounded-lg bg-white/[0.04] flex items-center justify-center text-2xl mb-2">{fileIcon(row)}</div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[9px] text-[#E30613] font-bold tracking-wide">{extension(row.name)} · v{row.version_number||1}</span>
-            <span className="text-[9px] text-gray-600">{sizeLabel(row.file_size)}</span>
-          </div>
-          <div className="text-[11px] font-semibold truncate mt-1" title={row.name}>{row.name}</div>
-          <div className="text-[9px] text-gray-500 mt-1 truncate">{row.customer?.first_name||'Sem cliente'}</div>
-        </button>)}
-      </div>}
-    </section>
-
-    <section>
-      <div className="mb-4">
-        <h2 className="text-lg font-bold">Clientes</h2>
-        <p className="text-xs text-gray-500">Abra um cliente para navegar pelos projetos e arquivos sem sair desta tela.</p>
-      </div>
-      <div className="mb-4">
-        <input value={customerSearch} onChange={e=>setCustomerSearch(e.target.value)} placeholder="Buscar cliente, projeto ou arquivo..." className="w-full min-h-11 px-4 rounded-xl bg-[#141416] border border-white/10 text-sm"/>
-      </div>
-
-      {loading?<p className="text-gray-500">Carregando...</p>:filteredGrouped.length===0?<p className="text-sm text-gray-500">Nenhum cliente, projeto ou arquivo encontrado.</p>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-        {filteredGrouped.map(([customerId,group])=>{
-          const totalFiles=Array.from(group.projects.values()).reduce((sum,item)=>sum+item.files.length,0)
-          return <button
-            key={customerId}
-            type="button"
-            onClick={()=>{setLibraryCustomer(customerId);setLibraryProject(null);setLibrarySearch('');setLibraryType('all');setLibraryReview('all');setLibraryFolder('all');setMenuFile(null)}}
-            className="text-left rounded-xl border border-white/8 bg-[#121214] hover:bg-[#171719] hover:border-white/15 transition-colors p-4"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-white/[0.05] flex items-center justify-center">📁</div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold truncate">{group.customer?[group.customer.first_name,group.customer.last_name].filter(Boolean).join(' '):'Sem cliente'}</p>
-                <p className="text-[10px] text-gray-500 truncate">{group.customer?.email||''}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs font-semibold">{totalFiles}</p>
-                <p className="text-[9px] text-gray-600">arquivos</p>
-              </div>
-            </div>
-          </button>
-        })}
-      </div>}
-    </section>
-
-    {reviewDetailsFile&&<div className="fixed inset-0 z-[75] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
-      <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-[#111113] border border-white/10 p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-3 mb-5">
-          <div><p className="text-[10px] uppercase tracking-widest text-orange-400 font-bold">Revisão do cliente</p><h3 className="text-lg font-bold mt-1">{reviewDetailsFile.name}</h3><p className="text-xs text-gray-500 mt-1">Versão v{reviewDetailsFile.version_number||1}</p></div>
-          <button type="button" onClick={()=>setReviewDetailsFile(null)} className="w-9 h-9 rounded-lg bg-white/[0.05]">×</button>
-        </div>
-        {reviewDetailsLoading?<p className="text-sm text-gray-500 py-8 text-center">Carregando ajustes...</p>:reviewDetails.length===0?<p className="text-sm text-gray-500 py-8 text-center">Nenhum registro de revisão encontrado.</p>:<div className="space-y-3">{reviewDetails.map((review:any)=><div key={review.id} className="rounded-xl border border-white/10 bg-black/30 p-4">
-          <div className="flex items-center justify-between gap-3"><span className={'px-2 py-1 rounded-full text-[9px] font-bold '+(review.action==='approved'?'bg-emerald-500/10 text-emerald-300':'bg-orange-500/10 text-orange-300')}>{review.action==='approved'?'Aprovado':'Ajustes solicitados'}</span><span className="text-[10px] text-gray-600">{new Date(review.created_at).toLocaleString('pt-BR')}</span></div>
-          {review.subject&&<h4 className="font-bold text-sm mt-3">{review.subject}</h4>}
-          {review.comment&&<p className="text-xs text-gray-400 mt-2 whitespace-pre-wrap">{review.comment}</p>}
-          {Array.isArray(review.items)&&review.items.length>0&&<div className="mt-4 space-y-2">{review.items.map((item:string,index:number)=><div key={index} className="flex gap-2 text-xs"><span className="w-5 h-5 shrink-0 rounded-full bg-orange-500/10 text-orange-300 flex items-center justify-center text-[9px] font-bold">{index+1}</span><span className="text-gray-300 pt-0.5">{item}</span></div>)}</div>}
-          {Array.isArray(review.attachments)&&review.attachments.length>0&&<div className="mt-4"><p className="text-[10px] uppercase tracking-wider text-gray-600 font-bold mb-2">Referências</p><div className="flex flex-wrap gap-2">{review.attachments.map((attachment:any,index:number)=><button key={index} type="button" onClick={()=>void openReviewAttachment(attachment.path)} className="px-3 py-2 rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] text-[10px] text-left"><span className="block font-semibold text-gray-300 max-w-[220px] truncate">{attachment.name}</span><span className="text-gray-600">{Math.max(1,Math.round((attachment.size||0)/1024))} KB</span></button>)}</div></div>}
-        </div>)}</div>}
-      </div>
-    </div>}
-
-    {versioningFile&&<div className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111113] p-5">
-        <div className="flex items-start justify-between gap-3 mb-4">
-          <div><h3 className="text-base font-bold">Enviar nova versão</h3><p className="text-xs text-gray-500 mt-1">Versão atual: v{versioningFile.version_number||1} · {versioningFile.name}</p></div>
-          <button type="button" onClick={()=>{setVersioningFile(null);setVersionFile(null)}} className="w-8 h-8 rounded-lg bg-white/[0.04]">×</button>
-        </div>
-        <label className="block p-4 rounded-xl border border-dashed border-white/15 bg-white/[0.025] cursor-pointer">
-          <input type="file" className="hidden" onChange={e=>setVersionFile(e.target.files?.[0]||null)}/>
-          <span className="text-sm font-semibold">{versionFile?versionFile.name:'Selecionar arquivo da nova versão'}</span>
-          <span className="block text-xs text-gray-500 mt-1">A nova versão será vinculada ao mesmo histórico do arquivo.</span>
-        </label>
-        {saving&&<div className="mt-3"><div className="h-2 rounded-full bg-white/10 overflow-hidden"><div className="h-full bg-[#E30613]" style={{width:versionProgress+'%'}}/></div><p className="text-[10px] text-gray-500 mt-1">{versionProgress}% enviado</p></div>}
-        <div className="flex gap-2 mt-4">
-          <button type="button" onClick={()=>{setVersioningFile(null);setVersionFile(null)}} className="min-h-10 px-4 rounded-xl border border-white/10 text-xs">Cancelar</button>
-          <button type="button" disabled={!versionFile||saving} onClick={()=>void uploadNewVersion()} className="min-h-10 flex-1 px-4 rounded-xl bg-[#E30613] disabled:opacity-40 text-xs font-bold">Enviar nova versão</button>
-        </div>
-      </div>
-    </div>}
-
-    {libraryCustomer&&selectedLibraryGroup&&<div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onMouseDown={e=>{if(e.currentTarget===e.target){setLibraryCustomer(null);setLibraryProject(null);setMenuFile(null)}}}>
-      <div className="w-full max-w-5xl max-h-[86vh] rounded-2xl border border-white/10 bg-[#111113] shadow-2xl overflow-hidden flex flex-col">
-        <div className="h-14 px-4 sm:px-5 border-b border-white/10 flex items-center gap-3 shrink-0">
-          {libraryProject&&<button type="button" onClick={()=>{setLibraryProject(null);setMenuFile(null)}} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-300" title="Voltar" aria-label="Voltar">←</button>}
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold truncate">
-              {selectedLibraryGroup.customer?[selectedLibraryGroup.customer.first_name,selectedLibraryGroup.customer.last_name].filter(Boolean).join(' '):'Sem cliente'}
-            </p>
-            <p className="text-[10px] text-gray-500 truncate">
-              {libraryProject&&selectedLibraryProject?.project?.title?selectedLibraryProject.project.title:selectedLibraryGroup.customer?.email||'Biblioteca de arquivos'}
-            </p>
-          </div>
-          <button type="button" onClick={()=>{setLibraryCustomer(null);setLibraryProject(null);setMenuFile(null)}} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-400 text-lg" title="Fechar" aria-label="Fechar">×</button>
-        </div>
-
-        <div className="p-4 sm:p-5 overflow-y-auto">
-          {!libraryProject?<div>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs uppercase tracking-wide text-gray-500">Projetos</p>
-              <span className="text-[10px] text-gray-600">{selectedLibraryGroup.projects.size} pasta(s)</span>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {Array.from(selectedLibraryGroup.projects.entries()).map(([projectId,projectGroup])=><button
-                key={projectId}
-                type="button"
-                onClick={()=>{setLibraryProject(projectId);setLibrarySearch('');setLibraryType('all');setLibraryReview('all');setLibraryFolder('all');setMenuFile(null)}}
-                className="text-left p-4 rounded-xl border border-white/8 bg-[#171719] hover:bg-[#1d1d20] hover:border-white/15 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-white/[0.05] flex items-center justify-center">📂</div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold truncate">{projectGroup.project?.title||'Arquivos gerais'}</p>
-                    <p className="text-[10px] text-gray-500 mt-1">{projectGroup.files.length} arquivo(s)</p>
-                  </div>
-                  <span className="text-gray-600">›</span>
-                </div>
-              </button>)}
-            </div>
-          </div>:selectedLibraryProject?<div>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs uppercase tracking-wide text-gray-500">Arquivos</p>
-              <span className="text-[10px] text-gray-600">{filteredLibraryFiles.length} de {selectedLibraryProject.files.length} item(ns)</span>
-            </div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
-              <input value={librarySearch} onChange={e=>setLibrarySearch(e.target.value)} placeholder="Buscar arquivo..." className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs"/>
-              <select value={libraryType} onChange={e=>setLibraryType(e.target.value)} className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs">
-                <option value="all">Todos os formatos</option>
-                <option value="image">Imagens</option>
-                <option value="video">Vídeos</option>
-                <option value="audio">Áudios</option>
-                <option value="pdf">PDF</option>
-                <option value="archive">Compactados</option>
-                <option value="other">Outros</option>
-              </select>
-              <select value={libraryReview} onChange={e=>setLibraryReview(e.target.value)} className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs">
-                <option value="all">Toda aprovação</option>
-                <option value="pending">Aguardando cliente</option>
-                <option value="approved">Aprovados</option>
-                <option value="changes_requested">Ajustes solicitados</option>
-                <option value="none">Sem aprovação</option>
-              </select>
-              <select value={libraryFolder} onChange={e=>setLibraryFolder(e.target.value)} className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs">
-                <option value="all">Todas as pastas</option>
-                <option value="root">Sem subpasta</option>
-                {libraryCustomFolders.map((folder:any)=><option key={folder.id} value={folder.id}>{folder.name}</option>)}
-              </select>
-            </div>
-
-            {filteredLibraryFiles.length===0?<div className="py-12 text-center text-sm text-gray-600 border border-dashed border-white/8 rounded-2xl">Nenhum arquivo corresponde aos filtros.</div>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {filteredLibraryFiles.map(row=>{
-                const review=reviewBadge(row)
-                return <div key={row.id} className="relative p-3 rounded-xl bg-[#171719] border border-white/8 hover:border-white/15 transition-colors">
-                  <button type="button" onClick={()=>open(row)} className="w-full text-left">
-                    <div className="h-20 rounded-lg bg-white/[0.035] flex items-center justify-center text-3xl">{fileIcon(row)}</div>
-                    <div className="mt-2 flex items-center justify-between gap-2">
-                      <span className="text-[9px] font-bold text-[#E30613]">{extension(row.name)} · v{row.version_number||1}</span>
-                      <span className="text-[9px] text-gray-600">{sizeLabel(row.file_size)}</span>
-                    </div>
-                    <p className="text-xs font-semibold truncate mt-1" title={row.name}>{row.name}</p>
-                    <p className="text-[9px] text-gray-500 truncate mt-1">{row.custom_folder?.name?('📁 '+row.custom_folder.name):(row.task?.title||'Arquivo geral')}</p>
-                    {review&&<span className={'inline-flex mt-2 px-2 py-1 rounded-full text-[9px] font-semibold '+review.className}>{review.label}</span>}
-                  </button>
-
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {!row.review_required&&<button type="button" disabled={reviewingFile===row.id} onClick={()=>void requestReview(row)} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] disabled:opacity-50 text-[10px] font-bold text-white">{reviewingFile===row.id?'Solicitando...':'Solicitar aprovação'}</button>}
-                    {row.review_required&&row.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(row)} className="min-h-9 flex-1 px-3 rounded-lg border border-white/10 hover:bg-white/[0.05] text-[10px] font-semibold">Cancelar aprovação</button>}
-                    {row.review_required&&row.review_status==='changes_requested'&&<>
-                      <button type="button" onClick={()=>void showReviewDetails(row)} className="min-h-9 flex-1 px-3 rounded-lg border border-orange-500/20 bg-orange-500/[0.08] text-orange-300 text-[10px] font-bold">Ver ajustes</button>
-                      <button type="button" onClick={()=>{setVersioningFile(row);setVersionFile(null);setVersionProgress(0)}} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] text-[10px] font-bold text-white">Enviar nova versão</button>
-                    </>}
-                    {row.review_required&&row.review_status==='approved'&&!isDelivered(row)&&<button type="button" onClick={()=>void move(row,'delivery')} className="min-h-9 flex-1 px-3 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/20 text-[10px] font-bold">Finalizar entrega</button>}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={()=>setMenuFile(menuFile===row.id?null:row.id)}
-                    className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-black/45 hover:bg-black/70 flex items-center justify-center text-gray-300"
-                    title="Ações"
-                    aria-label="Ações do arquivo"
-                  >•••</button>
-
-                  {menuFile===row.id&&<div className="absolute z-20 right-2 top-10 w-56 rounded-xl border border-white/10 bg-[#0d0d0f] shadow-2xl p-1.5" onMouseLeave={()=>setMenuFile(null)}>
-                    <div className="flex items-center gap-1">
-                      {(row.drive_file_id||row.external_url||row.storage_path)&&<button type="button" onClick={()=>{setMenuFile(null);void open(row)}} className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center text-sm" title="Abrir" aria-label="Abrir arquivo">↗</button>}
-                      <button type="button" onClick={()=>void rename(row)} className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center text-sm" title="Renomear" aria-label="Renomear arquivo">✎</button>
-                      {row.storage_provider==='google_drive'&&row.project_id&&<label className="relative w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer text-sm" title="Mover" aria-label="Mover arquivo">
-                        ⇄
-                        <select defaultValue="" onChange={e=>{if(e.target.value){void move(row,e.target.value);setMenuFile(null)}}} className="absolute inset-0 opacity-0 cursor-pointer">
-                          <option value="">Mover</option>
-                          {folderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
-                        </select>
-                      </label>}
-                      <button type="button" onClick={()=>{setMenuFile(null);void remove(row)}} className="w-9 h-9 rounded-lg hover:bg-red-500/10 text-red-400 flex items-center justify-center text-sm" title="Excluir" aria-label="Excluir arquivo">⌫</button>
-                    </div>
-                    <div className="mt-1 border-t border-white/8 pt-1">
-                      {!row.review_required&&<button type="button" onClick={()=>void requestReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Solicitar aprovação</button>}
-                      {row.review_required&&row.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Cancelar aprovação</button>}
-                      {row.review_required&&['approved','changes_requested'].includes(row.review_status)&&<button type="button" onClick={()=>void requestReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Solicitar nova avaliação</button>}
-                    </div>
-                  </div>}
-                </div>
-              })}
-            </div>}
-          </div>:null}
-        </div>
-      </div>
-    </div>}
+</div></div></div>}
   </div>
 }
