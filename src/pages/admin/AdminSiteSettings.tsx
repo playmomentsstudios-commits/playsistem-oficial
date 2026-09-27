@@ -97,7 +97,7 @@ export function AdminSiteSettings() {
   const saveArea=async(area:HomeServiceArea)=>{setAreaSaving(area.id);try{const saved=await siteContentApi.saveHomeServiceArea(area);setAreas(prev=>prev.map(a=>a.id===area.id?saved:a));toast('Card da Home salvo.','success')}catch(error:any){toast(error.message||'Não foi possível salvar o card.','error')}finally{setAreaSaving(null)}}
   const addArea=async()=>{try{const saved=await siteContentApi.saveHomeServiceArea({title:'Nova área',icon:'◆',accent_color:'#E30613',href:'/servicos',topics:[],display_order:(areas.at(-1)?.display_order||0)+10,active:true});setAreas(prev=>[...prev,saved]);toast('Novo card criado.','success')}catch(error:any){toast(error.message||'Não foi possível criar o card.','error')}}
   const removeArea=async(area:HomeServiceArea)=>{if(!confirm('Excluir o card "'+area.title+'"?'))return;try{await siteContentApi.deleteHomeServiceArea(area.id);setAreas(prev=>prev.filter(a=>a.id!==area.id));toast('Card excluído.','success')}catch(error:any){toast(error.message||'Não foi possível excluir o card.','error')}}
-  const uploadAreaImage=async(area:HomeServiceArea,file?:File)=>{if(!file)return;setAreaSaving(area.id);try{const url=await siteContentApi.uploadSiteAsset(file,'home-areas');patchArea(area.id,{image_url:url});const saved=await siteContentApi.saveHomeServiceArea({...area,image_url:url});setAreas(prev=>prev.map(a=>a.id===area.id?saved:a));toast('Imagem atualizada.','success')}catch(error:any){toast(error.message||'Não foi possível enviar a imagem.','error')}finally{setAreaSaving(null)}}
+  const uploadAreaImage=async(area:HomeServiceArea,file?:File)=>{if(!file)return;setAreaSaving(area.id);try{const asset=await siteContentApi.uploadSiteAsset(file,'HOME');patchArea(area.id,{image_url:asset.url,image_drive_file_id:asset.driveFileId,image_mime_type:asset.mimeType,image_file_size:asset.fileSize});const saved=await siteContentApi.saveHomeServiceArea({...area,image_url:asset.url,image_drive_file_id:asset.driveFileId,image_mime_type:asset.mimeType,image_file_size:asset.fileSize});setAreas(prev=>prev.map(a=>a.id===area.id?saved:a));toast('Imagem atualizada.','success')}catch(error:any){toast(error.message||'Não foi possível enviar a imagem.','error')}finally{setAreaSaving(null)}}
 
   if(initialLoading)return <p className="text-gray-400">Carregando configurações...</p>
 
@@ -182,7 +182,7 @@ export function AdminSiteSettings() {
               </div>
             </div>
             <div className="p-4 rounded-xl" style={{ background: 'rgba(76,201,240,0.08)', border: '1px solid rgba(76,201,240,0.2)', color: '#67d7f0' }}>
-              <p className="text-xs">As imagens dos cards da Home podem ser trocadas diretamente na aba Home. Os arquivos são publicados no bucket de assets do site.</p>
+              <p className="text-xs">As imagens dos cards da Home podem ser trocadas diretamente na aba Home. Os arquivos são armazenados no Google Drive e entregues ao site pela camada de mídia da Play Moments.</p>
             </div>
           </div>
         )}
