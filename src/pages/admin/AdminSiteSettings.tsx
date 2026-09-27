@@ -122,7 +122,7 @@ export function AdminSiteSettings() {
         ))}
       </div>
 
-      <div className="max-w-2xl">
+      <div className={tab==='Home'?'max-w-4xl':'max-w-2xl'}>
         {tab === 'Geral' && (
           <div className="flex flex-col gap-4">
             <Input label="Nome da empresa" value={settings.companyName} onChange={set('companyName')} />
@@ -182,7 +182,7 @@ export function AdminSiteSettings() {
               </div>
             </div>
             <div className="p-4 rounded-xl" style={{ background: 'rgba(76,201,240,0.08)', border: '1px solid rgba(76,201,240,0.2)', color: '#67d7f0' }}>
-              <p className="text-xs">Para alterar logo e favicon, use o painel de assets. Upload de imagens disponível após integração completa com storage.</p>
+              <p className="text-xs">As imagens dos cards da Home podem ser trocadas diretamente na aba Home. Os arquivos são publicados no bucket de assets do site.</p>
             </div>
           </div>
         )}
