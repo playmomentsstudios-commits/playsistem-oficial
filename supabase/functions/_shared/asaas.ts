@@ -13,6 +13,7 @@ export async function requireCustomer(req:Request){
  return {db,userId:data.user.id,profile};
 }
 export function asaasBaseUrl(){return (Deno.env.get("ASAAS_BASE_URL")||"https://api-sandbox.asaas.com/v3").replace(/\/$/,"")}
+export function asaasEnvironment(){return /api-sandbox\.asaas\.com/i.test(asaasBaseUrl())?"sandbox":"production" as const}
 export async function asaas(path:string,init:RequestInit={}){
  const response=await fetch(asaasBaseUrl()+path,{...init,headers:{"Content-Type":"application/json","User-Agent":"PlayMoments/1.0 (Supabase Edge Function)","access_token":env("ASAAS_API_KEY"),...(init.headers||{})}});
  const raw=await response.text();let payload:any=null;try{payload=raw?JSON.parse(raw):null}catch{payload={raw}}
