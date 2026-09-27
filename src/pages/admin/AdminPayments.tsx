@@ -38,6 +38,9 @@ export function AdminPayments(){
   }),[rows,statusFilter,scopeFilter,search])
 
   const operationalRows=useMemo(()=>rows.filter(p=>!p.archived_at&&p.environment!=='sandbox'),[rows])
+  const sandboxCount=useMemo(()=>rows.filter(p=>p.environment==='sandbox'&&!p.archived_at).length,[rows])
+  const archivedCount=useMemo(()=>rows.filter(p=>Boolean(p.archived_at)).length,[rows])
+  const unknownCount=useMemo(()=>rows.filter(p=>p.environment==='unknown'&&!p.archived_at).length,[rows])
   const totals=useMemo(()=>({
     received:operationalRows.filter(p=>p.status==='paid').reduce((sum,p)=>sum+(p.amount||0),0),
     pending:operationalRows.filter(p=>['pending','awaiting_confirmation'].includes(p.status)).reduce((sum,p)=>sum+(p.amount||0),0),
@@ -75,6 +78,12 @@ export function AdminPayments(){
       <Metric label="Precisam de atenção" value={totals.attention} tone={totals.attention?'text-amber-300':'text-emerald-300'}/>
     </div>
 
+    <div className="grid sm:grid-cols-3 gap-2 mb-4">
+      <button onClick={()=>setScopeFilter('testes')} className="text-left px-4 py-3 rounded-xl bg-sky-500/[0.05] border border-sky-500/15 hover:bg-sky-500/[0.08]"><span className="text-xs text-sky-300 font-semibold">Sandbox</span><span className="block text-lg font-bold mt-1">{sandboxCount}</span></button>
+      <button onClick={()=>setScopeFilter('arquivados')} className="text-left px-4 py-3 rounded-xl bg-white/[0.025] border border-white/[0.07] hover:bg-white/[0.04]"><span className="text-xs text-gray-400 font-semibold">Arquivados</span><span className="block text-lg font-bold mt-1">{archivedCount}</span></button>
+      <button onClick={()=>setScopeFilter('todos')} className="text-left px-4 py-3 rounded-xl bg-amber-500/[0.04] border border-amber-500/10 hover:bg-amber-500/[0.07]"><span className="text-xs text-amber-300 font-semibold">Legado sem ambiente</span><span className="block text-lg font-bold mt-1">{unknownCount}</span></button>
+    </div>
+
     <div className="p-3 rounded-2xl bg-[#111113] border border-white/10 flex flex-wrap gap-3 mb-5">
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar cliente, pedido ou ID..." className="min-h-11 flex-1 min-w-64 px-4 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-[#E30613]/50"/>
       <select value={scopeFilter} onChange={e=>setScopeFilter(e.target.value)} className="min-h-11 px-3 rounded-xl bg-black border border-white/10">
@@ -106,9 +115,11 @@ export function AdminPayments(){
         <div className="mt-4 rounded-2xl border border-white/10 divide-y divide-white/[0.07]">
           {[['Cliente',[selected.customer?.first_name,selected.customer?.last_name].filter(Boolean).join(' ')||'Cliente'],['E-mail',selected.customer?.email||'—'],['Método',rotulo(metodoPagamento,selected.method)],['Provedor',selected.provider||'—'],['Criado em',new Date(selected.created_at).toLocaleString('pt-BR')],['ID interno',selected.id]].map(([label,value])=><div key={label} className="p-4"><p className="text-[10px] uppercase text-gray-600">{label}</p><p className="text-sm text-gray-300 mt-1 break-all">{value}</p></div>)}
         </div>
-        {selected.environment==='sandbox'&&<div className="mt-4 p-4 rounded-xl bg-sky-500/5 border border-sky-500/15 text-xs text-sky-200">Ambiente Sandbox confirmado. Este registro pode ser retirado dos indicadores sem apagar a trilha financeira.</div>}
+        {selected.environment==='sandbox'&&<div className="mt-4 p-4 rounded-xl bg-sky-500/5 border border-sky-500/15 text-xs text-sky-200"><strong className="block mb-1">Sandbox confirmado</strong>Este registro é de teste. Cancelar interrompe uma cobrança pendente no Asaas; arquivar apenas retira o registro dos indicadores financeiros.</div>}
+        {selected.environment==='unknown'&&<div className="mt-4 p-4 rounded-xl bg-amber-500/5 border border-amber-500/15 text-xs text-amber-200"><strong className="block mb-1">Registro legado</strong>O ambiente desta cobrança não foi registrado quando ela foi criada. Por segurança, ela não pode ser tratada automaticamente como teste.</div>}
+        {selected.environment==='production'&&<div className="mt-4 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15 text-xs text-emerald-200"><strong className="block mb-1">Ambiente de produção</strong>Este registro faz parte do histórico financeiro real e não oferece ação de limpeza.</div>}
         {selected.provider==='manual'&&<div className="mt-4 p-4 rounded-xl bg-amber-500/5 border border-amber-500/15 text-xs text-amber-200">Pagamento manual legado — preservado apenas para histórico.</div>}
-        {!['paid','refunded','cancelled'].includes(selected.status)&&<button onClick={()=>void cancelPayment(selected)} className="mt-5 w-full min-h-11 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm font-semibold">Cancelar cobrança</button>}
+        {!selected.archived_at&&!['paid','refunded','cancelled'].includes(selected.status)&&<button onClick={()=>void cancelPayment(selected)} className="mt-5 w-full min-h-11 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm font-semibold">Cancelar cobrança</button>}
         {selected.environment==='sandbox'&&<button onClick={()=>void setArchived(selected,!selected.archived_at)} className="mt-3 w-full min-h-11 rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-300 text-sm font-semibold">{selected.archived_at?'Restaurar pagamento de teste':'Arquivar pagamento de teste'}</button>}
         <div className="mt-5 p-4 rounded-xl bg-white/[0.025] border border-white/[0.07]"><p className="text-xs font-semibold text-gray-300">Histórico protegido</p><p className="text-[11px] text-gray-600 mt-1">Registros financeiros não são apagados. Somente cobranças comprovadamente Sandbox podem ser arquivadas e restauradas, mantendo auditoria.</p></div>
       </aside>
