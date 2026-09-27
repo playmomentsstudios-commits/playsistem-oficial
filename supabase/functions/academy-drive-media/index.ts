@@ -47,7 +47,7 @@ Deno.serve(async(req)=>{
    const driveToken=await getDriveAccessToken();
    const meta=await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(t.drive_file_id)}?fields=id,name,size,mimeType,modifiedTime,capabilities(canDownload)`,{headers:{Authorization:`Bearer ${driveToken}`}});
    if(!meta.ok)return new Response("Could not read media metadata",{status:meta.status,headers:mediaHeaders()});
-   const info=await meta.json();const size=Number(info.size||0);
+   const info=await meta.json();const size=Number(info.size||0);\n    console.log("academy-media request",{method:req.method,range:req.headers.get("Range"),fileId:t.drive_file_id,mimeType:info.mimeType,size});
    if(!Number.isSafeInteger(size)||size<=0)return new Response("Invalid media size",{status:502,headers:mediaHeaders()});
    if(info.capabilities?.canDownload===false)return new Response("Media download is restricted",{status:403,headers:mediaHeaders()});
 
@@ -76,7 +76,7 @@ Deno.serve(async(req)=>{
     return new Response("Could not stream media",{status:drive.status,headers:mediaHeaders(drive.headers)});
    }
 
-   const out=mediaHeaders(drive.headers);
+   console.log("academy-media upstream",{status:drive.status,requestedRange,contentType:drive.headers.get("content-type"),contentLength:drive.headers.get("content-length"),contentRange:drive.headers.get("content-range")});\n    const out=mediaHeaders(drive.headers);
    if(info.mimeType&&!out.has("Content-Type"))out.set("Content-Type",String(info.mimeType));
 
    if(expectedRange){
@@ -104,7 +104,7 @@ Deno.serve(async(req)=>{
    const driveToken=await getDriveAccessToken();
    const metaResponse=await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(driveFileId)}?fields=id,name,size,mimeType,videoMediaMetadata,capabilities(canDownload)`,{headers:{Authorization:`Bearer ${driveToken}`}});
    if(!metaResponse.ok)throw new Error("Google Drive could not read the uploaded video metadata ("+metaResponse.status+").");
-   const meta=await metaResponse.json();
+   const meta=await metaResponse.json();\n    console.log("academy-media ticket metadata",{lessonId:id,fileId:driveFileId,name:meta.name,mimeType:meta.mimeType,size:meta.size,durationMillis:meta.videoMediaMetadata?.durationMillis,width:meta.videoMediaMetadata?.width,height:meta.videoMediaMetadata?.height});
    if(!String(meta.mimeType||"").startsWith("video/"))throw new Error("O arquivo está no Drive, mas foi armazenado como "+(meta.mimeType||"tipo desconhecido")+" em vez de vídeo.");
    if(!meta.size)throw new Error("O arquivo de vídeo está vazio no Google Drive.");
    if(meta.capabilities?.canDownload===false)throw new Error("O Google Drive bloqueou a leitura deste vídeo.");
