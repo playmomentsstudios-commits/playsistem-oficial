@@ -32,21 +32,21 @@ function MenuIcon({name,size=20}:{name:IconName,size?:number}){
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ICONS[name]}</svg>
 }
 
-const MENU:{label:string;href:string;icon:IconName}[]=[
-  { label: 'Painel', href: '/app/dashboard', icon: 'home' },
-  { label: 'Perfil', href: '/app/perfil', icon: 'user' },
-  { label: 'Pedidos', href: '/app/pedidos', icon: 'orders' },
-  { label: 'Projetos', href: '/app/projetos', icon: 'projects' },
-  { label: 'Serviços', href: '/app/servicos', icon: 'services' },
-  { label: 'Orçamentos', href: '/app/orcamentos', icon: 'quotes' },
-  { label: 'Pagamentos', href: '/app/pagamentos', icon: 'payments' },
-  { label: 'Conversas', href: '/app/conversas', icon: 'chat' },
-  { label: 'Arquivos', href: '/app/arquivos', icon: 'files' },
-  { label: 'Academia', href: '/app/academia', icon: 'academy' },
-  { label: 'Comunidade', href: '/comunidade', icon: 'community' },
-  { label: 'Notificações', href: '/app/notificacoes', icon: 'notifications' },
-  { label: 'Comunicados', href: '/app/comunicados', icon: 'announcements' },
-  { label: 'Configurações', href: '/app/configuracoes', icon: 'settings' },
+const MENU:{label:string;href:string;icon:IconName;group:string}[]=[
+  { label: 'Início', href: '/app/dashboard', icon: 'home', group: 'principal' },
+  { label: 'Perfil', href: '/app/perfil', icon: 'user', group: 'conta' },
+  { label: 'Pedidos', href: '/app/pedidos', icon: 'orders', group: 'negocios' },
+  { label: 'Projetos', href: '/app/projetos', icon: 'projects', group: 'principal' },
+  { label: 'Serviços', href: '/app/servicos', icon: 'services', group: 'negocios' },
+  { label: 'Orçamentos', href: '/app/orcamentos', icon: 'quotes', group: 'negocios' },
+  { label: 'Pagamentos', href: '/app/pagamentos', icon: 'payments', group: 'negocios' },
+  { label: 'Conversas', href: '/app/conversas', icon: 'chat', group: 'principal' },
+  { label: 'Arquivos', href: '/app/arquivos', icon: 'files', group: 'principal' },
+  { label: 'Academia', href: '/app/academia', icon: 'academy', group: 'experiencia' },
+  { label: 'Comunidade', href: '/comunidade', icon: 'community', group: 'experiencia' },
+  { label: 'Notificações', href: '/app/notificacoes', icon: 'notifications', group: 'conta' },
+  { label: 'Comunicados', href: '/app/comunicados', icon: 'announcements', group: 'experiencia' },
+  { label: 'Configurações', href: '/app/configuracoes', icon: 'settings', group: 'conta' },
 ]
 
 export function CustomerLayoutV2() {
@@ -55,7 +55,7 @@ export function CustomerLayoutV2() {
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [expanded,setExpanded]=useState(()=>{
-    try{return window.localStorage.getItem('playmoments.customer.sidebar')==='expanded'}catch{return false}
+    try{return window.localStorage.getItem('playmoments.customer.sidebar')!=='collapsed'}catch{return true}
   })
   const [counts, setCounts] = useState({ messages: 0, notifications: 0 })
   const [floatingChatEnabled,setFloatingChatEnabled]=useState(true)
@@ -132,21 +132,23 @@ export function CustomerLayoutV2() {
       </div>
 
       <nav className="flex-1 px-2 overflow-y-auto pb-3">
-        {MENU.map(item=>{
-          const active=location.pathname===item.href||location.pathname.startsWith(item.href+'/')
-          const count=item.href==='/app/conversas'?counts.messages:item.href==='/app/notificacoes'?counts.notifications:0
-          return <Link
-            key={item.href}
-            to={item.href}
-            onClick={()=>setSidebarOpen(false)}
-            title={!showLabels?item.label:undefined}
-            className={'group relative flex items-center rounded-xl mb-1 transition-all duration-200 '+(showLabels?'gap-3 px-3 h-11':'justify-center h-11')+(active?' bg-[#E30613]/12 text-[#ff3340]':' text-[#E30613] hover:bg-[#E30613]/8')}
-          >
-            <span className={'shrink-0 transition-transform duration-200 '+(active?'scale-105':'group-hover:scale-105')}><MenuIcon name={item.icon}/></span>
-            {showLabels&&<span className={'text-sm truncate transition-colors '+(active?'font-semibold text-white':'font-medium text-[#b7b7c2] group-hover:text-white')}>{item.label}</span>}
-            {count>0&&<span className={(showLabels?'ml-auto ':'absolute top-1 right-1 ')+'min-w-4 h-4 px-1 rounded-full '+(item.href==='/app/conversas'?'bg-[#25D366]':'bg-[#E30613]')+' text-white text-[9px] font-bold flex items-center justify-center'}>{count}</span>}
-            {active&&<span className="absolute -left-2 w-1 h-6 rounded-r bg-[#E30613]"/>}
-          </Link>
+        {(['principal','negocios','experiencia','conta'] as const).map((group,groupIndex)=>{
+          const items=MENU.filter(item=>item.group===group)
+          const title={principal:'Minha Play Moments',negocios:'Contratações',experiencia:'Conteúdo',conta:'Conta'}[group]
+          return <div key={group} className={groupIndex?'mt-4 pt-3 border-t border-white/[.045]':''}>
+            {showLabels&&<p className="px-3 mb-1.5 text-[9px] uppercase tracking-[.16em] font-semibold text-[#555560]">{title}</p>}
+            {items.map(item=>{
+              const active=location.pathname===item.href||location.pathname.startsWith(item.href+'/')
+              const count=item.href==='/app/conversas'?counts.messages:item.href==='/app/notificacoes'?counts.notifications:0
+              return <Link key={item.href} to={item.href} onClick={()=>setSidebarOpen(false)} title={!showLabels?item.label:undefined}
+                className={'group relative flex items-center rounded-xl mb-0.5 transition-all duration-200 '+(showLabels?'gap-3 px-3 h-10':'justify-center h-10')+(active?' bg-white/[.065] text-white':' text-[#777783] hover:text-[#d8d8de] hover:bg-white/[.035]')}>
+                <span className={'shrink-0 '+(active?'text-[#ff3340]':'group-hover:text-[#b7b7c2]')}><MenuIcon name={item.icon} size={18}/></span>
+                {showLabels&&<span className={'text-[13px] truncate '+(active?'font-semibold':'font-medium')}>{item.label}</span>}
+                {count>0&&<span className={(showLabels?'ml-auto ':'absolute top-0.5 right-0.5 ')+'min-w-[17px] h-[17px] px-1 rounded-full bg-[#E30613] text-white text-[8px] font-bold flex items-center justify-center'}>{count>99?'99+':count}</span>}
+                {active&&<span className="absolute -left-2 w-0.5 h-5 rounded-r bg-[#E30613]"/>}
+              </Link>
+            })}
+          </div>
         })}
       </nav>
 
