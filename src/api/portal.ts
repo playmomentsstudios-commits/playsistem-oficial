@@ -332,7 +332,14 @@ export const portalApi = {
   },
   createAsaasPayment: async (orderId:string,billingType:'PIX'|'CREDIT_CARD'='PIX') => {
     const { data,error }=await supabase.functions.invoke('asaas-create-payment',{body:{order_id:orderId,billing_type:billingType}})
-    if(error)throw error
+    if(error){
+      let message='Não foi possível criar a cobrança no Asaas.'
+      try{
+        const payload=await (error as any)?.context?.json?.()
+        if(payload?.error)message=payload.error
+      }catch{}
+      throw new Error(message)
+    }
     if(!data?.ok)throw new Error(data?.error||'Não foi possível criar a cobrança no Asaas.')
     return data
   },
