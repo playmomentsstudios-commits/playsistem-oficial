@@ -112,11 +112,11 @@ export function AdminDashboard(){
       </div>
     </div>
 
-    <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
-      {cards.map(card=><Link key={card.label} to={card.href} className="pm-surface pm-surface-interactive p-4 md:p-5 group relative overflow-hidden">
+    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2.5">
+      {cards.map(card=><Link key={card.label} to={card.href} className="pm-surface pm-surface-interactive p-3.5 md:p-4 group relative overflow-hidden min-h-[108px]">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
         <div className="flex items-start justify-between gap-3"><p className="text-[10px] uppercase tracking-[0.12em] text-gray-500">{card.label}</p><span className="text-gray-700 group-hover:text-gray-300 transition-colors" aria-hidden="true">↗</span></div>
-        <p className={'text-3xl font-bold mt-3 '+card.tone}>{card.value}</p>
+        <p className={'text-2xl font-bold mt-2.5 '+card.tone}>{card.value}</p>
         <p className="text-[10px] text-gray-600 mt-1.5">{card.hint}</p>
       </Link>)}
     </div>
@@ -126,7 +126,7 @@ export function AdminDashboard(){
       <Link to={metrics.overdueActions?'/admin/crm':metrics.pendingPayments?'/admin/pagamentos':'/admin/conversas'} className="text-xs font-semibold text-amber-300 hover:text-amber-200">Resolver agora →</Link>
     </div>}
 
-    <div className="grid md:grid-cols-2 gap-3 mt-3">
+    <div className="grid md:grid-cols-2 gap-2.5 mt-2.5">
       <Link to="/admin/crm" className="pm-surface p-4">
         <p className="text-[10px] uppercase text-gray-500">Pipeline em negociação</p>
         <p className="text-xl font-bold text-[#E30613] mt-2">{money(metrics.pipelineValue)}</p>
@@ -169,7 +169,7 @@ export function AdminDashboard(){
             const status=String(project.status||'planning')
             const statusTone=status==='review'?'bg-violet-500/10 text-violet-300':status==='in_progress'?'bg-sky-500/10 text-sky-300':'bg-white/[0.04] text-gray-400'
             return <Link key={project.id} to={'/admin/projetos/'+project.id} className="block p-4 hover:bg-white/[0.025] transition-colors">
-              <div className="flex items-start justify-between gap-3"><p className="text-sm font-semibold truncate">{project.title}</p><span className={'text-[9px] uppercase tracking-wide px-2 py-1 rounded-full shrink-0 '+statusTone}>{status.replaceAll('_',' ')}</span></div>
+              <div className="flex items-start justify-between gap-3"><p className="text-sm font-semibold truncate">{project.title}</p><span className={'text-[9px] uppercase tracking-wide px-2 py-1 rounded-full shrink-0 '+statusTone}>{status.replace(/_/g,' ')}</span></div>
               <div className="flex gap-3 mt-2 text-[10px] text-gray-600"><span>Prioridade: {project.priority||'normal'}</span>{project.due_date&&<span>Prazo: {new Date(project.due_date+'T12:00:00').toLocaleDateString('pt-BR')}</span>}</div>
             </Link>
           })}
