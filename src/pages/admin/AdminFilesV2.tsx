@@ -484,13 +484,14 @@ export function AdminFilesV2(){
               {libraryProject&&selectedLibraryProject?.project?.title?selectedLibraryProject.project.title:selectedLibraryGroup.customer?.email||'Biblioteca de arquivos'}
             </p>
           </div>
+          <button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='sem-cliente')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-8 px-3 rounded-lg bg-[#E30613] hover:bg-[#f01826] text-white text-[10px] font-bold">＋ Novo</button>
           <button type="button" onClick={()=>{setLibraryCustomer(null);setLibraryProject(null);setMenuFile(null)}} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-400 text-lg" title="Fechar" aria-label="Fechar">×</button>
         </div>
 
         <div className="p-4 sm:p-5 overflow-y-auto">
           {!libraryProject?<div>
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs uppercase tracking-wide text-gray-500">Projetos</p>
+              <p className="text-[10px] uppercase tracking-[.14em] text-gray-500">Pastas de projetos</p>
               <span className="text-[10px] text-gray-600">{selectedLibraryGroup.projects.size} pasta(s)</span>
             </div>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -498,7 +499,7 @@ export function AdminFilesV2(){
                 key={projectId}
                 type="button"
                 onClick={()=>{setLibraryProject(projectId);setLibrarySearch('');setLibraryType('all');setLibraryReview('all');setLibraryFolder('all');setMenuFile(null)}}
-                className="text-left p-4 rounded-xl border border-white/8 bg-[#171719] hover:bg-[#1d1d20] hover:border-white/15 transition-colors"
+                className="text-left p-3 rounded-xl border border-white/8 bg-[#171719] hover:bg-[#1d1d20] hover:border-white/15 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-white/[0.05] flex items-center justify-center">📂</div>
@@ -516,7 +517,7 @@ export function AdminFilesV2(){
               <span className="text-[10px] text-gray-600">{filteredLibraryFiles.length} de {selectedLibraryProject.files.length} item(ns)</span>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-[minmax(180px,1.6fr)_repeat(3,minmax(130px,.8fr))] gap-2 mb-3 p-2 rounded-xl bg-black/20 border border-white/[0.06]">
               <input value={librarySearch} onChange={e=>setLibrarySearch(e.target.value)} placeholder="Buscar arquivo..." className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs"/>
               <select value={libraryType} onChange={e=>setLibraryType(e.target.value)} className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs">
                 <option value="all">Todos os formatos</option>
@@ -544,9 +545,9 @@ export function AdminFilesV2(){
             {filteredLibraryFiles.length===0?<div className="py-12 text-center text-sm text-gray-600 border border-dashed border-white/8 rounded-2xl">Nenhum arquivo corresponde aos filtros.</div>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {filteredLibraryFiles.map(row=>{
                 const review=reviewBadge(row)
-                return <div key={row.id} className="relative p-3 rounded-xl bg-[#171719] border border-white/8 hover:border-white/15 transition-colors">
+                return <div key={row.id} className="relative p-2.5 rounded-xl bg-[#171719] border border-white/8 hover:border-white/15 transition-colors">
                   <button type="button" onClick={()=>open(row)} className="w-full text-left">
-                    <div className="h-20 rounded-lg bg-white/[0.035] flex items-center justify-center text-3xl">{fileIcon(row)}</div>
+                    <div className="h-14 rounded-lg bg-white/[0.035] flex items-center justify-center text-2xl">{fileIcon(row)}</div>
                     <div className="mt-2 flex items-center justify-between gap-2">
                       <span className="text-[9px] font-bold text-[#E30613]">{extension(row.name)} · v{row.version_number||1}</span>
                       <span className="text-[9px] text-gray-600">{sizeLabel(row.file_size)}</span>
