@@ -13,13 +13,20 @@ export function PaymentsPage(){
   const [rows,setRows]=useState<any[]>([])
   const [settings,setSettings]=useState<any>(null)
   const [loading,setLoading]=useState(true)
+  const [error,setError]=useState('')
   const [uploading,setUploading]=useState<string|null>(null)
 
   const load=async()=>{
-    const [payments,config]=await Promise.all([portalApi.payments(),portalApi.paymentSettings()])
-    setRows(payments)
-    setSettings(config)
-    setLoading(false)
+    try{
+      setError('')
+      const [payments,config]=await Promise.all([portalApi.payments(),portalApi.paymentSettings()])
+      setRows(payments)
+      setSettings(config)
+    }catch(e:any){
+      setError(e.message||'Não foi possível carregar seus pagamentos.')
+    }finally{
+      setLoading(false)
+    }
   }
 
   useEffect(()=>{void load()},[])
@@ -54,6 +61,8 @@ export function PaymentsPage(){
 
     {loading
       ? <p className="text-gray-400">Carregando...</p>
+      : error
+        ? <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5"><p className="text-red-300">{error}</p><button onClick={()=>{setLoading(true);void load()}} className="text-sm text-[#E30613] mt-2">Tentar novamente</button></div>
       : !rows.length
         ? <EmptyState icon="💳" title="Nenhum pagamento registrado"/>
         : <div className="space-y-4">{rows.map(payment=>{
