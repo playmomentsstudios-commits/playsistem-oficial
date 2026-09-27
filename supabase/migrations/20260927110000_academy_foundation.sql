@@ -12,6 +12,7 @@ create table if not exists public.courses (
   cover_url text,
   cover_mime_type text,
   cover_file_size bigint,
+  drive_folder_id text,
   instructor_name text,
   estimated_minutes integer,
   published_at timestamptz,
@@ -24,6 +25,7 @@ create table if not exists public.course_modules (
   course_id uuid not null references public.courses(id) on delete cascade,
   title text not null,
   description text,
+  drive_folder_id text,
   display_order integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -54,6 +56,16 @@ create table if not exists public.lesson_materials (
   display_order integer not null default 0,
   created_at timestamptz not null default now()
 );
+create table if not exists public.academy_media_tickets (
+  token uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  drive_file_id text not null,
+  purpose text not null check (purpose in ('lesson_video','material')),
+  expires_at timestamptz not null default (now()+interval '15 minutes'),
+  created_at timestamptz not null default now()
+);
+create index if not exists academy_media_tickets_expiry_idx on public.academy_media_tickets(expires_at);
+
 create table if not exists public.course_enrollments (
   id uuid primary key default gen_random_uuid(),
   course_id uuid not null references public.courses(id) on delete cascade,
@@ -83,6 +95,7 @@ alter table public.courses enable row level security;
 alter table public.course_modules enable row level security;
 alter table public.course_lessons enable row level security;
 alter table public.lesson_materials enable row level security;
+alter table public.academy_media_tickets enable row level security;
 alter table public.course_enrollments enable row level security;
 alter table public.lesson_progress enable row level security;
 
@@ -107,6 +120,8 @@ create policy "academy admins manage materials" on public.lesson_materials for a
 create policy "academy students view materials" on public.lesson_materials for select using (
   exists(select 1 from public.course_lessons l join public.course_modules m on m.id=l.module_id join public.course_enrollments e on e.course_id=m.course_id where l.id=lesson_materials.lesson_id and e.user_id=auth.uid() and e.status in ('active','completed'))
 );
+create policy "academy users view own media tickets" on public.academy_media_tickets for select using (user_id=auth.uid());
+create policy "academy admins manage media tickets" on public.academy_media_tickets for all using (public.is_active_admin()) with check (public.is_active_admin());
 create policy "academy admins manage enrollments" on public.course_enrollments for all using (public.is_active_admin()) with check (public.is_active_admin());
 create policy "academy students view own enrollments" on public.course_enrollments for select using (user_id=auth.uid());
 create policy "academy students create free enrollment" on public.course_enrollments for insert with check (
