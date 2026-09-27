@@ -76,20 +76,18 @@ export function AdminLayout() {
       flexDirection: 'column',
       ...(mobile ? { position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 50 } : {}),
     }}>
-      <div className="flex items-center justify-between px-5 py-5 border-b"
-        style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-        <Link to="/"><img src={logoUrl} alt="Play Moments" style={{ height: 24 }} /></Link>
-        {mobile && <button onClick={() => setSidebarOpen(false)} style={{ color: '#6b6b78' }}>✕</button>}
-      </div>
-
-      <div className="px-4 py-3 mx-3 mt-3 rounded-xl"
-        style={{ background: 'rgba(227,6,19,0.1)', border: '1px solid rgba(227,6,19,0.2)' }}>
-        <div className="flex items-center gap-2">
-          <span className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#E30613]/15 text-[#ff5364]"><MenuIcon name="team" size={14} /></span>
-          <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em]" style={{ color: '#E30613' }}>{user?.role === 'admin' ? 'Administrador' : 'Colaborador'}</p>
-            <p className="text-xs truncate mt-0.5" style={{ color: '#b0b0bb' }}>{user?.name}</p>
-          </div>
+      <div className="px-5 pt-6 pb-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+        <div className="flex items-start justify-between gap-3">
+          <Link to="/admin" className="block">
+            <img src={logoUrl} alt="Play Moments" className="h-10 w-auto object-contain" />
+            <span className="block mt-2 text-[9px] uppercase tracking-[0.22em] text-gray-600">Painel administrativo</span>
+          </Link>
+          {mobile && <button onClick={() => setSidebarOpen(false)} className="mt-1 text-gray-600 hover:text-gray-300">✕</button>}
+        </div>
+        <div className="flex items-center gap-2 mt-4 pt-3 border-t border-white/[0.05]">
+          <span className="w-2 h-2 rounded-full bg-emerald-400" aria-hidden="true" />
+          <p className="min-w-0 text-[10px] text-gray-500 truncate">{user?.name || (user?.role === 'admin' ? 'Administrador' : 'Colaborador')}</p>
+          <span className="ml-auto text-[9px] uppercase tracking-wider text-gray-700">{user?.role === 'admin' ? 'Admin' : 'Equipe'}</span>
         </div>
       </div>
 
