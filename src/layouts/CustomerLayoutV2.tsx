@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Component, type ErrorInfo, type ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { afterAuthPath } from '../lib/navigation'
@@ -34,20 +34,34 @@ function MenuIcon({name,size=20}:{name:IconName,size?:number}){
 
 const MENU:{label:string;href:string;icon:IconName;group:string}[]=[
   { label: 'Início', href: '/app/dashboard', icon: 'home', group: 'principal' },
-  { label: 'Perfil', href: '/app/perfil', icon: 'user', group: 'conta' },
   { label: 'Pedidos', href: '/app/pedidos', icon: 'orders', group: 'negocios' },
   { label: 'Projetos', href: '/app/projetos', icon: 'projects', group: 'principal' },
   { label: 'Serviços', href: '/app/servicos', icon: 'services', group: 'negocios' },
   { label: 'Orçamentos', href: '/app/orcamentos', icon: 'quotes', group: 'negocios' },
   { label: 'Pagamentos', href: '/app/pagamentos', icon: 'payments', group: 'negocios' },
-  { label: 'Conversas', href: '/app/conversas', icon: 'chat', group: 'principal' },
   { label: 'Arquivos', href: '/app/arquivos', icon: 'files', group: 'principal' },
   { label: 'Academia', href: '/app/academia', icon: 'academy', group: 'experiencia' },
   { label: 'Comunidade', href: '/comunidade', icon: 'community', group: 'experiencia' },
-  { label: 'Notificações', href: '/app/notificacoes', icon: 'notifications', group: 'conta' },
   { label: 'Comunicados', href: '/app/comunicados', icon: 'announcements', group: 'experiencia' },
-  { label: 'Configurações', href: '/app/configuracoes', icon: 'settings', group: 'conta' },
 ]
+
+
+class CustomerRouteBoundary extends Component<{children:ReactNode;route:string},{error:Error|null}>{
+  state:{error:Error|null}={error:null}
+  static getDerivedStateFromError(error:Error){return {error}}
+  componentDidCatch(error:Error,info:ErrorInfo){console.error('[CustomerPortal] route crashed',this.props.route,error,info)}
+  componentDidUpdate(prev:{route:string}){if(prev.route!==this.props.route&&this.state.error)this.setState({error:null})}
+  render(){
+    if(!this.state.error)return this.props.children
+    return <div className="max-w-2xl mx-auto mt-10 p-6 rounded-2xl border border-red-500/20 bg-red-500/[.04]">
+      <p className="text-[10px] uppercase tracking-[.16em] font-bold text-[#ff5364]">Área do cliente</p>
+      <h1 className="text-xl font-bold text-white mt-2">Não foi possível abrir esta tela</h1>
+      <p className="text-sm text-[#8d8d98] mt-2">A navegação continua disponível. Tente carregar novamente; se persistir, o erro abaixo identifica a origem.</p>
+      <pre className="mt-4 p-3 rounded-xl bg-black/30 text-xs text-red-200 whitespace-pre-wrap break-words">{this.state.error.message||'Erro inesperado'}</pre>
+      <button onClick={()=>window.location.reload()} className="mt-4 h-10 px-4 rounded-xl bg-[#E30613] text-white text-xs font-bold">Recarregar tela</button>
+    </div>
+  }
+}
 
 export function CustomerLayoutV2() {
   const { user, isAuthenticated, isLoading, logout } = useAuth()
@@ -59,6 +73,7 @@ export function CustomerLayoutV2() {
   })
   const [counts, setCounts] = useState({ messages: 0, notifications: 0 })
   const [floatingChatEnabled,setFloatingChatEnabled]=useState(true)
+  const [accountMenuOpen,setAccountMenuOpen]=useState(false)
 
   useEffect(() => {
     if (!user?.id) return
@@ -132,9 +147,9 @@ export function CustomerLayoutV2() {
       </div>
 
       <nav className="flex-1 px-2 overflow-y-auto pb-3">
-        {(['principal','negocios','experiencia','conta'] as const).map((group,groupIndex)=>{
+        {(['principal','negocios','experiencia'] as const).map((group,groupIndex)=>{
           const items=MENU.filter(item=>item.group===group)
-          const title={principal:'Minha Play Moments',negocios:'Contratações',experiencia:'Conteúdo',conta:'Conta'}[group]
+          const title={principal:'Minha Play Moments',negocios:'Contratações',experiencia:'Conteúdo'}[group]
           return <div key={group} className={groupIndex?'mt-4 pt-3 border-t border-white/[.045]':''}>
             {showLabels&&<p className="px-3 mb-1.5 text-[9px] uppercase tracking-[.16em] font-semibold text-[#555560]">{title}</p>}
             {items.map(item=>{
@@ -163,14 +178,6 @@ export function CustomerLayoutV2() {
           <span className={'transition-transform duration-300 '+(expanded?'rotate-180':'')}><MenuIcon name="chevron"/></span>
           {showLabels&&<span className="text-sm font-medium text-[#b7b7c2]">{expanded?'Recolher menu':'Expandir menu'}</span>}
         </button>}
-        <button
-          onClick={handleLogout}
-          title={!showLabels?'Sair':undefined}
-          className={'w-full rounded-xl text-[#E30613] hover:bg-[#E30613]/8 transition-colors '+(showLabels?'flex items-center gap-3 px-3 h-11':'h-11 flex items-center justify-center')}
-        >
-          <MenuIcon name="logout"/>
-          {showLabels&&<span className="text-sm font-medium text-[#b7b7c2]">Sair</span>}
-        </button>
       </div>
     </aside>
   }
@@ -184,6 +191,27 @@ export function CustomerLayoutV2() {
     </>}
 
     <div className="flex-1 flex flex-col min-w-0">
+      <header className="hidden md:flex h-16 items-center justify-end gap-2 px-6 border-b border-white/5 bg-[#0b0b0d]/95">
+        <Link to="/app/conversas" className="relative w-10 h-10 rounded-xl flex items-center justify-center text-[#7d7d88] hover:text-white hover:bg-white/[.05]" title="Mensagens">
+          <MenuIcon name="chat" size={18}/>{counts.messages>0&&<span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#E30613] text-[8px] font-bold text-white flex items-center justify-center">{counts.messages>99?'99+':counts.messages}</span>}
+        </Link>
+        <Link to="/app/notificacoes" className="relative w-10 h-10 rounded-xl flex items-center justify-center text-[#7d7d88] hover:text-white hover:bg-white/[.05]" title="Notificações">
+          <MenuIcon name="notifications" size={18}/>{counts.notifications>0&&<span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#E30613] text-[8px] font-bold text-white flex items-center justify-center">{counts.notifications>99?'99+':counts.notifications}</span>}
+        </Link>
+        <div className="relative ml-1">
+          <button onClick={()=>setAccountMenuOpen(v=>!v)} className="h-10 pl-2 pr-3 rounded-xl flex items-center gap-2 hover:bg-white/[.05]">
+            <span className="w-8 h-8 rounded-lg overflow-hidden bg-[#E30613] text-white flex items-center justify-center text-xs font-bold">{user?.avatar?<img src={user.avatar} alt="" className="w-full h-full object-cover"/>:(user?.name?.charAt(0)??'?')}</span>
+            <span className="text-xs font-semibold text-[#d8d8de] max-w-[120px] truncate">{user?.name}</span>
+            <span className={'text-[#666672] transition-transform '+(accountMenuOpen?'rotate-90':'')}><MenuIcon name="chevron" size={14}/></span>
+          </button>
+          {accountMenuOpen&&<><button aria-label="Fechar menu" className="fixed inset-0 z-30 cursor-default" onClick={()=>setAccountMenuOpen(false)}/><div className="absolute right-0 top-12 z-40 w-52 p-1.5 rounded-2xl border border-white/[.08] bg-[#111114] shadow-2xl">
+            <Link to="/app/perfil" onClick={()=>setAccountMenuOpen(false)} className="flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#aaaab4] hover:text-white hover:bg-white/[.05]"><MenuIcon name="user" size={16}/>Perfil</Link>
+            <Link to="/app/configuracoes" onClick={()=>setAccountMenuOpen(false)} className="flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#aaaab4] hover:text-white hover:bg-white/[.05]"><MenuIcon name="settings" size={16}/>Configurações</Link>
+            <div className="my-1 border-t border-white/[.06]"/>
+            <button onClick={handleLogout} className="w-full flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#ff4b55] hover:bg-[#E30613]/10"><MenuIcon name="logout" size={16}/>Sair</button>
+          </div></>}
+        </div>
+      </header>
       <div className="md:hidden flex items-center justify-between p-4 border-b bg-[#0d0d0f] border-white/5">
         <button onClick={()=>setSidebarOpen(true)} className="text-[#E30613]">
           <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
@@ -193,7 +221,7 @@ export function CustomerLayoutV2() {
       </div>
 
       <main className="flex-1 overflow-auto p-4 md:p-8">
-        <Outlet/>
+        <CustomerRouteBoundary route={location.pathname}><Outlet/></CustomerRouteBoundary>
       </main>
     </div>
     {floatingChatEnabled&&<FloatingCustomerChat unread={counts.messages}/>} 

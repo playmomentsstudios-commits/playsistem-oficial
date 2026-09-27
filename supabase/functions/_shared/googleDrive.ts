@@ -378,7 +378,8 @@ export async function ensureAcademyFolder(db: SupabaseClient, userId: string, co
   if (!academyRoot) academyRoot = await createDriveFolder("ACADEMIA", rootFolderId, { playMomentsKind: "academy-root" });
 
   const { data: course, error: courseError } = await db.from("courses").select("id,title,drive_folder_id").eq("id",courseId).single();
-  if (courseError || !course) throw new Error("Course not found");
+  if (courseError) throw new Error(`Academy course lookup failed: ${courseError.message}`);
+  if (!course) throw new Error("Academy course not found");
   let courseFolderId = course.drive_folder_id;
   if (!courseFolderId) {
     const existing = await findDriveFolder(academyRoot.id,"academy-course",courseId);
@@ -390,7 +391,8 @@ export async function ensureAcademyFolder(db: SupabaseClient, userId: string, co
   if (!moduleId) return { academyRootId:academyRoot.id, courseFolderId, folderId:courseFolderId };
 
   const { data: module, error: moduleError } = await db.from("course_modules").select("id,title,course_id,drive_folder_id").eq("id",moduleId).eq("course_id",courseId).single();
-  if (moduleError || !module) throw new Error("Course module not found");
+  if (moduleError) throw new Error(`Academy module lookup failed: ${moduleError.message}`);
+  if (!module) throw new Error("Academy course module not found");
   let moduleFolderId = module.drive_folder_id;
   if (!moduleFolderId) {
     const existing = await findDriveFolder(courseFolderId,"academy-module",moduleId);
