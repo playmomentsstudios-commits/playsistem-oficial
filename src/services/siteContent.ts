@@ -200,12 +200,14 @@ export const siteContentApi={
     if(error)throw error
   },
 
-  uploadSiteAsset:async(file:File,folder='general')=>{
-    const ext=file.name.includes('.')?'.'+file.name.split('.').pop():''
-    const path=folder+'/'+crypto.randomUUID()+ext
-    const {error}=await supabase.storage.from('site-assets').upload(path,file,{upsert:false})
+  uploadSiteAsset:async(file:File,section='HOME')=>{
+    const {data,error}=await supabase.functions.invoke('google-drive-site-asset-upload',{body:{file_name:file.name,mime_type:file.type||'application/octet-stream',file_size:file.size,section}})
     if(error)throw error
-    const {data}=supabase.storage.from('site-assets').getPublicUrl(path)
-    return data.publicUrl
-  },
+    if(!data?.upload_url)throw new Error(data?.error||'Não foi possível iniciar o upload no Drive.')
+    const uploaded=await fetch(data.upload_url,{method:'PUT',headers:{'Content-Type':file.type||'application/octet-stream'},body:file})
+    if(!uploaded.ok)throw new Error('Não foi possível concluir o upload no Drive.')
+    const driveFile=await uploaded.json()
+    const base=(import.meta.env.VITE_SUPABASE_URL||'').replace(/\/$/,'')
+    return {driveFileId:driveFile.id as string,url:`${base}/functions/v1/google-drive-site-asset?id=${encodeURIComponent(driveFile.id)}`,mimeType:driveFile.mimeType||file.type||null,fileSize:Number(driveFile.size||file.size)||null}
+  }
 }
