@@ -38,5 +38,9 @@ Deno.serve(async(req)=>{
    if(stockError)throw stockError;
   }
   return json({ok:true});
- }catch(error){return json({ok:false,error:error instanceof Error?error.message:"Unknown error"},400)}
+ }catch(error){
+  const message=error instanceof Error?error.message:"Unknown error";
+  console.error("asaas-admin-cancel:",message);
+  return json({ok:false,error:message},400);
+ }
 });
