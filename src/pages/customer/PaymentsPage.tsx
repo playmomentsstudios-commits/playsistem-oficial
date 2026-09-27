@@ -69,6 +69,7 @@ export function PaymentsPage(){
           const receipts=payment.receipt||[]
           const latest=receipts[0]
           const canUpload=!['paid','cancelled','refunded'].includes(payment.status)
+          const asaasPix=payment.provider==='asaas'&&payment.method==='pix_gateway'?payment.provider_payload?.pixQrCode:null
           return <div key={payment.id} className="p-5 rounded-2xl bg-[#141416] border border-white/10">
             <div className="flex flex-wrap justify-between gap-4">
               <div>
@@ -97,6 +98,14 @@ export function PaymentsPage(){
 
             {payment.status==='paid'
               ? <p className="mt-4 text-emerald-400">✓ Pagamento recebido e confirmado</p>
+              : asaasPix?.payload?<div className="mt-4 p-4 rounded-xl bg-white/5 text-sm space-y-3">
+                <p className="font-semibold text-white">PIX Asaas</p>
+                {asaasPix.encodedImage&&<img src={'data:image/png;base64,'+asaasPix.encodedImage} alt="QR Code PIX" className="w-48 h-48 bg-white rounded-xl p-2"/>}
+                <p className="text-xs text-gray-400">Escaneie o QR Code ou copie o código PIX abaixo.</p>
+                <div className="p-3 rounded-lg bg-black/30 break-all text-xs">{asaasPix.payload}</div>
+                <button onClick={()=>navigator.clipboard.writeText(asaasPix.payload)} className="px-3 py-2 rounded-lg bg-[#E30613] text-white">Copiar PIX</button>
+                {asaasPix.expirationDate&&<p className="text-xs text-gray-500">Expira em {new Date(asaasPix.expirationDate).toLocaleString('pt-BR')}</p>}
+              </div>
               : canUpload&&settings&&<div className="mt-4 p-4 rounded-xl bg-white/5 text-sm space-y-2">
                 <p><b>Beneficiário:</b> {settings.beneficiary_name||'Não configurado'}</p>
                 <p><b>Banco:</b> {settings.bank_name||'Não configurado'}</p>

@@ -15,9 +15,10 @@ export function CartPage(){
   if(!user){navigate(authLink('/login','/carrinho'));return}
   try{
    setLoading(true)
-   await portalApi.createCartOrder(cart.items.map(i=>({product_id:i.productId,quantity:i.quantity})))
+   const orderId=await portalApi.createCartOrder(cart.items.map(i=>({product_id:i.productId,quantity:i.quantity})))
+   try{await portalApi.createAsaasPayment(orderId,'PIX')}catch(paymentError){console.error(paymentError)}
    clearCart()
-   toast('Pedido criado. Agora finalize o pagamento.','success')
+   toast('Pedido criado. Finalize o pagamento na sua área.','success')
    navigate('/app/pagamentos')
   }catch(e:any){toast(e.message||'Não foi possível finalizar a compra.','error')}finally{setLoading(false)}
  }

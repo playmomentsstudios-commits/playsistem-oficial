@@ -63,7 +63,8 @@ export function ProductDetailPage() {
     if (!user) { navigate(authLink('/cadastro', '/produtos/' + product.slug)); return }
     try {
       setBuying(true)
-      await portalApi.createProductOrder(product.id)
+      const orderId=await portalApi.createProductOrder(product.id)
+      try{await portalApi.createAsaasPayment(orderId,'PIX')}catch(paymentError){console.error(paymentError)}
       toast('Pedido criado. Finalize o pagamento na sua área.','success')
       navigate('/app/pagamentos')
     } catch (error: any) { toast(error.message || 'Não foi possível criar o pedido.','error') }
