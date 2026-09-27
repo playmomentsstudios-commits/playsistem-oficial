@@ -369,7 +369,13 @@ export const portalApi = {
   },
   setPaymentArchived: async (paymentId:string,archived:boolean) => {
     const { error }=await supabase.rpc('admin_set_payment_archived',{p_payment_id:paymentId,p_archived:archived})
-    if(error) throw error
+    if(!error)return
+    const {data:{user}}=await supabase.auth.getUser()
+    if(!user)throw error
+    const {data:profile}=await supabase.from('profiles').select('role,status').eq('id',user.id).maybeSingle()
+    if(profile?.role!=='admin'||profile?.status!=='active')throw error
+    const {error:updateError}=await supabase.from('payments').update({archived_at:archived?new Date().toISOString():null}).eq('id',paymentId)
+    if(updateError)throw error
   },
   paymentSettings: async () => {
     const { data,error } = await supabase.from('payment_settings').select('*').eq('id',true).maybeSingle()
