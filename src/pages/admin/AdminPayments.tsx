@@ -1,5 +1,6 @@
 import { useEffect,useMemo,useState } from 'react'
 import { portalApi } from '../../api/portal'
+import { supabase } from '../../lib/supabase'
 import { useToast } from '../../contexts/ToastContext'
 import { metodoPagamento,rotulo,statusComprovante,statusPagamento } from '../../lib/labels.ptBR'
 
@@ -39,6 +40,17 @@ export function AdminPayments(){
     }catch(e:any){
       toast(e.message,'error')
     }
+  }
+
+  async function cancelPayment(payment:any){
+    if(!window.confirm('Cancelar esta cobrança? Pagamentos Asaas pendentes também serão cancelados no provedor.'))return
+    try{
+      const {data,error}=await supabase.functions.invoke('asaas-admin-cancel',{body:{payment_id:payment.id}})
+      if(error)throw error
+      if(!data?.ok)throw new Error(data?.error||'Não foi possível cancelar a cobrança.')
+      toast('Cobrança cancelada.','success')
+      await load()
+    }catch(e:any){toast(e.message||'Não foi possível cancelar a cobrança.','error')}
   }
 
   async function openReceipt(path:string){
@@ -110,6 +122,7 @@ export function AdminPayments(){
           <div className="text-right">
             <span className="inline-flex px-3 py-1 rounded-full bg-white/5 text-sm">{rotulo(statusPagamento,payment.status)}</span>
             <p className="text-xs text-gray-600 mt-2">{new Date(payment.created_at).toLocaleString('pt-BR')}</p>
+            {!['paid','refunded','cancelled'].includes(payment.status)&&<button onClick={()=>cancelPayment(payment)} className="mt-3 px-3 py-2 rounded-lg bg-red-950 text-red-300 text-xs">Cancelar cobrança</button>}
           </div>
         </div>
 
