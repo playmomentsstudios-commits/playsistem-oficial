@@ -27,7 +27,8 @@ export function AdminCustomers(){
 
   return <div>
     <div className="mb-6">
-      <h1 className="text-2xl font-bold text-white">Clientes</h1>
+      <p className="text-[11px] uppercase tracking-[.18em] text-[#E30613] font-semibold">Comercial</p>
+      <h1 className="text-2xl font-bold text-white mt-1">Clientes</h1>
       <p className="text-sm text-gray-500">Gestão de contas, acesso e relacionamento.</p>
     </div>
 
@@ -37,9 +38,9 @@ export function AdminCustomers(){
         ['active','Ativos',counts.active],
         ['inactive','Inativos',counts.inactive],
         ['blocked','Bloqueados',counts.blocked],
-      ].map(([value,label,count])=><button key={String(value)} type="button" onClick={()=>setStatus(String(value))} className={'text-left p-3 rounded-xl border transition-colors '+(status===value?'border-[#E30613]/50 bg-[#E30613]/8':'border-white/8 bg-[#141416] hover:border-white/15')}>
+      ].map(([value,label,count])=><button key={String(value)} type="button" onClick={()=>setStatus(String(value))} className={'text-left p-3 rounded-xl border transition-colors '+(status===value?'border-[#E30613]/40 bg-[#E30613]/10':'border-white/10 bg-[#141416] hover:border-white/20')}>
         <p className="text-[10px] uppercase tracking-wide text-gray-500">{label}</p>
-        <p className="text-xl font-bold mt-1">{count}</p>
+        <p className={'text-xl font-bold mt-2 '+(value==='active'?'text-emerald-300':value==='blocked'?'text-red-300':value==='inactive'?'text-amber-300':'text-white')}>{count}</p>
       </button>)}
     </div>
 
