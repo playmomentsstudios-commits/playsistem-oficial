@@ -48,6 +48,11 @@ export function FilesPage(){
   const [uploadName,setUploadName]=useState('')
   const [versionGroup,setVersionGroup]=useState<string|null>(null)
   const [reviewing,setReviewing]=useState<string|null>(null)
+  const [adjustFile,setAdjustFile]=useState<any|null>(null)
+  const [adjustSubject,setAdjustSubject]=useState('')
+  const [adjustDescription,setAdjustDescription]=useState('')
+  const [adjustItems,setAdjustItems]=useState<string[]>([''])
+  const [adjustAttachments,setAdjustAttachments]=useState<File[]>([])
   const [projectSearch,setProjectSearch]=useState('')
   const [fileSearch,setFileSearch]=useState('')
   const [fileType,setFileType]=useState('all')
@@ -156,19 +161,37 @@ export function FilesPage(){
   }
 
   async function review(file:any,action:'approved'|'changes_requested'){
-    let comment=''
     if(action==='changes_requested'){
-      comment=window.prompt('Descreva o que precisa ser ajustado nesta versão:')||''
-      if(!comment.trim())return
-    }else{
-      comment=window.prompt('Comentário opcional para a aprovação:')||''
+      setAdjustFile(file);setAdjustSubject('');setAdjustDescription('');setAdjustItems(['']);setAdjustAttachments([])
+      return
     }
+    const comment=window.prompt('Comentário opcional para a aprovação:')||''
     try{
       setReviewing(file.id)
       await portalApi.submitFileReview(file.id,action,comment)
-      toast(action==='approved'?'Versão aprovada.':'Ajustes enviados para a equipe.','success')
+      toast('Versão aprovada.','success')
       await load()
     }catch(error:any){toast(error.message||'Não foi possível registrar sua avaliação.','error')}
+    finally{setReviewing(null)}
+  }
+
+  async function submitAdjustments(){
+    if(!adjustFile)return
+    const items=adjustItems.map(item=>item.trim()).filter(Boolean)
+    if(!adjustSubject.trim()&&!adjustDescription.trim()&&!items.length)return toast('Descreva pelo menos um ajuste.','error')
+    try{
+      setReviewing(adjustFile.id)
+      const uploaded=[]
+      for(const file of adjustAttachments){
+        uploaded.push(await portalApi.uploadFileReviewAttachment(adjustFile.customer_id,adjustFile.id,file))
+      }
+      await portalApi.submitFileReview(adjustFile.id,'changes_requested',adjustDescription,{
+        subject:adjustSubject,items,attachments:uploaded,
+      })
+      toast('Solicitação de ajustes enviada para a equipe.','success')
+      setAdjustFile(null)
+      await load()
+    }catch(error:any){toast(error.message||'Não foi possível enviar os ajustes.','error')}
     finally{setReviewing(null)}
   }
 
@@ -291,6 +314,37 @@ export function FilesPage(){
               </div>
             })}
           </div>}
+        </div>
+      </div>
+    </div>}
+
+    {adjustFile&&<div className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
+      <div className="w-full max-w-xl max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-[#111113] border border-white/10 shadow-2xl p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-3 mb-5">
+          <div><h3 className="text-lg font-bold">Solicitar ajustes</h3><p className="text-xs text-gray-500 mt-1">{adjustFile.name} · v{adjustFile.version_number||1}</p></div>
+          <button type="button" onClick={()=>setAdjustFile(null)} className="w-9 h-9 rounded-lg bg-white/[0.05]">×</button>
+        </div>
+        <div className="space-y-4">
+          <label className="block text-xs text-gray-400">Assunto do ajuste
+            <input value={adjustSubject} onChange={e=>setAdjustSubject(e.target.value)} placeholder="Ex.: Ajustes na capa e no texto final" className="mt-1.5 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10 text-sm"/>
+          </label>
+          <label className="block text-xs text-gray-400">Descrição
+            <textarea value={adjustDescription} onChange={e=>setAdjustDescription(e.target.value)} rows={4} placeholder="Explique o resultado esperado..." className="mt-1.5 w-full px-3 py-3 rounded-xl bg-black border border-white/10 text-sm resize-y"/>
+          </label>
+          <div>
+            <div className="flex items-center justify-between gap-3 mb-2"><p className="text-xs text-gray-400">Tópicos do ajuste</p><button type="button" onClick={()=>setAdjustItems(items=>[...items,''])} className="text-[10px] font-semibold text-[#E30613]">+ Adicionar tópico</button></div>
+            <div className="space-y-2">{adjustItems.map((item,index)=><div key={index} className="flex gap-2"><span className="w-6 h-10 flex items-center justify-center text-xs text-gray-600">{index+1}.</span><input value={item} onChange={e=>setAdjustItems(items=>items.map((value,i)=>i===index?e.target.value:value))} placeholder="Descreva uma alteração específica" className="min-h-10 flex-1 px-3 rounded-xl bg-black border border-white/10 text-xs"/>{adjustItems.length>1&&<button type="button" onClick={()=>setAdjustItems(items=>items.filter((_,i)=>i!==index))} className="w-9 rounded-lg bg-white/[0.04] text-gray-500">×</button>}</div>)}</div>
+          </div>
+          <label className="block p-4 rounded-xl border border-dashed border-white/15 bg-white/[0.025] cursor-pointer">
+            <input type="file" multiple accept="image/*,.pdf" className="hidden" onChange={e=>setAdjustAttachments(Array.from(e.target.files||[]))}/>
+            <span className="text-sm font-semibold">Anexar referências</span>
+            <span className="block text-[10px] text-gray-500 mt-1">Prints, imagens ou PDF · até 10 MB por arquivo</span>
+            {adjustAttachments.length>0&&<span className="block text-xs text-[#E30613] mt-2">{adjustAttachments.length} anexo(s) selecionado(s)</span>}
+          </label>
+        </div>
+        <div className="flex gap-2 mt-5">
+          <button type="button" onClick={()=>setAdjustFile(null)} className="min-h-11 px-4 rounded-xl border border-white/10 text-xs">Cancelar</button>
+          <button type="button" disabled={reviewing===adjustFile.id} onClick={()=>void submitAdjustments()} className="min-h-11 flex-1 px-4 rounded-xl bg-orange-500/15 text-orange-300 font-bold text-xs disabled:opacity-50">{reviewing===adjustFile.id?'Enviando...':'Enviar solicitação de ajustes'}</button>
         </div>
       </div>
     </div>}
