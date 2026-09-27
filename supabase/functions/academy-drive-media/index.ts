@@ -9,10 +9,12 @@ Deno.serve(async(req)=>{
    const db=createClient(env("SUPABASE_URL"),env("SUPABASE_SERVICE_ROLE_KEY"),{auth:{persistSession:false}});
    const {data:t,error}=await db.from("academy_media_tickets").select("*").eq("token",ticket).gt("expires_at",new Date().toISOString()).single();
    if(error||!t)return new Response("Expired or invalid media ticket",{status:403});
-   const token=await getDriveAccessToken();const headers:any={Authorization:`Bearer ${token}`};const range=req.headers.get("Range");if(range)headers.Range=range;
+   const token=await getDriveAccessToken();const headers:any={Authorization:`Bearer ${token}`};
+   // HTML5 video needs byte-range responses to discover duration and seek reliably. Some browsers/proxies omit Range on the first metadata request, so start with a small partial response instead of streaming the entire Drive file.
+   const requestedRange=req.headers.get("Range");headers.Range=requestedRange||"bytes=0-1048575";
    const drive=await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(t.drive_file_id)}?alt=media`,{headers});
    const outHeaders=new Headers();for(const h of ["content-type","content-length","content-range","accept-ranges","content-disposition"])if(drive.headers.get(h))outHeaders.set(h,drive.headers.get(h)!);
-   outHeaders.set("Access-Control-Allow-Origin","*");outHeaders.set("Cache-Control","private, max-age=60");
+   outHeaders.set("Access-Control-Allow-Origin","*");outHeaders.set("Access-Control-Expose-Headers","Content-Length, Content-Range, Accept-Ranges, Content-Type");outHeaders.set("Accept-Ranges","bytes");outHeaders.set("Cache-Control","private, max-age=60");outHeaders.delete("content-disposition");
    return new Response(drive.body,{status:drive.status,headers:outHeaders});
   }
   const ctx=await requireUser(req);const body=await req.json();const kind=String(body.kind||"");const id=String(body.id||"");let driveFileId="";
