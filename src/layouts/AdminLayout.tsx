@@ -40,6 +40,7 @@ export function AdminLayout() {
   const [counts, setCounts] = useState({ messages: 0, notifications: 0 })
   const [staffPermissions,setStaffPermissions]=useState<string[]>([])
   const [openGroups,setOpenGroups]=useState<string[]>([])
+  const [accountOpen,setAccountOpen]=useState(false)
   useEffect(() => {
     if (!user?.id) return
     const load = () => portalApi.unreadCounts(user.id).then(setCounts).catch(() => undefined)
@@ -78,18 +79,12 @@ export function AdminLayout() {
       flexDirection: 'column',
       ...(mobile ? { position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 50 } : {}),
     }}>
-      <div className="px-5 pt-6 pb-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-        <div className="flex items-start justify-between gap-3">
+      <div className="px-5 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+        <div className="flex items-center justify-between gap-3">
           <Link to="/admin" className="block">
-            <img src={logoUrl} alt="Play Moments" className="h-10 w-auto object-contain" />
-            <span className="block mt-2 text-[9px] uppercase tracking-[0.22em] text-gray-600">Painel administrativo</span>
+            <img src={logoUrl} alt="Play Moments" className="h-12 w-auto object-contain" />
           </Link>
-          {mobile && <button onClick={() => setSidebarOpen(false)} className="mt-1 text-gray-600 hover:text-gray-300">✕</button>}
-        </div>
-        <div className="flex items-center gap-2 mt-4 pt-3 border-t border-white/[0.05]">
-          <span className="w-2 h-2 rounded-full bg-emerald-400" aria-hidden="true" />
-          <p className="min-w-0 text-[10px] text-gray-500 truncate">{user?.name || (user?.role === 'admin' ? 'Administrador' : 'Colaborador')}</p>
-          <span className="ml-auto text-[9px] uppercase tracking-wider text-gray-700">{user?.role === 'admin' ? 'Admin' : 'Equipe'}</span>
+          {mobile && <button onClick={() => setSidebarOpen(false)} className="text-gray-600 hover:text-gray-300">✕</button>}
         </div>
       </div>
 
@@ -120,14 +115,7 @@ export function AdminLayout() {
         })}
       </nav>
 
-      <div className="p-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-        <Link to="/" className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs hover:bg-white/[0.03] transition-colors" style={{ color: '#6b6b78' }}>
-          ← Ver site
-        </Link>
-        <button onClick={handleLogout} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs hover:bg-white/[0.03] transition-colors" style={{ color: '#6b6b78' }}>
-          ↩ Sair
-        </button>
-      </div>
+
     </aside>
   )
 
@@ -154,7 +142,21 @@ export function AdminLayout() {
                 <path d="M3 12h18M3 6h18M3 18h18" />
               </svg>
             </button>
-            <span className="text-sm font-semibold" style={{ color: '#f0f0f2' }}>Painel Administrativo</span>
+            <span className="text-sm font-semibold" style={{ color: '#f0f0f2' }}>Play Moments</span>
+          </div>
+          <div className="relative">
+            <button type="button" onClick={()=>setAccountOpen(v=>!v)} className="flex items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.025] px-2.5 py-1.5 hover:bg-white/[0.05] transition-colors">
+              <span className="w-8 h-8 rounded-lg bg-[#E30613] text-white text-xs font-bold flex items-center justify-center">{(user?.name||'A').trim().charAt(0).toUpperCase()}</span>
+              <span className="hidden sm:block text-left"><span className="block text-xs font-semibold text-gray-200 max-w-[150px] truncate">{user?.name||'Administrador'}</span><span className="block text-[9px] text-gray-600">{user?.role==='admin'?'Administrador':'Equipe'}</span></span>
+              <span className="text-gray-600 text-xs">⌄</span>
+            </button>
+            {accountOpen&&<><button aria-label="Fechar menu" onClick={()=>setAccountOpen(false)} className="fixed inset-0 z-40 cursor-default"/><div className="absolute right-0 top-[calc(100%+8px)] z-50 w-56 rounded-xl border border-white/10 bg-[#111113] p-1.5 shadow-2xl">
+              <Link to="/admin/portfolio" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="about" size={15}/><span>Quem Somos</span></Link>
+              <Link to="/admin/configuracoes" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="settings" size={15}/><span>Configurações</span></Link>
+              <Link to="/" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="site" size={15}/><span>Ver site</span></Link>
+              <div className="my-1 border-t border-white/[0.07]"/>
+              <button onClick={()=>{setAccountOpen(false);void handleLogout()}} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-[#ff6573] hover:bg-[#E30613]/10"><span>↩</span><span>Sair</span></button>
+            </div></>}
           </div>
         </div>
 
