@@ -291,7 +291,7 @@ export function AdminFilesV2(){
   async function move(row:any,kind:string){
     try{
       await fileManagementApi.move(row.id,kind)
-      toast('Arquivo movido no Google Drive.','success')
+      toast(kind==='delivery'?'Entrega finalizada e arquivo movido para a pasta de entrega.':'Arquivo movido no Google Drive.','success')
       await load()
     }catch(error:any){toast(error.message||'Não foi possível mover o arquivo.','error')}
   }
@@ -370,6 +370,7 @@ export function AdminFilesV2(){
   }
 
   function reviewBadge(row:any){
+    if(row.review_status==='approved'&&row.drive_folder?.folder_kind==='delivery')return {label:'Entregue',className:'bg-emerald-500/15 text-emerald-300'}
     if(!row.review_required)return null
     if(row.review_status==='pending')return {label:'Aguardando cliente',className:'bg-yellow-500/10 text-yellow-300'}
     if(row.review_status==='approved')return {label:'Aprovado',className:'bg-emerald-500/10 text-emerald-400'}
@@ -665,7 +666,7 @@ export function AdminFilesV2(){
                       <button type="button" onClick={()=>void showReviewDetails(row)} className="min-h-9 flex-1 px-3 rounded-lg border border-orange-500/20 bg-orange-500/[0.08] text-orange-300 text-[10px] font-bold">Ver ajustes</button>
                       <button type="button" onClick={()=>{setVersioningFile(row);setVersionFile(null);setVersionProgress(0)}} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] text-[10px] font-bold text-white">Enviar nova versão</button>
                     </>}
-                    {row.review_required&&row.review_status==='approved'&&<button type="button" onClick={()=>void move(row,'delivery')} className="min-h-9 flex-1 px-3 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/20 text-[10px] font-bold">Mover para entrega</button>}
+                    {row.review_required&&row.review_status==='approved'&&row.drive_folder?.folder_kind!=='delivery'&&<button type="button" onClick={()=>void move(row,'delivery')} className="min-h-9 flex-1 px-3 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/20 text-[10px] font-bold">Finalizar entrega</button>}
                   </div>
 
                   <button
