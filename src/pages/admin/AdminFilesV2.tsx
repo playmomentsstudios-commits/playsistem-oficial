@@ -75,6 +75,7 @@ export function AdminFilesV2(){
   const [selectedFiles,setSelectedFiles]=useState<File[]>([])
   const [currentFileName,setCurrentFileName]=useState('')
   const [completedFiles,setCompletedFiles]=useState(0)
+  const [uploadResult,setUploadResult]=useState<{count:number;names:string[]}|null>(null)
   const [libraryCustomer,setLibraryCustomer]=useState<string|null>(null)
   const [libraryProject,setLibraryProject]=useState<string|null>(null)
   const [libraryCustomFolders,setLibraryCustomFolders]=useState<any[]>([])
@@ -220,7 +221,7 @@ export function AdminFilesV2(){
     e.preventDefault()
     if(!user||!customer)return
     try{
-      setSaving(true);setProgress(0);setCompletedFiles(0);setCurrentFileName('')
+      setSaving(true);setProgress(0);setCompletedFiles(0);setCurrentFileName('');setUploadResult(null)
       if(provider==='google_drive'){
         if(!project||!selectedFiles.length)throw new Error('Selecione um projeto e um ou mais arquivos para enviar ao Google Drive.')
         await portalApi.ensureProjectDriveFolder(project)
@@ -236,6 +237,7 @@ export function AdminFilesV2(){
           },current,value=>setProgress(Math.round(((index+(value/100))/selectedFiles.length)*100)))
           setCompletedFiles(index+1)
         }
+        setUploadResult({count:selectedFiles.length,names:selectedFiles.map(file=>file.name)})
         toast(selectedFiles.length===1?'Arquivo enviado para o Google Drive.':selectedFiles.length+' arquivos enviados para o Google Drive.','success')
       }else if(provider==='supabase'){
         if(!selectedFiles.length)throw new Error('Selecione um ou mais arquivos.')
@@ -384,6 +386,12 @@ export function AdminFilesV2(){
       <Button type="button" variant="secondary" loading={testing} onClick={testDrive}>Testar Google Drive</Button>
     </div>
 
+    {uploadResult&&<div className="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 flex items-start gap-3">
+      <div className="w-9 h-9 shrink-0 rounded-xl bg-emerald-500/10 text-emerald-300 flex items-center justify-center font-bold">✓</div>
+      <div className="min-w-0 flex-1"><p className="text-sm font-bold text-emerald-300">{uploadResult.count} {uploadResult.count===1?'arquivo enviado':'arquivos enviados'} com sucesso</p><p className="text-xs text-gray-500 mt-1 truncate">{uploadResult.names.join(' • ')}</p><p className="text-[10px] text-gray-600 mt-1">A lista abaixo foi atualizada com os arquivos finalizados.</p></div>
+      <button type="button" onClick={()=>setUploadResult(null)} className="text-gray-600 hover:text-white">×</button>
+    </div>}
+
     <form onSubmit={save} className="p-5 rounded-2xl bg-[#141416] border border-white/10 mb-8 space-y-4">
       <div className="grid md:grid-cols-3 gap-3">
         <label className="text-xs text-gray-500">Armazenamento
@@ -475,7 +483,7 @@ export function AdminFilesV2(){
       </div>}
 
       {provider==='google_drive'&&<p className="text-xs text-gray-500">Até {driveLimitGb} GB por arquivo no Google Drive. Os arquivos são enviados em fila, diretamente do navegador para o Drive, em partes de 16 MB.</p>}
-      {saving&&progress>0&&<div className="rounded-xl bg-black/20 border border-white/8 p-3"><div className="flex justify-between gap-3 text-xs text-gray-500"><span className="truncate">{currentFileName||'Enviando arquivos'}</span><span className="shrink-0">{progress}% · {completedFiles}/{selectedFiles.length}</span></div><div className="h-2 rounded bg-white/10 mt-2 overflow-hidden"><div className="h-2 rounded bg-[#E30613] transition-[width]" style={{width:progress+'%'}}/></div></div>}
+      {saving&&<div className="rounded-xl bg-black/30 border border-[#E30613]/20 p-3"><div className="flex justify-between gap-3 text-xs"><span className="truncate text-gray-300">{currentFileName||'Preparando upload...'}</span><span className="shrink-0 text-[#ff6b7a] font-bold">{progress}%</span></div><div className="h-2 rounded bg-white/10 mt-2 overflow-hidden"><div className="h-2 rounded bg-[#E30613] transition-[width] duration-200" style={{width:progress+'%'}}/></div><p className="text-[10px] text-gray-600 mt-2">{completedFiles} de {selectedFiles.length} finalizados · não feche esta página durante o envio.</p></div>}
       <Button type="submit" loading={saving} className="w-full sm:w-auto min-h-12">{provider==='google_drive'?(selectedFiles.length>1?'Enviar '+selectedFiles.length+' arquivos':'Enviar para o Google Drive'):'Salvar arquivo'}</Button>
     </form>
 
