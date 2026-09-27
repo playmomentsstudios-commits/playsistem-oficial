@@ -6,10 +6,11 @@ import { siteContentApi,type SiteSettings } from '../services/siteContent'
 
 export function PublicLayout({ children }: { children: ReactNode }) {
   const [settings,setSettings]=useState<SiteSettings|null>(null)
+  const [serviceAreas,setServiceAreas]=useState<Array<{id:string;title:string;href:string}>>([])
 
   useEffect(()=>{
     let active=true
-    siteContentApi.settings().then(data=>{if(active)setSettings(data)}).catch(()=>undefined)
+    Promise.all([siteContentApi.settings(),siteContentApi.homeServiceAreas()]).then(([data,areas])=>{if(active){setSettings(data);setServiceAreas(areas)}}).catch(()=>undefined)
     return()=>{active=false}
   },[])
 
@@ -31,13 +32,13 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             <div>
               <img src={logoUrl} alt={settings?.company_name||'Play Moments'} style={{ height: 28, width: 'auto', marginBottom: 16 }} />
               <p className="text-sm leading-relaxed" style={{ color: '#6b6b78' }}>
-                {settings?.description||'Plataforma criativa para tecnologia, estúdio e design digital.'}
+                {settings?.footer_description||settings?.description||'Plataforma criativa para tecnologia, estúdio e design digital.'}
               </p>
             </div>
             <div>
               <p className="text-xs font-semibold mb-3 uppercase tracking-widest" style={{ color: primary }}>Serviços</p>
-              {['Studio & Criação', 'Design & Digital', 'Tech & Equipamentos'].map(s => (
-                <p key={s} className="text-sm mb-2" style={{ color: '#6b6b78' }}>{s}</p>
+              {serviceAreas.map(area => (
+                <Link key={area.id} to={area.href} className="block text-sm mb-2 transition-colors" style={{ color: '#6b6b78' }}>{area.title}</Link>
               ))}
             </div>
             <div>
@@ -53,7 +54,8 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               {settings?.contact_email&&<a href={'mailto:'+settings.contact_email} className="block text-sm mb-2" style={{color:'#6b6b78'}}>{settings.contact_email}</a>}
               {settings?.contact_phone&&<a href={'tel:'+settings.contact_phone.replace(/[^+\d]/g,'')} className="block text-sm mb-2" style={{color:'#6b6b78'}}>{settings.contact_phone}</a>}
               {settings?.whatsapp&&<a href={'https://wa.me/'+settings.whatsapp.replace(/\D/g,'')} target="_blank" rel="noreferrer" className="block text-sm mb-2" style={{color:'#6b6b78'}}>WhatsApp</a>}
-              {settings?.address&&<p className="text-sm" style={{ color: '#6b6b78' }}>{settings.address}</p>}
+              {settings?.address&&<p className="text-sm mb-1" style={{ color: '#6b6b78' }}>{settings.address}</p>}
+              {(settings?.city||settings?.state)&&<p className="text-sm" style={{ color: '#6b6b78' }}>{[settings?.city,settings?.state].filter(Boolean).join(' · ')}</p>}
               {!settings&&<><p className="text-sm mb-2" style={{ color: '#6b6b78' }}>contato@playmoments.com.br</p><p className="text-sm" style={{ color: '#6b6b78' }}>São Paulo, SP</p></>}
             </div>
           </div>
