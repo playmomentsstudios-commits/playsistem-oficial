@@ -26,6 +26,15 @@ Deno.serve(async(req)=>{
    if(eventError)throw eventError;
    return json({ok:true,ignored:true});
   }
+  const {data:currentPayment,error:currentError}=await db.from("payments").select("id,status").in("provider",["asaas","asaas_checkout"]).eq("provider_reference",providerReference).maybeSingle();
+  if(currentError)throw currentError;
+  if(!currentPayment)throw new Error("Payment not found for webhook");
+  if(currentPayment.status==="paid"&&!paid&&!refunded){
+   const {error:eventError}=await db.from("payment_webhook_events").insert({id:eventId,provider:"asaas",event_type:event,provider_reference:providerReference,payload});
+   if(eventError?.code==="23505")return json({ok:true,duplicate:true});
+   if(eventError)throw eventError;
+   return json({ok:true,ignored:true,reason:"paid_is_terminal"});
+  }
   const update:any={status,provider_payload:checkout.id?checkout:charge,updated_at:new Date().toISOString()};
   if(paid)update.paid_at=new Date().toISOString();
   const {data:payment,error}=await db.from("payments").update(update).in("provider",["asaas","asaas_checkout"]).eq("provider_reference",providerReference).select("id,order_id,customer_id,status").maybeSingle();
