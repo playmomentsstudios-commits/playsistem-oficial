@@ -635,7 +635,7 @@ export function AdminFilesV2(){
 
                   {menuFile===row.id&&<div className="absolute z-20 right-2 top-10 w-56 rounded-xl border border-white/10 bg-[#0d0d0f] shadow-2xl p-1.5" onMouseLeave={()=>setMenuFile(null)}>
                     <div className="flex items-center gap-1">
-                      {(row.external_url||row.storage_path)&&<button type="button" onClick={()=>{setMenuFile(null);void open(row)}} className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center text-sm" title="Abrir" aria-label="Abrir arquivo">↗</button>}
+                      {(row.drive_file_id||row.external_url||row.storage_path)&&<button type="button" onClick={()=>{setMenuFile(null);void open(row)}} className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center text-sm" title="Abrir" aria-label="Abrir arquivo">↗</button>}
                       <button type="button" onClick={()=>void rename(row)} className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center text-sm" title="Renomear" aria-label="Renomear arquivo">✎</button>
                       {row.storage_provider==='google_drive'&&row.project_id&&<label className="relative w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer text-sm" title="Mover" aria-label="Mover arquivo">
                         ⇄
