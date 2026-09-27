@@ -59,7 +59,7 @@ export function AdminQuotes(){
 
   return <div>
     <div className="flex flex-wrap justify-between gap-4 items-end mb-6">
-      <div><h1 className="text-2xl font-bold text-white">Orçamentos</h1><p className="text-sm text-gray-500">Crie, envie e acompanhe propostas comerciais</p></div>
+      <div><p className="text-[11px] uppercase tracking-[.18em] text-[#E30613] font-semibold">Comercial</p><h1 className="text-2xl font-bold text-white mt-1">Orçamentos</h1><p className="text-sm text-gray-500 mt-1">Crie, envie e acompanhe propostas comerciais.</p></div>
       <button onClick={()=>setShowForm(v=>!v)} className="px-4 py-2.5 rounded-xl bg-[#E30613]">{showForm?'Fechar':'Novo orçamento'}</button>
     </div>
 
@@ -76,12 +76,14 @@ export function AdminQuotes(){
       <button type="submit" className="px-4 py-2 rounded-xl bg-[#E30613]">Criar orçamento</button>
     </form>}
 
-    <div className="flex flex-wrap gap-3 mb-4">
-      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar orçamento ou cliente..." className="px-4 py-2.5 rounded-xl bg-white/5 border border-white/10"/>
+    <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">{[['Em aberto',rows.filter(q=>['draft','sent','viewed'].includes(q.status)).length,'text-amber-300'],['Aceitos',rows.filter(q=>q.status==='accepted').length,'text-emerald-300'],['Recusados',rows.filter(q=>q.status==='rejected').length,'text-red-300'],['Total',rows.length,'text-white']].map(([l,v,t])=><div key={String(l)} className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">{l}</p><p className={'text-xl font-bold mt-2 '+t}>{v}</p></div>)}</div>
+
+    <div className="p-3 rounded-2xl bg-[#111113] border border-white/10 flex flex-wrap gap-3 mb-4">
+      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar orçamento ou cliente..." className="min-h-11 flex-1 min-w-64 px-4 rounded-xl bg-black/40 border border-white/10"/>
       <select value={status} onChange={e=>setStatus(e.target.value)} className="px-3 py-2.5 rounded-xl bg-black border border-white/10"><option value="todos">Todos os status</option>{['draft','sent','viewed','accepted','rejected','expired'].map(value=><option key={value} value={value}>{rotulo(statusOrcamento,value)}</option>)}</select>
     </div>
 
-    <div className="space-y-2">{filtered.map(q=><Link key={q.id} to={'/admin/orcamentos/'+q.id} className="p-4 rounded-2xl bg-[#141416] border border-white/10 flex justify-between gap-4">
+    <div className="space-y-2">{filtered.map(q=><Link key={q.id} to={'/admin/orcamentos/'+q.id} className="p-4 rounded-2xl bg-[#141416] border border-white/10 flex justify-between gap-4 hover:border-white/20 hover:bg-white/[0.025] transition-colors">
       <div><b className="text-[#E30613]">{q.quote_number}</b><p>{q.title}</p><p className="text-xs text-gray-500">{q.customer?q.customer.first_name+' '+q.customer.last_name:'Cliente'}</p></div>
       <div className="text-right"><b>{money(q.total)}</b><p className="text-xs text-gray-500">{rotulo(statusOrcamento,q.status)}</p></div>
     </Link>)}</div>
