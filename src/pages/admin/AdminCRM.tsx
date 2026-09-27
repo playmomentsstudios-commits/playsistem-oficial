@@ -2,6 +2,7 @@ import { useEffect,useMemo,useState } from 'react'
 import { Link } from 'react-router-dom'
 import { crmApi,CRM_STAGES,CRM_STAGE_LABELS,type CrmCustomer,type CrmStage } from '../../api/crm'
 import { portalApi } from '../../api/portal'
+import { settingsApi } from '../../api/settings'
 import { useToast } from '../../contexts/ToastContext'
 
 function money(cents:number){
@@ -32,13 +33,15 @@ export function AdminCRM(){
   const [owner,setOwner]=useState('all')
   const [loading,setLoading]=useState(true)
   const [dragging,setDragging]=useState<string|null>(null)
+  const [followUpDays,setFollowUpDays]=useState(2)
 
   async function load(){
     try{
       setLoading(true)
-      const [crm,people]=await Promise.all([crmApi.list(),portalApi.teamMembers()])
+      const [crm,people,settings]=await Promise.all([crmApi.list(),portalApi.teamMembers(),settingsApi.appSettings().catch(()=>null)])
       setRows(crm)
       setTeam(people)
+      if(settings)setFollowUpDays(settings.crm_default_follow_up_days)
     }catch(error:any){toast(error.message||'Não foi possível carregar o CRM.','error')}
     finally{setLoading(false)}
   }
@@ -84,7 +87,7 @@ export function AdminCRM(){
       <div>
         <p className="text-[11px] uppercase tracking-[0.18em] text-[#E30613] font-semibold">Comercial</p>
         <h1 className="text-2xl font-bold mt-1">CRM & Pipeline</h1>
-        <p className="text-sm text-gray-500 mt-1">Do primeiro contato ao pós-venda, com responsável e próxima ação.</p>
+        <p className="text-sm text-gray-500 mt-1">Do primeiro contato ao pós-venda, com responsável e próxima ação.</p><p className="text-[10px] text-gray-600 mt-1">Prazo operacional padrão para follow-up: {followUpDays} dia(s).</p>
       </div>
     </div>
 

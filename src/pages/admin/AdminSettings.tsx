@@ -11,6 +11,10 @@ const DEFAULTS:AppSettings={
   default_quote_valid_days:7,
   default_client_file_visibility:false,
   drive_upload_limit_gb:50,
+  crm_default_follow_up_days:2,
+  orders_default_filter:'all',
+  internal_operation_notifications:true,
+  commercial_notifications:true,
   updated_at:'',
   updated_by:null,
 }
@@ -41,6 +45,10 @@ export function AdminSettings(){
         default_quote_valid_days:Number(settings.default_quote_valid_days)||7,
         default_client_file_visibility:settings.default_client_file_visibility,
         drive_upload_limit_gb:Number(settings.drive_upload_limit_gb)||50,
+        crm_default_follow_up_days:Number(settings.crm_default_follow_up_days)||2,
+        orders_default_filter:settings.orders_default_filter,
+        internal_operation_notifications:settings.internal_operation_notifications,
+        commercial_notifications:settings.commercial_notifications,
       })
       setSettings(saved)
       toast('Configurações administrativas salvas.','success')
@@ -115,6 +123,39 @@ export function AdminSettings(){
               <span className="text-xs text-gray-500">GB por arquivo</span>
             </div>
             <p className="text-[10px] text-gray-600 mt-2">O backend continua limitado ao teto técnico de 50 GB por arquivo.</p>
+          </label>
+        </div>
+      </section>
+
+      <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
+        <h2 className="font-semibold">CRM e pedidos</h2>
+        <p className="text-xs text-gray-500 mt-1">Padrões usados nas rotinas comercial e operacional.</p>
+        <div className="space-y-4 mt-5">
+          <label className="block text-xs text-gray-500">Prazo padrão para próxima ação no CRM
+            <div className="mt-1 flex items-center gap-2">
+              <input type="number" min={1} max={30} value={settings.crm_default_follow_up_days} onChange={e=>setSettings({...settings,crm_default_follow_up_days:Number(e.target.value)})} className="w-28 min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
+              <span className="text-xs text-gray-500">dias</span>
+            </div>
+          </label>
+          <label className="block text-xs text-gray-500">Filtro inicial da tela de pedidos
+            <select value={settings.orders_default_filter} onChange={e=>setSettings({...settings,orders_default_filter:e.target.value as AppSettings['orders_default_filter']})} className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10">
+              <option value="all">Todos</option><option value="awaiting_payment">Aguardando pagamento</option><option value="paid">Pago</option><option value="in_production">Em produção</option><option value="completed">Concluído</option><option value="cancelled">Cancelado</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
+        <h2 className="font-semibold">Notificações operacionais</h2>
+        <p className="text-xs text-gray-500 mt-1">Políticas globais para os gatilhos internos do sistema.</p>
+        <div className="space-y-3 mt-5">
+          <label className="flex items-center justify-between gap-4 p-3 rounded-xl bg-white/[0.035] border border-white/8 cursor-pointer">
+            <div><p className="text-sm font-medium">Avisos de operação</p><p className="text-[10px] text-gray-500 mt-1">Habilitar avisos internos de projetos, arquivos e pedidos.</p></div>
+            <input type="checkbox" checked={settings.internal_operation_notifications} onChange={e=>setSettings({...settings,internal_operation_notifications:e.target.checked})} className="accent-[#E30613]"/>
+          </label>
+          <label className="flex items-center justify-between gap-4 p-3 rounded-xl bg-white/[0.035] border border-white/8 cursor-pointer">
+            <div><p className="text-sm font-medium">Avisos comerciais</p><p className="text-[10px] text-gray-500 mt-1">Habilitar avisos internos ligados a CRM, orçamento e vendas.</p></div>
+            <input type="checkbox" checked={settings.commercial_notifications} onChange={e=>setSettings({...settings,commercial_notifications:e.target.checked})} className="accent-[#E30613]"/>
           </label>
         </div>
       </section>
