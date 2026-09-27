@@ -88,22 +88,23 @@ export function AdminProductivity(){
   return <div>
     <div className="flex flex-wrap justify-between items-end gap-4 mb-6">
       <div>
-        <h1 className="text-2xl font-bold">Produtividade</h1>
-        <p className="text-sm text-gray-500">Visão operacional de tarefas, prazos e entregas</p>
+        <p className="text-[11px] uppercase tracking-[.18em] text-[#E30613] font-semibold">Operação</p>
+        <h1 className="text-2xl font-bold mt-1">Produtividade</h1>
+        <p className="text-sm text-gray-500 mt-1">Prioridades da equipe, prazos e entregas.</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        {(['kanban','lista','calendario'] as const).map(option=><button key={option} onClick={()=>setView(option)} className={'px-3 py-2 rounded-xl text-sm '+(view===option?'bg-[#E30613]':'bg-white/5')}>{option==='kanban'?'Kanban':option==='lista'?'Lista':'Calendário'}</button>)}
+        {(['kanban','lista','calendario'] as const).map(option=><button key={option} onClick={()=>setView(option)} className={'px-3 py-2 rounded-xl text-sm border '+(view===option?'bg-[#E30613]/15 text-red-200 border-[#E30613]/30':'bg-white/[0.03] text-gray-400 border-white/10')}>{option==='kanban'?'Kanban':option==='lista'?'Lista':'Calendário'}</button>)}
       </div>
     </div>
 
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-xs text-gray-500">Para hoje</p><b className="text-2xl">{dueToday}</b></div>
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-xs text-gray-500">Atrasadas</p><b className="text-2xl text-red-400">{overdue}</b></div>
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-xs text-gray-500">Em andamento</p><b className="text-2xl text-blue-300">{inProgress}</b></div>
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-xs text-gray-500">Em revisão</p><b className="text-2xl text-yellow-300">{review}</b></div>
+      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Para hoje</p><b className="text-xl mt-2 block">{dueToday}</b></div>
+      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Atrasadas</p><b className="text-xl mt-2 block text-red-300">{overdue}</b></div>
+      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Em andamento</p><b className="text-xl mt-2 block text-blue-300">{inProgress}</b></div>
+      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Em revisão</p><b className="text-xl mt-2 block text-violet-300">{review}</b></div>
     </div>
 
-    <div className="flex flex-wrap gap-2 mb-5">
+    <div className="p-3 rounded-2xl bg-[#111113] border border-white/10 flex flex-wrap gap-2 mb-5">
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar tarefa ou projeto..." className="px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
       <select value={projectFilter} onChange={e=>setProjectFilter(e.target.value)} className="px-3 py-2 rounded-xl bg-black border border-white/10"><option value="todos">Todos os projetos</option>{projects.map(project=><option key={project.id} value={project.id}>{project.title}</option>)}</select>
       <select value={assigneeFilter} onChange={e=>setAssigneeFilter(e.target.value)} className="px-3 py-2 rounded-xl bg-black border border-white/10"><option value="todos">Todos os responsáveis</option><option value="sem_responsavel">Sem responsável</option>{team.map(member=><option key={member.id} value={member.id}>{member.first_name} {member.last_name}</option>)}</select>

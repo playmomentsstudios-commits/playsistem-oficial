@@ -148,9 +148,12 @@ export function AdminTeam(){
 
   return <div>
     <div className="mb-6">
-      <h1 className="text-2xl font-bold">Colaboradores</h1>
-      <p className="text-sm text-gray-500">Funções, acessos e equipe responsável pelos atendimentos da Play Moments.</p>
+      <p className="text-[11px] uppercase tracking-[.18em] text-[#E30613] font-semibold">Gestão</p>
+      <h1 className="text-2xl font-bold mt-1">Colaboradores</h1>
+      <p className="text-sm text-gray-500 mt-1">Funções, áreas e acessos da equipe Play Moments.</p>
     </div>
+
+    <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-5"><div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Equipe</p><p className="text-xl font-bold mt-2">{team.length}</p></div><div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Ativos</p><p className="text-xl font-bold text-emerald-300 mt-2">{team.filter(m=>m.role==='admin'||staffInfo(m)?.active!==false).length}</p></div><div className="p-4 rounded-2xl bg-[#141416] border border-white/10 col-span-2 lg:col-span-1"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Inativos</p><p className="text-xl font-bold text-gray-400 mt-2">{team.filter(m=>m.role!=='admin'&&staffInfo(m)?.active===false).length}</p></div></div>
 
     <div className="grid xl:grid-cols-[420px_1fr] gap-5">
       <section className="p-4 sm:p-5 rounded-2xl bg-[#141416] border border-white/10 h-fit">

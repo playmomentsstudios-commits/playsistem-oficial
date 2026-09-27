@@ -387,8 +387,9 @@ export function AdminFilesV2(){
   return <div>
     <div className="flex flex-wrap justify-between gap-4 items-end mb-6">
       <div>
-        <h1 className="text-2xl font-bold">Central de Arquivos</h1>
-        <p className="text-sm text-gray-500">Cliente → Projeto → Tarefa, com Google Drive para arquivos pesados.</p>
+        <p className="text-[11px] uppercase tracking-[.18em] text-[#E30613] font-semibold">Operação</p>
+        <h1 className="text-2xl font-bold mt-1">Central de Arquivos</h1>
+        <p className="text-sm text-gray-500 mt-1">Cliente → Projeto → Tarefa → aprovação → entrega.</p>
       </div>
       <Button type="button" variant="secondary" loading={testing} onClick={testDrive}>Testar Google Drive</Button>
     </div>
@@ -399,23 +400,23 @@ export function AdminFilesV2(){
       <button type="button" onClick={()=>setUploadResult(null)} className="text-gray-600 hover:text-white">×</button>
     </div>}
 
-    <form onSubmit={save} className="p-5 rounded-2xl bg-[#141416] border border-white/10 mb-8 space-y-4">
+    <form onSubmit={save} className="pm-surface p-5 mb-8 space-y-4">
       <div className="grid md:grid-cols-3 gap-3">
         <label className="text-xs text-gray-500">Armazenamento
-          <select value={provider} onChange={e=>setProvider(e.target.value as typeof provider)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+          <select value={provider} onChange={e=>setProvider(e.target.value as typeof provider)} className="pm-control mt-1 w-full px-3 bg-black">
             <option value="google_drive">Google Drive — recomendado</option>
             <option value="supabase">Portal / Supabase — arquivos pequenos</option>
             <option value="external">Link externo</option>
           </select>
         </label>
         <label className="text-xs text-gray-500">Cliente
-          <select value={customer} onChange={e=>{setCustomer(e.target.value);setProject('');setTask('')}} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+          <select value={customer} onChange={e=>{setCustomer(e.target.value);setProject('');setTask('')}} className="pm-control mt-1 w-full px-3 bg-black">
             <option value="">Selecione o cliente</option>
             {customers.map(c=><option key={c.id} value={c.id}>{c.first_name} {c.last_name} — {c.email}</option>)}
           </select>
         </label>
         <label className="text-xs text-gray-500">Projeto
-          <select value={project} onChange={e=>{setProject(e.target.value);setTask('');setCustomFolder('')}} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+          <select value={project} onChange={e=>{setProject(e.target.value);setTask('');setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
             <option value="">Sem projeto</option>
             {customerProjects.map((p:any)=><option key={p.id} value={p.id}>{p.title}</option>)}
           </select>
@@ -424,18 +425,18 @@ export function AdminFilesV2(){
 
       <div className="grid md:grid-cols-3 gap-3">
         <label className="text-xs text-gray-500">Tarefa
-          <select value={task} onChange={e=>setTask(e.target.value)} disabled={!project} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10 disabled:opacity-40">
+          <select value={task} onChange={e=>setTask(e.target.value)} disabled={!project} className="pm-control mt-1 w-full px-3 bg-black disabled:opacity-40">
             <option value="">Arquivo geral do projeto</option>
             {tasks.map((t:any)=><option key={t.id} value={t.id}>{t.title}</option>)}
           </select>
         </label>
         {provider==='google_drive'&&<label className="text-xs text-gray-500">Pasta do projeto
-          <select value={folderKind} onChange={e=>{setFolderKind(e.target.value);setCustomFolder('')}} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+          <select value={folderKind} onChange={e=>{setFolderKind(e.target.value);setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
             {folderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
           </select>
         </label>}
         <label className="text-xs text-gray-500">Visibilidade
-          <select value={clientVisible?'client':'internal'} onChange={e=>setClientVisible(e.target.value==='client')} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+          <select value={clientVisible?'client':'internal'} onChange={e=>setClientVisible(e.target.value==='client')} className="pm-control mt-1 w-full px-3 bg-black">
             <option value="client">Visível ao cliente</option>
             <option value="internal">Somente equipe</option>
           </select>
@@ -444,7 +445,7 @@ export function AdminFilesV2(){
 
       {provider==='google_drive'&&project&&<div className="grid md:grid-cols-[1fr_auto] gap-3 items-end">
         <label className="text-xs text-gray-500">Subpasta personalizada
-          <select value={customFolder} onChange={e=>setCustomFolder(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+          <select value={customFolder} onChange={e=>setCustomFolder(e.target.value)} className="pm-control mt-1 w-full px-3 bg-black">
             <option value="">Sem subpasta — usar {folderOptions.find(([value])=>value===folderKind)?.[1]||'pasta padrão'}</option>
             {foldersForKind.map((folder:any)=><option key={folder.id} value={folder.id}>📁 {folder.name}</option>)}
           </select>
@@ -453,11 +454,11 @@ export function AdminFilesV2(){
       </div>}
 
       {provider==='external'?<div className="grid md:grid-cols-2 gap-3">
-        <input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome do arquivo ou material" className="min-h-11 px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
-        <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://..." className="min-h-11 px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
+        <input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome do arquivo ou material" className="pm-control px-3 bg-white/[0.03]"/>
+        <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://..." className="pm-control px-3 bg-white/[0.03]"/>
       </div>:<div className="space-y-3">
         {provider==='supabase'&&<input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome personalizado (opcional quando selecionar 1 arquivo)" className="w-full min-h-11 px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>}
-        <label className="block rounded-2xl border border-dashed border-white/15 bg-white/[0.025] p-4 sm:p-5 hover:border-[#E30613]/50 transition-colors cursor-pointer">
+        <label className="block rounded-2xl border border-dashed border-white/15 bg-white/[0.025] p-5 sm:p-6 hover:border-[#E30613]/50 hover:bg-[#E30613]/[0.025] transition-colors cursor-pointer">
           <input type="file" multiple onChange={e=>{
             const picked=Array.from(e.target.files||[])
             const invalid=provider==='google_drive'?picked.find(item=>item.size>driveLimitGb*1024*1024*1024):null
@@ -499,7 +500,7 @@ export function AdminFilesV2(){
         <h2 className="text-lg font-bold">Recentes</h2>
         <p className="text-xs text-gray-500">Acesso rápido aos últimos arquivos.</p>
       </div>
-      {loading?<p className="text-gray-500">Carregando...</p>:recent.length===0?<p className="text-sm text-gray-500">Nenhum arquivo ainda.</p>:<div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
+      {loading?<div aria-busy="true" aria-label="Carregando arquivos recentes" className="space-y-3"><div className="pm-skeleton h-20 rounded-2xl"/><div className="pm-skeleton h-20 rounded-2xl"/><div className="pm-skeleton h-20 rounded-2xl"/></div>:recent.length===0?<p className="text-sm text-gray-500">Nenhum arquivo ainda.</p>:<div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
         {recent.map(row=><button key={row.id} type="button" onClick={()=>open(row)} className="group text-left p-2.5 rounded-xl bg-[#141416] border border-white/8 hover:border-white/20 transition-colors min-w-0">
           <div className="h-11 rounded-lg bg-white/[0.04] flex items-center justify-center text-2xl mb-2">{fileIcon(row)}</div>
           <div className="flex items-center justify-between gap-2">

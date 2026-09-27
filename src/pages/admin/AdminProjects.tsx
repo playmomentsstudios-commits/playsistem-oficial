@@ -83,14 +83,23 @@ export function AdminProjects(){
     }
   }
 
+  const today=new Date().toISOString().slice(0,10)
+  const activeCount=rows.filter(p=>p.status==='active').length
+  const reviewCount=rows.filter(p=>p.status==='review').length
+  const overdueCount=rows.filter(p=>p.due_date&&p.due_date<today&&!['completed','cancelled'].includes(p.status)).length
+  const completedCount=rows.filter(p=>p.status==='completed').length
+
   return <div>
     <div className="flex flex-wrap justify-between gap-4 items-end mb-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Projetos</h1>
-        <p className="text-sm text-gray-500">Gerencie trabalhos internos e projetos de clientes</p>
+        <p className="text-[11px] uppercase tracking-[.18em] text-[#E30613] font-semibold">Operação</p>
+        <h1 className="text-2xl font-bold text-white mt-1">Projetos</h1>
+        <p className="text-sm text-gray-500 mt-1">Trabalhos, prazos e andamento das entregas.</p>
       </div>
       <Button onClick={()=>setShowForm(value=>!value)}>{showForm?'Fechar':'Novo projeto'}</Button>
     </div>
+
+    <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">{[['Ativos',activeCount,'text-blue-300'],['Em revisão',reviewCount,'text-violet-300'],['Atrasados',overdueCount,'text-red-300'],['Concluídos',completedCount,'text-emerald-300']].map(([label,value,tone])=><div key={String(label)} className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">{label}</p><p className={'text-xl font-bold mt-2 '+tone}>{value}</p></div>)}</div>
 
     {showForm&&<form onSubmit={create} className="p-5 mb-6 rounded-2xl bg-[#141416] border border-white/10 space-y-4">
       <div className="grid md:grid-cols-2 gap-3">
@@ -114,23 +123,23 @@ export function AdminProjects(){
       <Button type="submit">Criar e abrir projeto</Button>
     </form>}
 
-    <div className="flex flex-wrap gap-3 mb-5">
-      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar projeto..." className="px-4 py-2 rounded-xl bg-white/5 border border-white/10"/>
+    <div className="p-3 rounded-2xl bg-[#111113] border border-white/10 flex flex-wrap gap-3 mb-5">
+      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar projeto..." className="min-h-11 flex-1 min-w-56 px-4 rounded-xl bg-black/40 border border-white/10"/>
       <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} className="px-3 py-2 rounded-xl bg-black border border-white/10">
         <option value="todos">Todos os status</option>
         {statuses.map(value=><option key={value} value={value}>{rotulo(statusProjeto,value)}</option>)}
       </select>
-      <Link to="/admin/produtividade" className="px-4 py-2 rounded-xl bg-white/5 text-sm flex items-center">Abrir produtividade →</Link>
+      <Link to="/admin/produtividade" className="min-h-11 px-4 rounded-xl bg-white/[0.05] border border-white/10 text-sm flex items-center hover:bg-white/[0.08]">Abrir produtividade →</Link>
     </div>
 
     {loading?<p className="text-gray-400">Carregando...</p>:!filtered.length?<p className="text-gray-500">Nenhum projeto encontrado.</p>:<div className="grid lg:grid-cols-2 gap-4">{filtered.map(project=><Link key={project.id} to={'/admin/projetos/'+project.id} className="p-5 rounded-2xl bg-[#141416] border border-white/10 hover:border-white/20 transition-colors">
       <div className="flex justify-between gap-3">
         <div><b className="text-white">{project.title}</b><p className="text-xs text-gray-500 mt-1">{rotulo(tipoProjeto,project.project_type)} · prioridade {rotulo(prioridade,project.priority)}</p></div>
-        <span className="text-sm text-gray-300">{rotulo(statusProjeto,project.status)}</span>
+        <span className={'text-xs px-2.5 py-1 rounded-full border '+(project.status==='completed'?'bg-emerald-500/10 text-emerald-300 border-emerald-500/20':project.status==='active'?'bg-blue-500/10 text-blue-300 border-blue-500/20':project.status==='review'?'bg-violet-500/10 text-violet-300 border-violet-500/20':project.status==='paused'?'bg-amber-500/10 text-amber-300 border-amber-500/20':'bg-white/5 text-gray-300 border-white/10')}>{rotulo(statusProjeto,project.status)}</span>
       </div>
       <div className="flex justify-between mt-4 text-sm"><span className="text-gray-500">Progresso</span><b>{progress(project)}%</b></div>
       <div className="h-2 bg-white/10 rounded mt-2"><div className="h-2 bg-[#E30613] rounded" style={{width:progress(project)+'%'}}/></div>
-      {project.due_date&&<p className="text-xs text-gray-500 mt-3">Prazo: {new Date(project.due_date+'T12:00').toLocaleDateString('pt-BR')}</p>}
+      {project.due_date&&<p className={'text-xs mt-3 '+(project.due_date<today&&!['completed','cancelled'].includes(project.status)?'text-red-300':'text-gray-500')}>Prazo: {new Date(project.due_date+'T12:00').toLocaleDateString('pt-BR')}{project.due_date<today&&!['completed','cancelled'].includes(project.status)?' · atrasado':''}</p>}
     </Link>)}</div>}
   </div>
 }
