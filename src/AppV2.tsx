@@ -9,6 +9,7 @@ import { useAuth } from './contexts/AuthContext'
 const CustomerLayoutV2 = lazy(() => import('./layouts/CustomerLayoutV2').then(m => ({ default:m.CustomerLayoutV2 })))
 const AdminLayout = lazy(() => import('./layouts/AdminLayout').then(m => ({ default:m.AdminLayout })))
 const HomePage = lazy(() => import('./pages/public/HomePage').then(m => ({ default:m.HomePage })))
+const PublicAcademyPage = lazy(() => import('./pages/public/PublicAcademyPage').then(m => ({ default:m.PublicAcademyPage })))
 const PublicDigitalLiteracyPage = lazy(() => import('./pages/public/PublicDigitalLiteracyPage').then(m => ({ default:m.PublicDigitalLiteracyPage })))
 const LoginPage = lazy(() => import('./pages/public/LoginPage').then(m => ({ default:m.LoginPage })))
 const RegisterPage = lazy(() => import('./pages/public/RegisterPage').then(m => ({ default:m.RegisterPage })))
@@ -92,6 +93,7 @@ export default function AppV2() {
             <Routes>
               {/* Public */}
               <Route path="/" element={<HomePage />} />
+              <Route path="/academia" element={<PublicAcademyPage />} />
               <Route path="/curso/letramento-digital" element={<PublicDigitalLiteracyPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/cadastro" element={<RegisterPage />} />
