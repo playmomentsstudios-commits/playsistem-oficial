@@ -2,7 +2,7 @@ import { useEffect,useMemo,useState } from 'react'
 import { portalApi } from '../../api/portal'
 import { supabase } from '../../lib/supabase'
 import { useToast } from '../../contexts/ToastContext'
-import { metodoPagamento,rotulo,statusPagamento } from '../../lib/labels.ptBR'
+import { ambientePagamento,metodoPagamento,rotulo,statusPagamento } from '../../lib/labels.ptBR'
 
 const money=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format((v||0)/100)
 const statusTone:Record<string,string>={
@@ -93,7 +93,7 @@ export function AdminPayments(){
     <div className="flex flex-wrap items-center gap-2 mb-4">
       <button onClick={()=>setScopeFilter('operacionais')} className="px-3 py-2 rounded-xl bg-white/[0.035] border border-white/[0.08] text-xs text-gray-300 hover:bg-white/[0.06]">Em operação <strong className="ml-1 text-white">{operationalRows.length}</strong></button>
       <button onClick={()=>setScopeFilter('rascunhos')} className="px-3 py-2 rounded-xl bg-amber-500/[0.04] border border-amber-500/10 text-xs text-amber-300 hover:bg-amber-500/[0.07]">Rascunhos / pendentes <strong className="ml-1 text-white">{draftRows.length}</strong></button>\n      <button onClick={()=>setScopeFilter('arquivados')} className="px-3 py-2 rounded-xl bg-white/[0.025] border border-white/[0.07] text-xs text-gray-400 hover:bg-white/[0.05]">Encerrados <strong className="ml-1 text-white">{inactiveCount}</strong></button>
-      <button onClick={()=>setScopeFilter('testes')} className="px-3 py-2 rounded-xl bg-sky-500/[0.04] border border-sky-500/10 text-xs text-sky-300">Sandbox <strong className="ml-1 text-white">{sandboxCount}</strong></button>
+      <button onClick={()=>setScopeFilter('testes')} className="px-3 py-2 rounded-xl bg-sky-500/[0.04] border border-sky-500/10 text-xs text-sky-300">Testes <strong className="ml-1 text-white">{sandboxCount}</strong></button>
       <button onClick={()=>setShowLegacy(v=>!v)} className="ml-auto px-3 py-2 text-[11px] text-gray-600 hover:text-gray-400">Legado sem ambiente: {unknownCount}</button>
     </div>
     {showLegacy&&<div className="mb-4 px-4 py-3 rounded-xl bg-amber-500/[0.035] border border-amber-500/10 text-xs text-amber-200">Existem {unknownCount} registros antigos sem ambiente identificado. Eles permanecem preservados para auditoria e podem ser consultados em “Todos os registros”.</div>}
@@ -101,7 +101,7 @@ export function AdminPayments(){
     <div className="p-3 rounded-2xl bg-[#111113] border border-white/10 flex flex-wrap gap-3 mb-5">
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar cliente, pedido ou ID..." className="min-h-11 flex-1 min-w-64 px-4 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-[#E30613]/50"/>
       <select value={scopeFilter} onChange={e=>setScopeFilter(e.target.value)} className="min-h-11 px-3 rounded-xl bg-black border border-white/10">
-        <option value="operacionais">Recebidos</option><option value="rascunhos">Rascunhos / pendentes</option><option value="arquivados">Encerrados / arquivados</option><option value="testes">Testes Sandbox</option><option value="todos">Todos os registros</option>
+        <option value="operacionais">Recebidos</option><option value="rascunhos">Rascunhos / pendentes</option><option value="arquivados">Encerrados / arquivados</option><option value="testes">Ambiente de testes</option><option value="todos">Todos os registros</option>
       </select>
       <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} className="min-h-11 px-3 rounded-xl bg-black border border-white/10">
         <option value="todos">Todos os status</option><option value="pending">Aguardando pagamento</option><option value="awaiting_confirmation">Aguardando confirmação</option><option value="paid">Pagamento recebido</option><option value="cancelled">Cancelado</option><option value="failed">Falhou</option><option value="expired">Vencido</option><option value="refunded">Reembolsado</option>
@@ -116,7 +116,7 @@ export function AdminPayments(){
             <div><p className="font-semibold text-white">{payment.order?.order_number||'Pagamento sem pedido'}</p><p className="text-xs text-gray-500 mt-1">{customerName} · {payment.customer?.email||'Sem e-mail'}</p></div>
             <div><p className="font-semibold">{money(payment.amount)}</p><p className="text-xs text-gray-500 mt-1">{rotulo(metodoPagamento,payment.method)}</p></div>
             <p className="text-xs text-gray-500">{new Date(payment.created_at).toLocaleString('pt-BR')}</p>
-            <div className="flex flex-wrap gap-1.5 justify-self-start md:justify-self-end">{payment.environment==='sandbox'&&<span className="inline-flex px-2.5 py-1 rounded-full border text-[11px] bg-sky-500/10 text-sky-300 border-sky-500/20">Sandbox</span>}{payment.archived_at&&<span className="inline-flex px-2.5 py-1 rounded-full border text-[11px] bg-white/5 text-gray-400 border-white/10">Arquivado</span>}<span className={'inline-flex px-2.5 py-1 rounded-full border text-[11px] '+(statusTone[payment.status]||'bg-white/5 text-gray-300 border-white/10')}>{rotulo(statusPagamento,payment.status)}</span></div>
+            <div className="flex flex-wrap gap-1.5 justify-self-start md:justify-self-end">{payment.environment==='sandbox'&&<span className="pm-tag pm-tag-info">{rotulo(ambientePagamento,payment.environment)}</span>}{payment.archived_at&&<span className="pm-tag pm-tag-neutral">Arquivado</span>}<span className={'pm-tag '+(payment.status==='paid'?'pm-tag-success':payment.status==='pending'||payment.status==='awaiting_confirmation'?'pm-tag-pending':payment.status==='refunded'?'pm-tag-review':payment.status==='failed'?'pm-tag-danger':'pm-tag-neutral')}>{rotulo(statusPagamento,payment.status)}</span></div>
           </div>
         </button>
       })}
@@ -125,11 +125,11 @@ export function AdminPayments(){
     {selected&&<div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex justify-end" onClick={()=>setSelected(null)}>
       <aside className="w-full max-w-lg h-full bg-[#101012] border-l border-white/10 p-5 sm:p-6 overflow-y-auto" onClick={e=>e.stopPropagation()}>
         <div className="flex justify-between gap-4"><div><p className="text-[10px] uppercase tracking-[.16em] text-[#E30613]">Detalhes financeiros</p><h2 className="text-xl font-bold mt-1">{selected.order?.order_number||'Pagamento'}</h2></div><button onClick={()=>setSelected(null)} className="w-9 h-9 rounded-xl bg-white/5 text-gray-400">✕</button></div>
-        <div className="mt-6 p-5 rounded-2xl bg-[#171719] border border-white/10"><p className="text-xs text-gray-500">Valor</p><p className="text-3xl font-bold mt-1">{money(selected.amount)}</p><span className={'mt-4 inline-flex px-3 py-1.5 rounded-full border text-xs '+(statusTone[selected.status]||'bg-white/5 text-gray-300 border-white/10')}>{rotulo(statusPagamento,selected.status)}</span></div>
+        <div className="mt-6 p-5 rounded-2xl bg-[#171719] border border-white/10"><p className="text-xs text-gray-500">Valor</p><p className="text-3xl font-bold mt-1">{money(selected.amount)}</p><span className={'pm-tag mt-4 '+(selected.status==='paid'?'pm-tag-success':selected.status==='pending'||selected.status==='awaiting_confirmation'?'pm-tag-pending':selected.status==='refunded'?'pm-tag-review':selected.status==='failed'?'pm-tag-danger':'pm-tag-neutral')}>{rotulo(statusPagamento,selected.status)}</span></div>
         <div className="mt-4 rounded-2xl border border-white/10 divide-y divide-white/[0.07]">
           {[['Cliente',[selected.customer?.first_name,selected.customer?.last_name].filter(Boolean).join(' ')||'Cliente'],['E-mail',selected.customer?.email||'—'],['Método',rotulo(metodoPagamento,selected.method)],['Provedor',selected.provider||'—'],['Criado em',new Date(selected.created_at).toLocaleString('pt-BR')],['ID interno',selected.id]].map(([label,value])=><div key={label} className="p-4"><p className="text-[10px] uppercase text-gray-600">{label}</p><p className="text-sm text-gray-300 mt-1 break-all">{value}</p></div>)}
         </div>
-        {selected.environment==='sandbox'&&<div className="mt-4 p-4 rounded-xl bg-sky-500/5 border border-sky-500/15 text-xs text-sky-200"><strong className="block mb-1">Sandbox confirmado</strong>Este registro é de teste. Cancelar interrompe uma cobrança pendente no Asaas; arquivar apenas retira o registro dos indicadores financeiros.</div>}
+        {selected.environment==='sandbox'&&<div className="mt-4 p-4 rounded-xl bg-sky-500/5 border border-sky-500/15 text-xs text-sky-200"><strong className="block mb-1">Ambiente de testes confirmado</strong>Este registro é de teste. Cancelar interrompe uma cobrança pendente no Asaas; arquivar apenas retira o registro dos indicadores financeiros.</div>}
         {selected.environment==='unknown'&&<div className="mt-4 p-4 rounded-xl bg-amber-500/5 border border-amber-500/15 text-xs text-amber-200"><strong className="block mb-1">Registro legado</strong>O ambiente desta cobrança não foi registrado quando ela foi criada. Por segurança, ela não pode ser tratada automaticamente como teste.</div>}
         {selected.environment==='production'&&<div className="mt-4 p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15 text-xs text-emerald-200"><strong className="block mb-1">Ambiente de produção</strong>Este registro faz parte do histórico financeiro real e não oferece ação de limpeza.</div>}
         {selected.provider==='manual'&&<div className="mt-4 p-4 rounded-xl bg-amber-500/5 border border-amber-500/15 text-xs text-amber-200">Pagamento manual legado — preservado apenas para histórico.</div>}
