@@ -1,3 +1,4 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
 import QRCode from "npm:qrcode@1.5.4";
 import { corsHeaders, createDriveFolder, findDriveFolder, getDriveAccessToken, json, requireUser, ensureAcademyFolder } from "../_shared/googleDrive.ts";
@@ -9,7 +10,7 @@ async function uploadPdf(bytes:Uint8Array,name:string,parentId:string,token:stri
 Deno.serve(async(req)=>{
  if(req.method==="OPTIONS")return new Response("ok",{headers:corsHeaders});
  try{
-  const body=await req.json();const action=String(body.action||"generate");const publicMode=action==="public-download";const ctx=await requireUser(req,publicMode);const id=String(body.certificate_id||"");const code=String(body.verification_code||"").trim().toUpperCase();if(!id&&!code)throw new Error("Certificado não informado.");
+  const body=await req.json();const action=String(body.action||"generate");const publicMode=action==="public-download";const ctx=publicMode?{db:createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,{auth:{persistSession:false,autoRefreshToken:false}}),userId:"public",role:"public",permissions:[]}:await requireUser(req);const id=String(body.certificate_id||"");const code=String(body.verification_code||"").trim().toUpperCase();if(!id&&!code)throw new Error("Certificado não informado.");
   let query=ctx.db.from("academy_certificates").select("*");query=id?query.eq("id",id):query.eq("verification_code",code);const {data:cert,error}=await query.single();if(error||!cert)throw new Error("Certificado não encontrado.");
   if(!publicMode&&cert.user_id!==ctx.userId&&ctx.role!=="admin")throw new Error("Acesso negado.");
   if(cert.revoked_at)throw new Error("Certificado revogado.");
