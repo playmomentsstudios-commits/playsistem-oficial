@@ -76,6 +76,11 @@ export const portalApi = {
     if(error) throw error
     return data as string
   },
+  requestProductRental: async (productId:string,startDate:string,endDate:string,quantity=1,notes?:string) => {
+    const {data,error}=await supabase.rpc('request_product_rental',{p_product_id:productId,p_start_date:startDate,p_end_date:endDate,p_quantity:quantity,p_notes:notes?.trim()||null})
+    if(error) throw error
+    return data as string
+  },
   createProductOrder: async (id:string) => {
     const { data,error } = await supabase.rpc('create_product_order',{p_product_id:id})
     if(error) throw error
