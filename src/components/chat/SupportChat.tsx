@@ -189,16 +189,54 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
       {error && <div role="alert" className="p-3 rounded-xl bg-red-950/40 text-sm">{error} <button className="underline min-h-11 px-2" onClick={() => setRetry(value => value + 1)}>Tentar novamente</button></div>}
       {loading ? <p role="status">Carregando conversas…</p> : (
         <div className={'flex flex-col md:flex-row overflow-hidden border border-white/10 '+(compact?'rounded-none h-full':'rounded-2xl')} style={{ background: '#141416', minHeight: compact ? 0 : 420 }}>
-          {staff && <aside className="md:w-64 md:shrink-0 border-b md:border-r border-white/10 p-3">
-            <input aria-label="Buscar cliente" placeholder="Buscar cliente…" value={filter} onChange={event => setFilter(event.target.value)} className="w-full p-3 rounded-xl bg-white/5 mb-2" />
-            <div className="max-h-40 md:max-h-[60vh] overflow-auto">
-              {conversations.filter(item => name(item).toLocaleLowerCase().includes(filter.toLocaleLowerCase())).map(item => (
-                <button key={item.id} disabled={sending} aria-pressed={selected === item.id} onClick={() => setSelected(item.id)} className="w-full text-left p-3 rounded-xl text-sm disabled:opacity-50" style={{ background: selected === item.id ? 'rgba(227,6,19,0.15)' : 'transparent' }}>
-                  <div className="flex items-center justify-between gap-2"><span className="truncate font-medium">{name(item)}</span><span className={'w-2 h-2 rounded-full shrink-0 '+(item.priority==='urgent'?'bg-red-500':item.priority==='high'?'bg-orange-400':item.status==='resolved'?'bg-emerald-400':'bg-gray-500')}/></div>
-                  <p className="text-[10px] text-gray-500 mt-1 truncate">{assigneeName(item)}</p>
+          {staff && <aside className={'w-full md:w-[330px] xl:w-[360px] shrink-0 border-white/10 bg-[#101012] flex-col '+(mobileChat?'hidden md:flex':'flex')+' md:border-r'}>
+            <div className="p-3 border-b border-white/10">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div><p className="text-sm font-bold">Caixa de entrada</p><p className="text-[10px] text-gray-500">{conversations.length} conversa(s)</p></div>
+                {counts.unread>0&&<span className="pm-tag pm-tag-danger">{counts.unread} não lida(s)</span>}
+              </div>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600">⌕</span>
+                <input aria-label="Buscar conversa" placeholder="Buscar cliente, mensagem ou marcador…" value={filter} onChange={event => setFilter(event.target.value)} className="w-full min-h-11 pl-9 pr-3 rounded-xl bg-white/[.05] border border-white/10 text-sm" />
+              </div>
+              <div className="flex gap-1.5 mt-3 overflow-x-auto pb-1">
+                {([
+                  ['all','Todas',conversations.length],
+                  ['unread','Não lidas',counts.unread],
+                  ['mine','Minhas',counts.mine],
+                  ['unassigned','Sem responsável',counts.unassigned],
+                  ['urgent','Urgentes',counts.urgent],
+                ] as Array<[InboxFilter,string,number]>).map(([value,label,count])=><button type="button" key={value} onClick={()=>setInboxFilter(value)} className={'shrink-0 min-h-8 px-2.5 rounded-lg border text-[10px] font-semibold '+(inboxFilter===value?'border-[#E30613]/40 bg-[#E30613]/10 text-red-200':'border-white/10 bg-white/[.025] text-gray-400')}>{label}{count>0&&value!=='all'?(' '+count):''}</button>)}
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto min-h-0">
+              {visibleConversations.map(item=>{
+                const itemName=name(item)
+                const unread=item.unread_count||0
+                return <button key={item.id} disabled={sending} aria-pressed={selected===item.id} onClick={()=>{setSelected(item.id);setMobileChat(true);setInfoOpen(false)}} className={'w-full text-left px-3 py-3.5 border-b border-white/[.05] hover:bg-white/[.035] transition-colors disabled:opacity-50 '+(selected===item.id?'bg-white/[.045]':'')}>
+                  <div className="flex gap-3">
+                    <div className="relative shrink-0">
+                      <div className={'w-11 h-11 rounded-full flex items-center justify-center text-xs font-bold '+(selected===item.id?'bg-[#E30613] text-white':'bg-white/[.07] text-gray-300')}>{initials(itemName)}</div>
+                      {item.priority==='urgent'&&<span className="absolute -right-0.5 -bottom-0.5 w-3 h-3 rounded-full bg-red-500 border-2 border-[#101012]"/>}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex justify-between gap-2 items-baseline">
+                        <p className={'text-sm truncate '+(unread?'font-bold text-white':'font-semibold text-gray-200')}>{itemName}</p>
+                        <span className={'text-[10px] shrink-0 '+(unread?'text-[#ff6573]':'text-gray-600')}>{shortTime(item.last_message_at)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className={'text-xs truncate flex-1 '+(unread?'text-gray-300':'text-gray-500')}>{item.last_sender_id===user?.id?'Você: ':''}{item.last_message||'Conversa iniciada'}</p>
+                        {unread>0&&<span className="min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] font-bold flex items-center justify-center">{unread>99?'99+':unread}</span>}
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-2 min-w-0">
+                        <span className={"pm-tag "+(item.status==='resolved'?'pm-tag-success':item.status==='pending'?'pm-tag-pending':'pm-tag-info')}>{statusLabel[item.status||'open']}</span>
+                        <span className="text-[10px] text-gray-600 truncate">{assigneeName(item)}</span>
+                      </div>
+                    </div>
+                  </div>
                 </button>
-              ))}
-              {!conversations.length && <p className="text-sm p-3">Nenhuma conversa recebida ainda.</p>}
+              })}
+              {!visibleConversations.length&&<div className="p-6 text-center"><p className="text-sm text-gray-400">Nenhuma conversa encontrada.</p><p className="text-xs text-gray-600 mt-1">Tente outro filtro ou termo de busca.</p></div>}
             </div>
           </aside>}
           <div className="flex-1 min-w-0 flex flex-col">
