@@ -855,7 +855,7 @@ export function AdminProducts() {
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
-                <Field label="Status">
+                <Field label="Situação">
                   <select
                     value={form.status}
                     onChange={event =>
@@ -865,7 +865,7 @@ export function AdminProducts() {
                           event.target.value as ProductStatus,
                       }))
                     }
-                    className="catalog-input"
+                    className={"catalog-input pm-select-status "+(form.status==="published"?"pm-state-success":form.status==="archived"?"pm-state-danger":"pm-state-pending")}
                   >
                     <option value="draft">
                       Rascunho

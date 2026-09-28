@@ -113,7 +113,7 @@ export function AdminProjects(){
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <select value={form.project_type} onChange={e=>setForm({...form,project_type:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10">{tipos.map(value=><option key={value} value={value}>{rotulo(tipoProjeto,value)}</option>)}</select>
         <select value={form.priority} onChange={e=>setForm({...form,priority:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10">{prioridades.map(value=><option key={value} value={value}>{rotulo(prioridade,value)}</option>)}</select>
-        <select value={form.status} onChange={e=>setForm({...form,status:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10">{statuses.map(value=><option key={value} value={value}>{rotulo(statusProjeto,value)}</option>)}</select>
+        <select aria-label="Situação do projeto" value={form.status} onChange={e=>setForm({...form,status:e.target.value})} className={"pm-select-status px-3 py-2 rounded-xl "+(form.status==="active"?"pm-state-progress":form.status==="review"?"pm-state-review":form.status==="completed"?"pm-state-success":form.status==="cancelled"?"pm-state-danger":form.status==="paused"?"pm-state-pending":"pm-state-neutral")}>{statuses.map(value=><option key={value} value={value}>{rotulo(statusProjeto,value)}</option>)}</select>
         <input value={form.drive_folder_url} onChange={e=>setForm({...form,drive_folder_url:e.target.value})} placeholder="Link da pasta no Drive" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
       </div>
       <div className="grid sm:grid-cols-2 gap-3">
@@ -126,16 +126,16 @@ export function AdminProjects(){
     <div className="p-3 rounded-2xl bg-[#111113] border border-white/10 flex flex-wrap gap-3 mb-5">
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar projeto..." className="min-h-11 flex-1 min-w-56 px-4 rounded-xl bg-black/40 border border-white/10"/>
       <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} className="px-3 py-2 rounded-xl bg-black border border-white/10">
-        <option value="todos">Todos os status</option>
+        <option value="todos">Todas as situações</option>
         {statuses.map(value=><option key={value} value={value}>{rotulo(statusProjeto,value)}</option>)}
       </select>
-      <Link to="/admin/produtividade" className="min-h-11 px-4 rounded-xl bg-white/[0.05] border border-white/10 text-sm flex items-center hover:bg-white/[0.08]">Abrir produtividade →</Link>
+      <Link to="/admin/produtividade" className="min-h-11 px-4 rounded-xl bg-white/[0.05] border border-white/10 text-sm flex items-center hover:bg-white/[0.08]">Abrir tarefas →</Link>
     </div>
 
     {loading?<p className="text-gray-400">Carregando...</p>:!filtered.length?<p className="text-gray-500">Nenhum projeto encontrado.</p>:<div className="grid lg:grid-cols-2 gap-4">{filtered.map(project=><Link key={project.id} to={'/admin/projetos/'+project.id} className="p-5 rounded-2xl bg-[#141416] border border-white/10 hover:border-white/20 transition-colors">
       <div className="flex justify-between gap-3">
         <div><b className="text-white">{project.title}</b><p className="text-xs text-gray-500 mt-1">{rotulo(tipoProjeto,project.project_type)} · prioridade {rotulo(prioridade,project.priority)}</p></div>
-        <span className={'text-xs px-2.5 py-1 rounded-full border '+(project.status==='completed'?'bg-emerald-500/10 text-emerald-300 border-emerald-500/20':project.status==='active'?'bg-blue-500/10 text-blue-300 border-blue-500/20':project.status==='review'?'bg-violet-500/10 text-violet-300 border-violet-500/20':project.status==='paused'?'bg-amber-500/10 text-amber-300 border-amber-500/20':'bg-white/5 text-gray-300 border-white/10')}>{rotulo(statusProjeto,project.status)}</span>
+        <span className={"pm-tag "+(project.status==="completed"?"pm-tag-success":project.status==="active"?"pm-tag-progress":project.status==="review"?"pm-tag-review":project.status==="paused"?"pm-tag-pending":project.status==="cancelled"?"pm-tag-danger":"pm-tag-neutral")}>{rotulo(statusProjeto,project.status)}</span>
       </div>
       <div className="flex justify-between mt-4 text-sm"><span className="text-gray-500">Progresso</span><b>{progress(project)}%</b></div>
       <div className="h-2 bg-white/10 rounded mt-2"><div className="h-2 bg-[#E30613] rounded" style={{width:progress(project)+'%'}}/></div>
