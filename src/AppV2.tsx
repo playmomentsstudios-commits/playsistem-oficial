@@ -41,6 +41,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard').then(m 
 const AdminCustomers = lazy(() => import('./pages/admin/AdminCustomers').then(m => ({ default:m.AdminCustomers })))
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts').then(m => ({ default:m.AdminProducts })))
 const AdminOrders = lazy(() => import('./pages/admin/AdminOrders').then(m => ({ default:m.AdminOrders })))
+const AdminRentals = lazy(() => import('./pages/admin/AdminRentals').then(m => ({ default:m.AdminRentals })))
 const AdminConversations = lazy(() => import('./pages/admin/AdminConversations').then(m => ({ default:m.AdminConversations })))
 const AdminSiteSettings = lazy(() => import('./pages/admin/AdminSiteSettings').then(m => ({ default:m.AdminSiteSettings })))
 const AdminCommunity = lazy(() => import('./pages/admin/AdminCommunity').then(m => ({ default:m.AdminCommunity })))
@@ -143,6 +144,7 @@ export default function AppV2() {
                 <Route path="categorias" element={<AdminPermissionGate permission={['catalog.view','catalog.manage']}><AdminCategories /></AdminPermissionGate>} />
                 <Route path="servicos" element={<AdminPermissionGate permission={['catalog.view','catalog.manage']}><AdminServices /></AdminPermissionGate>} />
                 <Route path="pedidos" element={<AdminPermissionGate permission={['sales.view','sales.manage']}><AdminOrders /></AdminPermissionGate>} />
+                <Route path="locacoes" element={<AdminPermissionGate permission={['sales.view','sales.manage']}><AdminRentals /></AdminPermissionGate>} />
                 <Route path="pedidos/:id" element={<AdminPermissionGate permission={['sales.view','sales.manage']}><AdminOrderDetail /></AdminPermissionGate>} />
                 <Route path="orcamentos" element={<AdminPermissionGate permission={['quotes.view','quotes.manage']}><AdminQuotes /></AdminPermissionGate>} />
                 <Route path="orcamentos/:id" element={<AdminPermissionGate permission={['quotes.view','quotes.manage']}><AdminQuoteDetail /></AdminPermissionGate>} />
