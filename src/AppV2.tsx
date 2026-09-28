@@ -70,6 +70,7 @@ const AdminAutoAttendant = lazy(() => import('./pages/admin/AdminAutoAttendant')
 const AdminAcademy = lazy(() => import('./pages/admin/AdminAcademy').then(m => ({ default:m.AdminAcademy })))
 const AdminAcademyStudents = lazy(() => import('./pages/admin/AdminAcademyStudents').then(m => ({ default:m.AdminAcademyStudents })))
 const AdminAcademyManagement = lazy(() => import('./pages/admin/AdminAcademyManagement').then(m => ({ default:m.AdminAcademyManagement })))
+const AdminAcademyPrograms = lazy(() => import('./pages/admin/AdminAcademyPrograms').then(m => ({ default:m.AdminAcademyPrograms })))
 const AdminAcademyCertificates = lazy(() => import('./pages/admin/AdminAcademyCertificates').then(m => ({ default:m.AdminAcademyCertificates })))
 const AcademyPage = lazy(() => import('./pages/customer/AcademyPage').then(m => ({ default:m.AcademyPage })))
 const AcademyCoursePage = lazy(() => import('./pages/customer/AcademyCoursePage').then(m => ({ default:m.AcademyCoursePage })))
@@ -175,6 +176,7 @@ export default function AppV2() {
                 <Route path="relatorios" element={<AdminPermissionGate permission="reports.view"><AdminReports /></AdminPermissionGate>} />
                 <Route path="academia" element={<AdminPermissionGate adminOnly><AdminAcademy /></AdminPermissionGate>} />
                 <Route path="academia/alunos" element={<AdminPermissionGate adminOnly><AdminAcademyStudents /></AdminPermissionGate>} />
+                <Route path="academia/programas" element={<AdminPermissionGate adminOnly><AdminAcademyPrograms /></AdminPermissionGate>} />
                 <Route path="academia/certificados" element={<AdminPermissionGate adminOnly><AdminAcademyCertificates /></AdminPermissionGate>} />
                 <Route path="academia/gestao" element={<AdminPermissionGate adminOnly><AdminAcademyManagement /></AdminPermissionGate>} />
               </Route>
