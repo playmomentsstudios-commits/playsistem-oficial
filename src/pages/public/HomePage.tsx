@@ -13,13 +13,14 @@ export function HomePage() {
   const [siteSettings,setSiteSettings]=useState<SiteSettings|null>(null)
   const [serviceAreas,setServiceAreas]=useState<HomeServiceArea[]>([])
   useEffect(()=>{Promise.all([siteContentApi.profile(),siteContentApi.portfolioItems(),siteContentApi.settings(),siteContentApi.homeServiceAreas()]).then(([p,i,s,a])=>{setProfile(p);setPortfolio(i.filter(item=>item.featured).slice(0,3));setSiteSettings(s);setServiceAreas(a);if(s.meta_description){document.title=s.company_name;document.querySelector('meta[name="description"]')?.setAttribute('content',s.meta_description)}}).catch(()=>undefined)},[])
-  const contact = conversationLink(role)
   const quote = conversationLink(role, 'orcamento')
+  const academyHref = role === 'customer' ? '/app/academia' : role ? '/admin/academia' : '/cadastro?next=%2Fapp%2Facademia'
+  const clientHref = role === 'customer' ? '/app/dashboard' : role ? '/admin' : '/login?next=%2Fapp%2Fdashboard'
   const quickLinks = [
-    { title: 'Contratar um serviço', description: 'Design, sites, audiovisual, áudio e soluções digitais.', icon: '✦', href: '/produtos' },
-    { title: 'Comprar um produto', description: 'Veja produtos, equipamentos e soluções disponíveis.', icon: '◇', href: '/produtos' },
-    { title: 'Aprender', description: 'Cursos, conteúdos e formações da Academia Play Moments.', icon: '◌', href: role === 'customer' ? '/cliente/academia' : '/cadastro' },
-    { title: 'Área do cliente', description: 'Acompanhe projetos, arquivos, pagamentos e conversas.', icon: '↗', href: role === 'customer' ? '/cliente' : '/login' },
+    { title: 'Contratar um serviço', description: 'Design, sites, audiovisual, áudio e soluções digitais.', icon: '✦', href: '/servicos' },
+    { title: 'Comprar um produto', description: 'Produtos e equipamentos disponíveis para compra.', icon: '◇', href: '/produtos' },
+    { title: 'Aprender', description: 'Cursos, conteúdos e formações da Academia Play Moments.', icon: '◌', href: academyHref },
+    { title: 'Área do cliente', description: 'Projetos, arquivos, pagamentos e acompanhamento em um só lugar.', icon: '↗', href: clientHref },
   ]
   return (
     <PublicLayout>
@@ -32,13 +33,26 @@ export function HomePage() {
           <p className="text-base sm:text-lg mb-6 max-w-xl mx-auto" style={{ color: '#9090a0' }}>
             Encontre produtos, serviços e soluções da Play Moments para o que você precisa.
           </p>
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap justify-center gap-3">
-            <Link to="/produtos" className="col-span-2 sm:col-span-1 px-6 py-3 rounded-full font-bold" style={{ background: '#E30613', color: '#fff' }}>Encontrar uma solução</Link>
-            <Link to={quote} className="col-span-2 sm:col-span-1 px-6 py-3 rounded-full font-semibold" style={{ border: '1px solid #E30613', color: '#ff6b7a', background: 'rgba(227,6,19,0.08)' }}>Tenho um projeto personalizado</Link>
-            <Link to={role === 'customer' ? '/cliente/academia' : '/cadastro'} className="px-4 py-3 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.06)', color: '#f0f0f2' }}>Quero aprender</Link>
-            <Link to={role === 'customer' ? '/cliente' : '/login'} className="px-4 py-3 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.06)', color: '#f0f0f2' }}>Já sou cliente</Link>
+          <div className="grid grid-cols-2 gap-3 max-w-2xl mx-auto">
+            <Link to="/servicos" className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: '#E30613', color: '#fff' }}>
+              <span className="block text-sm font-bold">Quero contratar</span>
+              <span className="block text-xs mt-1 opacity-80">Serviços e soluções</span>
+            </Link>
+            <Link to="/produtos" className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: 'rgba(255,255,255,0.07)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <span className="block text-sm font-bold">Quero comprar</span>
+              <span className="block text-xs mt-1" style={{ color: '#9090a0' }}>Produtos e equipamentos</span>
+            </Link>
+            <Link to={academyHref} className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: 'rgba(255,255,255,0.07)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <span className="block text-sm font-bold">Quero aprender</span>
+              <span className="block text-xs mt-1" style={{ color: '#9090a0' }}>Cursos e Academia</span>
+            </Link>
+            <Link to={clientHref} className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: 'rgba(255,255,255,0.07)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <span className="block text-sm font-bold">Já sou cliente</span>
+              <span className="block text-xs mt-1" style={{ color: '#9090a0' }}>Acompanhar meu trabalho</span>
+            </Link>
           </div>
-          <Link to={conversationLink(role, 'duvida')} className="inline-flex items-center min-h-11 mt-3 text-sm underline underline-offset-4" style={{ color: '#c0c0cc' }}>Preciso falar com a equipe</Link>
+          <Link to={quote} className="inline-flex items-center min-h-11 mt-4 text-sm font-semibold underline underline-offset-4" style={{ color: '#ff6b7a' }}>Tenho um projeto personalizado</Link>
+          <span className="mx-2 text-xs" style={{ color: '#4f4f59' }}>•</span><Link to={conversationLink(role, 'duvida')} className="inline-flex items-center min-h-11 mt-3 text-sm underline underline-offset-4" style={{ color: '#9090a0' }}>Não encontrei o que preciso</Link>
         </div>
       </section>
 
