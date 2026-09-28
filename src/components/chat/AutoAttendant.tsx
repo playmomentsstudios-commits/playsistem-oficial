@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { crmApi } from '../../api/crm'
 
 type Props={onHuman:(summary:string)=>Promise<void>;busy?:boolean}
 
@@ -13,13 +14,25 @@ const FAQ=[
 ]
 
 export function AutoAttendant({onHuman,busy=false}:Props){
+ const navigate=useNavigate()
  const [flow,setFlow]=useState<Flow>('home')
  const [faq,setFaq]=useState<number|null>(null)
  const [custom,setCustom]=useState({type:'',goal:'',deadline:'',budget:''})
  const [support,setSupport]=useState({topic:'',detail:''})
  const [sent,setSent]=useState(false)
 
- async function handoff(summary:string){
+ async function crmEvent(event:'service_interest'|'product_interest'|'custom_project'|'support_request',detail?:string){
+  try{await crmApi.customerAutoEvent(event,detail)}catch{ /* CRM must never block customer service. */ }
+ }
+
+ async function go(path:string,event:'service_interest'|'product_interest'){
+  await crmEvent(event)
+  navigate(path)
+ }
+
+ async function handoff(summary:string,event:'custom_project'|'support_request',detail?:string){
+  await crmEvent(event,detail)
+
   await onHuman('[Autoatendimento Play Moments]\n'+summary)
   setSent(true)
  }
@@ -37,8 +50,8 @@ export function AutoAttendant({onHuman,busy=false}:Props){
   </div>
 
   {flow==='home'&&<div className="grid grid-cols-2 gap-2 mt-3">
-   <Link to="/servicos" className="min-h-20 p-3 rounded-xl border border-white/10 bg-white/[0.035]"><b className="text-sm block">Contratar serviço</b><span className="text-[11px] text-gray-500">Ver soluções e propostas</span></Link>
-   <Link to="/produtos" className="min-h-20 p-3 rounded-xl border border-white/10 bg-white/[0.035]"><b className="text-sm block">Comprar produto</b><span className="text-[11px] text-gray-500">Produtos e equipamentos</span></Link>
+   <button type="button" onClick={()=>void go('/servicos','service_interest')} className="min-h-20 p-3 rounded-xl border border-white/10 bg-white/[0.035] text-left"><b className="text-sm block">Contratar serviço</b><span className="text-[11px] text-gray-500">Ver soluções e propostas</span></button>
+   <button type="button" onClick={()=>void go('/produtos','product_interest')} className="min-h-20 p-3 rounded-xl border border-white/10 bg-white/[0.035] text-left"><b className="text-sm block">Comprar produto</b><span className="text-[11px] text-gray-500">Produtos e equipamentos</span></button>
    <Link to="/app/academia" className="min-h-20 p-3 rounded-xl border border-white/10 bg-white/[0.035]"><b className="text-sm block">Academia</b><span className="text-[11px] text-gray-500">Cursos e conteúdos</span></Link>
    <button onClick={()=>setFlow('faq')} className="min-h-20 p-3 rounded-xl border border-white/10 bg-white/[0.035] text-left"><b className="text-sm block">Dúvidas rápidas</b><span className="text-[11px] text-gray-500">Projetos, arquivos e pagamentos</span></button>
    <button onClick={()=>setFlow('custom')} className="col-span-2 min-h-16 p-3 rounded-xl border border-[#E30613]/40 bg-[#E30613]/10 text-left"><b className="text-sm block">Tenho um projeto personalizado</b><span className="text-[11px] text-gray-400">Organizar briefing antes de falar com a equipe</span></button>
@@ -66,7 +79,7 @@ export function AutoAttendant({onHuman,busy=false}:Props){
     <label className="block text-xs text-gray-400">Prazo desejado<input value={custom.deadline} onChange={e=>setCustom({...custom,deadline:e.target.value})} placeholder="Ex.: 30 dias" className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10 text-white"/></label>
     <label className="block text-xs text-gray-400">Faixa de investimento<input value={custom.budget} onChange={e=>setCustom({...custom,budget:e.target.value})} placeholder="Opcional" className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10 text-white"/></label>
    </div>
-   <button disabled={busy||!custom.type||custom.goal.trim().length<8} onClick={()=>void handoff(`Tipo: Projeto personalizado\nÁrea: ${custom.type}\nObjetivo: ${custom.goal.trim()}\nPrazo desejado: ${custom.deadline||'Não informado'}\nFaixa de investimento: ${custom.budget||'Não informada'}\nEncaminhamento: atendimento humano solicitado.`)} className="w-full min-h-12 rounded-xl bg-[#E30613] font-semibold disabled:opacity-40">{busy?'Registrando...':'Enviar briefing para a equipe'}</button>
+   <button disabled={busy||!custom.type||custom.goal.trim().length<8} onClick={()=>void handoff(`Tipo: Projeto personalizado\nÁrea: ${custom.type}\nObjetivo: ${custom.goal.trim()}\nPrazo desejado: ${custom.deadline||'Não informado'}\nFaixa de investimento: ${custom.budget||'Não informada'}\nEncaminhamento: atendimento humano solicitado.`,'custom_project',`${custom.type}: ${custom.goal.trim()}`)} className="w-full min-h-12 rounded-xl bg-[#E30613] font-semibold disabled:opacity-40">{busy?'Registrando...':'Enviar briefing para a equipe'}</button>
    <button onClick={()=>setFlow('home')} className="min-h-11 text-xs text-gray-400">← Voltar</button>
   </div>}
 
@@ -77,7 +90,7 @@ export function AutoAttendant({onHuman,busy=false}:Props){
     </select>
    </label>
    <label className="block text-xs text-gray-400">O que aconteceu?<textarea rows={3} value={support.detail} onChange={e=>setSupport({...support,detail:e.target.value})} className="mt-1 w-full p-3 rounded-xl bg-black border border-white/10 text-white resize-none" placeholder="Descreva somente o essencial."/></label>
-   <button disabled={busy||!support.topic||support.detail.trim().length<5} onClick={()=>void handoff(`Tipo: Suporte / exceção do autoatendimento\nAssunto: ${support.topic}\nRelato: ${support.detail.trim()}\nEncaminhamento: atendimento humano solicitado.`)} className="w-full min-h-12 rounded-xl bg-[#E30613] font-semibold disabled:opacity-40">{busy?'Registrando...':'Encaminhar para a equipe'}</button>
+   <button disabled={busy||!support.topic||support.detail.trim().length<5} onClick={()=>void handoff(`Tipo: Suporte / exceção do autoatendimento\nAssunto: ${support.topic}\nRelato: ${support.detail.trim()}\nEncaminhamento: atendimento humano solicitado.`,'support_request',`${support.topic}: ${support.detail.trim()}`)} className="w-full min-h-12 rounded-xl bg-[#E30613] font-semibold disabled:opacity-40">{busy?'Registrando...':'Encaminhar para a equipe'}</button>
    <button onClick={()=>setFlow('home')} className="min-h-11 text-xs text-gray-400">← Voltar</button>
   </div>}
  </div>

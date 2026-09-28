@@ -97,4 +97,12 @@ export const crmApi={
     if(error)throw error
     return data
   },
+  customerAutoEvent:async(event:'service_interest'|'product_interest'|'custom_project'|'support_request',detail?:string)=>{
+    const {data,error}=await supabase.rpc('customer_autoattendant_crm_event',{
+      p_event:event,
+      p_detail:detail?.trim()||null,
+    })
+    if(error)throw error
+    return data
+  },
 }
