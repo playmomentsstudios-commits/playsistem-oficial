@@ -31,26 +31,30 @@ begin
     and m.course_id = cid;
 
   update public.academy_assessments a
-  set status = 'published',
-      updated_at = now()
+  set status = 'published'
   from public.course_modules m
   where m.id = a.module_id
     and m.course_id = cid;
 
   -- Match the test account without assuming a single profiles naming column.
   -- to_jsonb keeps this compatible with the current profile schema.
-  select count(*), min(p.id)
-    into matches, test_user_id
+  select count(*)
+    into matches
   from public.profiles p
-  where lower(trim(coalesce(
-    to_jsonb(p)->>'full_name',
-    to_jsonb(p)->>'name',
-    to_jsonb(p)->>'nome',
-    to_jsonb(p)->>'display_name',
-    ''
+  where lower(trim(concat_ws(' ',
+    nullif(to_jsonb(p)->>'first_name', ''),
+    nullif(to_jsonb(p)->>'last_name', '')
   ))) = 'felipe designer';
 
   if matches = 1 then
+    select p.id into test_user_id
+    from public.profiles p
+    where lower(trim(concat_ws(' ',
+      nullif(to_jsonb(p)->>'first_name', ''),
+      nullif(to_jsonb(p)->>'last_name', '')
+    ))) = 'felipe designer'
+    limit 1;
+
     insert into public.course_enrollments(course_id, user_id, status, source)
     values (cid, test_user_id, 'active', 'manual')
     on conflict (course_id, user_id) do update
