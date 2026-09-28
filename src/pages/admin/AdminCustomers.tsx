@@ -46,8 +46,8 @@ export function AdminCustomers(){
 
     <div className="flex flex-wrap gap-3 mb-4">
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar nome, e-mail..." className="w-full max-w-sm px-4 py-2.5 rounded-xl bg-white/5 border border-white/10"/>
-      <select value={status} onChange={e=>setStatus(e.target.value)} className="px-3 py-2.5 rounded-xl bg-black border border-white/10">
-        <option value="todos">Todos os status</option>
+      <select value={status} onChange={e=>setStatus(e.target.value)} className={"pm-select-status px-3 py-2.5 rounded-xl "+(status==="active"?"pm-state-success":status==="blocked"?"pm-state-danger":status==="inactive"?"pm-state-pending":"pm-state-neutral")}>
+        <option value="todos">Todas as situações</option>
         <option value="active">Ativos</option>
         <option value="inactive">Inativos</option>
         <option value="blocked">Bloqueados</option>
@@ -62,11 +62,7 @@ export function AdminCustomers(){
           <p className="text-xs text-gray-500 truncate">{customer.email}{customer.phone?' · '+customer.phone:''}</p>
           {customer.status_reason_code&&<p className="text-[10px] text-yellow-300/70 mt-1 truncate">{rotulo(motivoStatusCliente,customer.status_reason_code)}</p>}
         </div>
-        <div className="flex items-center gap-2">
-          <span className={'w-2 h-2 rounded-full '+(customer.status==='active'?'bg-emerald-400':customer.status==='blocked'?'bg-red-400':'bg-yellow-300')}/>
-          <span className="text-xs text-gray-400 hidden sm:inline">{rotulo(statusCliente,customer.status)}</span>
-          <span className="text-gray-600">›</span>
-        </div>
+        <div className="flex items-center gap-2"><span className={"pm-tag "+(customer.status==="active"?"pm-tag-success":customer.status==="blocked"?"pm-tag-danger":"pm-tag-pending")}>{rotulo(statusCliente,customer.status)}</span><span className="text-gray-600">›</span></div>
       </Link>)}
     </div>}
   </div>
