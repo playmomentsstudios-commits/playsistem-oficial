@@ -14,12 +14,12 @@ export function HomePage() {
   const [serviceAreas,setServiceAreas]=useState<HomeServiceArea[]>([])
   useEffect(()=>{Promise.all([siteContentApi.profile(),siteContentApi.portfolioItems(),siteContentApi.settings(),siteContentApi.homeServiceAreas()]).then(([p,i,s,a])=>{setProfile(p);setPortfolio(i.filter(item=>item.featured).slice(0,3));setSiteSettings(s);setServiceAreas(a);if(s.meta_description){document.title=s.company_name;document.querySelector('meta[name="description"]')?.setAttribute('content',s.meta_description)}}).catch(()=>undefined)},[])
   const quote = conversationLink(role, 'orcamento')
-  const academyHref = role === 'customer' ? '/app/academia' : role ? '/admin/academia' : '/cadastro?next=%2Fapp%2Facademia'
+  const academyHref = '/academia'
   const clientHref = role === 'customer' ? '/app/dashboard' : role ? '/admin' : '/login?next=%2Fapp%2Fdashboard'
   const quickLinks = [
-    { title: 'Contratar um serviço', description: 'Design, sites, audiovisual, áudio e soluções digitais.', icon: '✦', href: '/servicos' },
-    { title: 'Comprar um produto', description: 'Produtos e equipamentos disponíveis para compra.', icon: '◇', href: '/produtos' },
-    { title: 'Aprender', description: 'Cursos, conteúdos e formações da Academia Play Moments.', icon: '◌', href: academyHref },
+    { title: 'Serviços criativos', description: 'Veja soluções de design, sites, audiovisual e tecnologia.', icon: '✦', href: '/servicos' },
+    { title: 'Loja e equipamentos', description: 'Explore produtos e equipamentos disponíveis.', icon: '◇', href: '/produtos' },
+    { title: 'Academia', description: 'Assista cursos gratuitos sem cadastro e conheça as formações.', icon: '◌', href: academyHref },
     { title: 'Área do cliente', description: 'Projetos, arquivos, pagamentos e acompanhamento em um só lugar.', icon: '↗', href: clientHref },
   ]
   return (
@@ -31,7 +31,7 @@ export function HomePage() {
             O que você quer <span style={{ color: siteSettings?.primary_color||'#E30613' }}>realizar hoje?</span>
           </h1>
           <p className="text-base sm:text-lg mb-6 max-w-xl mx-auto" style={{ color: '#9090a0' }}>
-            Encontre produtos, serviços e soluções da Play Moments para o que você precisa.
+            Tecnologia, criação e conhecimento em um só lugar. Escolha por onde quer começar.
           </p>
           <div className="grid grid-cols-2 gap-3 max-w-2xl mx-auto">
             <Link to="/servicos" className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: '#E30613', color: '#fff' }}>
@@ -51,20 +51,20 @@ export function HomePage() {
               <span className="block text-xs mt-1" style={{ color: '#9090a0' }}>Acompanhar meu trabalho</span>
             </Link>
           </div>
-          <Link to={quote} className="inline-flex items-center min-h-11 mt-4 text-sm font-semibold underline underline-offset-4" style={{ color: '#ff6b7a' }}>Tenho um projeto personalizado</Link>
-          <span className="mx-2 text-xs" style={{ color: '#4f4f59' }}>•</span><Link to={conversationLink(role, 'duvida')} className="inline-flex items-center min-h-11 mt-3 text-sm underline underline-offset-4" style={{ color: '#9090a0' }}>Não encontrei o que preciso</Link>
+          <Link to={quote} className="inline-flex items-center min-h-11 mt-4 text-sm font-semibold underline underline-offset-4" style={{ color: '#ff6b7a' }}>Preciso de algo personalizado</Link>
+          <span className="mx-2 text-xs" style={{ color: '#4f4f59' }}>•</span><Link to={conversationLink(role, 'duvida')} className="inline-flex items-center min-h-11 mt-3 text-sm underline underline-offset-4" style={{ color: '#9090a0' }}>Falar com a Play Moments</Link>
         </div>
       </section>
 
-      <section className="px-5 pb-8" aria-labelledby="quick-access-title">
+      <section className="px-5 pb-10" aria-labelledby="quick-access-title">
         <div className="max-w-6xl mx-auto">
-          <h2 id="quick-access-title" className="text-xl font-bold mb-4" style={{ color: '#f0f0f2' }}>Acessos rápidos</h2>
+          <div className="mb-5"><p className="text-[11px] uppercase tracking-[.18em] font-bold mb-2" style={{color:'#E30613'}}>Explore a plataforma</p><h2 id="quick-access-title" className="text-2xl font-bold" style={{ color: '#f0f0f2' }}>Escolha seu caminho</h2><p className="text-sm mt-2" style={{color:'#6b6b78'}}>Você pode navegar livremente. Conta só é necessária quando houver uma ação pessoal.</p></div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {quickLinks.map(item => (
-              <Link key={item.title} to={item.href} className="p-4 rounded-2xl hover:-translate-y-1 transition-transform" style={{ background: '#141416', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <Link key={item.title} to={item.href} className="group p-5 rounded-2xl hover:-translate-y-1 transition-all duration-200" style={{ background: '#141416', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <span aria-hidden="true" className="text-2xl" style={{ color: '#ff6b7a' }}>{item.icon}</span>
                 <h3 className="font-semibold text-sm mt-2 mb-1" style={{ color: '#f0f0f2' }}>{item.title}</h3>
-                <p className="text-xs" style={{ color: '#9090a0' }}>{item.description}</p>
+                <p className="text-xs leading-relaxed" style={{ color: '#9090a0' }}>{item.description}</p><span className="inline-flex mt-4 text-xs font-bold group-hover:translate-x-1 transition-transform" style={{color:'#ff6b7a'}}>Acessar →</span>
               </Link>
             ))}
           </div>
@@ -76,15 +76,15 @@ export function HomePage() {
           <div className="absolute right-0 top-0 w-72 h-72 pointer-events-none" style={{background:'radial-gradient(circle,rgba(227,6,19,.14),transparent 68%)'}} />
           <div className="relative max-w-3xl">
             <span className="inline-flex px-3 py-1 rounded-full text-xs font-bold" style={{background:'rgba(16,185,129,.1)',color:'#6ee7b7'}}>Curso gratuito · sem cadastro para assistir</span>
-            <h2 id="free-course-title" className="text-3xl md:text-4xl font-extrabold mt-4" style={{color:'#f0f0f2'}}>Letramento Digital <span style={{color:'#E30613'}}>— tecnologia, autonomia e futuro</span></h2>
-            <p className="mt-4 max-w-2xl leading-relaxed" style={{color:'#9090a0'}}>Uma formação aberta para entender sistemas, comunicação, informação, algoritmos, inteligência artificial e as possibilidades que a tecnologia cria para estudo, trabalho e território.</p>
-            <div className="flex flex-wrap items-center gap-4 mt-6"><Link to="/curso/letramento-digital" className="px-6 py-3 rounded-xl font-bold text-sm" style={{background:'#E30613',color:'#fff'}}>Assistir gratuitamente →</Link><span className="text-xs" style={{color:'#6b6b78'}}>Login só para progresso e atividades.</span></div>
+            <h2 id="free-course-title" className="text-3xl md:text-4xl font-extrabold mt-4" style={{color:'#f0f0f2'}}>Letramento Digital <span style={{color:'#E30613'}}>gratuito e aberto</span></h2>
+            <p className="mt-4 max-w-2xl leading-relaxed" style={{color:'#9090a0'}}>Comece agora, sem criar conta. Aprenda fundamentos de tecnologia, comunicação, informação e inteligência artificial no seu ritmo.</p>
+            <div className="flex flex-wrap items-center gap-4 mt-6"><Link to="/curso/letramento-digital" className="px-6 py-3 rounded-xl font-bold text-sm" style={{background:'#E30613',color:'#fff'}}>Começar curso grátis →</Link><span className="text-xs" style={{color:'#6b6b78'}}>Sem login para assistir · entre apenas para salvar progresso, fazer atividades e emitir certificado.</span></div>
           </div>
         </div>
       </section>
 
       {/* ── STATS ────────────────────────────────────────────────────────── */}
-      <section className="px-6 py-10">
+      <section className="px-6 py-12">
         <div className="mx-auto grid grid-cols-2 md:grid-cols-4 gap-4" style={{ maxWidth: 900 }}>
           {[
             {value:profile?.projects_delivered_label||'8 mil+',label:'Projetos entregues'},
@@ -92,7 +92,7 @@ export function HomePage() {
             {value:'Desde '+(profile?.market_since||2008),label:'No mercado'},
             {value:profile?.satisfaction_label||'85%',label:'Satisfação'},
           ].map(s => (
-            <div key={s.label} className="text-center py-6 px-4 rounded-2xl"
+            <div key={s.label} className="text-center py-5 px-4 rounded-2xl"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
               <p className="font-extrabold text-3xl mb-1" style={{ color: '#E30613' }}>{s.value}</p>
               <p className="text-xs" style={{ color: '#6b6b78' }}>{s.label}</p>
@@ -146,7 +146,7 @@ export function HomePage() {
           <div className="flex items-end justify-between mb-10">
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: '#E30613' }}>Portfólio</p>
-              <h2 className="text-3xl font-bold" style={{ color: '#f0f0f2' }}>Projetos recentes</h2>
+              <h2 className="text-3xl font-bold" style={{ color: '#f0f0f2' }}>Trabalhos e projetos</h2>
             </div>
             <Link to="/quem-somos#portfolio" className="text-sm font-semibold" style={{ color: '#9090a0' }}>
               Ver todos →
@@ -185,11 +185,11 @@ export function HomePage() {
           <div className="flex flex-wrap gap-4 justify-center">
             <Link to="/cadastro" className="px-8 py-4 rounded-full font-bold text-base"
               style={{ background: '#E30613', color: '#fff' }}>
-              Criar conta grátis
+              Criar minha conta
             </Link>
             <Link to="/login" className="px-8 py-4 rounded-full font-bold text-base"
               style={{ border: '1px solid rgba(255,255,255,0.15)', color: '#9090a0' }}>
-              Já tenho conta
+              Entrar
             </Link>
           </div>
         </div>
