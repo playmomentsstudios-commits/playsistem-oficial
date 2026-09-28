@@ -76,6 +76,16 @@ export const portalApi = {
     if(error) throw error
     return data as string
   },
+  rentals: async (admin=false) => {
+    const {data,error}=await supabase.from('product_rentals').select('*,product:products(id,name,slug,stock,inventory_tracked),customer:profiles!product_rentals_customer_id_fkey(id,email,first_name,last_name),order:orders(id,order_number,payment_status,status)').order('start_date',{ascending:true})
+    if(error) throw error
+    return data ?? []
+  },
+  updateRentalStatus: async (id:string,status:'confirmed'|'checked_out'|'completed'|'cancelled') => {
+    const {data,error}=await supabase.rpc('admin_update_product_rental_status',{p_rental_id:id,p_status:status})
+    if(error) throw error
+    return data
+  },
   checkoutProductRental: async (rentalId:string) => {
     const {data,error}=await supabase.rpc('checkout_product_rental',{p_rental_id:rentalId})
     if(error) throw error

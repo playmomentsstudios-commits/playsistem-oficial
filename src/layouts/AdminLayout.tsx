@@ -8,7 +8,7 @@ import { hasStaffPermission } from '../lib/staffPermissions'
 const iconPaths:Record<string,string>={
   dashboard:'M3 13h8V3H3v10Zm10 8h8V11h-8v10ZM3 21h8v-6H3v6Zm10-12h8V3h-8v6Z',
   commercial:'M4 19V9l8-5 8 5v10H4Zm4 0v-6h8v6', customers:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m13 10v-2a4 4 0 0 0-3-3.87m-2-12a4 4 0 0 1 0 7.75',
-  crm:'M3 3v18h18M7 16l4-4 3 3 5-7', quote:'M6 2h9l5 5v15H6V2Zm8 0v6h6M9 13h6M9 17h6', orders:'M6 7V5a6 6 0 0 1 12 0v2M4 7h16l-1 15H5L4 7Z',
+  crm:'M3 3v18h18M7 16l4-4 3 3 5-7', quote:'M6 2h9l5 5v15H6V2Zm8 0v6h6M9 13h6M9 17h6', orders:'M6 7V5a6 6 0 0 1 12 0v2M4 7h16l-1 15H5L4 7Z', rentals:'M4 17h16M6 17l1-8h10l1 8M8 9l1-4h6l1 4M8 21h.01M16 21h.01',
   operation:'M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5', projects:'M3 7h7l2 2h9v11H3V7Z', productivity:'M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z', files:'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm0 0v6h6', conversations:'M21 15a4 4 0 0 1-4 4H8l-5 3 1.5-5A8 8 0 1 1 21 15Z',
   finance:'M3 6h18M5 6l2-3h10l2 3M5 10v8m5-8v8m4-8v8m5-8v8M3 21h18', payments:'M3 6h18v12H3V6Zm0 4h18M7 15h3', reports:'M5 20V10m7 10V4m7 16v-7',
   catalog:'M20 13 13 20 4 11V4h7l9 9ZM8.5 8.5h.01', products:'M21 8 12 3 3 8l9 5 9-5Zm-18 5 9 5 9-5M3 18l9 5 9-5', services:'M14.7 6.3a4 4 0 0 0-5 5L3 18l3 3 6.7-6.7a4 4 0 0 0 5-5l-3 3-3-3 3-3Z', categories:'M4 4h6v6H4V4Zm10 0h6v6h-6V4ZM4 14h6v6H4v-6Zm10 0h6v6h-6v-6Z',
@@ -20,7 +20,7 @@ function MenuIcon({name,size=17}:{name:string;size?:number}){return <svg width={
 
 const MENU_GROUPS = [
   { label:'Comercial', icon:'commercial', items:[
-    { label:'Clientes', href:'/admin/clientes', icon:'customers', permission:'customers.view' },{ label:'CRM Comercial', href:'/admin/crm', icon:'crm', permission:['customers.view','customers.manage'] },{ label:'Orçamentos', href:'/admin/orcamentos', icon:'quote', permission:['quotes.view','quotes.manage'] },{ label:'Pedidos', href:'/admin/pedidos', icon:'orders', permission:['sales.view','sales.manage'] },
+    { label:'Clientes', href:'/admin/clientes', icon:'customers', permission:'customers.view' },{ label:'CRM Comercial', href:'/admin/crm', icon:'crm', permission:['customers.view','customers.manage'] },{ label:'Orçamentos', href:'/admin/orcamentos', icon:'quote', permission:['quotes.view','quotes.manage'] },{ label:'Pedidos', href:'/admin/pedidos', icon:'orders', permission:['sales.view','sales.manage'] },{ label:'Locações', href:'/admin/locacoes', icon:'rentals', permission:['sales.view','sales.manage'] },
   ]},
   { label:'Operação', icon:'operation', items:[
     { label:'Projetos', href:'/admin/projetos', icon:'projects', permission:['projects.view','projects.manage'] },{ label:'Produtividade', href:'/admin/produtividade', icon:'productivity', permission:['projects.view','projects.manage'] },{ label:'Arquivos', href:'/admin/arquivos', icon:'files', permission:['files.view','files.manage'] },{ label:'Conversas', href:'/admin/conversas', icon:'conversations', permission:['conversations.access','conversations.view_all'] },
