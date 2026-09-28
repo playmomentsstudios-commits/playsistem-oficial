@@ -154,12 +154,12 @@ export function RegisterPage() {
       }, next)
 
       if (result.requiresEmailConfirmation) {
-        toast('Conta criada. Confira seu e-mail para confirmar o cadastro.', 'success')
+        toast(next === '/carrinho' ? 'Conta criada. Confirme seu e-mail e volte para finalizar sua compra.' : 'Conta criada. Confira seu e-mail para confirmar o cadastro.', 'success')
         navigate(authLink('/login', next))
         return
       }
 
-      toast('Conta criada com sucesso!', 'success')
+      toast(next === '/carrinho' ? 'Conta criada! Vamos continuar sua compra.' : 'Conta criada com sucesso!', 'success')
       navigate(afterAuthPath(next, 'customer'))
     } catch (err: any) {
       toast(err.message || 'Erro ao criar conta.', 'error')
@@ -174,9 +174,10 @@ export function RegisterPage() {
         <Link to="/"><img src={logoUrl} alt="Play Moments" style={{ height: 28, marginBottom: 32 }} /></Link>
 
         <h1 className="text-2xl font-bold mb-2" style={{ color: '#f0f0f2' }}>Criar conta</h1>
-        <p className="text-sm mb-8" style={{ color: '#6b6b78' }}>
+        <p className="text-sm mb-4" style={{ color: '#6b6b78' }}>
           Já tem conta? <Link to={authLink('/login', next)} style={{ color: '#E30613' }}>Entrar</Link>
         </p>
+        {next==='/carrinho'&&<div className="mb-6 p-3 rounded-xl border border-[#E30613]/20 bg-[#E30613]/5"><p className="text-xs font-semibold" style={{color:'#f0f0f2'}}>🛒 Seu carrinho está esperando</p><p className="text-[11px] mt-1" style={{color:'#6b6b78'}}>Crie sua conta e você volta automaticamente para finalizar a compra.</p></div>}
 
         <div className="mb-6">
           <div className="flex items-center gap-2">
