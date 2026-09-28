@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { conversationsApi, type ConversationTeamMember, type SupportConversation, type SupportMessage } from '../../api/conversations'
 import { useAuth } from '../../contexts/AuthContext'
@@ -6,6 +6,15 @@ import { ChatComposer } from './ChatComposer'
 import { AttachmentView } from './AttachmentView'
 import { portalApi } from '../../api/portal'
 import { AutoAttendant } from './AutoAttendant'
+
+type InboxFilter='all'|'unread'|'mine'|'unassigned'|'urgent'
+const statusLabel:Record<string,string>={open:'Aberta',pending:'Aguardando',resolved:'Resolvida'}
+function initials(value:string){return value.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join('').toUpperCase()||'CL'}
+function shortTime(value?:string|null){
+  if(!value)return ''
+  const date=new Date(value),now=new Date()
+  return date.toDateString()===now.toDateString()?date.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):date.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})
+}
 
 export function SupportChat({ staff = false, compact = false }: { staff?: boolean; compact?: boolean }) {
   const { user } = useAuth()
@@ -20,6 +29,9 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
   const [filter, setFilter] = useState('')
+  const [inboxFilter,setInboxFilter]=useState<InboxFilter>('all')
+  const [infoOpen,setInfoOpen]=useState(false)
+  const [mobileChat,setMobileChat]=useState(false)
   const [team,setTeam]=useState<ConversationTeamMember[]>([])
   const [staffPermissions,setStaffPermissions]=useState<string[]>([])
   const [transferring,setTransferring]=useState(false)
@@ -29,6 +41,11 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   const prompt = subject === 'orcamento'
     ? 'Conte o que você precisa para prepararmos seu orçamento.'
     : subject === 'duvida' ? 'Qual é sua dúvida? Nossa equipe vai ajudar.' : 'Como podemos ajudar você hoje?'
+
+  async function loadConversationList(){
+    if(!user?.id)return []
+    return staff?conversationsApi.listWithSummary(user.id):conversationsApi.list()
+  }
 
   useEffect(()=>{
     if(!staff)return
@@ -51,7 +68,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
     async function load() {
       try {
         const ownId = staff ? null : await conversationsApi.open()
-        const list = await conversationsApi.list()
+        const list = await loadConversationList()
         if (!active) return
         if (id && !list.some(item => item.id === id)) throw new Error('Conversa indisponível.')
         setConversations(list)
@@ -64,7 +81,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
     }
     void load()
     const timer = staff ? window.setInterval(() => {
-      conversationsApi.list().then(list => {
+      loadConversationList().then(list => {
         if (!active) return
         setConversations(list)
         setSelected(current => current || list[0]?.id || '')
@@ -91,7 +108,10 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
           setMessages(previous => [...new Map([...result, ...previous].map(message => [message.id, message])).values()]
             .sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id)))
           setError('')
-          if (user?.id) void portalApi.markConversationRead(selected, user.id).catch(() => undefined)
+          if (user?.id) {
+            void portalApi.markConversationRead(selected, user.id).catch(() => undefined)
+            setConversations(previous=>previous.map(item=>item.id===selected?{...item,unread_count:0}:item))
+          }
         }
       } catch {
         if (active) setError('Não foi possível atualizar as mensagens. Tente novamente.')
@@ -121,6 +141,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
     const attachment = file ? await conversationsApi.upload(selected, user.id, id, file) : undefined
     const message = await conversationsApi.send(selected, user.id, content, id, attachment)
     setMessages(previous => [...previous.filter(item => item.id !== message.id), message])
+    setConversations(previous=>previous.map(item=>item.id===selected?{...item,last_message:message.content,last_message_at:message.created_at,last_sender_id:user.id,unread_count:0}:item).sort((a,b)=>(b.last_message_at||'').localeCompare(a.last_message_at||'')))
   }
 
   const conversation = conversations.find(item => item.id === selected)
@@ -137,7 +158,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
     try{
       setTransferring(true)
       await conversationsApi.assign(conversation.id,assignee||null)
-      const list=await conversationsApi.list()
+      const list=await loadConversationList()
       setConversations(list)
     }finally{setTransferring(false)}
   }
@@ -145,9 +166,23 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   async function updateCrm(values:{status?:string;priority?:string;tags?:string[]}){
     if(!conversation)return
     await conversationsApi.updateCrm(conversation.id,values)
-    const list=await conversationsApi.list()
+    const list=await loadConversationList()
     setConversations(list)
   }
+  const counts=useMemo(()=>({
+    unread:conversations.filter(item=>(item.unread_count||0)>0).length,
+    mine:conversations.filter(item=>item.assigned_to===user?.id).length,
+    unassigned:conversations.filter(item=>!item.assigned_to).length,
+    urgent:conversations.filter(item=>item.priority==='urgent').length,
+  }),[conversations,user?.id])
+
+  const visibleConversations=useMemo(()=>conversations.filter(item=>{
+    const term=filter.trim().toLocaleLowerCase()
+    const matchesText=!term||name(item).toLocaleLowerCase().includes(term)||(item.last_message||'').toLocaleLowerCase().includes(term)||(item.tags||[]).some(tag=>tag.toLocaleLowerCase().includes(term))
+    const matchesFilter=inboxFilter==='all'||(inboxFilter==='unread'&&(item.unread_count||0)>0)||(inboxFilter==='mine'&&item.assigned_to===user?.id)||(inboxFilter==='unassigned'&&!item.assigned_to)||(inboxFilter==='urgent'&&item.priority==='urgent')
+    return matchesText&&matchesFilter
+  }),[conversations,filter,inboxFilter,user?.id])
+
   return (
     <div className={compact ? 'h-full flex flex-col' : 'flex flex-col gap-4'} style={{ color: '#f0f0f2' }}>
       {!compact&&<div><h1 className="text-2xl font-bold">Conversas</h1><p className="text-sm" style={{ color: '#9090a0' }}>{staff ? 'Central de atendimento ao cliente' : 'Chat direto com a equipe Play Moments'}</p></div>}
