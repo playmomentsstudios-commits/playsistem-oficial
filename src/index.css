@@ -169,3 +169,67 @@ button:active:not(:disabled), a:active { transform: translateY(1px); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+
+/* ── Selects e tags: linguagem visual global ── */
+select {
+  color: #f2f2f4;
+  border-color: rgba(255,255,255,.16) !important;
+  background-color: #111114 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+  font-weight: 500;
+}
+select:hover:not(:disabled) {
+  border-color: rgba(255,255,255,.28) !important;
+  background-color: #17171b !important;
+}
+select:focus {
+  border-color: rgba(227,6,19,.65) !important;
+  box-shadow: 0 0 0 3px rgba(227,6,19,.12) !important;
+}
+select option { background: #111114; color: #f2f2f4; }
+
+.pm-select-status { border-left: 3px solid var(--pm-state, rgba(255,255,255,.28)) !important; }
+.pm-state-pending { --pm-state: #f59e0b; }
+.pm-state-progress { --pm-state: #3b82f6; }
+.pm-state-review { --pm-state: #a855f7; }
+.pm-state-success { --pm-state: #22c55e; }
+.pm-state-danger { --pm-state: #ef4444; }
+.pm-state-neutral { --pm-state: #8b8b98; }
+
+.pm-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  min-height: 24px;
+  max-width: 100%;
+  padding: .2rem .55rem;
+  border-radius: .55rem;
+  border: 1px solid color-mix(in srgb, var(--pm-tag-color, #8b8b98) 34%, transparent);
+  background: color-mix(in srgb, var(--pm-tag-color, #8b8b98) 11%, transparent);
+  color: color-mix(in srgb, var(--pm-tag-color, #8b8b98) 72%, white);
+  font-size: .6875rem;
+  line-height: 1rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+.pm-tag::before {
+  content: "";
+  width: .38rem;
+  height: .38rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--pm-tag-color, #8b8b98);
+}
+.pm-tag-pending { --pm-tag-color: #f59e0b; }
+.pm-tag-progress { --pm-tag-color: #3b82f6; }
+.pm-tag-review { --pm-tag-color: #a855f7; }
+.pm-tag-success { --pm-tag-color: #22c55e; }
+.pm-tag-danger { --pm-tag-color: #ef4444; }
+.pm-tag-info { --pm-tag-color: #06b6d4; }
+.pm-tag-neutral { --pm-tag-color: #8b8b98; }
+
+@media (max-width: 640px) {
+  select { min-height: 46px; }
+  .pm-tag { min-height: 26px; font-size: .72rem; }
+}
