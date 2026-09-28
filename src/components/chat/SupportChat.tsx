@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { ChatComposer } from './ChatComposer'
 import { AttachmentView } from './AttachmentView'
 import { portalApi } from '../../api/portal'
+import { AutoAttendant } from './AutoAttendant'
 
 export function SupportChat({ staff = false, compact = false }: { staff?: boolean; compact?: boolean }) {
   const { user } = useAuth()
@@ -22,6 +23,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   const [team,setTeam]=useState<ConversationTeamMember[]>([])
   const [staffPermissions,setStaffPermissions]=useState<string[]>([])
   const [transferring,setTransferring]=useState(false)
+  const [humanMode,setHumanMode]=useState(false)
   const end = useRef<HTMLDivElement>(null)
   const subject = search.get('assunto')
   const prompt = subject === 'orcamento'
@@ -105,6 +107,15 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
 
   useEffect(() => { end.current?.scrollIntoView({ block: 'nearest' }) }, [messages.length])
 
+  async function handoff(summary:string){
+    if(!user||!selected)throw new Error('Conversa indisponível.')
+    setSending(true)
+    try{
+      await send(summary,null,crypto.randomUUID())
+      setHumanMode(true)
+    }finally{setSending(false)}
+  }
+
   async function send(content: string, file: File | null, id: string) {
     if (!user || !selected) throw new Error('Selecione uma conversa.')
     const attachment = file ? await conversationsApi.upload(selected, user.id, id, file) : undefined
@@ -161,7 +172,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
                 {!staff&&<span className="w-8 h-8 rounded-full bg-[#E30613] text-white flex items-center justify-center text-xs font-bold">PM</span>}
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold truncate">{staff ? (conversation ? name(conversation) : 'Selecione uma conversa') : 'Play Moments'}</p>
-                  {!staff&&<p className="text-[10px] text-emerald-400 font-normal">Atendimento direto</p>}
+                  {!staff&&<p className="text-[10px] text-emerald-400 font-normal">{humanMode?'Atendimento com a equipe':'Autoatendimento disponível'}</p>}
                   {staff&&conversation&&<p className="text-[10px] text-gray-500 font-normal mt-0.5">Responsável: {assigneeName(conversation)}</p>}
                 </div>
               </div>
@@ -187,8 +198,9 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
                 </label>
               </div>}
             </div>
-            {!staff && <p className="px-4 pt-4 text-sm" style={{ color: '#ff9ca6' }}>{prompt}</p>}
-            <div role="log" aria-label="Mensagens" aria-live="polite" className="flex-1 overflow-auto p-4 space-y-3" style={{ height: compact ? 'auto' : '45vh', minHeight: compact ? 0 : 200 }}>
+            {!staff&&!humanMode&&<AutoAttendant onHuman={handoff} busy={sending}/>}
+            {(!staff&&humanMode) && <div className="px-4 pt-3 flex items-center justify-between gap-3"><p className="text-sm" style={{ color: '#ff9ca6' }}>{prompt}</p><button type="button" onClick={()=>setHumanMode(false)} className="shrink-0 min-h-10 text-xs text-gray-400 underline">Voltar ao autoatendimento</button></div>}
+            {(staff||humanMode)&&<div role="log" aria-label="Mensagens" aria-live="polite" className="flex-1 overflow-auto p-4 space-y-3" style={{ height: compact ? 'auto' : '45vh', minHeight: compact ? 0 : 200 }}>
               {messagesLoading && <p role="status">Carregando mensagens…</p>}
               {!messagesLoading && selected && !messages.length && !error && <p className="text-sm text-gray-400">Nenhuma mensagem ainda. Inicie a conversa abaixo.</p>}
               {messages.map(message => <div key={message.id} className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}>
@@ -199,8 +211,8 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
                 </div>
               </div>)}
               <div ref={end} />
-            </div>
-            <ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} />
+            </div>}
+            {(staff||humanMode)&&<ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} />}
           </div>
         </div>
       )}
