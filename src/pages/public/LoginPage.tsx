@@ -46,13 +46,14 @@ export function LoginPage() {
         style={{ background: 'linear-gradient(135deg, #0d0d0f 0%, #1a0a0a 100%)', borderRight: '1px solid rgba(255,255,255,0.05)' }}>
         <Link to="/"><img src={logoUrl} alt="Play Moments" style={{ height: 32 }} /></Link>
         <div>
-          <h2 className="text-4xl font-extrabold leading-tight mb-4" style={{ color: '#f0f0f2' }}>
-            Bem-vindo de<br />
-            <span style={{ color: '#E30613' }}>volta.</span>
-          </h2>
-          <p style={{ color: '#6b6b78' }}>Acesse seu portal e acompanhe seus projetos, pedidos e conversas.</p>
+          <div className="max-w-lg">
+            <p className="text-xs uppercase tracking-[.2em] font-bold mb-4" style={{color:'#ff5364'}}>Sua experiência Play Moments</p>
+            <h2 className="text-4xl xl:text-5xl font-extrabold leading-[1.05] mb-5" style={{ color: '#f0f0f2' }}>Tudo o que você cria,<br/><span style={{ color: '#E30613' }}>aprende e acompanha.</span></h2>
+            <p className="leading-relaxed max-w-md" style={{ color: '#858593' }}>Entre para continuar seus cursos na Academia, acompanhar projetos e pedidos, acessar arquivos e manter suas conversas organizadas.</p>
+            <div className="grid grid-cols-2 gap-3 mt-8 max-w-md">{['Academia e cursos','Projetos e pedidos','Arquivos organizados','Conversas em um só lugar'].map((item,i)=><div key={item} className="px-4 py-3 rounded-xl text-xs" style={{background:'rgba(255,255,255,.035)',border:'1px solid rgba(255,255,255,.06)',color:'#b0b0ba'}}><span style={{color:'#E30613'}}>{['▶','◇','↗','◌'][i]}</span> <span className="ml-2">{item}</span></div>)}</div>
+          </div>
         </div>
-        <div className="text-xs" style={{ color: '#3a3a42' }}>© 2024 Play Moments</div>
+        <div className="flex items-center gap-4 text-xs" style={{ color: '#4b4b55' }}><span>© {new Date().getFullYear()} Play Moments</span><Link to="/academia" className="hover:text-white">Conhecer a Academia →</Link></div>
 
         {/* Glow */}
         <div style={{ position: 'absolute', bottom: '20%', left: '30%', width: 400, height: 400, borderRadius: '50%',
@@ -66,10 +67,8 @@ export function LoginPage() {
             <img src={logoUrl} alt="Play Moments" style={{ height: 28 }} />
           </Link>
 
-          <h1 className="text-2xl font-bold mb-2" style={{ color: '#f0f0f2' }}>Entrar</h1>
-          <p className="text-sm mb-8" style={{ color: '#6b6b78' }}>
-            Não tem conta? <Link to={authLink('/cadastro', from)} style={{ color: '#E30613' }}>Criar agora</Link>
-          </p>
+          <p className="text-xs uppercase tracking-[.18em] font-bold mb-3" style={{color:'#E30613'}}>Área pessoal</p><h1 className="text-3xl font-extrabold mb-2" style={{ color: '#f0f0f2' }}>Acesse sua conta</h1>
+          <p className="text-sm mb-7 leading-relaxed" style={{ color: '#777784' }}>Continue de onde parou na Play Moments. Ainda não tem conta? <Link to={authLink('/cadastro', from)} className="font-semibold" style={{ color: '#ff5364' }}>Criar gratuitamente</Link>.</p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Input label="E-mail" type="email" placeholder="seu@email.com"
@@ -87,6 +86,7 @@ export function LoginPage() {
               Entrar
             </Button>
           </form>
+          <div className="mt-6 pt-5 border-t border-white/[.06] flex items-center justify-between gap-3"><span className="text-xs text-gray-600">Quer apenas conhecer os cursos?</span><Link to="/academia" className="text-xs font-bold text-[#ff5364]">Ver Academia →</Link></div>
         </div>
       </div>
     </div>
