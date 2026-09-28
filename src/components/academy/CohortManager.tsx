@@ -1,0 +1,16 @@
+import { FormEvent,useEffect,useState } from 'react'
+import { academyApi } from '../../api/academy'
+
+export function CohortManager({courseId,customers}:{courseId:string;customers:any[]}){
+ const [rows,setRows]=useState<any[]>([]),[name,setName]=useState(''),[organization,setOrganization]=useState(''),[selected,setSelected]=useState(''),[student,setStudent]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('')
+ const load=async()=>{try{setRows(await academyApi.cohorts(courseId));setError('')}catch(e:any){setError(e.message)}}
+ useEffect(()=>{setSelected('');void load()},[courseId])
+ const create=async(e:FormEvent)=>{e.preventDefault();if(!name.trim())return;try{setBusy(true);const row=await academyApi.createCohort(courseId,name.trim(),organization.trim());setName('');setOrganization('');setSelected(row.id);await load()}catch(e:any){setError(e.message)}finally{setBusy(false)}}
+ const add=async()=>{if(!selected||!student)return;try{setBusy(true);await academyApi.addCohortMember(selected,student);setStudent('');await load()}catch(e:any){setError(e.message)}finally{setBusy(false)}}
+ return <section className="pm-surface p-5 mt-6"><div className="flex flex-wrap justify-between gap-3"><div><h2 className="text-lg font-bold">Turmas</h2><p className="text-sm text-gray-500 mt-1">Organize alunos por organização, projeto, edição ou período.</p></div><span className="pm-tag pm-tag-neutral">{rows.length} turma(s)</span></div>
+  <form onSubmit={create} className="grid md:grid-cols-[1fr_1fr_auto] gap-2 mt-4"><input required value={name} onChange={e=>setName(e.target.value)} placeholder="Nome da turma" className="min-h-11 px-3 rounded-xl bg-black/30 border border-white/10"/><input value={organization} onChange={e=>setOrganization(e.target.value)} placeholder="Organização / parceiro (opcional)" className="min-h-11 px-3 rounded-xl bg-black/30 border border-white/10"/><button disabled={busy} className="min-h-11 px-4 rounded-xl bg-white/10 text-xs font-bold">Criar turma</button></form>
+  {rows.length>0&&<div className="mt-4 space-y-2">{rows.map(row=><button type="button" key={row.id} onClick={()=>setSelected(row.id)} className={'w-full p-3 rounded-xl border text-left flex items-center justify-between gap-3 '+(selected===row.id?'border-[#E30613]/40 bg-[#E30613]/5':'border-white/10')}><div><p className="text-sm font-semibold">{row.name}</p><p className="text-[10px] text-gray-500">{row.organization||'Sem organização'} · {(row.members||[]).length} aluno(s)</p></div><span className="pm-tag pm-tag-success">{row.status==='active'?'Ativa':row.status}</span></button>)}</div>}
+  {selected&&<div className="grid sm:grid-cols-[1fr_auto] gap-2 mt-3"><select value={student} onChange={e=>setStudent(e.target.value)} className="min-h-11 px-3 rounded-xl bg-black border border-white/10"><option value="">Adicionar aluno à turma…</option>{customers.filter(c=>!rows.find(r=>r.id===selected)?.members?.some((m:any)=>m.user_id===c.id)).map(c=><option key={c.id} value={c.id}>{c.first_name} {c.last_name} — {c.email}</option>)}</select><button type="button" disabled={busy||!student} onClick={()=>void add()} className="min-h-11 px-4 rounded-xl bg-[#E30613] text-xs font-bold disabled:opacity-40">Adicionar</button></div>}
+  {error&&<p className="text-xs text-red-300 mt-3">Turmas indisponíveis: {error}</p>}
+ </section>
+}
