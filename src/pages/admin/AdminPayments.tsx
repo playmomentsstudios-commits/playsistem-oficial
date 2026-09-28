@@ -5,14 +5,6 @@ import { useToast } from '../../contexts/ToastContext'
 import { ambientePagamento,metodoPagamento,rotulo,statusPagamento } from '../../lib/labels.ptBR'
 
 const money=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format((v||0)/100)
-const statusTone:Record<string,string>={
-  paid:'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
-  pending:'bg-amber-500/10 text-amber-300 border-amber-500/20',
-  awaiting_confirmation:'bg-amber-500/10 text-amber-300 border-amber-500/20',
-  refunded:'bg-violet-500/10 text-violet-300 border-violet-500/20',
-  cancelled:'bg-white/[0.04] text-gray-400 border-white/10',
-  failed:'bg-red-500/10 text-red-300 border-red-500/20',
-}
 function Metric({label,value,tone='text-white'}:{label:string;value:string|number;tone?:string}){
   return <div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">{label}</p><p className={'text-xl font-bold mt-2 '+tone}>{value}</p></div>
 }
