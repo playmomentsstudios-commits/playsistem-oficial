@@ -161,7 +161,7 @@ export function AdminServices(){
           <option value="starting_at">A partir de</option>
           <option value="quote">Sob orçamento</option>
         </select>
-        <select value={form.status} onChange={e=>setForm({...form,status:e.target.value as ServiceForm['status']})} className="px-3 py-2 rounded-xl bg-black border border-white/10">
+        <select aria-label="Situação da publicação" value={form.status} onChange={e=>setForm({...form,status:e.target.value as ServiceForm['status']})} className={"pm-select-status px-3 py-2 rounded-xl "+(form.status==="published"?"pm-state-success":form.status==="archived"?"pm-state-danger":"pm-state-pending")}>
           <option value="draft">Rascunho</option>
           <option value="published">Publicado</option>
           <option value="archived">Arquivado</option>
@@ -198,7 +198,7 @@ export function AdminServices(){
       <div>
         <b>{service.name}</b>
         <p className="text-sm text-gray-400 mt-1">{service.short_description||'Sem descrição curta'}</p>
-        <p className="text-xs text-gray-500 mt-1">{rotulo(tipoPrecoServico,service.price_type)} · {rotulo(statusPublicacao,service.status)} · {service.active?'Ativo':'Inativo'}</p>
+        <div className="mt-2 flex flex-wrap items-center gap-2"><span className="text-xs text-gray-500">{rotulo(tipoPrecoServico,service.price_type)}</span><span className={"pm-tag "+(service.status==="published"?"pm-tag-success":service.status==="archived"?"pm-tag-danger":"pm-tag-pending")}>{rotulo(statusPublicacao,service.status)}</span><span className={"pm-tag "+(service.active?"pm-tag-success":"pm-tag-neutral")}>{service.active?'Ativo':'Inativo'}</span></div>
       </div>
       <div className="flex gap-2 items-start">
         <button onClick={()=>openEdit(service)} className="px-3 py-2 rounded-lg bg-white/5 text-sm">Editar</button>
