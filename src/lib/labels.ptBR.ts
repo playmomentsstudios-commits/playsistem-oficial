@@ -121,3 +121,11 @@ export const motivoStatusCliente: Record<string,string> = {
   commercial_relationship_ended:'Encerramento da relação comercial',
   administrative_other:'Motivo administrativo',
 }
+
+export const prioridadeProjeto: Record<string,string> = {
+  low:'Baixa', medium:'Média', normal:'Normal', high:'Alta', urgent:'Urgente',
+}
+
+export const papelUsuario: Record<string,string> = {
+  admin:'Administrador', staff:'Colaborador', customer:'Cliente',
+}
