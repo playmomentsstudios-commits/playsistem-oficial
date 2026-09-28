@@ -4,7 +4,7 @@ import { portalApi } from '../../api/portal'
 import { EmptyState } from '../../components/ui/EmptyState'
 export function NotificationsPage(){
  const [rows,setRows]=useState<any[]>([]),[loading,setLoading]=useState(true)
- const load=()=>portalApi.notifications().then(setRows).finally(()=>setLoading(false))
+ const load=()=>portalApi.syncMyRentalNotifications().catch(()=>0).then(()=>portalApi.notifications()).then(setRows).finally(()=>setLoading(false))
  useEffect(()=>{void load(); const ch=window.setInterval(load,10000); return()=>clearInterval(ch)},[])
  const unread=rows.filter(n=>!n.read_at).length
  return <div><div className="flex justify-between items-center mb-6"><div><h1 className="text-2xl font-bold text-white">Notificações</h1><p className="text-sm text-gray-500">{unread?unread+' não lida(s)':'Tudo em dia'}</p></div>{unread>0&&<button className="text-sm text-[#E30613]" onClick={async()=>{await portalApi.markAllNotifications();await load()}}>Marcar todas como lidas</button>}</div>
