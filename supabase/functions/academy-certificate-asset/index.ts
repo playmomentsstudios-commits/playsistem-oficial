@@ -1,0 +1,19 @@
+import { corsHeaders, driveJson, ensureAcademyCertificateAssetsFolder, getDriveAccessToken, json, requireUser } from "../_shared/googleDrive.ts";
+
+Deno.serve(async(req)=>{
+ if(req.method==="OPTIONS")return new Response("ok",{headers:corsHeaders});
+ try{
+  const ctx=await requireUser(req);if(ctx.role!=="admin")throw new Error("Admin access required");
+  const body=await req.json();const action=String(body.action||"upload");
+  if(action==="delete"){const id=String(body.drive_file_id||"");if(!id)throw new Error("Arquivo não informado.");await driveJson(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}`,{method:"DELETE"});return json({ok:true})}
+  if(action==="read"){const id=String(body.drive_file_id||"");if(!id)throw new Error("Arquivo não informado.");const token=await getDriveAccessToken();const meta=await driveJson(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?fields=id,mimeType,trashed,appProperties`);if(meta.trashed||meta.appProperties?.playMomentsKind!=="academy-certificate-asset")throw new Error("Arquivo inválido.");const r=await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?alt=media`,{headers:{Authorization:`Bearer ${token}`}});if(!r.ok||!r.body)throw new Error("Não foi possível ler o arquivo.");return new Response(r.body,{headers:{...corsHeaders,"Content-Type":meta.mimeType||"application/octet-stream","Cache-Control":"private, max-age=300"}})}
+  const fileName=String(body.file_name||"").trim(),mimeType=String(body.mime_type||"").trim(),kind=String(body.kind||"");
+  const fileSize=Number(body.file_size||0);if(!["background","signature"].includes(kind))throw new Error("Tipo de arquivo inválido.");if(!fileName||fileSize<=0||fileSize>15*1024*1024)throw new Error("Arquivo inválido ou maior que 15 MB.");
+  const allowed=kind==="background"?["application/pdf","image/png","image/jpeg"]:["image/png","image/jpeg"];if(!allowed.includes(mimeType))throw new Error("Formato não permitido.");
+  const target=await ensureAcademyCertificateAssetsFolder(ctx.db,ctx.userId);const token=await getDriveAccessToken();
+  const metadata={name:fileName,parents:[target.folderId],appProperties:{playMomentsKind:"academy-certificate-asset",playMomentsAssetKind:kind}};
+  const r=await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id,name,mimeType,size",{method:"POST",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json; charset=UTF-8","X-Upload-Content-Type":mimeType,"X-Upload-Content-Length":String(fileSize)},body:JSON.stringify(metadata)});
+  if(!r.ok)throw new Error("Não foi possível iniciar o upload no Drive.");const uploadUrl=r.headers.get("Location");if(!uploadUrl)throw new Error("Google Drive não retornou a sessão de upload.");
+  return json({ok:true,upload_url:uploadUrl,folder_id:target.folderId});
+ }catch(e){return json({ok:false,error:e instanceof Error?e.message:"Erro no arquivo do certificado."},400)}
+});
