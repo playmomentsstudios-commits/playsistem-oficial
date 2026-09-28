@@ -62,6 +62,7 @@ export function AdminProjectDetailV2(){
   const [reviewHistory,setReviewHistory]=useState<any[]>([])
   const [loadingReviews,setLoadingReviews]=useState(false)
   const [taskForm,setTaskForm]=useState({title:'',stage_id:'',assigned_to:'',priority:'medium',due_date:'',client_visible:true})
+  const [projectTab,setProjectTab]=useState<'execucao'|'arquivos'>('execucao')
 
   const load=async()=>{
     const [item,members,projectFiles]=await Promise.all([portalApi.project(id),portalApi.teamMembers(),portalApi.projectFiles(id)])
@@ -313,6 +314,9 @@ export function AdminProjectDetailV2(){
       </div>
     </div>
 
+    <div className="mt-6 flex gap-2 overflow-x-auto pb-1"><button type="button" onClick={()=>setProjectTab('execucao')} className={'shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border '+(projectTab==='execucao'?'bg-[#E30613]/15 text-red-200 border-[#E30613]/30':'bg-white/[.03] text-gray-400 border-white/10')}>Execução</button><button type="button" onClick={()=>setProjectTab('arquivos')} className={'shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border '+(projectTab==='arquivos'?'bg-[#E30613]/15 text-red-200 border-[#E30613]/30':'bg-white/[.03] text-gray-400 border-white/10')}>Arquivos <span className="ml-1 text-[10px] opacity-70">({files.length})</span></button><Link to="/admin/arquivos" className="shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border border-white/10 text-gray-400 flex items-center">Central de Arquivos ↗</Link></div>
+
+    {projectTab==='arquivos'&&<div>
     <section className="mt-8">
       <div className="flex flex-wrap justify-between gap-3 items-end">
         <div>
@@ -405,6 +409,9 @@ export function AdminProjectDetailV2(){
       </div>
     </section>
 
+    </div>}
+
+    {projectTab==='execucao'&&<div>
     <section className="mt-8">
       <h2 className="text-xl font-bold">Etapas</h2>
       <p className="text-sm text-gray-500 mb-3">Organize o fluxo e o que o cliente pode acompanhar</p>
@@ -463,6 +470,7 @@ export function AdminProjectDetailV2(){
         </div>
       })}</div>
     </section>
+    </div>}
   {reviewHistoryFile&&<div className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4" onMouseDown={e=>{if(e.currentTarget===e.target)setReviewHistoryFile(null)}}>
     <div className="w-full max-w-xl max-h-[80vh] overflow-hidden rounded-2xl bg-[#111113] border border-white/10 shadow-2xl">
       <div className="h-14 px-4 border-b border-white/10 flex items-center justify-between gap-3">
