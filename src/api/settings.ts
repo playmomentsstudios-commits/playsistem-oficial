@@ -26,6 +26,7 @@ export type AppSettings={
   orders_default_filter:'all'|'awaiting_payment'|'paid'|'in_production'|'completed'|'cancelled'
   internal_operation_notifications:boolean
   commercial_notifications:boolean
+  favicon_url:string|null
   updated_at:string
   updated_by:string|null
 }
@@ -33,6 +34,15 @@ export type AppSettings={
 type PreferenceChanges=Partial<Omit<UserPreferences,'user_id'|'updated_at'>>
 
 export const settingsApi={
+  uploadFavicon:async(file:File)=>{
+    if(file.size>2*1024*1024)throw new Error('O favicon deve ter no máximo 2 MB.')
+    const ext=(file.name.split('.').pop()||'png').toLowerCase()
+    const path=`branding/favicon-${Date.now()}.${ext}`
+    const {error}=await supabase.storage.from('site-assets').upload(path,file,{upsert:false,contentType:file.type||'image/png'})
+    if(error)throw error
+    const {data}=supabase.storage.from('site-assets').getPublicUrl(path)
+    return data.publicUrl
+  },
   userPreferences:async():Promise<UserPreferences|null>=>{
     const {data:{user}}=await supabase.auth.getUser()
     if(!user)return null
