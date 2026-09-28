@@ -76,6 +76,11 @@ export const portalApi = {
     if(error) throw error
     return data as string
   },
+  syncRentalOperationalNotifications: async () => {
+    const {data,error}=await supabase.rpc('sync_rental_operational_notifications')
+    if(error) throw error
+    return Number(data||0)
+  },
   rentals: async (admin=false) => {
     const {data,error}=await supabase.from('product_rentals').select('*,product:products(id,name,slug,stock,inventory_tracked),customer:profiles!product_rentals_customer_id_fkey(id,email,first_name,last_name),order:orders(id,order_number,payment_status,status)').order('start_date',{ascending:true})
     if(error) throw error
