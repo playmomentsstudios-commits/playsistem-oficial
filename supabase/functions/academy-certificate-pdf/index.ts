@@ -1,0 +1,39 @@
+import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
+import QRCode from "npm:qrcode@1.5.4";
+import { corsHeaders, createDriveFolder, findDriveFolder, getDriveAccessToken, json, requireUser, ensureAcademyFolder } from "../_shared/googleDrive.ts";
+
+const esc=(s:string)=>s.replace(/[\\/:*?"<>|]/g,"-").slice(0,120);
+const pct=(v:any,total:number,fallback:number)=>total*(Number(v??fallback)/100);
+async function driveBytes(id:string,token:string){const r=await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?alt=media`,{headers:{Authorization:`Bearer ${token}`}});if(!r.ok)throw new Error("Não foi possível ler o arquivo do certificado no Drive.");return new Uint8Array(await r.arrayBuffer())}
+async function uploadPdf(bytes:Uint8Array,name:string,parentId:string,token:string){const boundary="pm-"+crypto.randomUUID();const metadata=JSON.stringify({name,mimeType:"application/pdf",parents:[parentId],appProperties:{playMomentsKind:"academy-certificate"}});const head=`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n--${boundary}\r\nContent-Type: application/pdf\r\n\r\n`;const tail=`\r\n--${boundary}--`;const blob=new Blob([new TextEncoder().encode(head),bytes,new TextEncoder().encode(tail)]);const r=await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name",{method:"POST",headers:{Authorization:`Bearer ${token}`,"Content-Type":`multipart/related; boundary=${boundary}`},body:blob});if(!r.ok)throw new Error("Não foi possível salvar o PDF no Drive.");return await r.json()}
+Deno.serve(async(req)=>{
+ if(req.method==="OPTIONS")return new Response("ok",{headers:corsHeaders});
+ try{
+  const ctx=await requireUser(req);const body=await req.json();const id=String(body.certificate_id||"");const action=String(body.action||"generate");if(!id)throw new Error("Certificado não informado.");
+  const {data:cert,error}=await ctx.db.from("academy_certificates").select("*").eq("id",id).single();if(error||!cert)throw new Error("Certificado não encontrado.");
+  if(cert.user_id!==ctx.userId&&ctx.role!=="admin")throw new Error("Acesso negado.");
+  if(cert.revoked_at)throw new Error("Certificado revogado.");
+  const token=await getDriveAccessToken();
+  if(action==="download"&&cert.pdf_drive_file_id){const bytes=await driveBytes(cert.pdf_drive_file_id,token);return new Response(bytes,{headers:{...corsHeaders,"Content-Type":"application/pdf","Content-Disposition":`attachment; filename="certificado-${esc(cert.verification_code)}.pdf"`}})}
+  const tpl=cert.template_snapshot;if(!tpl)throw new Error("Este certificado não possui snapshot de modelo. Emita-o novamente após configurar o modelo.");
+  const landscape=tpl.page_orientation!=="portrait";const defaultSize=landscape?[841.89,595.28]:[595.28,841.89];let pdf:PDFDocument;let page:any;
+  if(tpl.background_drive_file_id){
+   const bg=await driveBytes(tpl.background_drive_file_id,token);
+   try{pdf=await PDFDocument.load(bg);page=pdf.getPages()[0]}catch{pdf=await PDFDocument.create();page=pdf.addPage(defaultSize as [number,number]);try{const img=await pdf.embedPng(bg);page.drawImage(img,{x:0,y:0,width:page.getWidth(),height:page.getHeight()})}catch{const img=await pdf.embedJpg(bg);page.drawImage(img,{x:0,y:0,width:page.getWidth(),height:page.getHeight()})}}
+  }else{pdf=await PDFDocument.create();page=pdf.addPage(defaultSize as [number,number]);page.drawRectangle({x:0,y:0,width:page.getWidth(),height:page.getHeight(),color:rgb(1,1,1)})}
+  const font=await pdf.embedFont(StandardFonts.Helvetica),bold=await pdf.embedFont(StandardFonts.HelveticaBold);const W=page.getWidth(),H=page.getHeight(),layout=tpl.layout||{};
+  const date=cert.completion_date_snapshot?new Date(cert.completion_date_snapshot+"T12:00:00").toLocaleDateString("pt-BR"):"";
+  const vars:any={student_name:cert.student_name_snapshot||"",course_title:cert.course_title_snapshot||"",course_hours:String(cert.course_hours_snapshot||""),completion_date:date,verification_code:cert.verification_code};
+  const render=(s:string)=>String(s||"").replace(/{{(\w+)}}/g,(_:string,k:string)=>vars[k]??"");
+  const centered=(text:string,x:number,y:number,size:number,useBold=false)=>{const f=useBold?bold:font;page.drawText(text,{x:x-f.widthOfTextAtSize(text,size)/2,y:y-size/2,size,font:f,color:rgb(.08,.08,.09)})};
+  const n=layout.student_name||{};centered(vars.student_name,pct(n.x,W,50),H-pct(n.y,H,43),Number(n.fontSize||30),true);
+  const b=layout.body||{},bodyText=render(tpl.body_template);const maxWidth=pct(b.width,W,72),size=Number(b.fontSize||14);const words=bodyText.split(/\s+/);let lines:string[]=[],line="";for(const word of words){const test=line?line+" "+word:word;if(font.widthOfTextAtSize(test,size)>maxWidth&&line){lines.push(line);line=word}else line=test}if(line)lines.push(line);lines.slice(0,6).forEach((ln,i)=>centered(ln,pct(b.x,W,50),H-pct(b.y,H,56)-i*(size+5),size));
+  const s=layout.signer||{};if(tpl.signature_drive_file_id){const bytes=await driveBytes(tpl.signature_drive_file_id,token);let img;try{img=await pdf.embedPng(bytes)}catch{img=await pdf.embedJpg(bytes)}const iw=110,ih=iw*(img.height/img.width);page.drawImage(img,{x:pct(s.x,W,72)-iw/2,y:H-pct(s.y,H,79)+12,width:iw,height:ih})}centered(String(tpl.signer_name||"Play Moments"),pct(s.x,W,72),H-pct(s.y,H,79),Number(s.fontSize||11),true);if(tpl.signer_role)centered(String(tpl.signer_role),pct(s.x,W,72),H-pct(s.y,H,79)-15,9);
+  const c=layout.code||{};centered("Código "+cert.verification_code,pct(c.x,W,50),H-pct(c.y,H,92),Number(c.fontSize||8));
+  const base=Deno.env.get("PUBLIC_SITE_URL")||"https://playsistem-oficial.playmomentsstudios.workers.dev";const verify=`${base.replace(/\/$/,"")}/certificados/${encodeURIComponent(cert.verification_code)}`;const data=await QRCode.toDataURL(verify,{margin:0,width:320});const qr=await pdf.embedPng(Uint8Array.from(atob(data.split(",")[1]),x=>x.charCodeAt(0)));const q=layout.qr||{},qw=pct(q.size,W,8);page.drawImage(qr,{x:pct(q.x,W,91)-qw/2,y:H-pct(q.y,H,86)-qw/2,width:qw,height:qw});
+  const bytes=await pdf.save();const folders=await ensureAcademyFolder(ctx.db,ctx.userId,cert.course_id);let folder=await findDriveFolder(folders.courseFolderId,"academy-certificates",cert.course_id);if(!folder)folder=await createDriveFolder("CERTIFICADOS",folders.courseFolderId,{playMomentsKind:"academy-certificates",playMomentsEntityId:cert.course_id});const file=await uploadPdf(bytes,`Certificado - ${esc(cert.student_name_snapshot||cert.user_id)} - ${cert.verification_code}.pdf`,folder.id,token);
+  await ctx.db.from("academy_certificates").update({pdf_drive_file_id:file.id,generated_at:new Date().toISOString()}).eq("id",cert.id);
+  if(action==="generate")return json({ok:true,file_id:file.id,verification_url:verify});
+  return new Response(bytes,{headers:{...corsHeaders,"Content-Type":"application/pdf","Content-Disposition":`attachment; filename="certificado-${esc(cert.verification_code)}.pdf"`}});
+ }catch(e){return json({ok:false,error:e instanceof Error?e.message:"Erro ao gerar certificado."},400)}
+});
