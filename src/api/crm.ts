@@ -17,14 +17,6 @@ export type CrmCustomer={
   updated_at:string
   customer:any
   owner:any
-  customerAutoEvent:async(event:'service_interest'|'product_interest'|'custom_project'|'support_request',detail?:string)=>{
-    const {data,error}=await supabase.rpc('customer_autoattendant_crm_event',{
-      p_event:event,
-      p_detail:detail?.trim()||null,
-    })
-    if(error)throw error
-    return data
-  },
 }
 
 export const CRM_STAGE_LABELS:Record<CrmStage,string>={
@@ -101,6 +93,14 @@ export const crmApi={
       p_internal_notes:values.internal_notes??null,
       p_lost_reason:values.lost_reason??null,
       p_stage_note:values.stage_note??null,
+    })
+    if(error)throw error
+    return data
+  },
+  customerAutoEvent:async(event:'service_interest'|'product_interest'|'custom_project'|'support_request',detail?:string)=>{
+    const {data,error}=await supabase.rpc('customer_autoattendant_crm_event',{
+      p_event:event,
+      p_detail:detail?.trim()||null,
     })
     if(error)throw error
     return data
