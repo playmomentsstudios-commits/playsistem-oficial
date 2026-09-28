@@ -174,11 +174,11 @@ export default function AppV2() {
                 <Route path="configuracoes" element={<AdminPermissionGate adminOnly><AdminSettings /></AdminPermissionGate>} />
                 <Route path="auditoria" element={<AdminPermissionGate adminOnly><AdminAudit /></AdminPermissionGate>} />
                 <Route path="relatorios" element={<AdminPermissionGate permission="reports.view"><AdminReports /></AdminPermissionGate>} />
-                <Route path="academia" element={<AdminPermissionGate adminOnly><AdminAcademy /></AdminPermissionGate>} />
-                <Route path="academia/alunos" element={<AdminPermissionGate adminOnly><AdminAcademyStudents /></AdminPermissionGate>} />
-                <Route path="academia/programas" element={<AdminPermissionGate adminOnly><AdminAcademyPrograms /></AdminPermissionGate>} />
-                <Route path="academia/certificados" element={<AdminPermissionGate adminOnly><AdminAcademyCertificates /></AdminPermissionGate>} />
-                <Route path="academia/gestao" element={<AdminPermissionGate adminOnly><AdminAcademyManagement /></AdminPermissionGate>} />
+                <Route path="academia" element={<AdminPermissionGate permission="academy.view"><AdminAcademy /></AdminPermissionGate>} />
+                <Route path="academia/alunos" element={<AdminPermissionGate permission="academy.students.manage"><AdminAcademyStudents /></AdminPermissionGate>} />
+                <Route path="academia/programas" element={<AdminPermissionGate permission="academy.programs.manage"><AdminAcademyPrograms /></AdminPermissionGate>} />
+                <Route path="academia/certificados" element={<AdminPermissionGate permission="academy.documents.manage"><AdminAcademyCertificates /></AdminPermissionGate>} />
+                <Route path="academia/gestao" element={<AdminPermissionGate permission="academy.curriculum.manage"><AdminAcademyManagement /></AdminPermissionGate>} />
               </Route>
 
               {/* Fallback */}
