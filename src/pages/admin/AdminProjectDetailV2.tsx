@@ -418,7 +418,7 @@ export function AdminProjectDetailV2(){
       <form onSubmit={addStage} className="flex gap-2 mb-4"><input value={stageName} onChange={e=>setStageName(e.target.value)} placeholder="Nova etapa" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 flex-1"/><Button type="submit">Adicionar etapa</Button></form>
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">{sortedStages.map((stage:any)=><div key={stage.id} className="pm-surface p-4">
         <div className="flex justify-between gap-2"><b>{stage.name}</b><button onClick={async()=>{if(window.confirm('Excluir esta etapa? As tarefas permanecem sem etapa.')){await portalApi.deleteStage(stage.id);await load()}}} className="text-xs text-red-400">Excluir</button></div>
-        <select value={stage.status} onChange={async e=>{await portalApi.saveStage({status:e.target.value},stage.id);await load()}} className="mt-3 w-full px-3 py-2 rounded-lg bg-black border border-white/10 text-sm">{stageStatuses.map(value=><option key={value} value={value}>{rotulo(statusEtapa,value)}</option>)}</select>
+        <select value={stage.status} onChange={async e=>{await portalApi.saveStage({status:e.target.value},stage.id);await load()}} className={"pm-select-status mt-3 w-full px-3 py-2 rounded-lg text-sm "+(stage.status==="pending"?"pm-state-pending":stage.status==="in_progress"?"pm-state-progress":"pm-state-success")}>{stageStatuses.map(value=><option key={value} value={value}>{rotulo(statusEtapa,value)}</option>)}</select>
         <label className="mt-3 flex items-center gap-2 text-xs text-gray-400"><input type="checkbox" checked={stage.client_visible} onChange={async e=>{await portalApi.saveStage({client_visible:e.target.checked},stage.id);await load()}}/> Visível para o cliente</label>
       </div>)}</div>
     </section>
@@ -448,7 +448,7 @@ export function AdminProjectDetailV2(){
               {task.due_date&&<p className="text-xs text-gray-500 mt-1">Prazo: {new Date(task.due_date+'T12:00').toLocaleDateString('pt-BR')}</p>}
             </div>
             <div className="flex gap-2 items-start">
-              <select value={task.status} onChange={async e=>{await portalApi.saveTask({status:e.target.value,completed_at:e.target.value==='completed'?new Date().toISOString():null},task.id);await load()}} className="px-3 py-2 rounded-lg bg-black border border-white/10 text-sm">{taskStatuses.map(value=><option key={value} value={value}>{rotulo(statusTarefa,value)}</option>)}</select>
+              <select value={task.status} onChange={async e=>{await portalApi.saveTask({status:e.target.value,completed_at:e.target.value==='completed'?new Date().toISOString():null},task.id);await load()}} className={"pm-select-status px-3 py-2 rounded-lg text-sm "+(task.status==="pending"?"pm-state-pending":task.status==="in_progress"?"pm-state-progress":task.status==="review"?"pm-state-review":task.status==="completed"?"pm-state-success":"pm-state-danger")}>{taskStatuses.map(value=><option key={value} value={value}>{rotulo(statusTarefa,value)}</option>)}</select>
               <button onClick={async()=>{if(window.confirm('Excluir esta tarefa?')){await portalApi.deleteTask(task.id);await load()}}} className="px-3 py-2 text-xs text-red-400">Excluir</button>
             </div>
           </div>
