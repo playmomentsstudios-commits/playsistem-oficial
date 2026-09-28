@@ -418,3 +418,21 @@ export async function ensureAcademyFolder(db: SupabaseClient, userId: string, co
   }
   return { academyRootId:academyRoot.id, courseFolderId, moduleFolderId, folderId:moduleFolderId };
 }
+
+
+export async function ensureAcademyCertificateAssetsFolder(db: SupabaseClient, userId: string) {
+  const { academyRootId } = await ensureAcademyFolderRoot(db, userId);
+  let folder = await findDriveFolder(academyRootId, "academy-certificate-assets");
+  if (!folder) folder = await createDriveFolder("MODELOS DE CERTIFICADOS", academyRootId, { playMomentsKind:"academy-certificate-assets" });
+  return { academyRootId, folderId: folder.id };
+}
+
+async function ensureAcademyFolderRoot(db: SupabaseClient, userId: string) {
+  const { rootFolderId } = await ensureDriveRoot(db, userId);
+  let academyRoot = await findDriveFolder("root", "academy-root");
+  if (!academyRoot) {
+    const legacyRoot = await findDriveFolder(rootFolderId, "academy-root");
+    academyRoot = legacyRoot || await createDriveFolder("PLAY MOMENTS - ACADEMIA PRIVADA", "root", { playMomentsKind:"academy-root" });
+  }
+  return { academyRootId: academyRoot.id };
+}
