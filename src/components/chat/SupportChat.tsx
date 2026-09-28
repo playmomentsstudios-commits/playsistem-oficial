@@ -266,6 +266,42 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
             </div>}
             {(staff||humanMode)&&<div className="shrink-0 bg-[#141416] border-t border-white/10"><ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} compact /></div>}
           </div>
+          {infoOpen&&staff&&conversation&&<button className="fixed inset-0 z-40 bg-black/55 md:hidden" onClick={()=>setInfoOpen(false)} aria-label="Fechar informações"/>}
+          {infoOpen&&staff&&conversation&&<aside className="fixed inset-y-0 right-0 z-50 w-[88vw] max-w-sm md:static md:z-auto md:w-[300px] md:max-w-none shrink-0 border-l border-white/10 bg-[#111113] overflow-y-auto">
+            <div className="p-4 border-b border-white/10 flex items-center justify-between sticky top-0 bg-[#111113]/95 backdrop-blur z-10">
+              <div><p className="text-sm font-bold">Informações</p><p className="text-[10px] text-gray-500">Atendimento e contexto</p></div>
+              <button onClick={()=>setInfoOpen(false)} className="w-9 h-9 rounded-lg hover:bg-white/[.05] text-gray-400" aria-label="Fechar informações">✕</button>
+            </div>
+            <div className="p-4 space-y-5">
+              <section className="text-center">
+                <div className="w-16 h-16 rounded-full bg-[#E30613]/15 text-[#ff6573] mx-auto flex items-center justify-center font-bold">{initials(name(conversation))}</div>
+                <p className="font-bold mt-3">{name(conversation)}</p>
+                <p className="text-xs text-gray-500 mt-1">Cliente Play Moments</p>
+              </section>
+              <section className="space-y-3">
+                <label className="block text-[10px] uppercase tracking-wide text-gray-500">Responsável
+                  <select disabled={transferring||!canTransfer} value={conversation.assigned_to||''} onChange={e=>void transfer(e.target.value)} className="mt-1.5 w-full min-h-11 px-3 rounded-xl text-sm disabled:opacity-50">
+                    <option value="">Não atribuído</option>
+                    {team.map(member=><option key={member.id} value={member.id}>{member.first_name} {member.last_name}{member.staff?.job_title?' — '+member.staff.job_title:member.role==='admin'?' — Administrador':''}</option>)}
+                  </select>
+                </label>
+                <label className="block text-[10px] uppercase tracking-wide text-gray-500">Situação
+                  <select value={conversation.status||'open'} onChange={e=>void updateCrm({status:e.target.value})} className={"pm-select-status mt-1.5 w-full min-h-11 px-3 rounded-xl text-sm "+(conversation.status==='resolved'?'pm-state-success':conversation.status==='pending'?'pm-state-pending':'pm-state-progress')}>
+                    <option value="open">Aberta</option><option value="pending">Aguardando</option><option value="resolved">Resolvida</option>
+                  </select>
+                </label>
+                <label className="block text-[10px] uppercase tracking-wide text-gray-500">Prioridade
+                  <select value={conversation.priority||'normal'} onChange={e=>void updateCrm({priority:e.target.value})} className={"pm-select-status mt-1.5 w-full min-h-11 px-3 rounded-xl text-sm "+(conversation.priority==='urgent'?'pm-state-danger':conversation.priority==='high'?'pm-state-pending':conversation.priority==='low'?'pm-state-neutral':'pm-state-progress')}>
+                    <option value="low">Baixa</option><option value="normal">Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option>
+                  </select>
+                </label>
+                <label className="block text-[10px] uppercase tracking-wide text-gray-500">Marcadores
+                  <input key={conversation.id+(conversation.tags||[]).join(',')} defaultValue={(conversation.tags||[]).join(', ')} onBlur={e=>void updateCrm({tags:e.target.value.split(',').map(tag=>tag.trim()).filter(Boolean)})} placeholder="venda, vídeo, urgente" className="mt-1.5 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10 text-sm"/>
+                </label>
+                {(conversation.tags||[]).length>0&&<div className="flex flex-wrap gap-1.5">{conversation.tags?.map(tag=><span key={tag} className="pm-tag pm-tag-neutral">{tag}</span>)}</div>}
+              </section>
+            </div>
+          </aside>}
         </div>
       )}
     </div>
