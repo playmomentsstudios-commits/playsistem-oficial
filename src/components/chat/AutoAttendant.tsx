@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { crmApi } from '../../api/crm'
 import { autoattendantApi, AutoSolution } from '../../api/autoattendant'
+import { portalApi } from '../../api/portal'
 
 type Props={onHuman:(summary:string)=>Promise<void>;busy?:boolean}
 
@@ -23,7 +24,21 @@ export function AutoAttendant({onHuman,busy=false}:Props){
  const [sent,setSent]=useState(false)
  const [query,setQuery]=useState('')
  const [solutions,setSolutions]=useState<AutoSolution[]>([])
- useEffect(()=>{autoattendantApi.list().then(data=>setSolutions(data.filter(item=>item.active))).catch(()=>setSolutions([]))},[])
+ const [services,setServices]=useState<any[]>([])
+ useEffect(()=>{
+  autoattendantApi.list().then(data=>setSolutions(data.filter(item=>item.active))).catch(()=>setSolutions([]))
+  portalApi.services().then(setServices).catch(()=>setServices([]))
+ },[])
+ const serviceMatches=useMemo(()=>{
+  const normalized=query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+  const words=normalized.split(/\s+/).filter(w=>w.length>2)
+  if(!words.length)return []
+  return services.map(service=>{
+   const haystack=[service.name,service.category,service.short_description,service.description,...(service.deliverables||[]),...(service.included_items||[])].filter(Boolean).join(' ').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+   const score=words.reduce((total,word)=>total+(haystack.includes(word)?1:0),0)
+   return {service,score}
+  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,3)
+ },[query,services])
  const matches=useMemo(()=>{
   const words=query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/\s+/).filter(w=>w.length>2)
   if(!words.length)return []
@@ -76,11 +91,19 @@ export function AutoAttendant({onHuman,busy=false}:Props){
     <textarea autoFocus rows={3} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Ex.: preciso criar uma logo para minha empresa" className="mt-1 w-full p-3 rounded-xl bg-black border border-white/10 text-white resize-none"/>
    </label>
    {query.trim().length>2&&<div className="space-y-2">
-    {matches.length?matches.map(({item})=><div key={item.id} className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
+    {(serviceMatches.length||matches.length)?<>
+     {serviceMatches.map(({service})=><div key={'service-'+service.id} className="rounded-xl border border-[#E30613]/25 bg-[#E30613]/[0.05] p-3">
+      <div className="flex items-start justify-between gap-2"><div><span className="text-[10px] uppercase tracking-wider text-[#ff6b7a]">Serviço disponível</span><b className="text-sm block mt-0.5">{service.name}</b></div>{service.estimated_deadline&&<span className="text-[10px] text-gray-500 text-right">Prazo estimado<br/>{service.estimated_deadline}</span>}</div>
+      <p className="text-xs text-gray-400 mt-1">{service.short_description||service.description}</p>
+      {Array.isArray(service.deliverables)&&service.deliverables.length>0&&<p className="text-[11px] text-gray-500 mt-2">Inclui: {service.deliverables.slice(0,3).join(' · ')}</p>}
+      {Array.isArray(service.customer_requirements)&&service.customer_requirements.length>0&&<p className="text-[11px] text-gray-500 mt-1">Para começar: {service.customer_requirements.slice(0,2).join(' · ')}</p>}
+      <div className="flex gap-3 mt-2"><button type="button" onClick={()=>void crmEvent('service_interest',service.name).then(()=>navigate('/servicos/'+service.slug))} className="text-xs text-[#ff6b7a] underline">Ver esta solução</button><button type="button" onClick={()=>{setCustom(v=>({...v,type:service.category||service.name,goal:query}));setFlow('custom')}} className="text-xs text-gray-400 underline">Preciso adaptar</button></div>
+     </div>)}
+     {serviceMatches.length===0&&matches.map(({item})=><div key={item.id} className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
      <b className="text-sm">{item.name}</b><p className="text-xs text-gray-400 mt-1">{item.response}</p>
      {item.question&&<p className="text-xs text-gray-300 mt-2"><span className="text-[#ff6b7a]">Para direcionar melhor:</span> {item.question}</p>}
      <div className="flex gap-3 mt-2">{item.route&&<button type="button" onClick={()=>void crmEvent((item.crm_event==='product_interest'?'product_interest':'service_interest'),item.name).then(()=>navigate(item.route!))} className="text-xs text-[#ff6b7a] underline">Ver solução</button>}<button type="button" onClick={()=>{setCustom(v=>({...v,type:item.name,goal:query}));setFlow('custom')}} className="text-xs text-gray-400 underline">Quero algo personalizado</button></div>
-    </div>):<div className="rounded-xl border border-white/10 p-3"><p className="text-xs text-gray-400">Ainda não encontrei uma solução suficientemente próxima. Posso organizar seu pedido para a equipe.</p><button onClick={()=>{setCustom(v=>({...v,goal:query}));setFlow('custom')}} className="mt-2 text-xs text-[#ff6b7a] underline">Continuar como projeto personalizado</button></div>}
+    </div>)}</>:<div className="rounded-xl border border-white/10 p-3"><p className="text-xs text-gray-400">Ainda não encontrei uma solução suficientemente próxima. Posso organizar seu pedido para a equipe.</p><button onClick={()=>{setCustom(v=>({...v,goal:query}));setFlow('custom')}} className="mt-2 text-xs text-[#ff6b7a] underline">Continuar como projeto personalizado</button></div>}
    </div>}
    <button onClick={()=>setFlow('home')} className="min-h-11 text-xs text-gray-400">← Voltar</button>
   </div>}
