@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { crmApi } from '../../api/crm'
+import { autoattendantApi, AutoSolution } from '../../api/autoattendant'
 
 type Props={onHuman:(summary:string)=>Promise<void>;busy?:boolean}
 
-type Flow='home'|'faq'|'custom'|'support'
+type Flow='home'|'faq'|'custom'|'support'|'finder'
 
 const FAQ=[
   {q:'Como acompanho meu projeto?',a:'Na Área do Cliente, abra Projetos. Ali ficam status e acompanhamento do trabalho.',href:'/app/projetos',cta:'Ver projetos'},
@@ -20,6 +21,18 @@ export function AutoAttendant({onHuman,busy=false}:Props){
  const [custom,setCustom]=useState({type:'',goal:'',deadline:'',budget:''})
  const [support,setSupport]=useState({topic:'',detail:''})
  const [sent,setSent]=useState(false)
+ const [query,setQuery]=useState('')
+ const [solutions,setSolutions]=useState<AutoSolution[]>([])
+ useEffect(()=>{autoattendantApi.list().then(data=>setSolutions(data.filter(item=>item.active))).catch(()=>setSolutions([]))},[])
+ const matches=useMemo(()=>{
+  const words=query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/\s+/).filter(w=>w.length>2)
+  if(!words.length)return []
+  return solutions.map(item=>{
+   const keys=item.keywords.map(k=>k.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''))
+   const score=keys.reduce((total,key)=>total+(words.some(word=>key.includes(word)||word.includes(key))?1:0),0)
+   return {item,score}
+  }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score||b.item.priority-a.item.priority).slice(0,3)
+ },[query,solutions])
 
  async function crmEvent(event:'service_interest'|'product_interest'|'custom_project'|'support_request',detail?:string){
   try{await crmApi.customerAutoEvent(event,detail)}catch{ /* CRM must never block customer service. */ }
@@ -50,12 +63,26 @@ export function AutoAttendant({onHuman,busy=false}:Props){
   </div>
 
   {flow==='home'&&<div className="grid grid-cols-2 gap-2 mt-3">
-   <button type="button" onClick={()=>void go('/servicos','service_interest')} className="min-h-20 p-3 rounded-xl border border-white/10 bg-white/[0.035] text-left"><b className="text-sm block">Contratar serviço</b><span className="text-[11px] text-gray-500">Ver soluções e propostas</span></button>
+   <button type="button" onClick={()=>setFlow('finder')} className="min-h-20 p-3 rounded-xl border border-white/10 bg-white/[0.035] text-left"><b className="text-sm block">Encontrar uma solução</b><span className="text-[11px] text-gray-500">Descreva o que você precisa</span></button>
    <button type="button" onClick={()=>void go('/produtos','product_interest')} className="min-h-20 p-3 rounded-xl border border-white/10 bg-white/[0.035] text-left"><b className="text-sm block">Comprar produto</b><span className="text-[11px] text-gray-500">Produtos e equipamentos</span></button>
    <Link to="/app/academia" className="min-h-20 p-3 rounded-xl border border-white/10 bg-white/[0.035]"><b className="text-sm block">Academia</b><span className="text-[11px] text-gray-500">Cursos e conteúdos</span></Link>
    <button onClick={()=>setFlow('faq')} className="min-h-20 p-3 rounded-xl border border-white/10 bg-white/[0.035] text-left"><b className="text-sm block">Dúvidas rápidas</b><span className="text-[11px] text-gray-500">Projetos, arquivos e pagamentos</span></button>
    <button onClick={()=>setFlow('custom')} className="col-span-2 min-h-16 p-3 rounded-xl border border-[#E30613]/40 bg-[#E30613]/10 text-left"><b className="text-sm block">Tenho um projeto personalizado</b><span className="text-[11px] text-gray-400">Organizar briefing antes de falar com a equipe</span></button>
    <button onClick={()=>setFlow('support')} className="col-span-2 min-h-11 text-xs text-gray-400 underline underline-offset-4">Não encontrei o que preciso</button>
+  </div>}
+
+  {flow==='finder'&&<div className="mt-3 space-y-3">
+   <label className="block text-xs text-gray-400">Conte em poucas palavras o que você precisa
+    <textarea autoFocus rows={3} value={query} onChange={e=>setQuery(e.target.value)} placeholder="Ex.: preciso criar uma logo para minha empresa" className="mt-1 w-full p-3 rounded-xl bg-black border border-white/10 text-white resize-none"/>
+   </label>
+   {query.trim().length>2&&<div className="space-y-2">
+    {matches.length?matches.map(({item})=><div key={item.id} className="rounded-xl border border-white/10 bg-white/[0.025] p-3">
+     <b className="text-sm">{item.name}</b><p className="text-xs text-gray-400 mt-1">{item.response}</p>
+     {item.question&&<p className="text-xs text-gray-300 mt-2"><span className="text-[#ff6b7a]">Para direcionar melhor:</span> {item.question}</p>}
+     <div className="flex gap-3 mt-2">{item.route&&<button type="button" onClick={()=>void crmEvent((item.crm_event==='product_interest'?'product_interest':'service_interest'),item.name).then(()=>navigate(item.route!))} className="text-xs text-[#ff6b7a] underline">Ver solução</button>}<button type="button" onClick={()=>{setCustom(v=>({...v,type:item.name,goal:query}));setFlow('custom')}} className="text-xs text-gray-400 underline">Quero algo personalizado</button></div>
+    </div>):<div className="rounded-xl border border-white/10 p-3"><p className="text-xs text-gray-400">Ainda não encontrei uma solução suficientemente próxima. Posso organizar seu pedido para a equipe.</p><button onClick={()=>{setCustom(v=>({...v,goal:query}));setFlow('custom')}} className="mt-2 text-xs text-[#ff6b7a] underline">Continuar como projeto personalizado</button></div>}
+   </div>}
+   <button onClick={()=>setFlow('home')} className="min-h-11 text-xs text-gray-400">← Voltar</button>
   </div>}
 
   {flow==='faq'&&<div className="mt-3 space-y-2">

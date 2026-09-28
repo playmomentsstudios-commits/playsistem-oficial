@@ -62,6 +62,7 @@ const AdminCRM = lazy(() => import('./pages/admin/AdminCRM').then(m => ({ defaul
 const AdminReports = lazy(() => import('./pages/admin/AdminReports').then(m => ({ default:m.AdminReports })))
 const AdminAudit = lazy(() => import('./pages/admin/AdminAudit').then(m => ({ default:m.AdminAudit })))
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings').then(m => ({ default:m.AdminSettings })))
+const AdminAutoAttendant = lazy(() => import('./pages/admin/AdminAutoAttendant').then(m => ({ default:m.AdminAutoAttendant })))
 const AdminAcademy = lazy(() => import('./pages/admin/AdminAcademy').then(m => ({ default:m.AdminAcademy })))
 const AcademyPage = lazy(() => import('./pages/customer/AcademyPage').then(m => ({ default:m.AcademyPage })))
 const AcademyCoursePage = lazy(() => import('./pages/customer/AcademyCoursePage').then(m => ({ default:m.AcademyCoursePage })))
@@ -147,6 +148,7 @@ export default function AppV2() {
                 <Route path="orcamentos/:id" element={<AdminPermissionGate permission={['quotes.view','quotes.manage']}><AdminQuoteDetail /></AdminPermissionGate>} />
                 <Route path="pagamentos" element={<AdminPermissionGate permission={['payments.view','payments.manage']}><AdminPayments /></AdminPermissionGate>} />
                 <Route path="conversas" element={<AdminPermissionGate permission={['conversations.access','conversations.view_all']}><AdminConversations /></AdminPermissionGate>} />
+                <Route path="autoatendimento" element={<AdminPermissionGate adminOnly><AdminAutoAttendant /></AdminPermissionGate>} />
                 <Route path="arquivos" element={<AdminPermissionGate permission={['files.view','files.manage']}><AdminFilesV2 /></AdminPermissionGate>} />
                 <Route path="portfolio" element={<AdminPermissionGate permission="site.manage"><AdminAboutPortfolio /></AdminPermissionGate>} />
                 <Route path="comunidade" element={<AdminPermissionGate permission="community.manage"><AdminCommunity /></AdminPermissionGate>} />
