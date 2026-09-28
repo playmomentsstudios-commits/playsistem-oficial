@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { conversationsApi, type ConversationTeamMember, type SupportConversation, type SupportMessage } from '../../api/conversations'
 import { useAuth } from '../../contexts/AuthContext'
@@ -6,6 +6,15 @@ import { ChatComposer } from './ChatComposer'
 import { AttachmentView } from './AttachmentView'
 import { portalApi } from '../../api/portal'
 import { AutoAttendant } from './AutoAttendant'
+
+type InboxFilter='all'|'unread'|'mine'|'unassigned'|'urgent'
+const statusLabel:Record<string,string>={open:'Aberta',pending:'Aguardando',resolved:'Resolvida'}
+function initials(value:string){return value.split(/\s+/).filter(Boolean).slice(0,2).map(part=>part[0]).join('').toUpperCase()||'CL'}
+function shortTime(value?:string|null){
+  if(!value)return ''
+  const date=new Date(value),now=new Date()
+  return date.toDateString()===now.toDateString()?date.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):date.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})
+}
 
 export function SupportChat({ staff = false, compact = false }: { staff?: boolean; compact?: boolean }) {
   const { user } = useAuth()
@@ -20,6 +29,9 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
   const [filter, setFilter] = useState('')
+  const [inboxFilter,setInboxFilter]=useState<InboxFilter>('all')
+  const [infoOpen,setInfoOpen]=useState(false)
+  const [mobileChat,setMobileChat]=useState(false)
   const [team,setTeam]=useState<ConversationTeamMember[]>([])
   const [staffPermissions,setStaffPermissions]=useState<string[]>([])
   const [transferring,setTransferring]=useState(false)
@@ -29,6 +41,11 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   const prompt = subject === 'orcamento'
     ? 'Conte o que você precisa para prepararmos seu orçamento.'
     : subject === 'duvida' ? 'Qual é sua dúvida? Nossa equipe vai ajudar.' : 'Como podemos ajudar você hoje?'
+
+  async function loadConversationList(){
+    if(!user?.id)return []
+    return staff?conversationsApi.listWithSummary(user.id):conversationsApi.list()
+  }
 
   useEffect(()=>{
     if(!staff)return
@@ -51,7 +68,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
     async function load() {
       try {
         const ownId = staff ? null : await conversationsApi.open()
-        const list = await conversationsApi.list()
+        const list = await loadConversationList()
         if (!active) return
         if (id && !list.some(item => item.id === id)) throw new Error('Conversa indisponível.')
         setConversations(list)
@@ -64,7 +81,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
     }
     void load()
     const timer = staff ? window.setInterval(() => {
-      conversationsApi.list().then(list => {
+      loadConversationList().then(list => {
         if (!active) return
         setConversations(list)
         setSelected(current => current || list[0]?.id || '')
@@ -91,7 +108,10 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
           setMessages(previous => [...new Map([...result, ...previous].map(message => [message.id, message])).values()]
             .sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id)))
           setError('')
-          if (user?.id) void portalApi.markConversationRead(selected, user.id).catch(() => undefined)
+          if (user?.id) {
+            void portalApi.markConversationRead(selected, user.id).catch(() => undefined)
+            setConversations(previous=>previous.map(item=>item.id===selected?{...item,unread_count:0}:item))
+          }
         }
       } catch {
         if (active) setError('Não foi possível atualizar as mensagens. Tente novamente.')
@@ -121,6 +141,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
     const attachment = file ? await conversationsApi.upload(selected, user.id, id, file) : undefined
     const message = await conversationsApi.send(selected, user.id, content, id, attachment)
     setMessages(previous => [...previous.filter(item => item.id !== message.id), message])
+    setConversations(previous=>previous.map(item=>item.id===selected?{...item,last_message:message.content,last_message_at:message.created_at,last_sender_id:user.id,unread_count:0}:item).sort((a,b)=>(b.last_message_at||'').localeCompare(a.last_message_at||'')))
   }
 
   const conversation = conversations.find(item => item.id === selected)
@@ -137,7 +158,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
     try{
       setTransferring(true)
       await conversationsApi.assign(conversation.id,assignee||null)
-      const list=await conversationsApi.list()
+      const list=await loadConversationList()
       setConversations(list)
     }finally{setTransferring(false)}
   }
@@ -145,62 +166,93 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   async function updateCrm(values:{status?:string;priority?:string;tags?:string[]}){
     if(!conversation)return
     await conversationsApi.updateCrm(conversation.id,values)
-    const list=await conversationsApi.list()
+    const list=await loadConversationList()
     setConversations(list)
   }
+  const counts=useMemo(()=>({
+    unread:conversations.filter(item=>(item.unread_count||0)>0).length,
+    mine:conversations.filter(item=>item.assigned_to===user?.id).length,
+    unassigned:conversations.filter(item=>!item.assigned_to).length,
+    urgent:conversations.filter(item=>item.priority==='urgent').length,
+  }),[conversations,user?.id])
+
+  const visibleConversations=useMemo(()=>conversations.filter(item=>{
+    const term=filter.trim().toLocaleLowerCase()
+    const matchesText=!term||name(item).toLocaleLowerCase().includes(term)||(item.last_message||'').toLocaleLowerCase().includes(term)||(item.tags||[]).some(tag=>tag.toLocaleLowerCase().includes(term))
+    const matchesFilter=inboxFilter==='all'||(inboxFilter==='unread'&&(item.unread_count||0)>0)||(inboxFilter==='mine'&&item.assigned_to===user?.id)||(inboxFilter==='unassigned'&&!item.assigned_to)||(inboxFilter==='urgent'&&item.priority==='urgent')
+    return matchesText&&matchesFilter
+  }),[conversations,filter,inboxFilter,user?.id])
+
   return (
-    <div className={compact ? 'h-full flex flex-col' : 'flex flex-col gap-4'} style={{ color: '#f0f0f2' }}>
-      {!compact&&<div><h1 className="text-2xl font-bold">Conversas</h1><p className="text-sm" style={{ color: '#9090a0' }}>{staff ? 'Central de atendimento ao cliente' : 'Chat direto com a equipe Play Moments'}</p></div>}
+    <div className={compact ? 'h-full flex flex-col' : 'flex flex-col gap-3'} style={{ color: '#f0f0f2' }}>
+      {!compact&&<div className="flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-2xl font-bold">Conversas</h1><p className="text-sm text-gray-500">{staff ? 'Central de atendimento ao cliente' : 'Chat direto com a equipe Play Moments'}</p></div>{staff&&<div className="flex items-center gap-2 text-xs text-gray-500"><span>{counts.unread} não lida(s)</span><span>•</span><span>{counts.unassigned} sem responsável</span></div>}</div>}
       {error && <div role="alert" className="p-3 rounded-xl bg-red-950/40 text-sm">{error} <button className="underline min-h-11 px-2" onClick={() => setRetry(value => value + 1)}>Tentar novamente</button></div>}
       {loading ? <p role="status">Carregando conversas…</p> : (
-        <div className={'flex flex-col md:flex-row overflow-hidden border border-white/10 '+(compact?'rounded-none h-full':'rounded-2xl')} style={{ background: '#141416', minHeight: compact ? 0 : 420 }}>
-          {staff && <aside className="md:w-64 md:shrink-0 border-b md:border-r border-white/10 p-3">
-            <input aria-label="Buscar cliente" placeholder="Buscar cliente…" value={filter} onChange={event => setFilter(event.target.value)} className="w-full p-3 rounded-xl bg-white/5 mb-2" />
-            <div className="max-h-40 md:max-h-[60vh] overflow-auto">
-              {conversations.filter(item => name(item).toLocaleLowerCase().includes(filter.toLocaleLowerCase())).map(item => (
-                <button key={item.id} disabled={sending} aria-pressed={selected === item.id} onClick={() => setSelected(item.id)} className="w-full text-left p-3 rounded-xl text-sm disabled:opacity-50" style={{ background: selected === item.id ? 'rgba(227,6,19,0.15)' : 'transparent' }}>
-                  <div className="flex items-center justify-between gap-2"><span className="truncate font-medium">{name(item)}</span><span className={'w-2 h-2 rounded-full shrink-0 '+(item.priority==='urgent'?'bg-red-500':item.priority==='high'?'bg-orange-400':item.status==='resolved'?'bg-emerald-400':'bg-gray-500')}/></div>
-                  <p className="text-[10px] text-gray-500 mt-1 truncate">{assigneeName(item)}</p>
+        <div className={'relative flex overflow-hidden border border-white/10 bg-[#141416] '+(compact?'rounded-none h-full':'rounded-2xl h-[calc(100dvh-175px)] min-h-[560px]')}>
+          {staff && <aside className={'w-full md:w-[330px] xl:w-[360px] shrink-0 border-white/10 bg-[#101012] flex-col '+(mobileChat?'hidden md:flex':'flex')+' md:border-r'}>
+            <div className="p-3 border-b border-white/10">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div><p className="text-sm font-bold">Caixa de entrada</p><p className="text-[10px] text-gray-500">{conversations.length} conversa(s)</p></div>
+                {counts.unread>0&&<span className="pm-tag pm-tag-danger">{counts.unread} não lida(s)</span>}
+              </div>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600">⌕</span>
+                <input aria-label="Buscar conversa" placeholder="Buscar cliente, mensagem ou marcador…" value={filter} onChange={event => setFilter(event.target.value)} className="w-full min-h-11 pl-9 pr-3 rounded-xl bg-white/[.05] border border-white/10 text-sm" />
+              </div>
+              <div className="flex gap-1.5 mt-3 overflow-x-auto pb-1">
+                {([
+                  ['all','Todas',conversations.length],
+                  ['unread','Não lidas',counts.unread],
+                  ['mine','Minhas',counts.mine],
+                  ['unassigned','Sem responsável',counts.unassigned],
+                  ['urgent','Urgentes',counts.urgent],
+                ] as Array<[InboxFilter,string,number]>).map(([value,label,count])=><button type="button" key={value} onClick={()=>setInboxFilter(value)} className={'shrink-0 min-h-8 px-2.5 rounded-lg border text-[10px] font-semibold '+(inboxFilter===value?'border-[#E30613]/40 bg-[#E30613]/10 text-red-200':'border-white/10 bg-white/[.025] text-gray-400')}>{label}{count>0&&value!=='all'?(' '+count):''}</button>)}
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto min-h-0">
+              {visibleConversations.map(item=>{
+                const itemName=name(item)
+                const unread=item.unread_count||0
+                return <button key={item.id} disabled={sending} aria-pressed={selected===item.id} onClick={()=>{setSelected(item.id);setMobileChat(true);setInfoOpen(false)}} className={'w-full text-left px-3 py-3.5 border-b border-white/[.05] hover:bg-white/[.035] transition-colors disabled:opacity-50 '+(selected===item.id?'bg-white/[.045]':'')}>
+                  <div className="flex gap-3">
+                    <div className="relative shrink-0">
+                      <div className={'w-11 h-11 rounded-full flex items-center justify-center text-xs font-bold '+(selected===item.id?'bg-[#E30613] text-white':'bg-white/[.07] text-gray-300')}>{initials(itemName)}</div>
+                      {item.priority==='urgent'&&<span className="absolute -right-0.5 -bottom-0.5 w-3 h-3 rounded-full bg-red-500 border-2 border-[#101012]"/>}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex justify-between gap-2 items-baseline">
+                        <p className={'text-sm truncate '+(unread?'font-bold text-white':'font-semibold text-gray-200')}>{itemName}</p>
+                        <span className={'text-[10px] shrink-0 '+(unread?'text-[#ff6573]':'text-gray-600')}>{shortTime(item.last_message_at)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className={'text-xs truncate flex-1 '+(unread?'text-gray-300':'text-gray-500')}>{item.last_sender_id===user?.id?'Você: ':''}{item.last_message||'Conversa iniciada'}</p>
+                        {unread>0&&<span className="min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] font-bold flex items-center justify-center">{unread>99?'99+':unread}</span>}
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-2 min-w-0">
+                        <span className={"pm-tag "+(item.status==='resolved'?'pm-tag-success':item.status==='pending'?'pm-tag-pending':'pm-tag-info')}>{statusLabel[item.status||'open']}</span>
+                        <span className="text-[10px] text-gray-600 truncate">{assigneeName(item)}</span>
+                      </div>
+                    </div>
+                  </div>
                 </button>
-              ))}
-              {!conversations.length && <p className="text-sm p-3">Nenhuma conversa recebida ainda.</p>}
+              })}
+              {!visibleConversations.length&&<div className="p-6 text-center"><p className="text-sm text-gray-400">Nenhuma conversa encontrada.</p><p className="text-xs text-gray-600 mt-1">Tente outro filtro ou termo de busca.</p></div>}
             </div>
           </aside>}
-          <div className="flex-1 min-w-0 flex flex-col">
-            <div className="px-4 py-3 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                {!staff&&<span className="w-8 h-8 rounded-full bg-[#E30613] text-white flex items-center justify-center text-xs font-bold">PM</span>}
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold truncate">{staff ? (conversation ? name(conversation) : 'Selecione uma conversa') : 'Play Moments'}</p>
-                  {!staff&&<p className="text-[10px] text-emerald-400 font-normal">{humanMode?'Atendimento com a equipe':'Autoatendimento disponível'}</p>}
-                  {staff&&conversation&&<p className="text-[10px] text-gray-500 font-normal mt-0.5">Responsável: {assigneeName(conversation)}</p>}
-                </div>
+          <div className={"flex-1 min-w-0 flex-col "+(staff&&!mobileChat?"hidden md:flex":"flex")}>
+            <div className="min-h-[64px] px-3 md:px-4 border-b border-white/10 flex items-center gap-3 bg-[#141416]/95 backdrop-blur shrink-0">
+              {staff&&<button onClick={()=>setMobileChat(false)} className="md:hidden w-9 h-9 rounded-lg hover:bg-white/[.05] text-gray-300" aria-label="Voltar para conversas">←</button>}
+              <div className={'w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0 '+(staff?'bg-white/[.07]':'bg-[#E30613] text-white')}>{staff&&conversation?initials(name(conversation)):'PM'}</div>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold truncate">{staff ? (conversation ? name(conversation) : 'Selecione uma conversa') : 'Play Moments'}</p>
+                {!staff&&<p className="text-[10px] text-emerald-400">{humanMode?'Atendimento com a equipe':'Autoatendimento disponível'}</p>}
+                {staff&&conversation&&<div className="flex items-center gap-1.5 mt-0.5"><span className="text-[10px] text-gray-500 truncate">{assigneeName(conversation)}</span><span className="text-gray-700">•</span><span className="text-[10px] text-gray-500">{statusLabel[conversation.status||'open']}</span></div>}
               </div>
-              {staff&&conversation&&<div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-2 mt-3">
-                <label className="text-[10px] text-gray-500">Direcionar para
-                  <select disabled={transferring||!canTransfer} value={conversation.assigned_to||''} onChange={e=>void transfer(e.target.value)} className="mt-1 w-full min-h-10 px-2 rounded-lg bg-black border border-white/10 text-xs disabled:opacity-50">
-                    <option value="">Não atribuído</option>
-                    {team.map(member=><option key={member.id} value={member.id}>{member.first_name} {member.last_name}{member.staff?.job_title?' — '+member.staff.job_title:member.role==='admin'?' — Admin':''}</option>)}
-                  </select>
-                </label>
-                <label className="text-[10px] text-gray-500">Status
-                  <select value={conversation.status||'open'} onChange={e=>void updateCrm({status:e.target.value})} className="mt-1 w-full min-h-10 px-2 rounded-lg bg-black border border-white/10 text-xs">
-                    <option value="open">Aberta</option><option value="pending">Aguardando</option><option value="resolved">Resolvida</option>
-                  </select>
-                </label>
-                <label className="text-[10px] text-gray-500">Prioridade
-                  <select value={conversation.priority||'normal'} onChange={e=>void updateCrm({priority:e.target.value})} className="mt-1 w-full min-h-10 px-2 rounded-lg bg-black border border-white/10 text-xs">
-                    <option value="low">Baixa</option><option value="normal">Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option>
-                  </select>
-                </label>
-                <label className="text-[10px] text-gray-500">Tags
-                  <input key={conversation.id+(conversation.tags||[]).join(',')} defaultValue={(conversation.tags||[]).join(', ')} onBlur={e=>void updateCrm({tags:e.target.value.split(',').map(tag=>tag.trim()).filter(Boolean)})} placeholder="venda, vídeo, urgente" className="mt-1 w-full min-h-10 px-2 rounded-lg bg-black border border-white/10 text-xs"/>
-                </label>
-              </div>}
+              {staff&&conversation&&<button onClick={()=>setInfoOpen(true)} className="min-h-10 px-3 rounded-xl border border-white/10 hover:bg-white/[.05] text-xs font-semibold">Informações</button>}
             </div>
             {!staff&&!humanMode&&<AutoAttendant onHuman={handoff} busy={sending}/>}
-            {(!staff&&humanMode) && <div className="px-4 pt-3 flex items-center justify-between gap-3"><p className="text-sm" style={{ color: '#ff9ca6' }}>{prompt}</p><button type="button" onClick={()=>setHumanMode(false)} className="shrink-0 min-h-10 text-xs text-gray-400 underline">Voltar ao autoatendimento</button></div>}
-            {(staff||humanMode)&&<div role="log" aria-label="Mensagens" aria-live="polite" className="flex-1 overflow-auto p-4 space-y-3" style={{ height: compact ? 'auto' : '45vh', minHeight: compact ? 0 : 200 }}>
+            {(!staff&&humanMode) && <div className="px-4 pt-3 flex items-center justify-between gap-3 shrink-0"><p className="text-sm" style={{ color: '#ff9ca6' }}>{prompt}</p><button type="button" onClick={()=>setHumanMode(false)} className="shrink-0 min-h-10 text-xs text-gray-400 underline">Voltar ao autoatendimento</button></div>}
+            {(staff||humanMode)&&<div role="log" aria-label="Mensagens" aria-live="polite" className="flex-1 overflow-y-auto min-h-0 px-3 md:px-5 py-4 space-y-2">
               {messagesLoading && <p role="status">Carregando mensagens…</p>}
               {!messagesLoading && selected && !messages.length && !error && <p className="text-sm text-gray-400">Nenhuma mensagem ainda. Inicie a conversa abaixo.</p>}
               {messages.map(message => <div key={message.id} className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}>
@@ -212,8 +264,44 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
               </div>)}
               <div ref={end} />
             </div>}
-            {(staff||humanMode)&&<ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} />}
+            {(staff||humanMode)&&<div className="shrink-0 bg-[#141416] border-t border-white/10"><ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} compact /></div>}
           </div>
+          {infoOpen&&staff&&conversation&&<button className="fixed inset-0 z-40 bg-black/55 md:hidden" onClick={()=>setInfoOpen(false)} aria-label="Fechar informações"/>}
+          {infoOpen&&staff&&conversation&&<aside className="fixed inset-y-0 right-0 z-50 w-[88vw] max-w-sm md:static md:z-auto md:w-[300px] md:max-w-none shrink-0 border-l border-white/10 bg-[#111113] overflow-y-auto">
+            <div className="p-4 border-b border-white/10 flex items-center justify-between sticky top-0 bg-[#111113]/95 backdrop-blur z-10">
+              <div><p className="text-sm font-bold">Informações</p><p className="text-[10px] text-gray-500">Atendimento e contexto</p></div>
+              <button onClick={()=>setInfoOpen(false)} className="w-9 h-9 rounded-lg hover:bg-white/[.05] text-gray-400" aria-label="Fechar informações">✕</button>
+            </div>
+            <div className="p-4 space-y-5">
+              <section className="text-center">
+                <div className="w-16 h-16 rounded-full bg-[#E30613]/15 text-[#ff6573] mx-auto flex items-center justify-center font-bold">{initials(name(conversation))}</div>
+                <p className="font-bold mt-3">{name(conversation)}</p>
+                <p className="text-xs text-gray-500 mt-1">Cliente Play Moments</p>
+              </section>
+              <section className="space-y-3">
+                <label className="block text-[10px] uppercase tracking-wide text-gray-500">Responsável
+                  <select disabled={transferring||!canTransfer} value={conversation.assigned_to||''} onChange={e=>void transfer(e.target.value)} className="mt-1.5 w-full min-h-11 px-3 rounded-xl text-sm disabled:opacity-50">
+                    <option value="">Não atribuído</option>
+                    {team.map(member=><option key={member.id} value={member.id}>{member.first_name} {member.last_name}{member.staff?.job_title?' — '+member.staff.job_title:member.role==='admin'?' — Administrador':''}</option>)}
+                  </select>
+                </label>
+                <label className="block text-[10px] uppercase tracking-wide text-gray-500">Situação
+                  <select value={conversation.status||'open'} onChange={e=>void updateCrm({status:e.target.value})} className={"pm-select-status mt-1.5 w-full min-h-11 px-3 rounded-xl text-sm "+(conversation.status==='resolved'?'pm-state-success':conversation.status==='pending'?'pm-state-pending':'pm-state-progress')}>
+                    <option value="open">Aberta</option><option value="pending">Aguardando</option><option value="resolved">Resolvida</option>
+                  </select>
+                </label>
+                <label className="block text-[10px] uppercase tracking-wide text-gray-500">Prioridade
+                  <select value={conversation.priority||'normal'} onChange={e=>void updateCrm({priority:e.target.value})} className={"pm-select-status mt-1.5 w-full min-h-11 px-3 rounded-xl text-sm "+(conversation.priority==='urgent'?'pm-state-danger':conversation.priority==='high'?'pm-state-pending':conversation.priority==='low'?'pm-state-neutral':'pm-state-progress')}>
+                    <option value="low">Baixa</option><option value="normal">Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option>
+                  </select>
+                </label>
+                <label className="block text-[10px] uppercase tracking-wide text-gray-500">Marcadores
+                  <input key={conversation.id+(conversation.tags||[]).join(',')} defaultValue={(conversation.tags||[]).join(', ')} onBlur={e=>void updateCrm({tags:e.target.value.split(',').map(tag=>tag.trim()).filter(Boolean)})} placeholder="venda, vídeo, urgente" className="mt-1.5 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10 text-sm"/>
+                </label>
+                {(conversation.tags||[]).length>0&&<div className="flex flex-wrap gap-1.5">{conversation.tags?.map(tag=><span key={tag} className="pm-tag pm-tag-neutral">{tag}</span>)}</div>}
+              </section>
+            </div>
+          </aside>}
         </div>
       )}
     </div>
