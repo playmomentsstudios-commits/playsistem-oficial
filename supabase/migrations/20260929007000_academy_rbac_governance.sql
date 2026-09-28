@@ -3,9 +3,9 @@ begin;
 create or replace function public.has_staff_permission(p_permission text)
 returns boolean language sql stable security definer set search_path=public as $$
  select public.is_active_admin() or exists(
-   select 1 from public.staff_members sm join public.profiles p on p.id=sm.user_id
+   select 1 from public.staff_profiles sm join public.profiles p on p.id=sm.user_id
    where sm.user_id=auth.uid() and sm.active=true and p.status='active' and p.role='staff'
-   and (sm.permissions ? p_permission or sm.permissions ? '*')
+   and (sm.permissions @> array[p_permission]::text[] or sm.permissions @> array['*']::text[])
  )
 $$;
 grant execute on function public.has_staff_permission(text) to authenticated;
