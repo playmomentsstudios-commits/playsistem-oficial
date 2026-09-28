@@ -85,6 +85,19 @@ export const assessmentsApi = {
       selected,
     })
   },
+  async myResults(ids: string[]) {
+    if (!ids.length) return []
+    const { data: auth } = await supabase.auth.getUser()
+    if (!auth.user) return []
+    const { data, error } = await supabase
+      .from("academy_attempts")
+      .select("assessment_id,status,score,snapshot,started_at,completed_at")
+      .eq("user_id", auth.user.id)
+      .in("assessment_id", ids)
+      .order("started_at", { ascending: false })
+    if (error) throw error
+    return data || []
+  },
   async results(id: string) {
     const { data, error } = await supabase
       .from("academy_attempts")
