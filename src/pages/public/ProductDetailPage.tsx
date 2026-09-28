@@ -56,6 +56,10 @@ export function ProductDetailPage() {
     void load()
   }, [slug])
 
+  const canBuy=(product?.commercial_mode==='sale'||product?.commercial_mode==='sale_and_rental')&&product?.sale_price!==null
+  const canRent=(product?.commercial_mode==='rental'||product?.commercial_mode==='sale_and_rental')&&product?.rental_daily_price!==null
+  const unavailable=Boolean(product?.inventory_tracked&&product.stock<=0)
+
   function buy() {
     if (!product) return
     if (!user) { navigate(authLink('/cadastro', '/produtos/' + product.slug)); return }
@@ -258,6 +262,8 @@ export function ProductDetailPage() {
                 {(product.commercial_mode === 'sale' || product.commercial_mode === 'sale_and_rental') && product.sale_price !== null && (
                   <div className="mt-6 grid grid-cols-1 sm:flex gap-3"><Button size="lg" fullWidth disabled={product.inventory_tracked && product.stock <= 0} onClick={buy}>{product.specifications?.catalog_kind === 'service' ? 'Contratar agora' : 'Comprar agora'}</Button><Button size="lg" fullWidth variant="secondary" disabled={product.inventory_tracked && product.stock <= 0} onClick={() => { addItem({ id: product.id, name: product.name, slug: product.slug, price: product.promotional_price ?? product.sale_price ?? 0, image: getCover(product), stock: product.inventory_tracked ? product.stock : 1 }); toast(product.specifications?.catalog_kind === 'service' ? 'Serviço adicionado ao carrinho.' : 'Produto adicionado ao carrinho.','success') }}>{product.specifications?.catalog_kind === 'service' ? 'Adicionar ao carrinho' : 'Adicionar ao carrinho'}</Button></div>
                 )}
+
+                {canRent&&<div className="mt-4 rounded-xl border border-white/10 bg-white/[0.025] p-4"><p className="text-sm font-semibold">Precisa alugar?</p><p className="text-xs text-gray-500 mt-1">A locação exige período e disponibilidade. O autoatendimento organiza essa necessidade antes de encaminhar, evitando uma solicitação incompleta.</p><button type="button" disabled={unavailable} onClick={()=>navigate('/app/conversas')} className="mt-3 min-h-10 px-4 rounded-xl border border-white/10 text-xs font-semibold disabled:opacity-40">Solicitar locação pelo atendimento</button></div>}
 
                 {product.sku && (
                   <p
