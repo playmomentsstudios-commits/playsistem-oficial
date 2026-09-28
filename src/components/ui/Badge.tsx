@@ -39,9 +39,10 @@ export function Badge({ children, variant = 'default' }: { children: ReactNode; 
   const s = STYLES[variant]
   return (
     <span
-      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold"
       style={{ background: s.bg, color: s.color, border: `1px solid ${s.border}` }}
     >
+      <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: s.color }} />
       {children}
     </span>
   )

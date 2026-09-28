@@ -129,3 +129,18 @@ export const prioridadeProjeto: Record<string,string> = {
 export const papelUsuario: Record<string,string> = {
   admin:'Administrador', staff:'Colaborador', customer:'Cliente',
 }
+
+export const statusLocacao: Record<string,string> = {
+  pending:'Pendente',
+  awaiting_payment:'Aguardando pagamento',
+  confirmed:'Confirmada',
+  checked_out:'Retirado',
+  completed:'Devolvido',
+  cancelled:'Cancelada',
+}
+
+export const ambientePagamento: Record<string,string> = {
+  production:'Produção',
+  sandbox:'Ambiente de testes',
+  unknown:'Ambiente não identificado',
+}
