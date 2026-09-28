@@ -12,7 +12,7 @@ const control =
 export function AssessmentManager({
   modules,
 }: {
-  modules: { id: string title: string }[]
+  modules: { id: string; title: string }[]
 }) {
   const [items, setItems] = useState<Assessment[]>([]),
     [form, setForm] = useState<Partial<Assessment> & {
