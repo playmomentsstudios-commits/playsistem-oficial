@@ -125,7 +125,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
     return () => { active = false; window.clearInterval(timer) }
   }, [selected, retry])
 
-  useEffect(() => { end.current?.scrollIntoView({ block: 'nearest' }) }, [messages.length])
+  useEffect(() => { end.current?.scrollIntoView({ block: 'end', behavior: messages.length > 1 ? 'smooth' : 'auto' }) }, [messages.length])
 
   async function handoff(summary:string){
     if(!user||!selected)throw new Error('Conversa indisponível.')
@@ -188,7 +188,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
       {!compact&&<div className="flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-2xl font-bold">Conversas</h1><p className="text-sm text-gray-500">{staff ? 'Central de atendimento ao cliente' : 'Chat direto com a equipe Play Moments'}</p></div>{staff&&<div className="flex items-center gap-2 text-xs text-gray-500"><span>{counts.unread} não lida(s)</span><span>•</span><span>{counts.unassigned} sem responsável</span></div>}</div>}
       {error && <div role="alert" className="p-3 rounded-xl bg-red-950/40 text-sm">{error} <button className="underline min-h-11 px-2" onClick={() => setRetry(value => value + 1)}>Tentar novamente</button></div>}
       {loading ? <p role="status">Carregando conversas…</p> : (
-        <div className={'relative flex overflow-hidden border border-white/10 bg-[#141416] '+(compact?'rounded-none h-full':'rounded-2xl h-[calc(100dvh-175px)] min-h-[560px]')}>
+        <div className={'relative flex overflow-hidden bg-[#141416] '+(compact?'rounded-none h-full':'md:rounded-2xl md:border md:border-white/10 h-[calc(100dvh-150px)] min-h-[600px]')}>
           {staff && <aside className={'w-full md:w-[330px] xl:w-[360px] shrink-0 border-white/10 bg-[#101012] flex-col '+(mobileChat?'hidden md:flex':'flex')+' md:border-r'}>
             <div className="p-3 border-b border-white/10">
               <div className="flex items-center justify-between gap-3 mb-3">
@@ -252,16 +252,31 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
             </div>
             {!staff&&!humanMode&&<AutoAttendant onHuman={handoff} busy={sending}/>}
             {(!staff&&humanMode) && <div className="px-4 pt-3 flex items-center justify-between gap-3 shrink-0"><p className="text-sm" style={{ color: '#ff9ca6' }}>{prompt}</p><button type="button" onClick={()=>setHumanMode(false)} className="shrink-0 min-h-10 text-xs text-gray-400 underline">Voltar ao autoatendimento</button></div>}
-            {(staff||humanMode)&&<div role="log" aria-label="Mensagens" aria-live="polite" className="flex-1 overflow-y-auto min-h-0 px-3 md:px-5 py-4 space-y-2">
+            {(staff||humanMode)&&<div role="log" aria-label="Mensagens" aria-live="polite" className="flex-1 overflow-y-auto min-h-0 px-3 md:px-5 py-3 bg-[#0f0f11]">
               {messagesLoading && <p role="status">Carregando mensagens…</p>}
               {!messagesLoading && selected && !messages.length && !error && <p className="text-sm text-gray-400">Nenhuma mensagem ainda. Inicie a conversa abaixo.</p>}
-              {messages.map(message => <div key={message.id} className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}>
-                <div className="max-w-[85%] rounded-2xl px-4 py-3 text-sm" style={{ background: message.sender_id === user?.id ? '#E30613' : 'rgba(255,255,255,0.07)' }}>
-                  <AttachmentView message={message} />
-                  <p className="whitespace-pre-wrap break-words" style={{ overflowWrap: 'anywhere' }}>{message.content}</p>
-                  <p className="text-xs mt-1 opacity-70">{new Date(message.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+              {messages.map((message,index) => {
+                const mine=message.sender_id===user?.id
+                const previous=messages[index-1]
+                const next=messages[index+1]
+                const samePrevious=previous?.sender_id===message.sender_id
+                const sameNext=next?.sender_id===message.sender_id
+                const dayChanged=!previous||new Date(previous.created_at).toDateString()!==new Date(message.created_at).toDateString()
+                const day=new Date(message.created_at)
+                const today=new Date()
+                const yesterday=new Date();yesterday.setDate(today.getDate()-1)
+                const label=day.toDateString()===today.toDateString()?'Hoje':day.toDateString()===yesterday.toDateString()?'Ontem':day.toLocaleDateString('pt-BR',{day:'2-digit',month:'long'})
+                return <div key={message.id}>
+                  {dayChanged&&<div className="flex justify-center py-3"><span className="px-2.5 py-1 rounded-full bg-black/35 border border-white/[.05] text-[10px] text-gray-500">{label}</span></div>}
+                  <div className={`flex ${mine?'justify-end':'justify-start'} ${sameNext?'mb-[3px]':'mb-2'}`}>
+                    <div className={`max-w-[86%] md:max-w-[68%] px-3 py-2 text-[13px] md:text-sm leading-[1.35] shadow-sm ${mine?'bg-[#E30613] text-white':'bg-[#232326] text-gray-100'} ${mine?(samePrevious?'rounded-tr-md':'rounded-tr-[18px]'):(samePrevious?'rounded-tl-md':'rounded-tl-[18px]')} ${mine?(sameNext?'rounded-br-md':'rounded-br-[18px]'):(sameNext?'rounded-bl-md':'rounded-bl-[18px]')} rounded-l-[18px] rounded-r-[18px]`}>
+                      <AttachmentView message={message} />
+                      {message.content&&<p className="whitespace-pre-wrap break-words" style={{ overflowWrap:'anywhere' }}>{message.content}</p>}
+                      <p className="text-[9px] mt-1 opacity-55 text-right leading-none">{new Date(message.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</p>
+                    </div>
+                  </div>
                 </div>
-              </div>)}
+              })}
               <div ref={end} />
             </div>}
             {(staff||humanMode)&&<div className="shrink-0 bg-[#141416] border-t border-white/10"><ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} compact /></div>}

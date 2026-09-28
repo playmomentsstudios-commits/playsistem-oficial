@@ -16,6 +16,7 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false }: Prop
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [toolsOpen,setToolsOpen]=useState(false)
+  const textarea=useRef<HTMLTextAreaElement>(null)
   const input = useRef<HTMLInputElement>(null)
   const photos = useRef<HTMLInputElement>(null)
   const camera = useRef<HTMLInputElement>(null)
@@ -42,6 +43,17 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false }: Prop
     return () => URL.revokeObjectURL(url)
   }, [file])
 
+  function resizeTextarea(){
+    const element=textarea.current
+    if(!element)return
+    element.style.height='auto'
+    element.style.height=Math.min(element.scrollHeight,112)+'px'
+  }
+  function keyDown(event:React.KeyboardEvent<HTMLTextAreaElement>){
+    if(!compact||event.key!=='Enter'||event.shiftKey||event.nativeEvent.isComposing)return
+    event.preventDefault()
+    event.currentTarget.form?.requestSubmit()
+  }
   async function submit(event: React.FormEvent) {
     event.preventDefault()
     if (disabled || busy || sendingRef.current || (!text.trim() && !file)) return
@@ -51,7 +63,7 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false }: Prop
     pendingId.current ??= crypto.randomUUID()
     try {
       await onSend(text.trim(), file, pendingId.current)
-      if (mounted.current) { setText(''); setFile(null); pendingId.current = null }
+      if (mounted.current) { setText(''); setFile(null); pendingId.current = null; if(textarea.current)textarea.current.style.height='auto' }
     } catch (cause) {
       if (mounted.current) setError(`Envio não confirmado. Seu texto e arquivo foram mantidos. ${cause instanceof Error ? cause.message : 'Tente novamente.'}`)
     } finally {
@@ -63,7 +75,7 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false }: Prop
     <input ref={input} type="file" className="hidden" aria-label="Selecionar arquivo original" disabled={disabled || busy} onChange={event => { choose(event.target.files?.[0] || null); event.target.value = '' }} />
     <input ref={photos} type="file" accept="image/*,video/*" className="hidden" aria-label="Selecionar foto ou vídeo" disabled={disabled || busy} onChange={event => { choose(event.target.files?.[0] || null); event.target.value = '' }} />
     <input ref={camera} type="file" accept="image/*" capture="environment" className="hidden" aria-label="Abrir câmera" disabled={disabled || busy} onChange={event => { choose(event.target.files?.[0] || null); event.target.value = '' }} />
-    <div className={(compact&&!toolsOpen?'hidden ':'flex ')+'flex-wrap gap-1.5'}>
+    <div className={(compact&&!toolsOpen?'hidden ':'flex ')+'flex-wrap gap-1.5'+(compact?' px-1 pt-1':'')}>
       <button type="button" className="w-10 h-10 rounded-full bg-white/[0.06] hover:bg-white/[0.1] flex items-center justify-center text-gray-300" disabled={disabled || busy} onClick={() => input.current?.click()} title="Anexar arquivo" aria-label="Anexar arquivo">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.4 11.6 12 21a6 6 0 0 1-8.5-8.5l10-10a4 4 0 0 1 5.7 5.7l-10 10a2 2 0 1 1-2.8-2.8l9.2-9.2"/></svg>
       </button>
@@ -92,8 +104,10 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false }: Prop
     {sending && <p role="status" className="text-sm">{file ? 'Enviando arquivo e mensagem…' : 'Enviando mensagem…'}</p>}
     <div className="flex items-end gap-2">
       {compact&&<button type="button" onClick={()=>setToolsOpen(value=>!value)} className="w-11 h-11 shrink-0 rounded-full bg-white/[0.06] hover:bg-white/[0.1] text-xl text-gray-300" aria-label="Mais opções" title="Mais opções">＋</button>}
-      <textarea aria-label="Mensagem" placeholder={file ? 'Adicione uma mensagem (opcional)…' : 'Digite sua mensagem…'} value={text} maxLength={5000} rows={compact?1:2} disabled={disabled || busy} onChange={event => { setText(event.target.value); pendingId.current = null }} className={"flex-1 min-w-0 rounded-xl text-sm bg-white/5 resize-none "+(compact?"min-h-11 max-h-28 px-3 py-2.5":"p-3")} />
-      <Button type="submit" className="min-h-11" loading={sending} disabled={disabled || busy || (!text.trim() && !file)}>Enviar</Button>
+      <textarea ref={textarea} aria-label="Mensagem" placeholder={file ? 'Adicione uma mensagem…' : 'Mensagem'} value={text} maxLength={5000} rows={compact?1:2} disabled={disabled || busy} onKeyDown={keyDown} onChange={event => { setText(event.target.value); pendingId.current = null; resizeTextarea() }} className={"flex-1 min-w-0 rounded-[22px] text-sm bg-white/[.065] border border-white/[.07] resize-none outline-none focus:border-white/15 "+(compact?"min-h-11 max-h-28 px-4 py-[11px] leading-5":"p-3")} />
+      <button type="submit" aria-label="Enviar mensagem" title="Enviar mensagem" className="w-11 h-11 shrink-0 rounded-full bg-[#E30613] text-white flex items-center justify-center disabled:opacity-35 transition-opacity" disabled={disabled || busy || (!text.trim() && !file)}>
+        {sending?<span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"/>:<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>}
+      </button>
     </div>
     {!compact&&<p className="text-xs text-gray-400">Um arquivo por envio, até 50 MB. Enviado sem reduzir ou converter o original.</p>}
   </form>

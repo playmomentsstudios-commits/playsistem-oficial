@@ -53,11 +53,11 @@ export function FloatingCustomerChat({unread=0}:{unread?:number}){
   }
 
   return <>
-    {open&&<div className="fixed z-[80] inset-2 sm:inset-auto sm:right-4 sm:bottom-24 sm:w-[min(410px,calc(100vw-24px))] sm:h-[min(680px,calc(100vh-120px))] rounded-2xl overflow-hidden border border-white/10 bg-[#111113] shadow-2xl">
+    {open&&<div className="fixed z-[80] inset-2 sm:inset-auto sm:right-4 sm:bottom-24 sm:w-[min(430px,calc(100vw-24px))] sm:h-[min(720px,calc(100vh-100px))] rounded-2xl overflow-hidden border border-white/10 bg-[#111113] shadow-2xl">
       <div className="h-12 px-4 flex items-center justify-between border-b border-white/10 bg-[#0d0d0f]">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400"/>
-          <span className="text-sm font-semibold">Atendimento Play Moments</span>
+          <div><p className="text-sm font-semibold leading-tight">Play Moments</p><p className="text-[10px] text-gray-500">Converse com a gente</p></div>
         </div>
         <button type="button" onClick={()=>setOpen(false)} className="w-10 h-10 rounded-xl hover:bg-white/[0.06] text-gray-400" aria-label="Fechar chat">×</button>
       </div>
