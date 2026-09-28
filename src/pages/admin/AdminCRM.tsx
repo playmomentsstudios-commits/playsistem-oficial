@@ -74,7 +74,7 @@ export function AdminCRM(){
         estimated_value:current.estimated_value,
         internal_notes:current.internal_notes,
         lost_reason:stage==='lost'?current.lost_reason:null,
-        stage_note:'Movido pelo pipeline comercial',
+        stage_note:'Movido pelo funil comercial',
       })
     }catch(error:any){
       toast(error.message||'Não foi possível mover o cliente.','error')
@@ -86,8 +86,8 @@ export function AdminCRM(){
     <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
       <div>
         <p className="text-[11px] uppercase tracking-[0.18em] text-[#E30613] font-semibold">Comercial</p>
-        <h1 className="text-2xl font-bold mt-1">CRM & Pipeline</h1>
-        <p className="text-sm text-gray-500 mt-1">Do primeiro contato ao pós-venda, com responsável e próxima ação.</p><p className="text-[10px] text-gray-600 mt-1">Prazo operacional padrão para follow-up: {followUpDays} dia(s).</p>
+        <h1 className="text-2xl font-bold mt-1">CRM Comercial</h1>
+        <p className="text-sm text-gray-500 mt-1">Do primeiro contato ao pós-venda, com responsável e próxima ação.</p><p className="text-[10px] text-gray-600 mt-1">Prazo padrão para acompanhamento: {followUpDays} dia(s).</p>
       </div>
     </div>
 
