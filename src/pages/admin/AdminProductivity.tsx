@@ -79,6 +79,11 @@ export function AdminProductivity(){
   const dueToday=filtered.filter((task:any)=>task.due_date===today&&task.status!=='completed').length
   const inProgress=filtered.filter((task:any)=>task.status==='in_progress').length
   const review=filtered.filter((task:any)=>task.status==='review').length
+  const completed=filtered.filter((task:any)=>task.status==='completed').length
+  const withDeadline=filtered.filter((task:any)=>task.due_date)
+  const completedOnTime=withDeadline.filter((task:any)=>task.status==='completed'&&task.completed_at&&String(task.completed_at).slice(0,10)<=task.due_date).length
+  const onTimeRate=withDeadline.filter((task:any)=>task.status==='completed'&&task.completed_at).length?Math.round(completedOnTime/withDeadline.filter((task:any)=>task.status==='completed'&&task.completed_at).length*100):null
+  const teamLoad=useMemo(()=>team.map(member=>{const memberTasks=filtered.filter((task:any)=>task.assigned_to===member.id&&task.status!=='completed');return {id:member.id,name:[member.first_name,member.last_name].filter(Boolean).join(' '),open:memberTasks.length,overdue:memberTasks.filter((task:any)=>task.due_date&&task.due_date<today).length}}).filter(item=>item.open>0).sort((a,b)=>b.open-a.open),[team,filtered,today])
   const cells=useMemo(()=>monthCells(calendarMonth),[calendarMonth])
   const selectedTasks=filtered.filter((task:any)=>task.due_date===selectedDate)
 
@@ -109,11 +114,11 @@ export function AdminProductivity(){
       </div>
     </div>
 
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
+    <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 mb-4">
       <div className="px-4 py-3 rounded-xl bg-[#121214] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Para hoje</p><b className="text-xl mt-2 block">{dueToday}</b></div>
       <div className="px-4 py-3 rounded-xl bg-[#121214] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Atrasadas</p><b className="text-xl mt-2 block text-red-300">{overdue}</b></div>
       <div className="px-4 py-3 rounded-xl bg-[#121214] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Em andamento</p><b className="text-xl mt-2 block text-blue-300">{inProgress}</b></div>
-      <div className="px-4 py-3 rounded-xl bg-[#121214] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Em revisão</p><b className="text-xl mt-2 block text-violet-300">{review}</b></div>
+      <div className="px-4 py-3 rounded-xl bg-[#121214] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Em revisão</p><b className="text-xl mt-2 block text-violet-300">{review}</b></div><div className="px-4 py-3 rounded-xl bg-[#121214] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Concluídas</p><b className="text-xl mt-2 block text-green-300">{completed}</b></div><div className="px-4 py-3 rounded-xl bg-[#121214] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">No prazo</p><b className="text-xl mt-2 block text-emerald-300">{onTimeRate===null?'—':onTimeRate+'%'}</b></div>
     </div>
 
     <div className="px-3 py-2.5 rounded-xl bg-[#111113] border border-white/8 flex flex-wrap gap-2 mb-4">
@@ -122,6 +127,8 @@ export function AdminProductivity(){
       <select value={assigneeFilter} onChange={e=>setAssigneeFilter(e.target.value)} className="min-h-10 px-3 py-2 rounded-lg bg-black border border-white/10 text-sm"><option value="todos">Todos os responsáveis</option><option value="sem_responsavel">Sem responsável</option>{team.map(member=><option key={member.id} value={member.id}>{member.first_name} {member.last_name}</option>)}</select>
       <select value={priorityFilter} onChange={e=>setPriorityFilter(e.target.value)} className="min-h-10 px-3 py-2 rounded-lg bg-black border border-white/10 text-sm"><option value="todos">Todas as prioridades</option>{['low','medium','high','urgent'].map(value=><option key={value} value={value}>{rotulo(prioridade,value)}</option>)}</select>
     </div>
+
+    {!loading&&teamLoad.length>0&&<section className="mb-4 rounded-2xl bg-[#111113] border border-white/8 overflow-hidden"><div className="px-4 py-3 border-b border-white/8"><p className="text-[10px] uppercase tracking-[.14em] text-gray-600">Carga da equipe</p><p className="text-sm font-semibold mt-1">Tarefas abertas por responsável</p></div><div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-px bg-white/[.05]">{teamLoad.map(item=><button type="button" key={item.id} onClick={()=>setAssigneeFilter(item.id)} className="bg-[#111113] p-3 text-left hover:bg-white/[.03]"><div className="flex justify-between gap-3"><span className="text-sm font-semibold truncate">{item.name}</span><span className="text-xs text-gray-400">{item.open} aberta(s)</span></div><p className={'text-[10px] mt-1 '+(item.overdue?'text-red-300':'text-gray-600')}>{item.overdue?item.overdue+' atrasada(s)':'Nenhuma atrasada'}</p></button>)}</div></section>}
 
     {loading?<p className="text-gray-400">Carregando...</p>:view==='kanban'?<div className="grid xl:grid-cols-4 gap-3">{columns.map(column=><section key={column.key} className={'rounded-2xl border min-h-56 '+column.accent}>
       <div className="p-3 border-b border-white/10 flex justify-between"><b>{column.label}</b><span className={'text-xs px-2 py-1 rounded-full '+column.badge}>{filtered.filter((task:any)=>task.status===column.key).length}</span></div>
