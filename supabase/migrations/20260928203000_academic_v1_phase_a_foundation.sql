@@ -76,23 +76,23 @@ create index if not exists academy_curricula_course_status_idx on public.academy
 
 -- Bootstrap one academic identity per existing enrolled profile.
 insert into public.academy_students(profile_id,academic_record)
-select distinct e.user_id,'RA-'||to_char(current_date,'YYYY')||'-'||lpad(nextval('public.academy_student_ra_seq')::text,6,'0')
-from public.course_enrollments e
-where not exists(select 1 from public.academy_students s where s.profile_id=e.user_id);
+select x.user_id,'RA-'||to_char(current_date,'YYYY')||'-'||lpad(nextval('public.academy_student_ra_seq')::text,6,'0')
+from (select distinct e.user_id from public.course_enrollments e where e.user_id is not null) x
+on conflict(profile_id) do nothing;
 
 -- Bootstrap curriculum v1 for every existing course.
 insert into public.academy_curricula(course_id,version,name,status,effective_from,snapshot)
 select c.id,1,c.title||' — Matriz 1','active',current_date,
  jsonb_build_object('course_id',c.id,'course_title',c.title,'created_from','legacy_v1')
 from public.courses c
-where not exists(select 1 from public.academy_curricula x where x.course_id=c.id);
+on conflict(course_id,version) do nothing;
 
 -- Bootstrap one open offering for existing courses, preserving current cohort tables independently.
 insert into public.academy_offerings(course_id,curriculum_id,name,offering_type,status)
 select c.id,cur.id,c.title||' — Oferta contínua','open',case when c.status='published' then 'active' else 'draft' end
 from public.courses c
 join lateral(select id from public.academy_curricula x where x.course_id=c.id order by version desc limit 1) cur on true
-where not exists(select 1 from public.academy_offerings o where o.course_id=c.id);
+where not exists(select 1 from public.academy_offerings o where o.course_id=c.id and o.offering_type='open');
 
 -- Upgrade existing enrollments in place; do not duplicate them.
 update public.course_enrollments e set
@@ -118,13 +118,21 @@ alter table public.academy_curricula enable row level security;
 alter table public.academy_offerings enable row level security;
 alter table public.academy_events enable row level security;
 
+drop policy if exists "academy students own read" on public.academy_students;
 create policy "academy students own read" on public.academy_students for select to authenticated using(profile_id=auth.uid());
+drop policy if exists "academy students admin manage" on public.academy_students;
 create policy "academy students admin manage" on public.academy_students for all to authenticated using(public.is_active_admin()) with check(public.is_active_admin());
+drop policy if exists "academy curricula enrolled read" on public.academy_curricula;
 create policy "academy curricula enrolled read" on public.academy_curricula for select to authenticated using(exists(select 1 from public.course_enrollments e where e.curriculum_id=academy_curricula.id and e.user_id=auth.uid()) or public.is_active_admin());
+drop policy if exists "academy curricula admin manage" on public.academy_curricula;
 create policy "academy curricula admin manage" on public.academy_curricula for all to authenticated using(public.is_active_admin()) with check(public.is_active_admin());
+drop policy if exists "academy offerings enrolled read" on public.academy_offerings;
 create policy "academy offerings enrolled read" on public.academy_offerings for select to authenticated using(exists(select 1 from public.course_enrollments e where e.offering_id=academy_offerings.id and e.user_id=auth.uid()) or public.is_active_admin());
+drop policy if exists "academy offerings admin manage" on public.academy_offerings;
 create policy "academy offerings admin manage" on public.academy_offerings for all to authenticated using(public.is_active_admin()) with check(public.is_active_admin());
+drop policy if exists "academy events own read" on public.academy_events;
 create policy "academy events own read" on public.academy_events for select to authenticated using(exists(select 1 from public.academy_students s where s.id=academy_events.student_id and s.profile_id=auth.uid()) or public.is_active_admin());
+drop policy if exists "academy events admin manage" on public.academy_events;
 create policy "academy events admin manage" on public.academy_events for all to authenticated using(public.is_active_admin()) with check(public.is_active_admin());
 
 commit;
