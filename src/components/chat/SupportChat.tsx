@@ -184,11 +184,11 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   }),[conversations,filter,inboxFilter,user?.id])
 
   return (
-    <div className={compact ? 'h-full flex flex-col' : 'flex flex-col gap-4'} style={{ color: '#f0f0f2' }}>
-      {!compact&&<div><h1 className="text-2xl font-bold">Conversas</h1><p className="text-sm" style={{ color: '#9090a0' }}>{staff ? 'Central de atendimento ao cliente' : 'Chat direto com a equipe Play Moments'}</p></div>}
+    <div className={compact ? 'h-full flex flex-col' : 'flex flex-col gap-3'} style={{ color: '#f0f0f2' }}>
+      {!compact&&<div className="flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-2xl font-bold">Conversas</h1><p className="text-sm text-gray-500">{staff ? 'Central de atendimento ao cliente' : 'Chat direto com a equipe Play Moments'}</p></div>{staff&&<div className="flex items-center gap-2 text-xs text-gray-500"><span>{counts.unread} não lida(s)</span><span>•</span><span>{counts.unassigned} sem responsável</span></div>}</div>}
       {error && <div role="alert" className="p-3 rounded-xl bg-red-950/40 text-sm">{error} <button className="underline min-h-11 px-2" onClick={() => setRetry(value => value + 1)}>Tentar novamente</button></div>}
       {loading ? <p role="status">Carregando conversas…</p> : (
-        <div className={'flex flex-col md:flex-row overflow-hidden border border-white/10 '+(compact?'rounded-none h-full':'rounded-2xl')} style={{ background: '#141416', minHeight: compact ? 0 : 420 }}>
+        <div className={'relative flex overflow-hidden border border-white/10 bg-[#141416] '+(compact?'rounded-none h-full':'rounded-2xl h-[calc(100dvh-175px)] min-h-[560px]')}>
           {staff && <aside className={'w-full md:w-[330px] xl:w-[360px] shrink-0 border-white/10 bg-[#101012] flex-col '+(mobileChat?'hidden md:flex':'flex')+' md:border-r'}>
             <div className="p-3 border-b border-white/10">
               <div className="flex items-center justify-between gap-3 mb-3">
@@ -239,41 +239,20 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
               {!visibleConversations.length&&<div className="p-6 text-center"><p className="text-sm text-gray-400">Nenhuma conversa encontrada.</p><p className="text-xs text-gray-600 mt-1">Tente outro filtro ou termo de busca.</p></div>}
             </div>
           </aside>}
-          <div className="flex-1 min-w-0 flex flex-col">
-            <div className="px-4 py-3 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                {!staff&&<span className="w-8 h-8 rounded-full bg-[#E30613] text-white flex items-center justify-center text-xs font-bold">PM</span>}
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold truncate">{staff ? (conversation ? name(conversation) : 'Selecione uma conversa') : 'Play Moments'}</p>
-                  {!staff&&<p className="text-[10px] text-emerald-400 font-normal">{humanMode?'Atendimento com a equipe':'Autoatendimento disponível'}</p>}
-                  {staff&&conversation&&<p className="text-[10px] text-gray-500 font-normal mt-0.5">Responsável: {assigneeName(conversation)}</p>}
-                </div>
+          <div className={"flex-1 min-w-0 flex-col "+(staff&&!mobileChat?"hidden md:flex":"flex")}>
+            <div className="min-h-[64px] px-3 md:px-4 border-b border-white/10 flex items-center gap-3 bg-[#141416]/95 backdrop-blur shrink-0">
+              {staff&&<button onClick={()=>setMobileChat(false)} className="md:hidden w-9 h-9 rounded-lg hover:bg-white/[.05] text-gray-300" aria-label="Voltar para conversas">←</button>}
+              <div className={'w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0 '+(staff?'bg-white/[.07]':'bg-[#E30613] text-white')}>{staff&&conversation?initials(name(conversation)):'PM'}</div>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold truncate">{staff ? (conversation ? name(conversation) : 'Selecione uma conversa') : 'Play Moments'}</p>
+                {!staff&&<p className="text-[10px] text-emerald-400">{humanMode?'Atendimento com a equipe':'Autoatendimento disponível'}</p>}
+                {staff&&conversation&&<div className="flex items-center gap-1.5 mt-0.5"><span className="text-[10px] text-gray-500 truncate">{assigneeName(conversation)}</span><span className="text-gray-700">•</span><span className="text-[10px] text-gray-500">{statusLabel[conversation.status||'open']}</span></div>}
               </div>
-              {staff&&conversation&&<div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-2 mt-3">
-                <label className="text-[10px] text-gray-500">Direcionar para
-                  <select disabled={transferring||!canTransfer} value={conversation.assigned_to||''} onChange={e=>void transfer(e.target.value)} className="mt-1 w-full min-h-10 px-2 rounded-lg bg-black border border-white/10 text-xs disabled:opacity-50">
-                    <option value="">Não atribuído</option>
-                    {team.map(member=><option key={member.id} value={member.id}>{member.first_name} {member.last_name}{member.staff?.job_title?' — '+member.staff.job_title:member.role==='admin'?' — Admin':''}</option>)}
-                  </select>
-                </label>
-                <label className="text-[10px] text-gray-500">Status
-                  <select value={conversation.status||'open'} onChange={e=>void updateCrm({status:e.target.value})} className="mt-1 w-full min-h-10 px-2 rounded-lg bg-black border border-white/10 text-xs">
-                    <option value="open">Aberta</option><option value="pending">Aguardando</option><option value="resolved">Resolvida</option>
-                  </select>
-                </label>
-                <label className="text-[10px] text-gray-500">Prioridade
-                  <select value={conversation.priority||'normal'} onChange={e=>void updateCrm({priority:e.target.value})} className="mt-1 w-full min-h-10 px-2 rounded-lg bg-black border border-white/10 text-xs">
-                    <option value="low">Baixa</option><option value="normal">Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option>
-                  </select>
-                </label>
-                <label className="text-[10px] text-gray-500">Tags
-                  <input key={conversation.id+(conversation.tags||[]).join(',')} defaultValue={(conversation.tags||[]).join(', ')} onBlur={e=>void updateCrm({tags:e.target.value.split(',').map(tag=>tag.trim()).filter(Boolean)})} placeholder="venda, vídeo, urgente" className="mt-1 w-full min-h-10 px-2 rounded-lg bg-black border border-white/10 text-xs"/>
-                </label>
-              </div>}
+              {staff&&conversation&&<button onClick={()=>setInfoOpen(true)} className="min-h-10 px-3 rounded-xl border border-white/10 hover:bg-white/[.05] text-xs font-semibold">Informações</button>}
             </div>
             {!staff&&!humanMode&&<AutoAttendant onHuman={handoff} busy={sending}/>}
-            {(!staff&&humanMode) && <div className="px-4 pt-3 flex items-center justify-between gap-3"><p className="text-sm" style={{ color: '#ff9ca6' }}>{prompt}</p><button type="button" onClick={()=>setHumanMode(false)} className="shrink-0 min-h-10 text-xs text-gray-400 underline">Voltar ao autoatendimento</button></div>}
-            {(staff||humanMode)&&<div role="log" aria-label="Mensagens" aria-live="polite" className="flex-1 overflow-auto p-4 space-y-3" style={{ height: compact ? 'auto' : '45vh', minHeight: compact ? 0 : 200 }}>
+            {(!staff&&humanMode) && <div className="px-4 pt-3 flex items-center justify-between gap-3 shrink-0"><p className="text-sm" style={{ color: '#ff9ca6' }}>{prompt}</p><button type="button" onClick={()=>setHumanMode(false)} className="shrink-0 min-h-10 text-xs text-gray-400 underline">Voltar ao autoatendimento</button></div>}
+            {(staff||humanMode)&&<div role="log" aria-label="Mensagens" aria-live="polite" className="flex-1 overflow-y-auto min-h-0 px-3 md:px-5 py-4 space-y-2">
               {messagesLoading && <p role="status">Carregando mensagens…</p>}
               {!messagesLoading && selected && !messages.length && !error && <p className="text-sm text-gray-400">Nenhuma mensagem ainda. Inicie a conversa abaixo.</p>}
               {messages.map(message => <div key={message.id} className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}>
@@ -285,7 +264,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
               </div>)}
               <div ref={end} />
             </div>}
-            {(staff||humanMode)&&<ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} />}
+            {(staff||humanMode)&&<div className="shrink-0 bg-[#141416] border-t border-white/10"><ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} compact /></div>}
           </div>
         </div>
       )}
