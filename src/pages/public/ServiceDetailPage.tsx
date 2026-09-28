@@ -12,6 +12,8 @@ function lines(value:unknown){
  return typeof value==='string' ? value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean) : []
 }
 
+function DetailList({title,items,muted=false}:{title:string;items:string[];muted?:boolean}){return <div className="rounded-2xl border border-white/10 p-4 bg-[#111113]"><h3 className="text-sm font-semibold">{title}</h3><ul className="mt-2 space-y-2">{items.map((item,i)=><li key={i} className={`text-xs flex gap-2 ${muted?'text-gray-500':'text-gray-300'}`}><span>{muted?'—':'✓'}</span><span>{item}</span></li>)}</ul></div>}
+
 export function ServiceDetailPage(){
  const {slug}=useParams(),{user,role}=useAuth(),toast=useToast(),navigate=useNavigate()
  const [service,setService]=useState<any>(null),[loading,setLoading]=useState(true),[submitting,setSubmitting]=useState(false)
@@ -32,6 +34,10 @@ export function ServiceDetailPage(){
  const description=lines(service.description)
  const summary=service.short_description||description[0]||'Solução profissional Play Moments.'
  const isFixed=service.price_type==='fixed'
+ const deliverables=Array.isArray(service.deliverables)?service.deliverables:[]
+ const requirements=Array.isArray(service.customer_requirements)?service.customer_requirements:[]
+ const included=Array.isArray(service.included_items)?service.included_items:[]
+ const excluded=Array.isArray(service.excluded_items)?service.excluded_items:[]
  return <PublicLayout>
   <main className="mx-auto px-4 py-10 sm:py-14" style={{maxWidth:1000}}>
    <Link to="/servicos" className="inline-flex min-h-11 items-center text-sm text-gray-400">← Todos os serviços</Link>
@@ -48,6 +54,21 @@ export function ServiceDetailPage(){
        {description.length>1?<ul className="space-y-3">{description.map((item,i)=><li key={i} className="flex gap-3 text-sm text-gray-300"><span className="text-[#E30613] font-bold">✓</span><span>{item}</span></li>)}</ul>:<p className="text-sm text-gray-300 whitespace-pre-wrap">{service.description||summary}</p>}
       </div>
      </section>
+
+     {(deliverables.length||requirements.length||included.length||excluded.length||service.estimated_deadline||service.delivery_format||service.revision_count!==null)&&<section className="mt-7 space-y-4">
+      <h2 className="text-xl font-bold">Detalhes da solução</h2>
+      <div className="grid sm:grid-cols-3 gap-3">
+       {service.estimated_deadline&&<div className="rounded-xl border border-white/10 p-4"><p className="text-xs text-gray-500">Prazo estimado</p><p className="text-sm font-semibold mt-1">{service.estimated_deadline}</p></div>}
+       {service.revision_count!==null&&service.revision_count!==undefined&&<div className="rounded-xl border border-white/10 p-4"><p className="text-xs text-gray-500">Revisões incluídas</p><p className="text-sm font-semibold mt-1">{service.revision_count} {service.revision_count===1?'rodada':'rodadas'}</p></div>}
+       {service.delivery_format&&<div className="rounded-xl border border-white/10 p-4"><p className="text-xs text-gray-500">Formato de entrega</p><p className="text-sm font-semibold mt-1">{service.delivery_format}</p></div>}
+      </div>
+      <div className="grid sm:grid-cols-2 gap-3">
+       {deliverables.length>0&&<DetailList title="Entregáveis" items={deliverables}/>}
+       {included.length>0&&<DetailList title="Incluído" items={included}/>}
+       {requirements.length>0&&<DetailList title="O que precisamos de você" items={requirements}/>}
+       {excluded.length>0&&<DetailList title="Não incluído" items={excluded} muted/>}
+      </div>
+     </section>}
 
      <section className="mt-7 grid sm:grid-cols-3 gap-3">
       <div className="rounded-2xl border border-white/10 p-4 bg-[#111113]"><p className="text-xs text-gray-500">1</p><p className="font-semibold mt-1">Escolha</p><p className="text-xs text-gray-400 mt-1">Confira se esta solução atende ao que você precisa.</p></div>
