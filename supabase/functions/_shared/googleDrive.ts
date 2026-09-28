@@ -420,6 +420,19 @@ export async function ensureAcademyFolder(db: SupabaseClient, userId: string, co
 }
 
 
+
+export async function ensureAcademyDocumentsFolder(db: SupabaseClient, userId: string, studentId: string, enrollmentId?: string) {
+  const { academyRootId } = await ensureAcademyFolderRoot(db,userId);
+  let documentsRoot = await findDriveFolder(academyRootId,"academy-documents-root");
+  if (!documentsRoot) documentsRoot = await createDriveFolder("DOCUMENTOS ACADÊMICOS",academyRootId,{playMomentsKind:"academy-documents-root"});
+  let studentFolder = await findDriveFolder(documentsRoot.id,"academy-student-documents",studentId);
+  if (!studentFolder) studentFolder = await createDriveFolder("ALUNO-"+studentId.slice(0,8).toUpperCase(),documentsRoot.id,{playMomentsKind:"academy-student-documents",playMomentsEntityId:studentId});
+  if (!enrollmentId) return {academyRootId,documentsRootId:documentsRoot.id,studentFolderId:studentFolder.id,folderId:studentFolder.id};
+  let enrollmentFolder = await findDriveFolder(studentFolder.id,"academy-enrollment-documents",enrollmentId);
+  if (!enrollmentFolder) enrollmentFolder = await createDriveFolder("MATRICULA-"+enrollmentId.slice(0,8).toUpperCase(),studentFolder.id,{playMomentsKind:"academy-enrollment-documents",playMomentsEntityId:enrollmentId});
+  return {academyRootId,documentsRootId:documentsRoot.id,studentFolderId:studentFolder.id,enrollmentFolderId:enrollmentFolder.id,folderId:enrollmentFolder.id};
+}
+
 export async function ensureAcademyCertificateAssetsFolder(db: SupabaseClient, userId: string) {
   const { academyRootId } = await ensureAcademyFolderRoot(db, userId);
   let folder = await findDriveFolder(academyRootId, "academy-certificate-assets");
