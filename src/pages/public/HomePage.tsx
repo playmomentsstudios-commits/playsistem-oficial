@@ -56,15 +56,15 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="px-5 pb-8" aria-labelledby="quick-access-title">
+      <section className="px-5 pb-10" aria-labelledby="quick-access-title">
         <div className="max-w-6xl mx-auto">
-          <h2 id="quick-access-title" className="text-xl font-bold mb-4" style={{ color: '#f0f0f2' }}>Escolha seu caminho</h2>
+          <div className="mb-5"><p className="text-[11px] uppercase tracking-[.18em] font-bold mb-2" style={{color:'#E30613'}}>Explore a plataforma</p><h2 id="quick-access-title" className="text-2xl font-bold" style={{ color: '#f0f0f2' }}>Escolha seu caminho</h2><p className="text-sm mt-2" style={{color:'#6b6b78'}}>Você pode navegar livremente. Conta só é necessária quando houver uma ação pessoal.</p></div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {quickLinks.map(item => (
-              <Link key={item.title} to={item.href} className="p-4 rounded-2xl hover:-translate-y-1 transition-transform" style={{ background: '#141416', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <Link key={item.title} to={item.href} className="group p-5 rounded-2xl hover:-translate-y-1 transition-all duration-200" style={{ background: '#141416', border: '1px solid rgba(255,255,255,0.08)' }}>
                 <span aria-hidden="true" className="text-2xl" style={{ color: '#ff6b7a' }}>{item.icon}</span>
                 <h3 className="font-semibold text-sm mt-2 mb-1" style={{ color: '#f0f0f2' }}>{item.title}</h3>
-                <p className="text-xs" style={{ color: '#9090a0' }}>{item.description}</p>
+                <p className="text-xs leading-relaxed" style={{ color: '#9090a0' }}>{item.description}</p><span className="inline-flex mt-4 text-xs font-bold group-hover:translate-x-1 transition-transform" style={{color:'#ff6b7a'}}>Acessar →</span>
               </Link>
             ))}
           </div>
@@ -84,7 +84,7 @@ export function HomePage() {
       </section>
 
       {/* ── STATS ────────────────────────────────────────────────────────── */}
-      <section className="px-6 py-10">
+      <section className="px-6 py-12">
         <div className="mx-auto grid grid-cols-2 md:grid-cols-4 gap-4" style={{ maxWidth: 900 }}>
           {[
             {value:profile?.projects_delivered_label||'8 mil+',label:'Projetos entregues'},
@@ -92,7 +92,7 @@ export function HomePage() {
             {value:'Desde '+(profile?.market_since||2008),label:'No mercado'},
             {value:profile?.satisfaction_label||'85%',label:'Satisfação'},
           ].map(s => (
-            <div key={s.label} className="text-center py-6 px-4 rounded-2xl"
+            <div key={s.label} className="text-center py-5 px-4 rounded-2xl"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
               <p className="font-extrabold text-3xl mb-1" style={{ color: '#E30613' }}>{s.value}</p>
               <p className="text-xs" style={{ color: '#6b6b78' }}>{s.label}</p>
