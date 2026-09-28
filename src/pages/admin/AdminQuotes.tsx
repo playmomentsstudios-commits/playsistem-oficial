@@ -7,6 +7,7 @@ import { rotulo,statusOrcamento } from '../../lib/labels.ptBR'
 import { settingsApi } from '../../api/settings'
 
 const money=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format((v||0)/100)
+const quoteTag=(status:string)=>status==='accepted'?'pm-tag-success':status==='rejected'?'pm-tag-danger':status==='expired'?'pm-tag-neutral':status==='viewed'?'pm-tag-info':status==='sent'?'pm-tag-progress':'pm-tag-pending'
 
 export function AdminQuotes(){
   const {user}=useAuth()
@@ -85,7 +86,7 @@ export function AdminQuotes(){
 
     <div className="space-y-2">{filtered.map(q=><Link key={q.id} to={'/admin/orcamentos/'+q.id} className="p-4 rounded-2xl bg-[#141416] border border-white/10 flex justify-between gap-4 hover:border-white/20 hover:bg-white/[0.025] transition-colors">
       <div><b className="text-[#E30613]">{q.quote_number}</b><p>{q.title}</p><p className="text-xs text-gray-500">{q.customer?q.customer.first_name+' '+q.customer.last_name:'Cliente'}</p></div>
-      <div className="text-right"><b>{money(q.total)}</b><p className="text-xs text-gray-500">{rotulo(statusOrcamento,q.status)}</p></div>
+      <div className="text-right"><b>{money(q.total)}</b><div className="mt-2"><span className={"pm-tag "+quoteTag(q.status)}>{rotulo(statusOrcamento,q.status)}</span></div></div>
     </Link>)}</div>
   </div>
 }
