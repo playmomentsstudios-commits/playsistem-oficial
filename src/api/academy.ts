@@ -4,7 +4,10 @@ export type Course={id:string;title:string;slug:string;description:string|null;d
 async function functionError(error:any,fallback:string){
   try{const response=error?.context;if(response instanceof Response){const payload=await response.clone().json();return payload?.error||payload?.message||fallback}}catch{}
   return error?.message&&error.message!=='Edge Function returned a non-2xx status code'?error.message:fallback
+  async academicStudents(){const {data,error}=await supabase.from('course_enrollments').select('*,student:academy_students(id,academic_record,status),user:profiles(id,first_name,last_name,email),course:courses(id,title),curriculum:academy_curricula(id,name,version),offering:academy_offerings(id,name,offering_type,status),events:academy_events(id,event_type,title,occurred_at)').not('student_id','is',null).order('enrolled_at',{ascending:false});if(error)throw error;return data||[]},
+
 }
+
 export const academyApi={
   async adminCourses(){const {data,error}=await supabase.from('courses').select('*').order('display_order').order('created_at',{ascending:false});if(error)throw error;return (data||[]) as Course[]},
   async freeCourses(){const {data,error}=await supabase.from('courses').select('*').eq('status','published').eq('access_type','free').order('published_at',{ascending:false});if(error)throw error;return data||[]},
