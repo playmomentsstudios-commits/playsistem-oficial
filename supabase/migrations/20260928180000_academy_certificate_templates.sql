@@ -7,6 +7,8 @@ create table if not exists public.academy_certificate_templates (
  page_orientation text not null default 'landscape' check(page_orientation in ('landscape','portrait')),
  background_drive_file_id text,
  signature_drive_file_id text,
+ background_storage_path text,
+ signature_storage_path text,
  signer_name text,
  signer_role text,
  body_template text not null default 'Certificamos que {{student_name}} concluiu o curso {{course_title}}, com carga horária de {{course_hours}} horas, em {{completion_date}}.',
@@ -72,3 +74,9 @@ language sql stable security definer set search_path=public as $$
 $$;
 grant execute on function public.academy_verify_certificate(text) to anon,authenticated;
 create index if not exists academy_certificate_templates_status_idx on public.academy_certificate_templates(status,created_at desc);
+
+insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types) values('academy-certificate-assets','academy-certificate-assets',false,15728640,array['application/pdf','image/png','image/jpeg']) on conflict(id) do nothing;
+drop policy if exists "academy certificate assets admin manage" on storage.objects;
+create policy "academy certificate assets admin manage" on storage.objects for all to authenticated
+using(bucket_id='academy-certificate-assets' and exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='admin'))
+with check(bucket_id='academy-certificate-assets' and exists(select 1 from public.profiles p where p.id=auth.uid() and p.role='admin'));
