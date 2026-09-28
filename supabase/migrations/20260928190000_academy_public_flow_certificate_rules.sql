@@ -97,7 +97,7 @@ begin
         and t.score*100 >= greatest(
           1,
           (select coalesce(sum((q->>'points')::numeric),0) from jsonb_array_elements(t.snapshot) q)
-        )*a.passing_percent
+        )*60
     );
 
   if v_passed<v_required then
