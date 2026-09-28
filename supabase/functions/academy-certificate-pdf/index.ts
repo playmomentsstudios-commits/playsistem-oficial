@@ -1,3 +1,4 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { PDFDocument, StandardFonts, rgb } from "https://esm.sh/pdf-lib@1.17.1";
 import QRCode from "npm:qrcode@1.5.4";
 import { corsHeaders, createDriveFolder, findDriveFolder, getDriveAccessToken, json, requireUser, ensureAcademyFolder } from "../_shared/googleDrive.ts";
@@ -9,12 +10,12 @@ async function uploadPdf(bytes:Uint8Array,name:string,parentId:string,token:stri
 Deno.serve(async(req)=>{
  if(req.method==="OPTIONS")return new Response("ok",{headers:corsHeaders});
  try{
-  const ctx=await requireUser(req);const body=await req.json();const id=String(body.certificate_id||"");const action=String(body.action||"generate");if(!id)throw new Error("Certificado não informado.");
-  const {data:cert,error}=await ctx.db.from("academy_certificates").select("*").eq("id",id).single();if(error||!cert)throw new Error("Certificado não encontrado.");
-  if(cert.user_id!==ctx.userId&&ctx.role!=="admin")throw new Error("Acesso negado.");
+  const body=await req.json();const action=String(body.action||"generate");const publicMode=action==="public-download";const ctx=publicMode?{db:createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,{auth:{persistSession:false,autoRefreshToken:false}}),userId:"public",role:"public",permissions:[]}:await requireUser(req);const id=String(body.certificate_id||"");const code=String(body.verification_code||"").trim().toUpperCase();if(!id&&!code)throw new Error("Certificado não informado.");
+  let query=ctx.db.from("academy_certificates").select("*");query=id?query.eq("id",id):query.eq("verification_code",code);const {data:cert,error}=await query.single();if(error||!cert)throw new Error("Certificado não encontrado.");
+  if(!publicMode&&cert.user_id!==ctx.userId&&ctx.role!=="admin")throw new Error("Acesso negado.");
   if(cert.revoked_at)throw new Error("Certificado revogado.");
   const token=await getDriveAccessToken();
-  if(action==="download"&&cert.pdf_drive_file_id){const bytes=await driveBytes(cert.pdf_drive_file_id,token);return new Response(bytes,{headers:{...corsHeaders,"Content-Type":"application/pdf","Content-Disposition":`attachment; filename="certificado-${esc(cert.verification_code)}.pdf"`}})}
+  if((action==="download"||action==="public-download")&&cert.pdf_drive_file_id){const bytes=await driveBytes(cert.pdf_drive_file_id,token);return new Response(bytes,{headers:{...corsHeaders,"Content-Type":"application/pdf","Content-Disposition":`attachment; filename="certificado-${esc(cert.verification_code)}.pdf"`}})}
   const tpl=cert.template_snapshot;if(!tpl)throw new Error("Este certificado não possui snapshot de modelo. Emita-o novamente após configurar o modelo.");
   const landscape=tpl.page_orientation!=="portrait";const defaultSize=landscape?[841.89,595.28]:[595.28,841.89];let pdf:PDFDocument;let page:any;
   if(tpl.background_storage_path||tpl.background_drive_file_id){
