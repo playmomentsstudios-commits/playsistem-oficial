@@ -125,33 +125,8 @@ export function AssessmentRunner({
       )}
       {attempt?.status === "in_progress" && attempt.question && (
         <div className="mt-6">
-          <div className="flex flex-wrap justify-between gap-3 text-sm">
-            <span>
-              Questão {attempt.position + 1} de {attempt.total} ·{" "}
-              {attempt.question.points} ponto(s)
-            </span>
-            <span
-              role="timer"
-              aria-label="Tempo restante"
-              className={
-                remaining !== null && remaining <= 10
-                  ? "text-red-400 font-bold"
-                  : "text-gray-300"
-              }
-            >
-              {remaining === null
-                ? "Sem temporizador"
-                : `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`}
-            </span>
-          </div>
-          <div className="h-1 bg-white/10 rounded mt-3">
-            <div
-              className="h-1 bg-[#E30613] rounded"
-              style={{ width: `${(attempt.position / attempt.total) * 100}%` }}
-            />
-          </div>
-          <fieldset disabled={busy || remaining === 0} className="mt-6">
-            <legend className="text-lg font-semibold whitespace-pre-wrap">
+          <fieldset disabled={busy || remaining === 0}>
+            <legend className="text-2xl md:text-3xl font-extrabold leading-tight text-[#ff5364] whitespace-pre-wrap">
               {attempt.question.prompt}
             </legend>
             <div className="space-y-3 mt-4">
@@ -177,6 +152,32 @@ export function AssessmentRunner({
               ))}
             </div>
           </fieldset>
+          <div className="mt-5 border-t border-white/10 pt-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-gray-400">
+              <span>
+                Questão {attempt.position + 1} de {attempt.total} · {attempt.question.points} ponto(s)
+              </span>
+              <span
+                role="timer"
+                aria-label="Tempo restante"
+                className={
+                  remaining !== null && remaining <= 10
+                    ? "text-red-400 font-bold text-base"
+                    : "text-gray-300 font-semibold"
+                }
+              >
+                {remaining === null
+                  ? "Sem temporizador"
+                  : `Tempo: ${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}`}
+              </span>
+            </div>
+            <div className="h-1 bg-white/10 rounded mt-3">
+              <div
+                className="h-1 bg-[#E30613] rounded"
+                style={{ width: `${((attempt.position + 1) / attempt.total) * 100}%` }}
+              />
+            </div>
+          </div>
           <button
             onClick={() => send(choice)}
             disabled={busy || choice === null || remaining === 0}
