@@ -21,6 +21,10 @@ export interface SupportConversation {
   status?: 'open'|'pending'|'resolved'
   priority?: 'low'|'normal'|'high'|'urgent'
   tags?: string[]
+  last_message?: string | null
+  last_message_at?: string | null
+  last_sender_id?: string | null
+  unread_count?: number
   customer: { first_name: string; last_name: string } | null
   assignee?: { id:string; first_name:string; last_name:string; role:string } | null
 }
@@ -70,6 +74,42 @@ export const conversationsApi = {
       customer:Array.isArray(row.customer)?row.customer[0]||null:row.customer,
       assignee:Array.isArray(row.assignee)?row.assignee[0]||null:row.assignee,
     })) as SupportConversation[]
+  },
+  async listWithSummary(userId:string): Promise<SupportConversation[]> {
+    const rows=await conversationsApi.list()
+    const enriched=await Promise.all(rows.map(async row=>{
+      const [readResult,lastResult]=await Promise.all([
+        supabase.from('conversation_reads')
+          .select('last_read_at')
+          .eq('conversation_id',row.id)
+          .eq('user_id',userId)
+          .maybeSingle(),
+        supabase.from('messages')
+          .select('id,sender_id,content,created_at')
+          .eq('conversation_id',row.id)
+          .order('created_at',{ascending:false})
+          .order('id',{ascending:false})
+          .limit(1)
+          .maybeSingle(),
+      ])
+      const lastRead=readResult.data?.last_read_at||null
+      let unreadCount=0
+      let countQuery=supabase.from('messages')
+        .select('id',{count:'exact',head:true})
+        .eq('conversation_id',row.id)
+        .neq('sender_id',userId)
+      if(lastRead)countQuery=countQuery.gt('created_at',lastRead)
+      const countResult=await countQuery
+      const last=lastResult.data
+      return {
+        ...row,
+        last_message:last?.content||null,
+        last_message_at:last?.created_at||row.updated_at||row.created_at,
+        last_sender_id:last?.sender_id||null,
+        unread_count:countResult.count||0,
+      }
+    }))
+    return enriched.sort((a,b)=>(b.last_message_at||'').localeCompare(a.last_message_at||''))
   },
   async team(): Promise<ConversationTeamMember[]> {
     const { data,error }=await supabase.from('profiles')
