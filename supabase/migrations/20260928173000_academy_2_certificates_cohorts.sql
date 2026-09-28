@@ -186,3 +186,13 @@ begin
   update public.course_enrollments set status='completed',completed_at=coalesce(completed_at,now()) where id=v_enrollment.id;
   return v_cert;
 end $$;
+
+-- A validação pública expõe somente os campos impressos no certificado.
+create or replace function public.academy_verify_certificate(p_code text)
+returns table(verification_code text, issued_at timestamptz, revoked_at timestamptz, student_name text, course_title text, course_hours numeric, completion_date date)
+language sql stable security definer set search_path=public
+as $$
+ select c.verification_code,c.issued_at,c.revoked_at,c.student_name_snapshot,c.course_title_snapshot,c.course_hours_snapshot,c.completion_date_snapshot
+ from public.academy_certificates c where c.verification_code=upper(trim(p_code)) limit 1
+$$;
+grant execute on function public.academy_verify_certificate(text) to anon,authenticated;
