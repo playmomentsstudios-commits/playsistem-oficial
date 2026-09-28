@@ -22,6 +22,7 @@ const ProductsPage = lazy(() => import('./pages/public/ProductsPage').then(m => 
 const ProductDetailPage = lazy(() => import('./pages/public/ProductDetailPage').then(m => ({ default:m.ProductDetailPage })))
 const ServicesPage = lazy(() => import('./pages/public/ServicesPage').then(m => ({ default:m.ServicesPage })))
 const ServiceDetailPage = lazy(() => import('./pages/public/ServiceDetailPage').then(m => ({ default:m.ServiceDetailPage })))
+const CertificateVerifyPage = lazy(() => import('./pages/public/CertificateVerifyPage').then(m => ({ default:m.CertificateVerifyPage })))
 const ContactPage = lazy(() => import('./pages/public/ContactPage').then(m => ({ default:m.ContactPage })))
 const AboutPage = lazy(() => import('./pages/public/AboutPage').then(m => ({ default:m.AboutPage })))
 const CategoryPage = lazy(() => import('./pages/public/CategoryPage').then(m => ({ default:m.CategoryPage })))
@@ -113,6 +114,7 @@ export default function AppV2() {
               <Route path="/comunidade" element={<AuthenticatedCommunity />} />
               <Route path="/sobre" element={<Navigate to="/quem-somos" replace />} />
               <Route path="/contato" element={<ContactPage />} />
+              <Route path="/certificados/:code" element={<CertificateVerifyPage />} />
               <Route path="/carrinho" element={<CartPage />} />
 
               {/* Customer portal */}
