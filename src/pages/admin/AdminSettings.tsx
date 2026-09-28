@@ -15,6 +15,7 @@ const DEFAULTS:AppSettings={
   orders_default_filter:'all',
   internal_operation_notifications:true,
   commercial_notifications:true,
+  favicon_url:'/favicon.svg',
   updated_at:'',
   updated_by:null,
 }
@@ -24,6 +25,7 @@ export function AdminSettings(){
   const [settings,setSettings]=useState<AppSettings>(DEFAULTS)
   const [loading,setLoading]=useState(true)
   const [saving,setSaving]=useState(false)
+  const [uploadingFavicon,setUploadingFavicon]=useState(false)
 
   useEffect(()=>{
     let active=true
@@ -49,6 +51,7 @@ export function AdminSettings(){
         orders_default_filter:settings.orders_default_filter,
         internal_operation_notifications:settings.internal_operation_notifications,
         commercial_notifications:settings.commercial_notifications,
+        favicon_url:settings.favicon_url,
       })
       setSettings(saved)
       toast('Configurações administrativas salvas.','success')
@@ -84,6 +87,26 @@ export function AdminSettings(){
                 <option value="America/Sao_Paulo">Brasil — Brasília</option>
               </select>
             </label>
+          </div>
+        </div>
+      </section>
+
+      <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
+        <h2 className="font-semibold">Identidade do site</h2>
+        <p className="text-xs text-gray-500 mt-1">Ícone usado na aba do navegador e como base visual do futuro aplicativo.</p>
+        <div className="mt-5 flex items-center gap-4">
+          <div className="w-20 h-20 rounded-2xl border border-white/10 bg-white/[0.03] grid place-items-center overflow-hidden">
+            <img src={settings.favicon_url||'/favicon.svg'} alt="Favicon atual" className="w-14 h-14 object-contain"/>
+          </div>
+          <div className="flex-1">
+            <label className="inline-flex min-h-11 items-center px-4 rounded-xl border border-white/10 hover:border-white/20 cursor-pointer text-sm">
+              {uploadingFavicon?'Enviando...':'Trocar favicon'}
+              <input type="file" accept="image/png,image/svg+xml,image/x-icon,image/webp" className="hidden" disabled={uploadingFavicon} onChange={async e=>{
+                const file=e.target.files?.[0];if(!file)return
+                try{setUploadingFavicon(true);const url=await settingsApi.uploadFavicon(file);setSettings({...settings,favicon_url:url});toast('Novo favicon enviado. Salve as configurações para publicar.','success')}catch(error:any){toast(error.message||'Não foi possível enviar o favicon.','error')}finally{setUploadingFavicon(false);e.target.value=''}
+              }}/>
+            </label>
+            <p className="text-[10px] text-gray-600 mt-2">PNG, SVG, ICO ou WebP · até 2 MB. Prefira arquivo quadrado e sem fundo.</p>
           </div>
         </div>
       </section>
