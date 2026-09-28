@@ -17,6 +17,13 @@ type ServiceForm={
   active:boolean
   featured:boolean
   status:'draft'|'published'|'archived'
+  estimated_deadline:string
+  deliverables:string
+  revision_count:string
+  delivery_format:string
+  customer_requirements:string
+  included_items:string
+  excluded_items:string
 }
 
 const emptyForm:ServiceForm={
@@ -31,6 +38,7 @@ const emptyForm:ServiceForm={
   active:true,
   featured:false,
   status:'draft',
+  estimated_deadline:'',deliverables:'',revision_count:'',delivery_format:'',customer_requirements:'',included_items:'',excluded_items:'',
 }
 
 function slugify(value:string){
@@ -80,6 +88,13 @@ export function AdminServices(){
       active:!!service.active,
       featured:!!service.featured,
       status:service.status||'draft',
+      estimated_deadline:service.estimated_deadline||'',
+      deliverables:(service.deliverables||[]).join('\n'),
+      revision_count:service.revision_count===null||service.revision_count===undefined?'':String(service.revision_count),
+      delivery_format:service.delivery_format||'',
+      customer_requirements:(service.customer_requirements||[]).join('\n'),
+      included_items:(service.included_items||[]).join('\n'),
+      excluded_items:(service.excluded_items||[]).join('\n'),
     })
     setShowForm(true)
   }
@@ -101,6 +116,13 @@ export function AdminServices(){
         active:form.active,
         featured:form.featured,
         status:form.status,
+        estimated_deadline:form.estimated_deadline.trim()||null,
+        deliverables:form.deliverables.split('\n').map(v=>v.trim()).filter(Boolean),
+        revision_count:form.revision_count.trim()===''?null:Number(form.revision_count),
+        delivery_format:form.delivery_format.trim()||null,
+        customer_requirements:form.customer_requirements.split('\n').map(v=>v.trim()).filter(Boolean),
+        included_items:form.included_items.split('\n').map(v=>v.trim()).filter(Boolean),
+        excluded_items:form.excluded_items.split('\n').map(v=>v.trim()).filter(Boolean),
         ...(editing?{}:{created_by:user?.id||null}),
       }
       await portalApi.saveService(payload,editing||undefined)
@@ -147,6 +169,21 @@ export function AdminServices(){
       </div>
       {form.price_type==='fixed'&&<input value={form.price} onChange={e=>setForm({...form,price:e.target.value})} placeholder="Preço em R$ (ex.: 250,00)" className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>}
       {form.price_type==='starting_at'&&<input value={form.starting_price} onChange={e=>setForm({...form,starting_price:e.target.value})} placeholder="Preço inicial em R$" className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>}
+      <div className="pt-2 border-t border-white/10">
+        <h3 className="text-sm font-semibold text-white mb-1">Detalhes da contratação</h3>
+        <p className="text-xs text-gray-500 mb-3">Essas informações alimentam a página pública e deixam o autoatendimento mais preciso.</p>
+        <div className="grid md:grid-cols-3 gap-3">
+          <input value={form.estimated_deadline} onChange={e=>setForm({...form,estimated_deadline:e.target.value})} placeholder="Prazo estimado (ex.: 15 dias úteis)" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
+          <input type="number" min="0" value={form.revision_count} onChange={e=>setForm({...form,revision_count:e.target.value})} placeholder="Rodadas de revisão" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
+          <input value={form.delivery_format} onChange={e=>setForm({...form,delivery_format:e.target.value})} placeholder="Formato de entrega" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
+        </div>
+        <div className="grid md:grid-cols-2 gap-3 mt-3">
+          <textarea rows={4} value={form.deliverables} onChange={e=>setForm({...form,deliverables:e.target.value})} placeholder={"Entregáveis — um por linha\nEx.: Logo principal\nManual de marca"} className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
+          <textarea rows={4} value={form.customer_requirements} onChange={e=>setForm({...form,customer_requirements:e.target.value})} placeholder={"O que o cliente precisa enviar — um por linha"} className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
+          <textarea rows={4} value={form.included_items} onChange={e=>setForm({...form,included_items:e.target.value})} placeholder={"O que está incluído — um por linha"} className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
+          <textarea rows={4} value={form.excluded_items} onChange={e=>setForm({...form,excluded_items:e.target.value})} placeholder={"O que não está incluído — um por linha"} className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
+        </div>
+      </div>
       <div className="flex flex-wrap gap-5 text-sm">
         <label className="flex items-center gap-2"><input type="checkbox" checked={form.active} onChange={e=>setForm({...form,active:e.target.checked})}/> Ativo</label>
         <label className="flex items-center gap-2"><input type="checkbox" checked={form.featured} onChange={e=>setForm({...form,featured:e.target.checked})}/> Destaque</label>
