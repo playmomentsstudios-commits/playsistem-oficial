@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { portalApi } from '../../api/portal'
 import { crmApi,CRM_STAGE_LABELS,type CrmCustomer } from '../../api/crm'
+import { prioridadeProjeto,rotulo,statusOrcamento,statusProjeto } from '../../lib/labels.ptBR'
 
 function money(cents:number){
   return ((cents||0)/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})
@@ -128,7 +129,7 @@ export function AdminDashboard(){
 
     <div className="grid md:grid-cols-2 gap-2.5 mt-2.5">
       <Link to="/admin/crm" className="pm-surface p-4">
-        <p className="text-[10px] uppercase text-gray-500">Pipeline em negociação</p>
+        <p className="text-[10px] uppercase text-gray-500">Funil comercial em negociação</p>
         <p className="text-xl font-bold text-[#E30613] mt-2">{money(metrics.pipelineValue)}</p>
         <p className="text-xs text-gray-600 mt-1">Orçamentos, negociações e clientes fechados no CRM</p>
       </Link>
@@ -143,7 +144,7 @@ export function AdminDashboard(){
       <section className="pm-surface overflow-hidden">
         <div className="p-4 md:p-5 border-b border-white/8 flex items-center justify-between gap-3">
           <div><p className="text-[10px] uppercase tracking-[0.14em] text-gray-600">Comercial</p><h2 className="font-semibold mt-1">Próximas ações</h2></div>
-          <Link to="/admin/crm" className="text-xs text-[#ff5364] hover:text-[#ff7a86]">Pipeline →</Link>
+          <Link to="/admin/crm" className="text-xs text-[#ff5364] hover:text-[#ff7a86]">Funil comercial →</Link>
         </div>
         <div className="divide-y divide-white/[0.05]">
           {attention.length===0?<div className="p-5"><p className="text-sm text-gray-400">Agenda comercial em dia.</p><p className="text-xs text-gray-600 mt-1">Nenhum retorno programado exige atenção agora.</p></div>:attention.map(item=>{
@@ -169,8 +170,8 @@ export function AdminDashboard(){
             const status=String(project.status||'planning')
             const statusTone=status==='review'?'bg-violet-500/10 text-violet-300':status==='in_progress'?'bg-sky-500/10 text-sky-300':'bg-white/[0.04] text-gray-400'
             return <Link key={project.id} to={'/admin/projetos/'+project.id} className="block p-4 hover:bg-white/[0.025] transition-colors">
-              <div className="flex items-start justify-between gap-3"><p className="text-sm font-semibold truncate">{project.title}</p><span className={'text-[9px] uppercase tracking-wide px-2 py-1 rounded-full shrink-0 '+statusTone}>{status.replace(/_/g,' ')}</span></div>
-              <div className="flex gap-3 mt-2 text-[10px] text-gray-600"><span>Prioridade: {project.priority||'normal'}</span>{project.due_date&&<span>Prazo: {new Date(project.due_date+'T12:00:00').toLocaleDateString('pt-BR')}</span>}</div>
+              <div className="flex items-start justify-between gap-3"><p className="text-sm font-semibold truncate">{project.title}</p><span className={'text-[9px] uppercase tracking-wide px-2 py-1 rounded-full shrink-0 '+statusTone}>{rotulo(statusProjeto,status)}</span></div>
+              <div className="flex gap-3 mt-2 text-[10px] text-gray-600"><span>Prioridade: {rotulo(prioridadeProjeto,project.priority||'normal')}</span>{project.due_date&&<span>Prazo: {new Date(project.due_date+'T12:00:00').toLocaleDateString('pt-BR')}</span>}</div>
             </Link>
           })}
         </div>
@@ -185,7 +186,7 @@ export function AdminDashboard(){
           {latestQuotes.length===0?<div className="p-5"><p className="text-sm text-gray-400">Nenhum orçamento em aberto.</p><p className="text-xs text-gray-600 mt-1">Sua fila comercial está limpa neste momento.</p></div>:latestQuotes.map((quote:any)=>{
             const quoteTone=quote.status==='accepted'?'bg-emerald-500/10 text-emerald-300':quote.status==='viewed'?'bg-sky-500/10 text-sky-300':'bg-violet-500/10 text-violet-300'
             return <Link key={quote.id} to={'/admin/orcamentos/'+quote.id} className="block p-4 hover:bg-white/[0.025] transition-colors">
-              <div className="flex justify-between gap-3"><p className="text-sm font-semibold truncate">{quote.title||quote.quote_number||'Orçamento'}</p><span className={'text-[9px] uppercase px-2 py-1 rounded-full shrink-0 '+quoteTone}>{quote.status}</span></div>
+              <div className="flex justify-between gap-3"><p className="text-sm font-semibold truncate">{quote.title||quote.quote_number||'Orçamento'}</p><span className={'text-[9px] uppercase px-2 py-1 rounded-full shrink-0 '+quoteTone}>{rotulo(statusOrcamento,quote.status)}</span></div>
               <p className="text-sm font-semibold text-gray-300 mt-2">{quote.total?money(quote.total):'Valor não informado'}</p>
             </Link>
           })}
