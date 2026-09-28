@@ -429,6 +429,11 @@ export const portalApi = {
     if(error) throw error
     return data.signedUrl
   },
+  syncMyRentalNotifications: async () => {
+    const {data,error}=await supabase.rpc('sync_my_rental_notifications')
+    if(error) throw error
+    return Number(data||0)
+  },
   notifications: async () => {
     const { data,error }=await supabase.from('notifications').select('*').order('created_at',{ascending:false}).limit(100)
     if(error) throw error
