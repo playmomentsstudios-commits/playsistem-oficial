@@ -43,7 +43,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             </div>
             <div>
               <p className="text-xs font-semibold mb-3 uppercase tracking-widest" style={{ color: primary }}>Plataforma</p>
-              {[['Portfólio', '/portfolio'], ['Comunidade', '/comunidade'], ['Minha Conta', '/app/dashboard']].map(([label, href]) => (
+              {[['Academia', '/academia'], ['Portfólio', '/portfolio'], ['Comunidade', '/comunidade'], ['Minha Conta', '/app/dashboard']].map(([label, href]) => (
                 <Link key={href} to={href} className="block text-sm mb-2 transition-colors" style={{ color: '#6b6b78' }}>
                   {label}
                 </Link>
