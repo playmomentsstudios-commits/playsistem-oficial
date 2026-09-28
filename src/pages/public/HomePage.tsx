@@ -71,6 +71,18 @@ export function HomePage() {
         </div>
       </section>
 
+      <section className="px-5 py-10" aria-labelledby="free-course-title">
+        <div className="max-w-6xl mx-auto rounded-3xl overflow-hidden relative p-6 md:p-10" style={{background:'linear-gradient(135deg,#171719,#101011)',border:'1px solid rgba(227,6,19,.22)'}}>
+          <div className="absolute right-0 top-0 w-72 h-72 pointer-events-none" style={{background:'radial-gradient(circle,rgba(227,6,19,.14),transparent 68%)'}} />
+          <div className="relative max-w-3xl">
+            <span className="inline-flex px-3 py-1 rounded-full text-xs font-bold" style={{background:'rgba(16,185,129,.1)',color:'#6ee7b7'}}>Curso gratuito · sem cadastro para assistir</span>
+            <h2 id="free-course-title" className="text-3xl md:text-4xl font-extrabold mt-4" style={{color:'#f0f0f2'}}>Letramento Digital <span style={{color:'#E30613'}}>— tecnologia, autonomia e futuro</span></h2>
+            <p className="mt-4 max-w-2xl leading-relaxed" style={{color:'#9090a0'}}>Uma formação aberta para entender sistemas, comunicação, informação, algoritmos, inteligência artificial e as possibilidades que a tecnologia cria para estudo, trabalho e território.</p>
+            <div className="flex flex-wrap items-center gap-4 mt-6"><Link to="/curso/letramento-digital" className="px-6 py-3 rounded-xl font-bold text-sm" style={{background:'#E30613',color:'#fff'}}>Assistir gratuitamente →</Link><span className="text-xs" style={{color:'#6b6b78'}}>Login só para progresso e atividades.</span></div>
+          </div>
+        </div>
+      </section>
+
       {/* ── STATS ────────────────────────────────────────────────────────── */}
       <section className="px-6 py-10">
         <div className="mx-auto grid grid-cols-2 md:grid-cols-4 gap-4" style={{ maxWidth: 900 }}>
