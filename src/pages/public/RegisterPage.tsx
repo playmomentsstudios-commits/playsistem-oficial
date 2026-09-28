@@ -14,6 +14,7 @@ export function RegisterPage() {
   const [cities, setCities] = useState<Array<{ id: number; nome: string }>>([])
   const [loadingCities, setLoadingCities] = useState(false)
   const [loadingCep, setLoadingCep] = useState(false)
+  const [step, setStep] = useState(1)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const { register, user, isLoading } = useAuth()
   const toast = useToast()
@@ -106,6 +107,30 @@ export function RegisterPage() {
     return errs
   }
 
+  const stepErrors = (targetStep: number) => {
+    const all = validate()
+    const keys = targetStep === 1
+      ? ['name','lastName','email','phone','documentNumber']
+      : targetStep === 2
+        ? ['postalCode','street','addressNumber','neighborhood','city','state']
+        : ['password','confirm']
+    return Object.fromEntries(Object.entries(all).filter(([key]) => keys.includes(key)))
+  }
+
+  const nextStep = () => {
+    const errs = stepErrors(step)
+    if (Object.keys(errs).length) { setErrors(errs); return }
+    setErrors({})
+    setStep(current => Math.min(3, current + 1))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const previousStep = () => {
+    setErrors({})
+    setStep(current => Math.max(1, current - 1))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const errs = validate()
@@ -153,31 +178,54 @@ export function RegisterPage() {
           Já tem conta? <Link to={authLink('/login', next)} style={{ color: '#E30613' }}>Entrar</Link>
         </p>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Input label="Nome" placeholder="João" value={form.name} onChange={set('name')} error={errors.name} />
-            <Input label="Sobrenome" placeholder="Silva" value={form.lastName} onChange={set('lastName')} error={errors.lastName} />
+        <div className="mb-6">
+          <div className="flex items-center gap-2">
+            {[1,2,3].map(item => <div key={item} className="flex-1"><div className="h-1.5 rounded-full" style={{background:item<=step?'#E30613':'rgba(255,255,255,.10)'}} /></div>)}
           </div>
-          <Input label="E-mail" type="email" placeholder="seu@email.com" value={form.email} onChange={set('email')} error={errors.email} />
-          <Input label="Telefone" type="tel" inputMode="tel" autoComplete="tel" placeholder="(11) 99999-9999" value={form.phone} onChange={e=>setForm(prev=>({...prev,phone:formatPhone(e.target.value)}))} error={errors.phone} />
-          <Input label="CPF/CNPJ" inputMode="numeric" placeholder="CPF ou CNPJ" value={form.documentNumber} onChange={e=>setForm(prev=>({...prev,documentNumber:formatDocument(e.target.value)}))} error={errors.documentNumber} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><Input label="CEP" inputMode="numeric" autoComplete="postal-code" placeholder="00000-000" value={form.postalCode} onChange={e=>setForm(prev=>({...prev,postalCode:formatCep(e.target.value)}))} onBlur={()=>void lookupCep()} error={errors.postalCode} hint={loadingCep?'Buscando endereço...':'Digite o CEP para preencher o endereço'} /><Input label="Rua / Avenida" autoComplete="street-address" value={form.street} onChange={set('street')} error={errors.street} /></div>
-          <div className="grid grid-cols-2 gap-3"><Input label="Número" value={form.addressNumber} onChange={set('addressNumber')} error={errors.addressNumber} /><Input label="Complemento (opcional)" value={form.addressComplement} onChange={set('addressComplement')} /></div>
-          <Input label="Bairro" value={form.neighborhood} onChange={set('neighborhood')} error={errors.neighborhood} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <label className="flex flex-col gap-2"><span className="text-xs font-semibold" style={{ color: '#9090a0' }}>Estado</span><select value={form.state} onChange={handleStateChange} className="w-full rounded-xl px-4" style={{ height: 48, background: '#141416', border: '1px solid rgba(255,255,255,.12)', color: '#f0f0f2' }}><option value="">Selecione</option>{states.map(state => <option key={state.id} value={state.sigla}>{state.nome} - {state.sigla}</option>)}</select>{errors.state && <span className="text-xs" style={{ color: '#ff6b7a' }}>{errors.state}</span>}</label>
-            <label className="flex flex-col gap-2"><span className="text-xs font-semibold" style={{ color: '#9090a0' }}>Cidade</span><select value={form.city} onChange={e => setForm(prev => ({ ...prev, city: e.target.value }))} disabled={!form.state || loadingCities} className="w-full rounded-xl px-4 disabled:opacity-50" style={{ height: 48, background: '#141416', border: '1px solid rgba(255,255,255,.12)', color: '#f0f0f2' }}><option value="">{loadingCities ? 'Carregando...' : 'Selecione'}</option>{cities.map(city => <option key={city.id} value={city.nome}>{city.nome}</option>)}</select>{errors.city && <span className="text-xs" style={{ color: '#ff6b7a' }}>{errors.city}</span>}</label>
+          <div className="flex justify-between mt-2 text-[10px] uppercase tracking-wider" style={{color:'#6b6b78'}}>
+            <span>Seus dados</span><span>Endereço</span><span>Acesso</span>
           </div>
-          <Input label="Senha" type="password" autoComplete="new-password" placeholder="Mínimo 6 caracteres" value={form.password} onChange={set('password')} error={errors.password} />
-          <Input label="Confirmar senha" type="password" autoComplete="new-password" placeholder="Repita a senha" value={form.confirm} onChange={set('confirm')} error={errors.confirm} />
+        </div>
 
-          <Button type="submit" fullWidth loading={loading} size="lg">
-            Criar conta
-          </Button>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {step===1&&<>
+            <div className="mb-1"><h2 className="font-semibold" style={{color:'#f0f0f2'}}>Seus dados</h2><p className="text-xs mt-1" style={{color:'#6b6b78'}}>Informações básicas para identificar sua conta.</p></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input label="Nome" autoComplete="given-name" placeholder="João" value={form.name} onChange={set('name')} error={errors.name} />
+              <Input label="Sobrenome" autoComplete="family-name" placeholder="Silva" value={form.lastName} onChange={set('lastName')} error={errors.lastName} />
+            </div>
+            <Input label="E-mail" type="email" autoComplete="email" placeholder="seu@email.com" value={form.email} onChange={set('email')} error={errors.email} />
+            <Input label="Telefone" type="tel" inputMode="tel" autoComplete="tel" placeholder="(11) 99999-9999" value={form.phone} onChange={e=>setForm(prev=>({...prev,phone:formatPhone(e.target.value)}))} error={errors.phone} />
+            <Input label="CPF/CNPJ" inputMode="numeric" placeholder="CPF ou CNPJ" value={form.documentNumber} onChange={e=>setForm(prev=>({...prev,documentNumber:formatDocument(e.target.value)}))} error={errors.documentNumber} />
+          </>}
+
+          {step===2&&<>
+            <div className="mb-1"><h2 className="font-semibold" style={{color:'#f0f0f2'}}>Endereço</h2><p className="text-xs mt-1" style={{color:'#6b6b78'}}>Digite o CEP para preencher boa parte automaticamente.</p></div>
+            <Input label="CEP" inputMode="numeric" autoComplete="postal-code" placeholder="00000-000" value={form.postalCode} onChange={e=>setForm(prev=>({...prev,postalCode:formatCep(e.target.value)}))} onBlur={()=>void lookupCep()} error={errors.postalCode} hint={loadingCep?'Buscando endereço...':'Preenchimento automático pelo CEP'} />
+            <Input label="Rua / Avenida" autoComplete="street-address" value={form.street} onChange={set('street')} error={errors.street} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><Input label="Número" value={form.addressNumber} onChange={set('addressNumber')} error={errors.addressNumber} /><Input label="Complemento (opcional)" value={form.addressComplement} onChange={set('addressComplement')} /></div>
+            <Input label="Bairro" value={form.neighborhood} onChange={set('neighborhood')} error={errors.neighborhood} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className="flex flex-col gap-2"><span className="text-xs font-semibold" style={{ color: '#9090a0' }}>Estado</span><select value={form.state} onChange={handleStateChange} className="w-full rounded-xl px-4" style={{ height: 48, background: '#141416', border: '1px solid rgba(255,255,255,.12)', color: '#f0f0f2' }}><option value="">Selecione</option>{states.map(state => <option key={state.id} value={state.sigla}>{state.nome} - {state.sigla}</option>)}</select>{errors.state && <span className="text-xs" style={{ color: '#ff6b7a' }}>{errors.state}</span>}</label>
+              <label className="flex flex-col gap-2"><span className="text-xs font-semibold" style={{ color: '#9090a0' }}>Cidade</span><select value={form.city} onChange={e => setForm(prev => ({ ...prev, city: e.target.value }))} disabled={!form.state || loadingCities} className="w-full rounded-xl px-4 disabled:opacity-50" style={{ height: 48, background: '#141416', border: '1px solid rgba(255,255,255,.12)', color: '#f0f0f2' }}><option value="">{loadingCities ? 'Carregando...' : 'Selecione'}</option>{cities.map(city => <option key={city.id} value={city.nome}>{city.nome}</option>)}</select>{errors.city && <span className="text-xs" style={{ color: '#ff6b7a' }}>{errors.city}</span>}</label>
+            </div>
+          </>}
+
+          {step===3&&<>
+            <div className="mb-1"><h2 className="font-semibold" style={{color:'#f0f0f2'}}>Criar acesso</h2><p className="text-xs mt-1" style={{color:'#6b6b78'}}>Último passo. Crie sua senha para acessar pedidos, pagamentos e projetos.</p></div>
+            <Input label="Senha" type="password" autoComplete="new-password" placeholder="Mínimo 6 caracteres" value={form.password} onChange={set('password')} error={errors.password} />
+            <Input label="Confirmar senha" type="password" autoComplete="new-password" placeholder="Repita a senha" value={form.confirm} onChange={set('confirm')} error={errors.confirm} />
+          </>}
+
+          <div className="grid grid-cols-2 gap-3 mt-2">
+            {step>1?<Button type="button" variant="secondary" fullWidth size="lg" onClick={previousStep}>Voltar</Button>:<div />}
+            {step<3?<Button type="button" fullWidth size="lg" onClick={nextStep}>Continuar</Button>:<Button type="submit" fullWidth loading={loading} size="lg">Criar conta</Button>}
+          </div>
 
           <p className="text-xs text-center" style={{ color: '#6b6b78' }}>
-            Ao criar uma conta, você concorda com os nossos termos de uso.
+            Etapa {step} de 3 · Seus dados ficam salvos enquanto você avança.
           </p>
+          {step===3&&<p className="text-xs text-center" style={{ color: '#6b6b78' }}>Ao criar uma conta, você concorda com os nossos termos de uso.</p>}
         </form>
       </div>
     </div>
