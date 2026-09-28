@@ -23,12 +23,12 @@ export function CartPage(){
      await portalApi.createAsaasPayment(orderId,'PIX')
      clearCart()
      toast('Pedido criado. PIX Asaas gerado com sucesso.','success')
-     navigate('/app/pagamentos')
+     navigate('/app/pedidos/'+orderId+'?novo=1')
     }else if(paymentMethod==='CARD'){
      const {data,error}=await supabase.functions.invoke('asaas-card-payment',{body:{order_id:orderId,installment_count:Number(card.installments),credit_card:{holderName:card.holderName,number:card.number,expiryMonth:card.expiryMonth,expiryYear:card.expiryYear,ccv:card.ccv}}})
      if(error){let message='Não foi possível processar o cartão.';try{const payload=await (error as any)?.context?.json?.();if(payload?.error)message=payload.error}catch{};throw new Error(message)}
      if(!data?.ok)throw new Error(data?.error||'Não foi possível processar o cartão.')
-     clearCart();toast('Pagamento enviado ao Asaas com sucesso.','success');navigate('/app/pagamentos')
+     clearCart();toast('Pagamento enviado ao Asaas com sucesso.','success');navigate('/app/pedidos/'+orderId+'?novo=1')
     }
    }catch(paymentError:any){
     toast('Pedido criado, mas o pagamento falhou: '+(paymentError.message||'erro desconhecido'),'error')

@@ -1,5 +1,5 @@
 import { useEffect,useState } from 'react'
-import { Link,useParams } from 'react-router-dom'
+import { Link,useParams,useSearchParams } from 'react-router-dom'
 import { portalApi } from '../../api/portal'
 import { OrderStatusBadge } from '../../components/ui/Badge'
 import { rotulo,statusPagamento } from '../../lib/labels.ptBR'
@@ -10,6 +10,8 @@ const money=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency
 
 export function OrderDetailPage(){
   const {id=''}=useParams()
+  const [params]=useSearchParams()
+  const isNew=params.get('novo')==='1'
   const {user}=useAuth()
   const toast=useToast()
   const [row,setRow]=useState<any>(null)
@@ -48,6 +50,9 @@ export function OrderDetailPage(){
   if(error||!row)return <div><p className="text-red-300">{error||'Pedido não encontrado.'}</p><Link to="/app/pedidos" className="text-[#E30613]">Voltar</Link></div>
 
   return <div>
+    {isNew&&<div className="mb-6 p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
+      <div className="flex gap-3 items-start"><span className="text-2xl">✓</span><div><p className="text-xs uppercase tracking-widest text-emerald-400 font-semibold">Pedido recebido</p><h2 className="text-xl font-bold mt-1">Sua compra foi registrada</h2><p className="text-sm text-gray-400 mt-2">{row.payment_status==='paid'?'Pagamento confirmado. Você pode acompanhar o andamento abaixo.':'O pedido já está na sua conta. Acompanhe aqui a confirmação do pagamento e as próximas atualizações.'}</p><div className="flex flex-wrap gap-2 mt-4"><Link to="/app/pedidos" className="px-3 py-2 rounded-lg bg-white/5 text-xs font-semibold">Meus pedidos</Link><Link to="/app/pagamentos" className="px-3 py-2 rounded-lg bg-[#E30613] text-white text-xs font-semibold">Ver pagamento</Link></div></div></div>
+    </div>}
     <Link to="/app/pedidos" className="text-sm text-[#E30613]">← Pedidos</Link>
     <div className="flex flex-wrap justify-between gap-4 mt-4">
       <div><h1 className="text-2xl font-bold">{row.order_number}</h1><p className="text-sm text-gray-500">{new Date(row.created_at).toLocaleString('pt-BR')}</p></div>
