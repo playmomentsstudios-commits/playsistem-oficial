@@ -22,6 +22,13 @@ export const STAFF_PERMISSIONS=[
   ['reports.view','Relatórios — visualizar'],
   ['community.manage','Comunidade — gerenciar'],
   ['site.manage','Site — gerenciar conteúdo'],
+  ['academy.view','Academia — visualizar'],
+  ['academy.students.manage','Academia — secretaria e alunos'],
+  ['academy.curriculum.manage','Academia — estrutura curricular e turmas'],
+  ['academy.content.manage','Academia — cursos e conteúdo'],
+  ['academy.documents.manage','Academia — documentos e certificação'],
+  ['academy.programs.manage','Academia — programas e trilhas'],
+
 ] as const
 
 export const DEPARTMENT_LABELS:Record<StaffDepartment,string>={
