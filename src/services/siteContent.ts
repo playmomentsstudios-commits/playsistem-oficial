@@ -213,7 +213,7 @@ export const siteContentApi={
     const {error}=await supabase.from('portfolio_items').delete().eq('id',id)
     if(error)throw error
   },
-,
+
   campaigns:async()=>{
     const {data,error}=await supabase.from('site_campaigns').select('*').order('created_at',{ascending:false})
     if(error)throw error
