@@ -16,10 +16,11 @@ Deno.serve(async(req)=>{
   if(processed)return json({ok:true,duplicate:true});
 
   const paid=["PAYMENT_CONFIRMED","PAYMENT_RECEIVED","CHECKOUT_PAID"].includes(event);
-  const refunded=event==="PAYMENT_REFUNDED";
+  const refunded=["PAYMENT_REFUNDED","PAYMENT_PARTIALLY_REFUNDED","PAYMENT_CHARGEBACK_REQUESTED","PAYMENT_CHARGEBACK_DISPUTE","PAYMENT_AWAITING_CHARGEBACK_REVERSAL"].includes(event);
   const cancelled=["PAYMENT_DELETED","CHECKOUT_CANCELED","CHECKOUT_EXPIRED"].includes(event);
+  const overdue=event==="PAYMENT_OVERDUE";
   const rejected=event==="PAYMENT_CREDIT_CARD_CAPTURE_REFUSED";
-  const status=paid?"paid":refunded?"refunded":cancelled?"cancelled":rejected?"rejected":null;
+  const status=paid?"paid":refunded?"refunded":cancelled?"cancelled":overdue?"overdue":rejected?"rejected":null;
   if(!status){
    const {error:eventError}=await db.from("payment_webhook_events").insert({id:eventId,provider:"asaas",event_type:event,provider_reference:providerReference,payload});
    if(eventError?.code==="23505")return json({ok:true,duplicate:true});
