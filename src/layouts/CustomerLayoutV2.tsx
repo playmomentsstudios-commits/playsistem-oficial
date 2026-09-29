@@ -107,9 +107,7 @@ export function CustomerLayoutV2() {
   },[])
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-[#0a0a0b]">
-      <div className="w-8 h-8 rounded-full border-2 border-[#E30613] border-t-transparent animate-spin" />
-    </div>
+    return <div role="status" aria-live="polite" className="min-h-screen flex items-center justify-center gap-3 bg-[#0a0a0b] text-sm text-gray-500"><div aria-hidden="true" className="w-8 h-8 rounded-full border-2 border-[#E30613] border-t-transparent animate-spin" /><span>Preparando sua área…</span></div>
   }
 
   if (!isAuthenticated) return <Navigate to="/login" state={{ from: location }} replace />
@@ -127,7 +125,7 @@ export function CustomerLayoutV2() {
         <Link to="/" className="flex items-center justify-center">
           <img src={logoUrl} alt="Play Moments" className={showLabels?'h-8 w-auto':'h-8 w-auto max-w-[58px] object-contain'} />
         </Link>
-        {mobile&&<button onClick={()=>setSidebarOpen(false)} className="absolute right-4 text-gray-500 hover:text-white">✕</button>}
+        {mobile&&<button aria-label="Fechar menu" onClick={()=>setSidebarOpen(false)} className="absolute right-3 w-11 h-11 flex items-center justify-center text-gray-500 hover:text-white">✕</button>}
       </div>
 
       <div className={showLabels?'p-3':'px-2 py-3'}>
@@ -152,6 +150,7 @@ export function CustomerLayoutV2() {
               const active=location.pathname===item.href||location.pathname.startsWith(item.href+'/')
               const count=item.href==='/app/conversas'?counts.messages:item.href==='/app/notificacoes'?counts.notifications:0
               return <Link key={item.href} to={item.href} onClick={()=>setSidebarOpen(false)} title={!showLabels?item.label:undefined}
+                aria-current={active?'page':undefined}
                 className={'group relative flex items-center rounded-xl mb-0.5 transition-all duration-200 '+(showLabels?'gap-3 px-3 h-10':'justify-center h-10')+(active?' bg-white/[.065] text-white':' text-[#777783] hover:text-[#d8d8de] hover:bg-white/[.035]')}>
                 <span className={'shrink-0 '+(active?'text-[#ff3340]':'group-hover:text-[#b7b7c2]')}><MenuIcon name={item.icon} size={18}/></span>
                 {showLabels&&<span className={'text-[13px] truncate '+(active?'font-semibold':'font-medium')}>{item.label}</span>}
@@ -195,12 +194,12 @@ export function CustomerLayoutV2() {
           <MenuIcon name="notifications" size={18}/>{counts.notifications>0&&<span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#E30613] text-[8px] font-bold text-white flex items-center justify-center">{counts.notifications>99?'99+':counts.notifications}</span>}
         </Link>
         <div className="relative ml-1">
-          <button onClick={()=>setAccountMenuOpen(v=>!v)} className="h-10 pl-2 pr-3 rounded-xl flex items-center gap-2 hover:bg-white/[.05]">
+          <button aria-haspopup="menu" aria-expanded={accountMenuOpen} onClick={()=>setAccountMenuOpen(v=>!v)} className="h-11 pl-2 pr-3 rounded-xl flex items-center gap-2 hover:bg-white/[.05]">
             <span className="w-8 h-8 rounded-lg overflow-hidden bg-[#E30613] text-white flex items-center justify-center text-xs font-bold">{user?.avatar?<img src={user.avatar} alt="" className="w-full h-full object-cover"/>:(user?.name?.charAt(0)??'?')}</span>
             <span className="text-xs font-semibold text-[#d8d8de] max-w-[120px] truncate">{user?.name}</span>
             <span className={'text-[#666672] transition-transform '+(accountMenuOpen?'rotate-90':'')}><MenuIcon name="chevron" size={14}/></span>
           </button>
-          {accountMenuOpen&&<><button aria-label="Fechar menu" className="fixed inset-0 z-30 cursor-default" onClick={()=>setAccountMenuOpen(false)}/><div className="absolute right-0 top-12 z-40 w-52 p-1.5 rounded-2xl border border-white/[.08] bg-[#111114] shadow-2xl">
+          {accountMenuOpen&&<><button aria-label="Fechar menu" className="fixed inset-0 z-30 cursor-default" onClick={()=>setAccountMenuOpen(false)}/><div role="menu" className="absolute right-0 top-12 z-40 w-52 p-1.5 rounded-2xl border border-white/[.08] bg-[#111114] shadow-2xl">
             <Link to="/app/perfil" onClick={()=>setAccountMenuOpen(false)} className="flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#aaaab4] hover:text-white hover:bg-white/[.05]"><MenuIcon name="user" size={16}/>Perfil</Link>
             <Link to="/app/configuracoes" onClick={()=>setAccountMenuOpen(false)} className="flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#aaaab4] hover:text-white hover:bg-white/[.05]"><MenuIcon name="settings" size={16}/>Configurações</Link>
             <div className="my-1 border-t border-white/[.06]"/>
