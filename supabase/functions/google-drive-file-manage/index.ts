@@ -108,6 +108,7 @@ Deno.serve(async (req) => {
       const {data: targetProject,error: targetProjectError}=await ctx.db
         .from("projects").select("id,customer_id").eq("id",targetProjectId).single();
       if(targetProjectError||!targetProject)throw new Error("Target project not found");
+      if(!targetProject.customer_id)throw new Error("Target project must be linked to a customer before receiving client files");
 
       await ensureProjectFolder(ctx.db,ctx.userId,targetProjectId);
       let target:any = null;
