@@ -9,6 +9,7 @@ import { useState } from 'react'
 import { Input } from '../../components/ui/Input'
 import { supabase } from '../../lib/supabase'
 import { authLink } from '../../lib/navigation'
+import { trackConversion } from '../../lib/analytics'
 const money=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v/100)
 export function CartPage(){
  const {cart,removeItem,updateQuantity,clearCart}=useCart(); const {user}=useAuth(); const toast=useToast(); const navigate=useNavigate(); const [loading,setLoading]=useState(false); const [paymentMethod,setPaymentMethod]=useState<'PIX'|'CARD'>('PIX'); const [card,setCard]=useState({holderName:'',number:'',expiryMonth:'',expiryYear:'',ccv:'',installments:'1'}); const installmentCount=Math.max(1,Number(card.installments)||1); const installmentValue=Math.ceil(cart.total/installmentCount)
@@ -17,10 +18,12 @@ export function CartPage(){
   if(!user){navigate(authLink('/login','/carrinho'));return}
   try{
    setLoading(true)
+   trackConversion('checkout_started',{payment_method:paymentMethod,item_count:cart.items.reduce((sum,item)=>sum+item.quantity,0),value_cents:cart.total})
    const orderId=await portalApi.createCartOrder(cart.items.map(i=>({product_id:i.productId,quantity:i.quantity})))
    try{
     if(paymentMethod==='PIX'){
      await portalApi.createAsaasPayment(orderId,'PIX')
+     trackConversion('payment_created',{payment_method:'PIX',order_id:orderId})
      clearCart()
      toast('Pedido criado. PIX Asaas gerado com sucesso.','success')
      navigate('/app/pedidos/'+orderId+'?novo=1')
@@ -28,9 +31,10 @@ export function CartPage(){
      const {data,error}=await supabase.functions.invoke('asaas-card-payment',{body:{order_id:orderId,installment_count:Number(card.installments),credit_card:{holderName:card.holderName,number:card.number,expiryMonth:card.expiryMonth,expiryYear:card.expiryYear,ccv:card.ccv}}})
      if(error){let message='Não foi possível processar o cartão.';try{const payload=await (error as any)?.context?.json?.();if(payload?.error)message=payload.error}catch{};throw new Error(message)}
      if(!data?.ok)throw new Error(data?.error||'Não foi possível processar o cartão.')
-     clearCart();toast('Pagamento enviado ao Asaas com sucesso.','success');navigate('/app/pedidos/'+orderId+'?novo=1')
+     trackConversion('payment_created',{payment_method:'CARD',order_id:orderId});clearCart();toast('Pagamento enviado ao Asaas com sucesso.','success');navigate('/app/pedidos/'+orderId+'?novo=1')
     }
    }catch(paymentError:any){
+    trackConversion('payment_failed',{payment_method:paymentMethod,order_id:orderId})
     toast('Pedido criado, mas o pagamento falhou: '+(paymentError.message||'erro desconhecido'),'error')
     navigate('/app/pagamentos')
     return
