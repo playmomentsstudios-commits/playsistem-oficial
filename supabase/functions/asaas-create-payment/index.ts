@@ -6,6 +6,9 @@ Deno.serve(async(req)=>{
   const {db,userId,profile}=await requireCustomer(req);
   const {order_id,billing_type="PIX"}=await req.json();
   if(!order_id)throw new Error("order_id is required");
+  // This endpoint is intentionally PIX-only. Card data must go through
+  // asaas-card-payment so validation, remote IP and holder data cannot be bypassed.
+  if(billing_type!=="PIX")throw new Error("Use the dedicated card payment flow for credit cards.");
   const {data:order,error}=await db.from("orders").select("id,order_number,total,status,payment_status").eq("id",order_id).eq("customer_id",userId).single();
   if(error||!order)throw new Error("Order not found");
   if(order.payment_status==="paid")throw new Error("Order already paid");
@@ -27,9 +30,8 @@ Deno.serve(async(req)=>{
     dueDate:dueDate.toISOString().slice(0,10),description:"Play Moments - "+order.order_number,
     externalReference:order.id
   })});
-  const method=billing_type==="PIX"?"pix_gateway":"card";
-  let pixQrCode:any=null;
-  if(billing_type==="PIX")pixQrCode=await asaas("/payments/"+charge.id+"/pixQrCode");
+  const method="pix_gateway";
+  const pixQrCode=await asaas("/payments/"+charge.id+"/pixQrCode");
   const providerPayload={...charge,...(pixQrCode?{pixQrCode}:{})};
   const paymentValues={
     customer_id:userId,order_id:order.id,amount:order.total,method,status:"pending",provider:"asaas",environment:asaasEnvironment(),
