@@ -62,6 +62,7 @@ export function PaymentsPage(){
         : <div className="space-y-4">{rows.map(payment=>{
           const manualPix=payment.provider==='manual'&&payment.method==='pix_manual'
           const asaasPix=payment.provider==='asaas'&&payment.method==='pix_gateway'?payment.provider_payload?.pixQrCode:null
+          const hostedCard=payment.provider==='asaas_checkout'&&payment.method==='card'?payment.provider_payload?.checkoutLink:null
           return <div key={payment.id} className="p-5 rounded-2xl bg-[#141416] border border-white/10">
             <div className="flex flex-wrap justify-between gap-4">
               <div>
@@ -78,6 +79,11 @@ export function PaymentsPage(){
 
             {payment.status==='paid'
               ? <p className="mt-4 text-emerald-400">✓ Pagamento recebido e confirmado</p>
+: hostedCard?<div className="mt-4 p-4 rounded-xl bg-white/5 text-sm space-y-3">
+                <p className="font-semibold text-white">Cartão · checkout seguro Asaas</p>
+                <p className="text-xs text-gray-400">Continue o pagamento no ambiente seguro do Asaas. Se a sessão tiver expirado, volte ao carrinho para gerar uma nova sessão.</p>
+                <a href={hostedCard} className="inline-flex px-3 py-2 rounded-lg bg-[#E30613] text-white font-semibold">Continuar pagamento</a>
+              </div>
               : asaasPix?.payload?<div className="mt-4 p-4 rounded-xl bg-white/5 text-sm space-y-3">
                 <p className="font-semibold text-white">PIX Asaas</p>
                 {asaasPix.encodedImage&&<img src={'data:image/png;base64,'+asaasPix.encodedImage} alt="QR Code PIX" className="w-48 h-48 bg-white rounded-xl p-2"/>}
