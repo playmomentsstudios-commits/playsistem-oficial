@@ -27,9 +27,19 @@ Deno.serve(async(req)=>{
    if(eventError)throw eventError;
    return json({ok:true,ignored:true});
   }
-  const {data:currentPayment,error:currentError}=await db.from("payments").select("id,status").in("provider",["asaas","asaas_checkout"]).eq("provider_reference",providerReference).maybeSingle();
+  const {data:currentPayment,error:currentError}=await db.from("payments").select("id,status,amount").in("provider",["asaas","asaas_checkout"]).eq("provider_reference",providerReference).maybeSingle();
   if(currentError)throw currentError;
   if(!currentPayment)throw new Error("Payment not found for webhook");
+  if(paid){
+   const providerValue=Number(charge.value??checkout.value);
+   const expectedValue=Number(currentPayment.amount)/100;
+   if(!Number.isFinite(providerValue)||Math.abs(providerValue-expectedValue)>0.005){
+    const {error:eventError}=await db.from("payment_webhook_events").insert({id:eventId,provider:"asaas",event_type:event,provider_reference:providerReference,payload:{...payload,integrity_error:"amount_mismatch",expected_value:expectedValue,received_value:Number.isFinite(providerValue)?providerValue:null}});
+    if(eventError?.code==="23505")return json({ok:true,duplicate:true});
+    if(eventError)throw eventError;
+    return json({ok:false,error:"Payment amount mismatch"},409);
+   }
+  }
   if(currentPayment.status==="paid"&&!paid&&!refunded){
    const {error:eventError}=await db.from("payment_webhook_events").insert({id:eventId,provider:"asaas",event_type:event,provider_reference:providerReference,payload});
    if(eventError?.code==="23505")return json({ok:true,duplicate:true});
