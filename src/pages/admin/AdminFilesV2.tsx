@@ -271,8 +271,10 @@ export function AdminFilesV2(){
     if(!user||!customer)return
     try{
       setSaving(true);setProgress(0);setCompletedFiles(0);setCurrentFileName('');setUploadResult(null)
+      if(selectedProjectIsInternal&&provider!=='google_drive')throw new Error('Projetos internos usam o Google Drive para manter a estrutura operacional do projeto.')
       if(provider==='google_drive'){
         if(!project||!selectedFiles.length)throw new Error('Selecione um projeto e um ou mais arquivos para enviar ao Google Drive.')
+        if(selectedProjectIsInternal&&!effectiveStage)throw new Error('O projeto interno precisa ter pelo menos uma etapa para receber arquivos.')
         await portalApi.ensureProjectDriveFolder(project)
         for(let index=0;index<selectedFiles.length;index+=1){
           const current=selectedFiles[index]
@@ -280,9 +282,10 @@ export function AdminFilesV2(){
           await portalApi.uploadDriveFile({
             project_id:project,
             task_id:task||null,
+            stage_id:selectedProjectIsInternal?effectiveStage:null,
             folder_kind:folderKind,
-            custom_folder_id:customFolder||null,
-            client_visible:clientVisible,
+            custom_folder_id:selectedProjectIsInternal?null:(customFolder||null),
+            client_visible:selectedProjectIsInternal?false:clientVisible,
           },current,value=>setProgress(Math.round(((index+(value/100))/selectedFiles.length)*100)))
           setCompletedFiles(index+1)
         }
@@ -374,6 +377,11 @@ export function AdminFilesV2(){
   }
 
   async function requestReview(row:any){
+    const projectRow=projects.find((item:any)=>item.id===row.project_id)||row.project
+    if(projectRow?.project_type==='internal'){
+      toast('Projeto interno usa revisão da equipe, não aprovação de cliente.','error')
+      return
+    }
     try{
       setReviewingFile(row.id)
       if(row.storage_provider==='google_drive'&&!row.client_visible)await fileManagementApi.publish(row.id)
@@ -390,15 +398,18 @@ export function AdminFilesV2(){
     if(!versioningFile.project_id)return toast('O arquivo precisa estar vinculado a um projeto para receber uma nova versão.','error')
     try{
       setSaving(true);setVersionProgress(0)
+      const versionProject=projects.find((item:any)=>item.id===versioningFile.project_id)||versioningFile.project
+      const internalVersion=versionProject?.project_type==='internal'
       const uploaded=await portalApi.uploadDriveFile({
         project_id:versioningFile.project_id,
         task_id:versioningFile.task_id||null,
+        stage_id:internalVersion?(versioningFile.stage_id||versioningFile.task?.stage_id||null):null,
         folder_kind:'preview',
-        custom_folder_id:versioningFile.custom_folder_id||null,
-        client_visible:true,
+        custom_folder_id:internalVersion?null:(versioningFile.custom_folder_id||null),
+        client_visible:internalVersion?false:true,
       },versionFile,setVersionProgress)
       await portalApi.linkFileVersion(uploaded.id,versioningFile.id)
-      toast('Nova versão enviada. Agora você pode solicitar a aprovação do cliente.','success')
+      toast(internalVersion?'Nova versão adicionada ao projeto interno.':'Nova versão enviada. Agora você pode solicitar a aprovação do cliente.','success')
       setVersioningFile(null);setVersionFile(null);setVersionProgress(0)
       await load()
     }catch(error:any){toast(error.message||'Não foi possível enviar a nova versão.','error')}
@@ -425,6 +436,11 @@ export function AdminFilesV2(){
   async function openReviewAttachment(path:string){
     try{window.open(await portalApi.fileReviewAttachmentUrl(path),'_blank','noopener')}
     catch(error:any){toast(error.message||'Não foi possível abrir o anexo.','error')}
+  }
+
+  function isInternalRow(row:any){
+    const projectRow=projects.find((item:any)=>item.id===row.project_id)||row.project
+    return projectRow?.project_type==='internal'
   }
 
   function isDelivered(row:any){
