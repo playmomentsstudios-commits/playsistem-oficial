@@ -2,6 +2,7 @@ import { useEffect,useState } from 'react'
 import { portalApi } from '../../api/portal'
 import { useToast } from '../../contexts/ToastContext'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { LoadingState,ErrorState } from '../../components/ui/AsyncState'
 import { metodoPagamento,rotulo,statusPagamento } from '../../lib/labels.ptBR'
 
 const money=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v/100)
@@ -53,9 +54,9 @@ export function PaymentsPage(){
     </section>
 
     {loading
-      ? <p className="text-gray-400">Carregando...</p>
+      ? <LoadingState />
       : error
-        ? <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5"><p className="text-red-300">{error}</p><button onClick={()=>{setLoading(true);void load()}} className="text-sm text-[#E30613] mt-2">Tentar novamente</button></div>
+        ? <ErrorState message={error} action={<button onClick={()=>{setLoading(true);void load()}} className="min-h-11 px-4 rounded-xl bg-white/5">Tentar novamente</button>}/>
       : !rows.length
         ? <EmptyState icon="💳" title="Nenhum pagamento registrado"/>
         : <div className="space-y-4">{rows.map(payment=>{
