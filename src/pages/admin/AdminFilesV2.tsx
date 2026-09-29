@@ -6,6 +6,8 @@ import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
 import { settingsApi } from '../../api/settings'
 
+const INTERNAL_LIBRARY_KEY='__internal__'
+
 const folderOptions=[
   ['received','01 - Arquivos recebidos'],
   ['raw','02 - Brutos'],
@@ -65,6 +67,7 @@ export function AdminFilesV2(){
   const [customer,setCustomer]=useState('')
   const [project,setProject]=useState('')
   const [task,setTask]=useState('')
+  const [stage,setStage]=useState('')
   const [folderKind,setFolderKind]=useState('received')
   const [customFolders,setCustomFolders]=useState<any[]>([])
   const [customFolder,setCustomFolder]=useState('')
@@ -111,10 +114,20 @@ export function AdminFilesV2(){
     }).catch(()=>undefined)
   },[])
 
-  const customerProjects=useMemo(()=>projects.filter((p:any)=>p.customer_id===customer),[projects,customer])
+  const customerProjects=useMemo(()=>customer===INTERNAL_LIBRARY_KEY
+    ? projects.filter((p:any)=>p.project_type==='internal')
+    : projects.filter((p:any)=>p.customer_id===customer&&p.project_type!=='internal'),[projects,customer])
   const selectedProject=customerProjects.find((p:any)=>p.id===project)
+  const selectedProjectIsInternal=selectedProject?.project_type==='internal'
   const tasks=selectedProject?.tasks||[]
+  const stages=useMemo(()=>[...(selectedProject?.stages||[])].sort((a:any,b:any)=>a.position-b.position),[selectedProject])
+  const selectedTask=tasks.find((item:any)=>item.id===task)
+  const effectiveStage=selectedTask?.stage_id||stage||stages[0]?.id||null
   const foldersForKind=customFolders.filter((item:any)=>item.parent_kind===folderKind)
+
+  useEffect(()=>{
+    if(selectedProjectIsInternal&&!stage&&stages[0]?.id)setStage(stages[0].id)
+  },[selectedProjectIsInternal,stage,stages])
 
   useEffect(()=>{
     setCustomFolder('')
