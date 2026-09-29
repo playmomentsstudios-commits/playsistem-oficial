@@ -4,6 +4,7 @@ import { siteContentApi,type HomeServiceArea,type PortfolioItem,type SiteProfile
 import { PublicLayout } from '../../layouts/PublicLayout'
 import { useAuth } from '../../contexts/AuthContext'
 import { conversationLink } from '../../lib/navigation'
+import { trackConversion } from '../../lib/analytics'
 
 
 export function HomePage() {
@@ -28,19 +29,19 @@ export function HomePage() {
             Da ideia à entrega: contrate serviços, encontre equipamentos, aprenda e acompanhe tudo pela mesma plataforma.
           </p>
           <div className="grid grid-cols-2 gap-3 max-w-2xl mx-auto">
-            <Link to="/servicos" className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: '#E30613', color: '#fff' }}>
+            <Link to="/servicos" onClick={()=>trackConversion('service_interest',{source:'home_hero'})} className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: '#E30613', color: '#fff' }}>
               <span className="block text-sm font-bold">Contratar um serviço</span>
               <span className="block text-xs mt-1 opacity-80">Serviços e soluções</span>
             </Link>
-            <Link to="/produtos" className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: 'rgba(255,255,255,0.07)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <Link to="/produtos" onClick={()=>trackConversion('product_interest',{source:'home_hero'})} className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: 'rgba(255,255,255,0.07)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.08)' }}>
               <span className="block text-sm font-bold">Comprar ou alugar</span>
               <span className="block text-xs mt-1" style={{ color: '#9090a0' }}>Produtos e equipamentos</span>
             </Link>
-            <Link to={academyHref} className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: 'rgba(255,255,255,0.07)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <Link to={academyHref} onClick={()=>trackConversion('academy_interest',{source:'home_hero'})} className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: 'rgba(255,255,255,0.07)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.08)' }}>
               <span className="block text-sm font-bold">Aprender gratuitamente</span>
               <span className="block text-xs mt-1" style={{ color: '#9090a0' }}>Cursos e Academia</span>
             </Link>
-            <Link to={clientHref} className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: 'rgba(255,255,255,0.07)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <Link to={clientHref} onClick={()=>trackConversion('account_interest',{source:'home_hero'})} className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: 'rgba(255,255,255,0.07)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.08)' }}>
               <span className="block text-sm font-bold">Acessar minha área</span>
               <span className="block text-xs mt-1" style={{ color: '#9090a0' }}>Acompanhar meu trabalho</span>
             </Link>
@@ -57,7 +58,7 @@ export function HomePage() {
             <span className="inline-flex px-3 py-1 rounded-full text-xs font-bold" style={{background:'rgba(16,185,129,.1)',color:'#6ee7b7'}}>Curso gratuito · sem cadastro para assistir</span>
             <h2 id="free-course-title" className="text-3xl md:text-4xl font-extrabold mt-4" style={{color:'#f0f0f2'}}>Letramento Digital <span style={{color:'#E30613'}}>gratuito e aberto</span></h2>
             <p className="mt-4 max-w-2xl leading-relaxed" style={{color:'#9090a0'}}>Comece agora, sem criar conta. Aprenda fundamentos de tecnologia, comunicação, informação e inteligência artificial no seu ritmo.</p>
-            <div className="flex flex-wrap items-center gap-4 mt-6"><Link to="/curso/letramento-digital" className="px-6 py-3 rounded-xl font-bold text-sm" style={{background:'#E30613',color:'#fff'}}>Começar curso grátis →</Link><span className="text-xs" style={{color:'#6b6b78'}}>Sem login para assistir · entre apenas para salvar progresso, fazer atividades e emitir certificado.</span></div>
+            <div className="flex flex-wrap items-center gap-4 mt-6"><Link to="/curso/letramento-digital" onClick={()=>trackConversion('academy_interest',{source:'home_free_course'})} className="px-6 py-3 rounded-xl font-bold text-sm" style={{background:'#E30613',color:'#fff'}}>Começar curso grátis →</Link><span className="text-xs" style={{color:'#6b6b78'}}>Sem login para assistir · entre apenas para salvar progresso, fazer atividades e emitir certificado.</span></div>
           </div>
         </div>
       </section>
