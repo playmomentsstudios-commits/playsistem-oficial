@@ -138,22 +138,51 @@ export function AdminFilesV2(){
   },[project])
 
   const grouped=useMemo(()=>{
-    const map=new Map<string,{customer:any;projects:Map<string,{project:any;files:any[]}>}>()
-    for(const customerRow of customers)map.set(customerRow.id,{customer:customerRow,projects:new Map()})
-    for(const projectRow of projects){
-      const customerKey=projectRow.customer_id||'sem-cliente'
-      if(!map.has(customerKey))map.set(customerKey,{customer:null,projects:new Map()})
-      map.get(customerKey)!.projects.set(projectRow.id,{project:projectRow,files:[]})
+    const map=new Map<string,{customer:any;label:string;internal:boolean;projects:Map<string,{project:any;files:any[]}>}>()
+    for(const customerRow of customers){
+      map.set(customerRow.id,{
+        customer:customerRow,
+        label:[customerRow.first_name,customerRow.last_name].filter(Boolean).join(' ')||customerRow.email||'Cliente',
+        internal:false,
+        projects:new Map(),
+      })
     }
+
+    const projectById=new Map(projects.map((item:any)=>[item.id,item]))
+
+    for(const projectRow of projects){
+      const internal=projectRow.project_type==='internal'
+      const key=internal?INTERNAL_LIBRARY_KEY:(projectRow.customer_id||'__unassigned__')
+      if(!map.has(key)){
+        map.set(key,{
+          customer:null,
+          label:internal?'Projetos internos Play Moments':'Arquivos sem vínculo',
+          internal,
+          projects:new Map(),
+        })
+      }
+      map.get(key)!.projects.set(projectRow.id,{project:projectRow,files:[]})
+    }
+
     for(const row of files){
-      const customerKey=row.customer_id||row.project?.customer_id||'sem-cliente'
-      if(!map.has(customerKey))map.set(customerKey,{customer:row.customer||null,projects:new Map()})
-      const group=map.get(customerKey)!
+      const projectRow=projectById.get(row.project_id)||row.project||null
+      const internal=projectRow?.project_type==='internal'
+      const key=internal?INTERNAL_LIBRARY_KEY:(row.customer_id||projectRow?.customer_id||'__unassigned__')
+      if(!map.has(key)){
+        map.set(key,{
+          customer:row.customer||null,
+          label:internal?'Projetos internos Play Moments':'Arquivos sem vínculo',
+          internal,
+          projects:new Map(),
+        })
+      }
+      const group=map.get(key)!
       const projectKey=row.project_id||'sem-projeto'
-      if(!group.projects.has(projectKey))group.projects.set(projectKey,{project:row.project||null,files:[]})
+      if(!group.projects.has(projectKey))group.projects.set(projectKey,{project:projectRow||null,files:[]})
       group.projects.get(projectKey)!.files.push(row)
     }
-    return Array.from(map.entries())
+
+    return Array.from(map.entries()).filter(([,group])=>group.projects.size>0)
   },[files,customers,projects])
 
   const selectedLibraryGroup=libraryCustomer
@@ -167,6 +196,7 @@ export function AdminFilesV2(){
     if(!customerSearch.trim())return true
     const q=customerSearch.trim().toLowerCase()
     const customerText=[
+      group.label,
       group.customer?.first_name,
       group.customer?.last_name,
       group.customer?.email,
