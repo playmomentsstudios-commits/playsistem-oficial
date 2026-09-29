@@ -30,10 +30,11 @@ Deno.serve(async(req)=>{
   })});
   if(!checkout?.id)throw new Error("O Asaas não retornou o checkout.");
   const {data:manual}=await db.from("payments").select("id").eq("order_id",order.id).eq("provider","manual").in("status",["pending","awaiting_confirmation"]).order("created_at",{ascending:false}).limit(1).maybeSingle();
-  const values={customer_id:userId,order_id:order.id,amount:order.total,method:"card",status:"pending",provider:"asaas_checkout",provider_reference:checkout.id,provider_payload:{checkoutId:checkout.id,checkoutLink:checkout.link||null,maxInstallmentCount:12}};
+  const effectiveCheckoutUrl=checkout.link||("https://sandbox.asaas.com/checkoutSession/show/"+checkout.id);
+  const values={customer_id:userId,order_id:order.id,amount:order.total,method:"card",status:"pending",provider:"asaas_checkout",provider_reference:checkout.id,provider_payload:{checkoutId:checkout.id,checkoutLink:effectiveCheckoutUrl,maxInstallmentCount:12}};
   const write=manual?.id?db.from("payments").update(values).eq("id",manual.id):db.from("payments").insert(values);
   const {error:paymentError}=await write;
   if(paymentError)throw paymentError;
-  return json({ok:true,checkoutId:checkout.id,checkoutUrl:checkout.link||("https://sandbox.asaas.com/checkoutSession/show/"+checkout.id)});
+  return json({ok:true,checkoutId:checkout.id,checkoutUrl:effectiveCheckoutUrl});
  }catch(error){return json({ok:false,error:error instanceof Error?error.message:"Unknown error"},400)}
 });
