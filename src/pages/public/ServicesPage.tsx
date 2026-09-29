@@ -8,12 +8,15 @@ import { authLink,conversationLink } from '../../lib/navigation'
 
 const money=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v/100)
 
-export function ServicesPage(){
+type ServicesPageProps={ initialCategory?:string; embedded?:boolean; title?:string; subtitle?:string }
+
+export function ServicesPage({initialCategory='Todos',embedded=false,title='O que você precisa realizar?',subtitle='Escolha uma área, veja exatamente o que entregamos e contrate pela plataforma. Atendimento humano fica para projetos que realmente precisam de uma solução personalizada.'}:ServicesPageProps={}){
  const {user,role}=useAuth(),toast=useToast(),navigate=useNavigate()
- const [rows,setRows]=useState<any[]>([]),[loading,setLoading]=useState(true),[category,setCategory]=useState('Todos')
+ const [rows,setRows]=useState<any[]>([]),[loading,setLoading]=useState(true),[category,setCategory]=useState(initialCategory)
  useEffect(()=>{portalApi.services().then(setRows).finally(()=>setLoading(false))},[])
  const categories=useMemo(()=>['Todos',...Array.from(new Set(rows.map(s=>s.category).filter(Boolean)))],[rows])
- const visible=category==='Todos'?rows:rows.filter(s=>s.category===category)
+ const norm=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
+ const visible=category==='Todos'?rows:rows.filter(s=>{const current=norm(String(s.category||'')),wanted=norm(category);return current===wanted||current.includes(wanted.split(' ')[0])||wanted.includes(current)})
  async function hire(s:any){
    if(!user){navigate(authLink('/cadastro','/servicos/'+s.slug));return}
    try{
@@ -22,12 +25,11 @@ export function ServicesPage(){
      navigate(s.price_type==='fixed'?'/app/pedidos':'/app/orcamentos')
    }catch(e:any){toast(e.message,'error')}
  }
- return <PublicLayout>
-  <div className="mx-auto px-4 py-10 sm:py-14" style={{maxWidth:1100}}>
+ const content=<div className="mx-auto px-4 py-10 sm:py-14" style={{maxWidth:1100}}>
    <div className="max-w-2xl mb-8">
     <p className="text-xs uppercase tracking-widest text-[#E30613] mb-2">Serviços Play Moments</p>
-    <h1 className="text-3xl sm:text-4xl font-bold">O que você precisa realizar?</h1>
-    <p className="text-sm sm:text-base text-gray-400 mt-3">Escolha uma área, veja exatamente o que entregamos e contrate pela plataforma. Atendimento humano fica para projetos que realmente precisam de uma solução personalizada.</p>
+    <h1 className="text-3xl sm:text-4xl font-bold">{title}</h1>
+    <p className="text-sm sm:text-base text-gray-400 mt-3">{subtitle}</p>
    </div>
 
    {!loading&&categories.length>1&&<div className="flex gap-2 overflow-x-auto pb-3 mb-5" aria-label="Filtrar serviços por categoria">
@@ -56,5 +58,5 @@ export function ServicesPage(){
     <Link to={conversationLink(role,'orcamento')} className="min-h-11 inline-flex items-center justify-center px-5 py-3 rounded-xl border border-[#E30613] text-[#ff6b7a] font-semibold">Projeto personalizado</Link>
    </section>
   </div>
- </PublicLayout>
+ return embedded?content:<PublicLayout>{content}</PublicLayout>
 }

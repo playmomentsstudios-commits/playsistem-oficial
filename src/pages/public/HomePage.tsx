@@ -16,58 +16,37 @@ export function HomePage() {
   const quote = conversationLink(role, 'orcamento')
   const academyHref = '/academia'
   const clientHref = role === 'customer' ? '/app/dashboard' : role ? '/admin' : '/login?next=%2Fapp%2Fdashboard'
-  const quickLinks = [
-    { title: 'Serviços criativos', description: 'Veja soluções de design, sites, audiovisual e tecnologia.', icon: '✦', href: '/servicos' },
-    { title: 'Loja e equipamentos', description: 'Explore produtos e equipamentos disponíveis.', icon: '◇', href: '/produtos' },
-    { title: 'Academia', description: 'Assista cursos gratuitos sem cadastro e conheça as formações.', icon: '◌', href: academyHref },
-    { title: 'Área do cliente', description: 'Projetos, arquivos, pagamentos e acompanhamento em um só lugar.', icon: '↗', href: clientHref },
-  ]
   return (
     <PublicLayout>
       <section className="relative text-center px-5 py-10 sm:py-16 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at top, rgba(227,6,19,0.09), transparent 70%)' }} />
         <div className="relative max-w-4xl mx-auto">
           <h1 className="font-extrabold leading-tight mb-4" style={{ fontSize: 'clamp(2rem, 5vw, 3.75rem)', letterSpacing: '-0.02em', color: '#f0f0f2' }}>
-            O que você quer <span style={{ color: siteSettings?.primary_color||'#E30613' }}>realizar hoje?</span>
+            Criação, tecnologia e conhecimento <span style={{ color: siteSettings?.primary_color||'#E30613' }}>para tirar projetos do papel.</span>
           </h1>
           <p className="text-base sm:text-lg mb-6 max-w-xl mx-auto" style={{ color: '#9090a0' }}>
-            Tecnologia, criação e conhecimento em um só lugar. Escolha por onde quer começar.
+            Da ideia à entrega: contrate serviços, encontre equipamentos, aprenda e acompanhe tudo pela mesma plataforma.
           </p>
           <div className="grid grid-cols-2 gap-3 max-w-2xl mx-auto">
             <Link to="/servicos" className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: '#E30613', color: '#fff' }}>
-              <span className="block text-sm font-bold">Quero contratar</span>
+              <span className="block text-sm font-bold">Contratar um serviço</span>
               <span className="block text-xs mt-1 opacity-80">Serviços e soluções</span>
             </Link>
             <Link to="/produtos" className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: 'rgba(255,255,255,0.07)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <span className="block text-sm font-bold">Quero comprar</span>
+              <span className="block text-sm font-bold">Comprar ou alugar</span>
               <span className="block text-xs mt-1" style={{ color: '#9090a0' }}>Produtos e equipamentos</span>
             </Link>
             <Link to={academyHref} className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: 'rgba(255,255,255,0.07)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <span className="block text-sm font-bold">Quero aprender</span>
+              <span className="block text-sm font-bold">Aprender gratuitamente</span>
               <span className="block text-xs mt-1" style={{ color: '#9090a0' }}>Cursos e Academia</span>
             </Link>
             <Link to={clientHref} className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: 'rgba(255,255,255,0.07)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <span className="block text-sm font-bold">Já sou cliente</span>
+              <span className="block text-sm font-bold">Acessar minha área</span>
               <span className="block text-xs mt-1" style={{ color: '#9090a0' }}>Acompanhar meu trabalho</span>
             </Link>
           </div>
           <Link to={quote} className="inline-flex items-center min-h-11 mt-4 text-sm font-semibold underline underline-offset-4" style={{ color: '#ff6b7a' }}>Preciso de algo personalizado</Link>
           <span className="mx-2 text-xs" style={{ color: '#4f4f59' }}>•</span><Link to={conversationLink(role, 'duvida')} className="inline-flex items-center min-h-11 mt-3 text-sm underline underline-offset-4" style={{ color: '#9090a0' }}>Falar com a Play Moments</Link>
-        </div>
-      </section>
-
-      <section className="px-5 pb-10" aria-labelledby="quick-access-title">
-        <div className="max-w-6xl mx-auto">
-          <div className="mb-5"><p className="text-[11px] uppercase tracking-[.18em] font-bold mb-2" style={{color:'#E30613'}}>Explore a plataforma</p><h2 id="quick-access-title" className="text-2xl font-bold" style={{ color: '#f0f0f2' }}>Escolha seu caminho</h2><p className="text-sm mt-2" style={{color:'#6b6b78'}}>Você pode navegar livremente. Conta só é necessária quando houver uma ação pessoal.</p></div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {quickLinks.map(item => (
-              <Link key={item.title} to={item.href} className="group p-5 rounded-2xl hover:-translate-y-1 transition-all duration-200" style={{ background: '#141416', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <span aria-hidden="true" className="text-2xl" style={{ color: '#ff6b7a' }}>{item.icon}</span>
-                <h3 className="font-semibold text-sm mt-2 mb-1" style={{ color: '#f0f0f2' }}>{item.title}</h3>
-                <p className="text-xs leading-relaxed" style={{ color: '#9090a0' }}>{item.description}</p><span className="inline-flex mt-4 text-xs font-bold group-hover:translate-x-1 transition-transform" style={{color:'#ff6b7a'}}>Acessar →</span>
-              </Link>
-            ))}
-          </div>
         </div>
       </section>
 
@@ -87,11 +66,11 @@ export function HomePage() {
       <section className="px-6 py-12">
         <div className="mx-auto grid grid-cols-2 md:grid-cols-4 gap-4" style={{ maxWidth: 900 }}>
           {[
-            {value:profile?.projects_delivered_label||'8 mil+',label:'Projetos entregues'},
-            {value:profile?.clients_served_label||'2 mil+',label:'Clientes atendidos'},
-            {value:'Desde '+(profile?.market_since||2008),label:'No mercado'},
-            {value:profile?.satisfaction_label||'85%',label:'Satisfação'},
-          ].map(s => (
+            profile?.projects_delivered_label&&{value:profile.projects_delivered_label,label:'Projetos entregues'},
+            profile?.clients_served_label&&{value:profile.clients_served_label,label:'Clientes atendidos'},
+            profile?.market_since&&{value:'Desde '+profile.market_since,label:'No mercado'},
+            profile?.satisfaction_label&&{value:profile.satisfaction_label,label:'Satisfação'},
+          ].filter((s):s is {value:string;label:string}=>Boolean(s)).map(s => (
             <div key={s.label} className="text-center py-5 px-4 rounded-2xl"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
               <p className="font-extrabold text-3xl mb-1" style={{ color: '#E30613' }}>{s.value}</p>
@@ -180,7 +159,7 @@ export function HomePage() {
           </h2>
           <p className="mb-8" style={{ color: '#6b6b78', lineHeight: 1.7 }}>
             Crie sua conta gratuita e tenha acesso ao portal do cliente. Pedidos, orçamentos, conversas,
-            arquivos e notificações — tudo organizado, sem WhatsApp.
+            arquivos e notificações — tudo organizado, sem perder informações em conversas espalhadas.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link to="/cadastro" className="px-8 py-4 rounded-full font-bold text-base"
