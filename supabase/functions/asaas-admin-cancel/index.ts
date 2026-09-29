@@ -20,6 +20,10 @@ Deno.serve(async(req)=>{
   const {data:payment,error}=await db.from("payments").select("id,provider,provider_reference,status,order_id,environment").eq("id",payment_id).single();
   if(error||!payment)throw new Error("Payment not found");
   if(["paid","refunded"].includes(payment.status))throw new Error("Pagamentos recebidos ou reembolsados permanecem no histórico e não podem ser excluídos.");
+  const currentEnvironment=asaasEnvironment();
+  if(["asaas","asaas_checkout"].includes(payment.provider)&&payment.environment!=="unknown"&&payment.environment!==currentEnvironment){
+   throw new Error(`O pagamento pertence ao ambiente ${payment.environment}; o gateway ativo está em ${currentEnvironment}.`);
+  }
   if(payment.provider==="asaas"&&payment.provider_reference){
    await asaas("/payments/"+encodeURIComponent(payment.provider_reference),{method:"DELETE"});
   }
