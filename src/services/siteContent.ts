@@ -234,9 +234,14 @@ export const siteContentApi={
   },
 
   landingPage:async(slug:string,admin=false)=>{
-    let query=supabase.from('site_landing_pages').select(admin?'*,campaign:site_campaigns(*)':'*').eq('slug',slug)
-    if(!admin)query=query.eq('status','published')
-    const {data,error}=await query.single();if(error)throw error;return data as SiteLandingPage
+    if(admin){
+      const {data,error}=await supabase.from('site_landing_pages').select('*,campaign:site_campaigns(*)').eq('slug',slug).single()
+      if(error)throw error
+      return data as SiteLandingPage
+    }
+    const {data,error}=await supabase.from('site_landing_pages').select('*').eq('slug',slug).eq('status','published').single()
+    if(error)throw error
+    return data as SiteLandingPage
   },
 
   saveLandingPage:async(values:Partial<SiteLandingPage>&{title:string;headline:string})=>{
