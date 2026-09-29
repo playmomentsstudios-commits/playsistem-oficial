@@ -237,18 +237,18 @@ select option { background: #111114; color: #f2f2f4; }
 
 /* ── Collaborator workspace: intentionally distinct from master admin ── */
 .staff-workspace {
-  color: #17171a;
+  color: var(--staff-text, #17171a);
   color-scheme: light;
 }
-.staff-workspace main { background: #f4f6f8; }
+.staff-workspace main { background: var(--staff-bg, #f4f6f8); }
 .staff-workspace aside,
 .staff-workspace > div > div:first-child { color: #34343b; }
 .staff-workspace .pm-surface {
-  background: #fff;
+  background: var(--staff-surface, #fff);
   border-color: #e2e5e9;
   box-shadow: 0 8px 28px rgba(20,24,31,.05);
 }
-.staff-workspace .pm-surface-interactive:hover { background: #fafafa; border-color: #d3d7dc; }
+.staff-workspace .pm-surface-interactive:hover { background: color-mix(in srgb, var(--staff-surface, #fff) 94%, #000); border-color: #d3d7dc; }
 .staff-workspace :is(.text-gray-100,.text-gray-200,.text-gray-300,.text-gray-400) { color: #34343b !important; }
 .staff-workspace :is(.text-gray-500,.text-gray-600,.text-gray-700) { color: #6d7078 !important; }
 .staff-workspace :is(.bg-\[\#141416\],.bg-black,.bg-black\/30,.bg-white\/5,.bg-white\/\[0\.025\],.bg-white\/\[0\.035\],.bg-white\/\[0\.04\],.bg-white\/\[0\.05\],.bg-white\/\[0\.06\]) { background: #fff !important; }
