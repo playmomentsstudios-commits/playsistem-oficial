@@ -243,7 +243,7 @@ export const portalApi = {
     const q=id?supabase.from('projects').update(values).eq('id',id):supabase.from('projects').insert(values)
     const { data,error }=await q.select().single()
     if(error) throw error
-    if(data?.customer_id){
+    if(data?.customer_id||data?.project_type==='internal'){
       void supabase.functions.invoke('google-drive-project-folder',{
         body:{project_id:data.id},
       }).catch(()=>undefined)
