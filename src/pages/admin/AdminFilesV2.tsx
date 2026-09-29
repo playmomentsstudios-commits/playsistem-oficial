@@ -592,7 +592,7 @@ export function AdminFilesV2(){
                         📁
                         <select defaultValue="" onChange={e=>{if(e.target.value)void organizeIntoProject(row,e.target.value)}} className="absolute inset-0 opacity-0 cursor-pointer">
                           <option value="">Organizar em projeto</option>
-                          {projects.map((projectRow:any)=><option key={projectRow.id} value={projectRow.id}>{projectRow.title}</option>)}
+                          {projects.filter((projectRow:any)=>projectRow.customer_id).map((projectRow:any)=><option key={projectRow.id} value={projectRow.id}>{projectRow.title}</option>)}
                         </select>
                       </label>}
                       {row.storage_provider==='google_drive'&&row.project_id&&<label className="relative w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer text-sm" title="Mover dentro do projeto" aria-label="Mover arquivo">
