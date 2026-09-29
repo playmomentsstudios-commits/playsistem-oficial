@@ -315,11 +315,7 @@ export async function ensureProjectFolder(
   } else {
     if (!project.customer_id) throw new Error("External project has no customer");
 
-    const client = await ensureClientFolder(
-      db,
-      userId,
-      project.customer_id,
-    );
+    const client = await ensureClientFolder(db, userId, project.customer_id);
     customerFolderId = client.customerFolderId;
 
     let projectsRoot = await findDriveFolder(
@@ -341,10 +337,14 @@ export async function ensureProjectFolder(
   }
 
   let projectFolderId = project.drive_folder_id || null;
+  const expectedProjectFolderName = isInternal
+    ? project.title
+    : `PM-${projectId.slice(0,8).toUpperCase()} - ${project.title}`;
+
   if (!projectFolderId) {
     const existing = await findDriveFolder(projectParentId, "project", projectId);
     const projectFolder = existing || await createDriveFolder(
-      `PM-${projectId.slice(0,8).toUpperCase()} - ${project.title}`,
+      expectedProjectFolderName,
       projectParentId,
       {
         playMomentsKind: "project",
@@ -356,6 +356,93 @@ export async function ensureProjectFolder(
     await db.from("projects")
       .update({ drive_folder_id: projectFolderId })
       .eq("id", projectId);
+  } else if (isInternal) {
+    // Internal project folders mirror the project title exactly.
+    await driveJson(
+      `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(projectFolderId)}?fields=id,name`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: expectedProjectFolderName }),
+      },
+    );
+  }
+
+  if (isInternal) {
+    const { data: stages, error: stagesError } = await db
+      .from("project_stages")
+      .select("id,project_id,name,position,status")
+      .eq("project_id", projectId)
+      .order("position");
+    if (stagesError) throw stagesError;
+
+    const { data: existingStageFolders, error: stageFolderError } = await db
+      .from("project_stage_drive_folders")
+      .select("*")
+      .eq("project_id", projectId);
+    if (stageFolderError) throw stageFolderError;
+
+    const byStage = new Map((existingStageFolders || []).map((row:any) => [row.stage_id,row]));
+
+    for (const stage of stages || []) {
+      const existingRow = byStage.get(stage.id);
+      if (existingRow) {
+        if (existingRow.folder_name !== stage.name) {
+          await driveJson(
+            `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(existingRow.drive_folder_id)}?fields=id,name`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name: stage.name }),
+            },
+          );
+          await db.from("project_stage_drive_folders")
+            .update({ folder_name: stage.name })
+            .eq("stage_id", stage.id);
+        }
+        continue;
+      }
+
+      const existing = await findDriveFolder(projectFolderId, "project-stage", stage.id);
+      const folder = existing || await createDriveFolder(
+        stage.name,
+        projectFolderId,
+        {
+          playMomentsKind: "project-stage",
+          playMomentsEntityId: stage.id,
+          playMomentsProjectId: projectId,
+        },
+      );
+
+      const { error: insertStageFolderError } = await db
+        .from("project_stage_drive_folders")
+        .upsert({
+          stage_id: stage.id,
+          project_id: projectId,
+          drive_folder_id: folder.id,
+          folder_name: stage.name,
+        });
+      if (insertStageFolderError) throw insertStageFolderError;
+    }
+
+    const { data: stageFolders, error: finalStageError } = await db
+      .from("project_stage_drive_folders")
+      .select("*")
+      .eq("project_id", projectId);
+    if (finalStageError) throw finalStageError;
+
+    const orderedStageFolders = (stages || []).map((stage:any) => {
+      const folder = (stageFolders || []).find((row:any) => row.stage_id === stage.id);
+      return folder ? { ...folder, stage } : null;
+    }).filter(Boolean);
+
+    return {
+      projectFolderId,
+      customerFolderId,
+      projectScope: "internal",
+      folders: [],
+      stageFolders: orderedStageFolders,
+    };
   }
 
   const { data: currentFolders, error: folderError } = await db
@@ -392,10 +479,12 @@ export async function ensureProjectFolder(
   return {
     projectFolderId,
     customerFolderId,
-    projectScope: isInternal ? "internal" : "customer",
+    projectScope: "customer",
     folders: folders || [],
+    stageFolders: [],
   };
 }
+
 
 export async function ensureSiteAssetFolder(db: SupabaseClient, userId: string, section = "HOME") {
   const { rootFolderId } = await ensureDriveRoot(db, userId);

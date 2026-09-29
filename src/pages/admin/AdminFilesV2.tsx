@@ -6,6 +6,8 @@ import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
 import { settingsApi } from '../../api/settings'
 
+const INTERNAL_LIBRARY_KEY='__internal__'
+
 const folderOptions=[
   ['received','01 - Arquivos recebidos'],
   ['raw','02 - Brutos'],
@@ -65,6 +67,7 @@ export function AdminFilesV2(){
   const [customer,setCustomer]=useState('')
   const [project,setProject]=useState('')
   const [task,setTask]=useState('')
+  const [stage,setStage]=useState('')
   const [folderKind,setFolderKind]=useState('received')
   const [customFolders,setCustomFolders]=useState<any[]>([])
   const [customFolder,setCustomFolder]=useState('')
@@ -111,10 +114,20 @@ export function AdminFilesV2(){
     }).catch(()=>undefined)
   },[])
 
-  const customerProjects=useMemo(()=>projects.filter((p:any)=>p.customer_id===customer),[projects,customer])
+  const customerProjects=useMemo(()=>customer===INTERNAL_LIBRARY_KEY
+    ? projects.filter((p:any)=>p.project_type==='internal')
+    : projects.filter((p:any)=>p.customer_id===customer&&p.project_type!=='internal'),[projects,customer])
   const selectedProject=customerProjects.find((p:any)=>p.id===project)
+  const selectedProjectIsInternal=selectedProject?.project_type==='internal'
   const tasks=selectedProject?.tasks||[]
+  const stages=useMemo(()=>[...(selectedProject?.stages||[])].sort((a:any,b:any)=>a.position-b.position),[selectedProject])
+  const selectedTask=tasks.find((item:any)=>item.id===task)
+  const effectiveStage=selectedTask?.stage_id||stage||stages[0]?.id||null
   const foldersForKind=customFolders.filter((item:any)=>item.parent_kind===folderKind)
+
+  useEffect(()=>{
+    if(selectedProjectIsInternal&&!stage&&stages[0]?.id)setStage(stages[0].id)
+  },[selectedProjectIsInternal,stage,stages])
 
   useEffect(()=>{
     setCustomFolder('')
@@ -125,22 +138,51 @@ export function AdminFilesV2(){
   },[project])
 
   const grouped=useMemo(()=>{
-    const map=new Map<string,{customer:any;projects:Map<string,{project:any;files:any[]}>}>()
-    for(const customerRow of customers)map.set(customerRow.id,{customer:customerRow,projects:new Map()})
-    for(const projectRow of projects){
-      const customerKey=projectRow.customer_id||'sem-cliente'
-      if(!map.has(customerKey))map.set(customerKey,{customer:null,projects:new Map()})
-      map.get(customerKey)!.projects.set(projectRow.id,{project:projectRow,files:[]})
+    const map=new Map<string,{customer:any;label:string;internal:boolean;projects:Map<string,{project:any;files:any[]}>}>()
+    for(const customerRow of customers){
+      map.set(customerRow.id,{
+        customer:customerRow,
+        label:[customerRow.first_name,customerRow.last_name].filter(Boolean).join(' ')||customerRow.email||'Cliente',
+        internal:false,
+        projects:new Map(),
+      })
     }
+
+    const projectById=new Map(projects.map((item:any)=>[item.id,item]))
+
+    for(const projectRow of projects){
+      const internal=projectRow.project_type==='internal'
+      const key=internal?INTERNAL_LIBRARY_KEY:(projectRow.customer_id||'__unassigned__')
+      if(!map.has(key)){
+        map.set(key,{
+          customer:null,
+          label:internal?'Projetos internos Play Moments':'Arquivos sem vínculo',
+          internal,
+          projects:new Map(),
+        })
+      }
+      map.get(key)!.projects.set(projectRow.id,{project:projectRow,files:[]})
+    }
+
     for(const row of files){
-      const customerKey=row.customer_id||row.project?.customer_id||'sem-cliente'
-      if(!map.has(customerKey))map.set(customerKey,{customer:row.customer||null,projects:new Map()})
-      const group=map.get(customerKey)!
+      const projectRow=projectById.get(row.project_id)||row.project||null
+      const internal=projectRow?.project_type==='internal'
+      const key=internal?INTERNAL_LIBRARY_KEY:(row.customer_id||projectRow?.customer_id||'__unassigned__')
+      if(!map.has(key)){
+        map.set(key,{
+          customer:row.customer||null,
+          label:internal?'Projetos internos Play Moments':'Arquivos sem vínculo',
+          internal,
+          projects:new Map(),
+        })
+      }
+      const group=map.get(key)!
       const projectKey=row.project_id||'sem-projeto'
-      if(!group.projects.has(projectKey))group.projects.set(projectKey,{project:row.project||null,files:[]})
+      if(!group.projects.has(projectKey))group.projects.set(projectKey,{project:projectRow||null,files:[]})
       group.projects.get(projectKey)!.files.push(row)
     }
-    return Array.from(map.entries())
+
+    return Array.from(map.entries()).filter(([,group])=>group.projects.size>0)
   },[files,customers,projects])
 
   const selectedLibraryGroup=libraryCustomer
@@ -154,6 +196,7 @@ export function AdminFilesV2(){
     if(!customerSearch.trim())return true
     const q=customerSearch.trim().toLowerCase()
     const customerText=[
+      group.label,
       group.customer?.first_name,
       group.customer?.last_name,
       group.customer?.email,
@@ -228,8 +271,10 @@ export function AdminFilesV2(){
     if(!user||!customer)return
     try{
       setSaving(true);setProgress(0);setCompletedFiles(0);setCurrentFileName('');setUploadResult(null)
+      if(selectedProjectIsInternal&&provider!=='google_drive')throw new Error('Projetos internos usam o Google Drive para manter a estrutura operacional do projeto.')
       if(provider==='google_drive'){
         if(!project||!selectedFiles.length)throw new Error('Selecione um projeto e um ou mais arquivos para enviar ao Google Drive.')
+        if(selectedProjectIsInternal&&!effectiveStage)throw new Error('O projeto interno precisa ter pelo menos uma etapa para receber arquivos.')
         await portalApi.ensureProjectDriveFolder(project)
         for(let index=0;index<selectedFiles.length;index+=1){
           const current=selectedFiles[index]
@@ -237,9 +282,10 @@ export function AdminFilesV2(){
           await portalApi.uploadDriveFile({
             project_id:project,
             task_id:task||null,
+            stage_id:selectedProjectIsInternal?effectiveStage:null,
             folder_kind:folderKind,
-            custom_folder_id:customFolder||null,
-            client_visible:clientVisible,
+            custom_folder_id:selectedProjectIsInternal?null:(customFolder||null),
+            client_visible:selectedProjectIsInternal?false:clientVisible,
           },current,value=>setProgress(Math.round(((index+(value/100))/selectedFiles.length)*100)))
           setCompletedFiles(index+1)
         }
@@ -331,6 +377,11 @@ export function AdminFilesV2(){
   }
 
   async function requestReview(row:any){
+    const projectRow=projects.find((item:any)=>item.id===row.project_id)||row.project
+    if(projectRow?.project_type==='internal'){
+      toast('Projeto interno usa revisão da equipe, não aprovação de cliente.','error')
+      return
+    }
     try{
       setReviewingFile(row.id)
       if(row.storage_provider==='google_drive'&&!row.client_visible)await fileManagementApi.publish(row.id)
@@ -347,15 +398,18 @@ export function AdminFilesV2(){
     if(!versioningFile.project_id)return toast('O arquivo precisa estar vinculado a um projeto para receber uma nova versão.','error')
     try{
       setSaving(true);setVersionProgress(0)
+      const versionProject=projects.find((item:any)=>item.id===versioningFile.project_id)||versioningFile.project
+      const internalVersion=versionProject?.project_type==='internal'
       const uploaded=await portalApi.uploadDriveFile({
         project_id:versioningFile.project_id,
         task_id:versioningFile.task_id||null,
+        stage_id:internalVersion?(versioningFile.stage_id||versioningFile.task?.stage_id||null):null,
         folder_kind:'preview',
-        custom_folder_id:versioningFile.custom_folder_id||null,
-        client_visible:true,
+        custom_folder_id:internalVersion?null:(versioningFile.custom_folder_id||null),
+        client_visible:internalVersion?false:true,
       },versionFile,setVersionProgress)
       await portalApi.linkFileVersion(uploaded.id,versioningFile.id)
-      toast('Nova versão enviada. Agora você pode solicitar a aprovação do cliente.','success')
+      toast(internalVersion?'Nova versão adicionada ao projeto interno.':'Nova versão enviada. Agora você pode solicitar a aprovação do cliente.','success')
       setVersioningFile(null);setVersionFile(null);setVersionProgress(0)
       await load()
     }catch(error:any){toast(error.message||'Não foi possível enviar a nova versão.','error')}
@@ -384,6 +438,11 @@ export function AdminFilesV2(){
     catch(error:any){toast(error.message||'Não foi possível abrir o anexo.','error')}
   }
 
+  function isInternalRow(row:any){
+    const projectRow=projects.find((item:any)=>item.id===row.project_id)||row.project
+    return projectRow?.project_type==='internal'
+  }
+
   function isDelivered(row:any){
     const projectRow=projects.find((item:any)=>item.id===row.project_id)
     const deliveryFolder=projectRow?.drive_folders?.find((folder:any)=>folder.folder_kind==='delivery')
@@ -404,9 +463,9 @@ export function AdminFilesV2(){
       <div>
         <p className="text-[11px] uppercase tracking-[.18em] text-[#E30613] font-semibold">Operação</p>
         <h1 className="text-2xl font-bold mt-1">Central de Arquivos</h1>
-        <p className="text-sm text-gray-500 mt-1">Cliente → Projeto → Tarefa → aprovação → entrega.</p>
+        <p className="text-sm text-gray-500 mt-1">Clientes e produção interna → Projeto → Tarefa/Etapa → arquivo.</p>
       </div>
-      <div className="flex items-center gap-2"><Button type="button" variant="secondary" loading={testing} onClick={testDrive}>Testar Drive</Button><button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='sem-cliente')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-10 px-3.5 rounded-xl bg-[#E30613] hover:bg-[#f01826] text-white text-sm font-bold flex items-center gap-1.5"><span className="text-lg leading-none">＋</span>Novo</button></div>
+      <div className="flex items-center gap-2"><Button type="button" variant="secondary" loading={testing} onClick={testDrive}>Testar Drive</Button><button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='__unassigned__')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-10 px-3.5 rounded-xl bg-[#E30613] hover:bg-[#f01826] text-white text-sm font-bold flex items-center gap-1.5"><span className="text-lg leading-none">＋</span>Novo</button></div>
     </div>
 
     {uploadResult&&<div className="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 flex items-start gap-3">
@@ -416,7 +475,7 @@ export function AdminFilesV2(){
     </div>}
 
     <section>
-      <div className="mb-3 flex items-end justify-between gap-3"><div><p className="text-[10px] uppercase tracking-[.16em] text-gray-600">Biblioteca</p><h2 className="text-base font-bold mt-1">Clientes e projetos</h2></div><span className="text-[10px] text-gray-600">{customers.length} clientes · {projects.length} projetos · {files.length} arquivos</span></div>
+      <div className="mb-3 flex items-end justify-between gap-3"><div><p className="text-[10px] uppercase tracking-[.16em] text-gray-600">Biblioteca</p><h2 className="text-base font-bold mt-1">Clientes e projetos internos</h2></div><span className="text-[10px] text-gray-600">{customers.length} clientes · {projects.length} projetos · {files.length} arquivos</span></div>
       <div className="mb-3">
         <input value={customerSearch} onChange={e=>setCustomerSearch(e.target.value)} placeholder="Buscar cliente, projeto ou arquivo..." className="w-full min-h-10 px-3.5 rounded-xl bg-[#141416] border border-white/10 text-sm"/>
       </div>
@@ -433,8 +492,8 @@ export function AdminFilesV2(){
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-white/[0.05] flex items-center justify-center">📁</div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold truncate">{group.customer?[group.customer.first_name,group.customer.last_name].filter(Boolean).join(' '):'Sem cliente'}</p>
-                <p className="text-[10px] text-gray-500 truncate">{group.customer?.email||''}</p>
+                <p className="text-sm font-semibold truncate">{group.label}</p>
+                <p className="text-[10px] text-gray-500 truncate">{group.internal?'Produção interna da Play Moments':(group.customer?.email||'Arquivos sem projeto')}</p>
               </div>
               <div className="text-right">
                 <p className="text-xs font-semibold">{totalFiles}</p>
@@ -487,13 +546,13 @@ export function AdminFilesV2(){
           {libraryProject&&<button type="button" onClick={()=>{setLibraryProject(null);setMenuFile(null)}} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-300" title="Voltar" aria-label="Voltar">←</button>}
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold truncate">
-              {selectedLibraryGroup.customer?[selectedLibraryGroup.customer.first_name,selectedLibraryGroup.customer.last_name].filter(Boolean).join(' '):'Sem cliente'}
+              {selectedLibraryGroup.label}
             </p>
             <p className="text-[10px] text-gray-500 truncate">
-              {libraryProject&&selectedLibraryProject?.project?.title?selectedLibraryProject.project.title:selectedLibraryGroup.customer?.email||'Biblioteca de arquivos'}
+              {libraryProject&&selectedLibraryProject?.project?.title?selectedLibraryProject.project.title:(selectedLibraryGroup.internal?'Produção interna da Play Moments':selectedLibraryGroup.customer?.email||'Biblioteca de arquivos')}
             </p>
           </div>
-          <button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='sem-cliente')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-8 px-3 rounded-lg bg-[#E30613] hover:bg-[#f01826] text-white text-[10px] font-bold">＋ Novo</button>
+          <button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='__unassigned__')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-8 px-3 rounded-lg bg-[#E30613] hover:bg-[#f01826] text-white text-[10px] font-bold">＋ Novo</button>
           <button type="button" onClick={()=>{setLibraryCustomer(null);setLibraryProject(null);setMenuFile(null)}} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-400 text-lg" title="Fechar" aria-label="Fechar">×</button>
         </div>
 
@@ -554,6 +613,7 @@ export function AdminFilesV2(){
             {filteredLibraryFiles.length===0?<div className="py-12 text-center text-sm text-gray-600 border border-dashed border-white/8 rounded-2xl">Nenhum arquivo corresponde aos filtros.</div>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {filteredLibraryFiles.map(row=>{
                 const review=reviewBadge(row)
+                const internalRow=isInternalRow(row)
                 return <div key={row.id} className="relative p-2.5 rounded-xl bg-[#171719] border border-white/8 hover:border-white/15 transition-colors">
                   <button type="button" onClick={()=>open(row)} className="w-full text-left">
                     <div className="h-14 rounded-lg bg-white/[0.035] flex items-center justify-center text-2xl">{fileIcon(row)}</div>
@@ -562,18 +622,18 @@ export function AdminFilesV2(){
                       <span className="text-[9px] text-gray-600">{sizeLabel(row.file_size)}</span>
                     </div>
                     <p className="text-xs font-semibold truncate mt-1" title={row.name}>{row.name}</p>
-                    <p className="text-[9px] text-gray-500 truncate mt-1">{row.custom_folder?.name?('📁 '+row.custom_folder.name):(row.task?.title||'Arquivo geral')}</p>
+                    <p className="text-[9px] text-gray-500 truncate mt-1">{row.stage?.name?('📁 '+row.stage.name):(row.custom_folder?.name?('📁 '+row.custom_folder.name):(row.task?.title||'Arquivo geral'))}</p>
                     {review&&<span className={'inline-flex mt-2 px-2 py-1 rounded-full text-[9px] font-semibold '+review.className}>{review.label}</span>}
                   </button>
 
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {!row.review_required&&<button type="button" disabled={reviewingFile===row.id} onClick={()=>void requestReview(row)} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] disabled:opacity-50 text-[10px] font-bold text-white">{reviewingFile===row.id?'Solicitando...':'Solicitar aprovação'}</button>}
-                    {row.review_required&&row.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(row)} className="min-h-9 flex-1 px-3 rounded-lg border border-white/10 hover:bg-white/[0.05] text-[10px] font-semibold">Cancelar aprovação</button>}
-                    {row.review_required&&row.review_status==='changes_requested'&&<>
+                    {!internalRow&&!row.review_required&&<button type="button" disabled={reviewingFile===row.id} onClick={()=>void requestReview(row)} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] disabled:opacity-50 text-[10px] font-bold text-white">{reviewingFile===row.id?'Solicitando...':'Solicitar aprovação'}</button>}
+                    {!internalRow&&row.review_required&&row.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(row)} className="min-h-9 flex-1 px-3 rounded-lg border border-white/10 hover:bg-white/[0.05] text-[10px] font-semibold">Cancelar aprovação</button>}
+                    {!internalRow&&row.review_required&&row.review_status==='changes_requested'&&<>
                       <button type="button" onClick={()=>void showReviewDetails(row)} className="min-h-9 flex-1 px-3 rounded-lg border border-orange-500/20 bg-orange-500/[0.08] text-orange-300 text-[10px] font-bold">Ver ajustes</button>
                       <button type="button" onClick={()=>{setVersioningFile(row);setVersionFile(null);setVersionProgress(0)}} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] text-[10px] font-bold text-white">Enviar nova versão</button>
                     </>}
-                    {row.review_required&&row.review_status==='approved'&&!isDelivered(row)&&<button type="button" onClick={()=>void move(row,'delivery')} className="min-h-9 flex-1 px-3 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/20 text-[10px] font-bold">Finalizar entrega</button>}
+                    {!internalRow&&row.review_required&&row.review_status==='approved'&&!isDelivered(row)&&<button type="button" onClick={()=>void move(row,'delivery')} className="min-h-9 flex-1 px-3 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/20 text-[10px] font-bold">Finalizar entrega</button>}
                   </div>
 
                   <button
@@ -595,7 +655,7 @@ export function AdminFilesV2(){
                           {projects.filter((projectRow:any)=>projectRow.customer_id).map((projectRow:any)=><option key={projectRow.id} value={projectRow.id}>{projectRow.title}</option>)}
                         </select>
                       </label>}
-                      {row.storage_provider==='google_drive'&&row.project_id&&<label className="relative w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer text-sm" title="Mover dentro do projeto" aria-label="Mover arquivo">
+                      {row.storage_provider==='google_drive'&&row.project_id&&!internalRow&&<label className="relative w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer text-sm" title="Mover dentro do projeto" aria-label="Mover arquivo">
                         ⇄
                         <select defaultValue="" onChange={e=>{if(e.target.value){void move(row,e.target.value);setMenuFile(null)}}} className="absolute inset-0 opacity-0 cursor-pointer">
                           <option value="">Mover</option>
@@ -605,9 +665,9 @@ export function AdminFilesV2(){
                       <button type="button" onClick={()=>{setMenuFile(null);void remove(row)}} className="w-9 h-9 rounded-lg hover:bg-red-500/10 text-red-400 flex items-center justify-center text-sm" title="Excluir" aria-label="Excluir arquivo">⌫</button>
                     </div>
                     <div className="mt-1 border-t border-white/8 pt-1">
-                      {!row.review_required&&<button type="button" onClick={()=>void requestReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Solicitar aprovação</button>}
-                      {row.review_required&&row.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Cancelar aprovação</button>}
-                      {row.review_required&&['approved','changes_requested'].includes(row.review_status)&&<button type="button" onClick={()=>void requestReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Solicitar nova avaliação</button>}
+                      {!internalRow&&!row.review_required&&<button type="button" onClick={()=>void requestReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Solicitar aprovação</button>}
+                      {!internalRow&&row.review_required&&row.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Cancelar aprovação</button>}
+                      {!internalRow&&row.review_required&&['approved','changes_requested'].includes(row.review_status)&&<button type="button" onClick={()=>void requestReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Solicitar nova avaliação</button>}
                     </div>
                   </div>}
                 </div>
@@ -627,14 +687,15 @@ export function AdminFilesV2(){
             <option value="external">Link externo</option>
           </select>
         </label>
-        <label className="text-xs text-gray-500">Cliente
-          <select value={customer} onChange={e=>{setCustomer(e.target.value);setProject('');setTask('')}} className="pm-control mt-1 w-full px-3 bg-black">
-            <option value="">Selecione o cliente</option>
+        <label className="text-xs text-gray-500">Origem
+          <select value={customer} onChange={e=>{const next=e.target.value;setCustomer(next);if(next===INTERNAL_LIBRARY_KEY)setProvider('google_drive');setProject('');setTask('');setStage('');setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
+            <option value="">Selecione a origem</option>
+            <option value={INTERNAL_LIBRARY_KEY}>Play Moments — projetos internos</option>
             {customers.map(c=><option key={c.id} value={c.id}>{c.first_name} {c.last_name} — {c.email}</option>)}
           </select>
         </label>
         <label className="text-xs text-gray-500">Projeto
-          <select value={project} onChange={e=>{setProject(e.target.value);setTask('');setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
+          <select value={project} onChange={e=>{setProject(e.target.value);setTask('');setStage('');setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
             <option value="">Sem projeto</option>
             {customerProjects.map((p:any)=><option key={p.id} value={p.id}>{p.title}</option>)}
           </select>
@@ -643,25 +704,31 @@ export function AdminFilesV2(){
 
       <div className="grid md:grid-cols-3 gap-3">
         <label className="text-xs text-gray-500">Tarefa
-          <select value={task} onChange={e=>setTask(e.target.value)} disabled={!project} className="pm-control mt-1 w-full px-3 bg-black disabled:opacity-40">
+          <select value={task} onChange={e=>{const next=e.target.value;setTask(next);const linked=tasks.find((item:any)=>item.id===next);if(linked?.stage_id)setStage(linked.stage_id)}} disabled={!project} className="pm-control mt-1 w-full px-3 bg-black disabled:opacity-40">
             <option value="">Arquivo geral do projeto</option>
             {tasks.map((t:any)=><option key={t.id} value={t.id}>{t.title}</option>)}
           </select>
         </label>
-        {provider==='google_drive'&&<label className="text-xs text-gray-500">Pasta do projeto
+        {provider==='google_drive'&&(selectedProjectIsInternal?<label className="text-xs text-gray-500">Etapa / pasta do projeto
+          <select value={effectiveStage||''} disabled={Boolean(selectedTask?.stage_id)} onChange={e=>setStage(e.target.value)} className="pm-control mt-1 w-full px-3 bg-black disabled:opacity-60">
+            {stages.map((item:any)=><option key={item.id} value={item.id}>{item.name}</option>)}
+          </select>
+        </label>:<label className="text-xs text-gray-500">Pasta do projeto
           <select value={folderKind} onChange={e=>{setFolderKind(e.target.value);setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
             {folderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
           </select>
-        </label>}
-        <label className="text-xs text-gray-500">Visibilidade
+        </label>)}
+        {selectedProjectIsInternal?<label className="text-xs text-gray-500">Visibilidade
+          <div className="pm-control mt-1 w-full px-3 bg-white/[0.03] flex items-center">Somente equipe · projeto interno</div>
+        </label>:<label className="text-xs text-gray-500">Visibilidade
           <select value={clientVisible?'client':'internal'} onChange={e=>setClientVisible(e.target.value==='client')} className="pm-control mt-1 w-full px-3 bg-black">
             <option value="client">Visível ao cliente</option>
             <option value="internal">Somente equipe</option>
           </select>
-        </label>
+        </label>}
       </div>
 
-      {provider==='google_drive'&&project&&<div className="grid md:grid-cols-[1fr_auto] gap-3 items-end">
+      {provider==='google_drive'&&project&&!selectedProjectIsInternal&&<div className="grid md:grid-cols-[1fr_auto] gap-3 items-end">
         <label className="text-xs text-gray-500">Subpasta personalizada
           <select value={customFolder} onChange={e=>setCustomFolder(e.target.value)} className="pm-control mt-1 w-full px-3 bg-black">
             <option value="">Sem subpasta — usar {folderOptions.find(([value])=>value===folderKind)?.[1]||'pasta padrão'}</option>

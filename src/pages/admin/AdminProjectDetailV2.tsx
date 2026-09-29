@@ -53,6 +53,7 @@ export function AdminProjectDetailV2(){
   const [loading,setLoading]=useState(true)
   const [stageName,setStageName]=useState('')
   const [fileTask,setFileTask]=useState('')
+  const [fileStage,setFileStage]=useState('')
   const [fileVisible,setFileVisible]=useState(false)
   const [fileFolder,setFileFolder]=useState('received')
   const [uploading,setUploading]=useState(false)
@@ -77,6 +78,12 @@ export function AdminProjectDetailV2(){
 
   const sortedStages=useMemo(()=>[...(project?.stages||[])].sort((a:any,b:any)=>a.position-b.position),[project])
   const tasks=project?.tasks||[]
+  const selectedFileTask=tasks.find((task:any)=>task.id===fileTask)
+  const effectiveFileStage=selectedFileTask?.stage_id||fileStage||sortedStages[0]?.id||null
+
+  useEffect(()=>{
+    if(project?.project_type==='internal'&&!fileStage&&sortedStages[0]?.id)setFileStage(sortedStages[0].id)
+  },[project?.project_type,fileStage,sortedStages])
 
   async function updateProject(values:any){
     try{
@@ -171,6 +178,7 @@ export function AdminProjectDetailV2(){
         await portalApi.uploadDriveFile({
           project_id:id,
           task_id:fileTask||null,
+          stage_id:project.project_type==='internal'?effectiveFileStage:null,
           folder_kind:fileFolder,
           client_visible:project.project_type==='internal'?false:fileVisible,
         },file,value=>setFileProgress(Math.round(((index+(value/100))/picked.length)*100)))
@@ -197,6 +205,7 @@ export function AdminProjectDetailV2(){
       const uploaded=await portalApi.uploadDriveFile({
         project_id:id,
         task_id:previousFile.task_id||null,
+        stage_id:project.project_type==='internal'?(previousFile.stage_id||effectiveFileStage):null,
         folder_kind:'preview',
         client_visible:project.project_type==='internal'?false:true,
       },file,setFileProgress)
@@ -342,16 +351,20 @@ export function AdminProjectDetailV2(){
       <div className="pm-surface p-4 mt-4">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
           <label className="text-sm text-gray-400">Direcionar para
-            <select value={fileTask} onChange={e=>setFileTask(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+            <select value={fileTask} onChange={e=>{const next=e.target.value;setFileTask(next);const linked=tasks.find((task:any)=>task.id===next);if(linked?.stage_id)setFileStage(linked.stage_id)}} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
               <option value="">Arquivo geral do projeto</option>
               {tasks.map((task:any)=><option key={task.id} value={task.id}>{task.title}</option>)}
             </select>
           </label>
-          <label className="text-sm text-gray-400">Pasta no Drive
+          {project.project_type==='internal'?<label className="text-sm text-gray-400">Etapa / pasta no Drive
+            <select value={effectiveFileStage||''} disabled={Boolean(selectedFileTask?.stage_id)} onChange={e=>setFileStage(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10 disabled:opacity-60">
+              {sortedStages.map((stage:any)=><option key={stage.id} value={stage.id}>{stage.name}</option>)}
+            </select>
+          </label>:<label className="text-sm text-gray-400">Pasta no Drive
             <select value={fileFolder} onChange={e=>setFileFolder(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
               {driveFolderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
             </select>
-          </label>
+          </label>}
           {project.project_type==='internal'?<label className="text-sm text-gray-400">Visibilidade
             <div className="mt-1 w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300">Somente equipe · projeto interno</div>
           </label>:<label className="text-sm text-gray-400">Visibilidade
@@ -382,7 +395,7 @@ export function AdminProjectDetailV2(){
                 <button onClick={()=>openFile(file)} className="text-left min-w-0 flex-1">
                   <div className="flex items-center gap-2 min-w-0"><p className="text-sm font-medium truncate" title={file.name}>{file.name}</p><span className="text-[9px] text-[#E30613] shrink-0">v{file.version_number||1}</span></div>
                   <p className="text-xs text-gray-500 mt-1">{fileSize(file.file_size)} · {file.client_visible?'Cliente':'Equipe'}</p>
-                  <p className="text-[10px] text-gray-600 mt-1">{tasks.find((task:any)=>task.id===file.task_id)?.title||'Arquivo geral do projeto'}</p>
+                  <p className="text-[10px] text-gray-600 mt-1">{file.stage?.name?('📁 '+file.stage.name):(tasks.find((task:any)=>task.id===file.task_id)?.title||'Arquivo geral do projeto')}</p>
                   {review&&<span className={'inline-flex mt-2 px-2 py-1 rounded-full text-[9px] font-semibold '+review.className}>{review.label}</span>}
                 </button>
               </div>

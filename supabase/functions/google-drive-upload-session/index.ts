@@ -12,6 +12,7 @@ Deno.serve(async (req) => {
     const fileSize = Number(body.file_size || 0);
     const folderKind = String(body.folder_kind || "received");
     const customFolderId = body.custom_folder_id ? String(body.custom_folder_id) : null;
+    const requestedStageId = body.stage_id ? String(body.stage_id) : null;
 
     if (!projectId || !fileName || !Number.isFinite(fileSize) || fileSize <= 0) {
       throw new Error("Invalid upload metadata");
@@ -26,7 +27,7 @@ Deno.serve(async (req) => {
 
     const { data: project, error: projectError } = await ctx.db
       .from("projects")
-      .select("id,customer_id")
+      .select("id,customer_id,project_type")
       .eq("id", projectId)
       .single();
     if (projectError || !project) throw new Error("Project not found");
@@ -37,19 +38,33 @@ Deno.serve(async (req) => {
     // approval and delivery folders are staff-controlled even when the customer owns the project.
     if (!staffAllowed && folderKind !== "received") throw new Error("Customers can only upload to received files");
 
+    let taskStageId:string|null = null;
     if (taskId) {
       const { data: task, error: taskError } = await ctx.db
         .from("tasks")
-        .select("id,project_id")
+        .select("id,project_id,stage_id")
         .eq("id", taskId)
         .single();
       if (taskError || task?.project_id !== projectId) throw new Error("Task does not belong to project");
+      taskStageId = task.stage_id || null;
     }
 
     const folders = await ensureProjectFolder(ctx.db, ctx.userId, projectId);
-    let target:any = folders.folders.find((row:any) => row.folder_kind === folderKind)
-      || folders.folders.find((row:any) => row.folder_kind === "received");
-    if (!target) throw new Error("Drive target folder not found");
+    const internalStageId = taskStageId || requestedStageId;
+    let target:any = null;
+
+    if (project.project_type === "internal") {
+      if (customFolderId) throw new Error("Internal projects use stage folders, not customer custom folders");
+      const stageFolders = folders.stageFolders || [];
+      target = internalStageId
+        ? stageFolders.find((row:any) => row.stage_id === internalStageId)
+        : stageFolders[0];
+      if (!target) throw new Error("Internal project has no Drive stage folder");
+    } else {
+      target = folders.folders.find((row:any) => row.folder_kind === folderKind)
+        || folders.folders.find((row:any) => row.folder_kind === "received");
+      if (!target) throw new Error("Drive target folder not found");
+    }
 
     if (customFolderId) {
       const { data: customFolder, error: customFolderError } = await ctx.db
@@ -80,6 +95,7 @@ Deno.serve(async (req) => {
         playMomentsTaskId: taskId || "",
         playMomentsUploadId: uploadId,
         playMomentsCustomFolderId: customFolderId || "",
+        playMomentsStageId: project.project_type === "internal" ? (internalStageId || target.stage_id || "") : "",
       },
     };
 
@@ -123,6 +139,7 @@ Deno.serve(async (req) => {
       customer_id: project.customer_id,
       upload_id: uploadId,
       custom_folder_id: customFolderId,
+      stage_id: project.project_type === "internal" ? (internalStageId || target.stage_id || null) : null,
     });
   } catch (error) {
     return json({ ok: false, error: error instanceof Error ? error.message : "Unknown error" }, 400);
