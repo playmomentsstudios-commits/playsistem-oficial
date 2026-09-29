@@ -546,13 +546,13 @@ export function AdminFilesV2(){
           {libraryProject&&<button type="button" onClick={()=>{setLibraryProject(null);setMenuFile(null)}} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-300" title="Voltar" aria-label="Voltar">←</button>}
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold truncate">
-              {selectedLibraryGroup.customer?[selectedLibraryGroup.customer.first_name,selectedLibraryGroup.customer.last_name].filter(Boolean).join(' '):'Sem cliente'}
+              {selectedLibraryGroup.label}
             </p>
             <p className="text-[10px] text-gray-500 truncate">
-              {libraryProject&&selectedLibraryProject?.project?.title?selectedLibraryProject.project.title:selectedLibraryGroup.customer?.email||'Biblioteca de arquivos'}
+              {libraryProject&&selectedLibraryProject?.project?.title?selectedLibraryProject.project.title:(selectedLibraryGroup.internal?'Produção interna da Play Moments':selectedLibraryGroup.customer?.email||'Biblioteca de arquivos')}
             </p>
           </div>
-          <button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='sem-cliente')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-8 px-3 rounded-lg bg-[#E30613] hover:bg-[#f01826] text-white text-[10px] font-bold">＋ Novo</button>
+          <button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='__unassigned__')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-8 px-3 rounded-lg bg-[#E30613] hover:bg-[#f01826] text-white text-[10px] font-bold">＋ Novo</button>
           <button type="button" onClick={()=>{setLibraryCustomer(null);setLibraryProject(null);setMenuFile(null)}} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-400 text-lg" title="Fechar" aria-label="Fechar">×</button>
         </div>
 
@@ -613,6 +613,7 @@ export function AdminFilesV2(){
             {filteredLibraryFiles.length===0?<div className="py-12 text-center text-sm text-gray-600 border border-dashed border-white/8 rounded-2xl">Nenhum arquivo corresponde aos filtros.</div>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {filteredLibraryFiles.map(row=>{
                 const review=reviewBadge(row)
+                const internalRow=isInternalRow(row)
                 return <div key={row.id} className="relative p-2.5 rounded-xl bg-[#171719] border border-white/8 hover:border-white/15 transition-colors">
                   <button type="button" onClick={()=>open(row)} className="w-full text-left">
                     <div className="h-14 rounded-lg bg-white/[0.035] flex items-center justify-center text-2xl">{fileIcon(row)}</div>
@@ -626,13 +627,13 @@ export function AdminFilesV2(){
                   </button>
 
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {!row.review_required&&<button type="button" disabled={reviewingFile===row.id} onClick={()=>void requestReview(row)} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] disabled:opacity-50 text-[10px] font-bold text-white">{reviewingFile===row.id?'Solicitando...':'Solicitar aprovação'}</button>}
-                    {row.review_required&&row.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(row)} className="min-h-9 flex-1 px-3 rounded-lg border border-white/10 hover:bg-white/[0.05] text-[10px] font-semibold">Cancelar aprovação</button>}
-                    {row.review_required&&row.review_status==='changes_requested'&&<>
+                    {!internalRow&&!row.review_required&&<button type="button" disabled={reviewingFile===row.id} onClick={()=>void requestReview(row)} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] disabled:opacity-50 text-[10px] font-bold text-white">{reviewingFile===row.id?'Solicitando...':'Solicitar aprovação'}</button>}
+                    {!internalRow&&row.review_required&&row.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(row)} className="min-h-9 flex-1 px-3 rounded-lg border border-white/10 hover:bg-white/[0.05] text-[10px] font-semibold">Cancelar aprovação</button>}
+                    {!internalRow&&row.review_required&&row.review_status==='changes_requested'&&<>
                       <button type="button" onClick={()=>void showReviewDetails(row)} className="min-h-9 flex-1 px-3 rounded-lg border border-orange-500/20 bg-orange-500/[0.08] text-orange-300 text-[10px] font-bold">Ver ajustes</button>
                       <button type="button" onClick={()=>{setVersioningFile(row);setVersionFile(null);setVersionProgress(0)}} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] text-[10px] font-bold text-white">Enviar nova versão</button>
                     </>}
-                    {row.review_required&&row.review_status==='approved'&&!isDelivered(row)&&<button type="button" onClick={()=>void move(row,'delivery')} className="min-h-9 flex-1 px-3 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/20 text-[10px] font-bold">Finalizar entrega</button>}
+                    {!internalRow&&row.review_required&&row.review_status==='approved'&&!isDelivered(row)&&<button type="button" onClick={()=>void move(row,'delivery')} className="min-h-9 flex-1 px-3 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/20 text-[10px] font-bold">Finalizar entrega</button>}
                   </div>
 
                   <button
@@ -664,9 +665,9 @@ export function AdminFilesV2(){
                       <button type="button" onClick={()=>{setMenuFile(null);void remove(row)}} className="w-9 h-9 rounded-lg hover:bg-red-500/10 text-red-400 flex items-center justify-center text-sm" title="Excluir" aria-label="Excluir arquivo">⌫</button>
                     </div>
                     <div className="mt-1 border-t border-white/8 pt-1">
-                      {!row.review_required&&<button type="button" onClick={()=>void requestReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Solicitar aprovação</button>}
-                      {row.review_required&&row.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Cancelar aprovação</button>}
-                      {row.review_required&&['approved','changes_requested'].includes(row.review_status)&&<button type="button" onClick={()=>void requestReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Solicitar nova avaliação</button>}
+                      {!internalRow&&!row.review_required&&<button type="button" onClick={()=>void requestReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Solicitar aprovação</button>}
+                      {!internalRow&&row.review_required&&row.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Cancelar aprovação</button>}
+                      {!internalRow&&row.review_required&&['approved','changes_requested'].includes(row.review_status)&&<button type="button" onClick={()=>void requestReview(row)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-left text-xs text-gray-300">Solicitar nova avaliação</button>}
                     </div>
                   </div>}
                 </div>
@@ -703,7 +704,7 @@ export function AdminFilesV2(){
 
       <div className="grid md:grid-cols-3 gap-3">
         <label className="text-xs text-gray-500">Tarefa
-          <select value={task} onChange={e=>setTask(e.target.value)} disabled={!project} className="pm-control mt-1 w-full px-3 bg-black disabled:opacity-40">
+          <select value={task} onChange={e=>{const next=e.target.value;setTask(next);const linked=tasks.find((item:any)=>item.id===next);if(linked?.stage_id)setStage(linked.stage_id)}} disabled={!project} className="pm-control mt-1 w-full px-3 bg-black disabled:opacity-40">
             <option value="">Arquivo geral do projeto</option>
             {tasks.map((t:any)=><option key={t.id} value={t.id}>{t.title}</option>)}
           </select>
