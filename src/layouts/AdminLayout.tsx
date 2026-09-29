@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import logoUrl from '../assets/logo-play-moments.png'
 import { portalApi } from '../api/portal'
 import { hasStaffPermission } from '../lib/staffPermissions'
+import { settingsApi,type AppSettings } from '../api/settings'
 
 const iconPaths:Record<string,string>={
   dashboard:'M3 13h8V3H3v10Zm10 8h8V11h-8v10ZM3 21h8v-6H3v6Zm10-12h8V3h-8v6Z',
@@ -41,6 +42,10 @@ export function AdminLayout() {
   const [staffPermissions,setStaffPermissions]=useState<string[]>([])
   const [openGroups,setOpenGroups]=useState<string[]>([])
   const [accountOpen,setAccountOpen]=useState(false)
+  const [staffBrand,setStaffBrand]=useState<Pick<AppSettings,'staff_logo_url'|'staff_platform_name'|'staff_primary_color'|'staff_background_color'|'staff_surface_color'|'staff_text_color'>>({
+    staff_logo_url:'/staff-logo.svg',staff_platform_name:'Área do colaborador',staff_primary_color:'#E30613',
+    staff_background_color:'#F4F6F8',staff_surface_color:'#FFFFFF',staff_text_color:'#17171A',
+  })
   useEffect(() => {
     if (!user?.id) return
     const load = () => portalApi.unreadCounts(user.id).then(setCounts).catch(() => undefined)
@@ -55,6 +60,17 @@ export function AdminLayout() {
   },[user?.id,user?.role])
 
   const collaboratorMode=user?.role==='staff'
+  useEffect(()=>{
+    if(!collaboratorMode)return
+    settingsApi.appSettings().then(row=>{if(row)setStaffBrand({
+      staff_logo_url:row.staff_logo_url||'/staff-logo.svg',
+      staff_platform_name:row.staff_platform_name||'Área do colaborador',
+      staff_primary_color:row.staff_primary_color||'#E30613',
+      staff_background_color:row.staff_background_color||'#F4F6F8',
+      staff_surface_color:row.staff_surface_color||'#FFFFFF',
+      staff_text_color:row.staff_text_color||'#17171A',
+    })}).catch(()=>undefined)
+  },[collaboratorMode])
 
   if (isLoading) {
     return (
@@ -75,7 +91,7 @@ export function AdminLayout() {
   const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
     <aside style={{
       width: 248,
-      background: collaboratorMode ? '#ffffff' : '#0a0a0b',
+      background: collaboratorMode ? staffBrand.staff_surface_color : '#0a0a0b',
       borderRight: '1px solid rgba(255,255,255,0.05)',
       display: 'flex',
       flexDirection: 'column',
@@ -84,7 +100,7 @@ export function AdminLayout() {
       <div className="px-5 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
         <div className="flex items-center justify-between gap-3">
           <Link to="/admin" className="block">
-            <img src={logoUrl} alt="Play Moments" className="h-12 w-auto object-contain" />
+            <div className={collaboratorMode?'rounded-xl px-3 py-2':'contents'} style={collaboratorMode?{background:staffBrand.staff_primary_color}:undefined}><img src={collaboratorMode?(staffBrand.staff_logo_url||'/staff-logo.svg'):logoUrl} alt="Play Moments" className="h-12 w-auto max-w-full object-contain" /></div>
           </Link>
           {mobile && <button aria-label="Fechar menu administrativo" onClick={() => setSidebarOpen(false)} className="w-11 h-11 flex items-center justify-center text-gray-600 hover:text-gray-300">✕</button>}
         </div>
@@ -122,7 +138,7 @@ export function AdminLayout() {
   )
 
   return (
-    <div className={collaboratorMode?'staff-workspace min-h-screen flex':'min-h-screen flex'} style={{ background: collaboratorMode?'#f4f6f8':'#0d0d0f' }}>
+    <div className={collaboratorMode?'staff-workspace min-h-screen flex':'min-h-screen flex'} style={collaboratorMode?{background:staffBrand.staff_background_color,color:staffBrand.staff_text_color,'--staff-primary':staffBrand.staff_primary_color,'--staff-bg':staffBrand.staff_background_color,'--staff-surface':staffBrand.staff_surface_color,'--staff-text':staffBrand.staff_text_color} as CSSProperties:{background:'#0d0d0f'}}>
       <div className="hidden md:flex flex-shrink-0" style={{ width: 248 }}>
         <Sidebar />
       </div>
@@ -137,14 +153,14 @@ export function AdminLayout() {
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Top bar */}
         <div className="flex items-center justify-between px-4 py-3 border-b"
-          style={{ background: collaboratorMode?'#ffffff':'#0a0a0b', borderColor: 'rgba(255,255,255,0.05)', minHeight: 56 }}>
+          style={{ background: collaboratorMode?staffBrand.staff_surface_color:'#0a0a0b', borderColor: 'rgba(255,255,255,0.05)', minHeight: 56 }}>
           <div className="flex items-center gap-3">
             <button aria-label="Abrir menu administrativo" className="md:hidden w-11 h-11 flex items-center justify-center" onClick={() => setSidebarOpen(true)} style={{ color: '#9090a0' }}>
               <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M3 12h18M3 6h18M3 18h18" />
               </svg>
             </button>
-            <span className="text-sm font-semibold" style={{ color: collaboratorMode?'#17171a':'#f0f0f2' }}>{collaboratorMode?'Área do colaborador':'Play Moments'}</span>
+            <span className="text-sm font-semibold" style={{ color: collaboratorMode?'#17171a':'#f0f0f2' }}>{collaboratorMode?staffBrand.staff_platform_name:'Play Moments'}</span>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <Link to="/admin/conversas" aria-label="Mensagens" title="Mensagens" className="relative w-10 h-10 rounded-xl border border-white/[0.07] bg-white/[0.025] text-gray-400 hover:text-white hover:bg-white/[0.05] transition-colors flex items-center justify-center">

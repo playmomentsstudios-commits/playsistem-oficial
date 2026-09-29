@@ -27,6 +27,12 @@ export type AppSettings={
   internal_operation_notifications:boolean
   commercial_notifications:boolean
   favicon_url:string|null
+  staff_logo_url:string|null
+  staff_platform_name:string
+  staff_primary_color:string
+  staff_background_color:string
+  staff_surface_color:string
+  staff_text_color:string
   updated_at:string
   updated_by:string|null
 }
@@ -34,6 +40,15 @@ export type AppSettings={
 type PreferenceChanges=Partial<Omit<UserPreferences,'user_id'|'updated_at'>>
 
 export const settingsApi={
+  uploadStaffLogo:async(file:File)=>{
+    if(file.size>3*1024*1024)throw new Error('A logo deve ter no máximo 3 MB.')
+    const ext=(file.name.split('.').pop()||'svg').toLowerCase()
+    const path=`branding/staff-logo-${Date.now()}.${ext}`
+    const {error}=await supabase.storage.from('site-assets').upload(path,file,{upsert:false,contentType:file.type||'image/svg+xml'})
+    if(error)throw error
+    const {data}=supabase.storage.from('site-assets').getPublicUrl(path)
+    return data.publicUrl
+  },
   uploadFavicon:async(file:File)=>{
     if(file.size>2*1024*1024)throw new Error('O favicon deve ter no máximo 2 MB.')
     const ext=(file.name.split('.').pop()||'png').toLowerCase()

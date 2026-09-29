@@ -16,6 +16,12 @@ const DEFAULTS:AppSettings={
   internal_operation_notifications:true,
   commercial_notifications:true,
   favicon_url:'/favicon.svg',
+  staff_logo_url:'/staff-logo.svg',
+  staff_platform_name:'Área do colaborador',
+  staff_primary_color:'#E30613',
+  staff_background_color:'#F4F6F8',
+  staff_surface_color:'#FFFFFF',
+  staff_text_color:'#17171A',
   updated_at:'',
   updated_by:null,
 }
@@ -26,6 +32,7 @@ export function AdminSettings(){
   const [loading,setLoading]=useState(true)
   const [saving,setSaving]=useState(false)
   const [uploadingFavicon,setUploadingFavicon]=useState(false)
+  const [uploadingStaffLogo,setUploadingStaffLogo]=useState(false)
 
   useEffect(()=>{
     let active=true
@@ -52,6 +59,12 @@ export function AdminSettings(){
         internal_operation_notifications:settings.internal_operation_notifications,
         commercial_notifications:settings.commercial_notifications,
         favicon_url:settings.favicon_url,
+        staff_logo_url:settings.staff_logo_url,
+        staff_platform_name:settings.staff_platform_name.trim()||'Área do colaborador',
+        staff_primary_color:settings.staff_primary_color,
+        staff_background_color:settings.staff_background_color,
+        staff_surface_color:settings.staff_surface_color,
+        staff_text_color:settings.staff_text_color,
       })
       setSettings(saved)
       toast('Configurações administrativas salvas.','success')
@@ -107,6 +120,48 @@ export function AdminSettings(){
               }}/>
             </label>
             <p className="text-[10px] text-gray-600 mt-2">PNG, SVG, ICO ou WebP · até 2 MB. Prefira arquivo quadrado e sem fundo.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="p-5 rounded-2xl bg-[#141416] border border-white/10 lg:col-span-2">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div><h2 className="font-semibold">Plataforma dos colaboradores</h2><p className="text-xs text-gray-500 mt-1">Personalização exclusiva da área branca da equipe. O Admin Mestre continua com a identidade escura.</p></div>
+          <span className="text-[10px] uppercase tracking-[.12em] text-[#E30613]">Somente Admin Mestre</span>
+        </div>
+        <div className="grid lg:grid-cols-[260px_1fr] gap-5 mt-5">
+          <div className="rounded-2xl p-5 border border-white/10" style={{background:settings.staff_primary_color}}>
+            <img src={settings.staff_logo_url||'/staff-logo.svg'} alt="Logo da área dos colaboradores" className="w-full h-20 object-contain"/>
+            <p className="text-center text-white text-xs mt-3">{settings.staff_platform_name}</p>
+          </div>
+          <div className="space-y-4">
+            <label className="block text-xs text-gray-500">Nome exibido no painel
+              <input value={settings.staff_platform_name} onChange={e=>setSettings({...settings,staff_platform_name:e.target.value})} className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
+            </label>
+            <div>
+              <label className="inline-flex min-h-11 items-center px-4 rounded-xl border border-white/10 hover:border-white/20 cursor-pointer text-sm">
+                {uploadingStaffLogo?'Enviando...':'Trocar logo dos colaboradores'}
+                <input type="file" accept="image/png,image/svg+xml,image/webp" className="hidden" disabled={uploadingStaffLogo} onChange={async e=>{
+                  const file=e.target.files?.[0];if(!file)return
+                  try{setUploadingStaffLogo(true);const url=await settingsApi.uploadStaffLogo(file);setSettings({...settings,staff_logo_url:url});toast('Logo enviada. Salve as configurações para publicar.','success')}catch(error:any){toast(error.message||'Não foi possível enviar a logo.','error')}finally{setUploadingStaffLogo(false);e.target.value=''}
+                }}/>
+              </label>
+              <p className="text-[10px] text-gray-600 mt-2">SVG, PNG ou WebP · até 3 MB. A logo enviada por você já fica como padrão inicial.</p>
+            </div>
+            <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
+              {([
+                ['staff_primary_color','Cor principal'],
+                ['staff_background_color','Fundo da plataforma'],
+                ['staff_surface_color','Cards e menu'],
+                ['staff_text_color','Texto principal'],
+              ] as const).map(([key,label])=><label key={key} className="text-xs text-gray-500">{label}
+                <div className="mt-1 flex items-center gap-2 rounded-xl border border-white/10 bg-black px-2">
+                  <input type="color" value={settings[key]} onChange={e=>setSettings({...settings,[key]:e.target.value})} className="w-9 h-10 bg-transparent border-0 p-0"/>
+                  <input value={settings[key]} onChange={e=>setSettings({...settings,[key]:e.target.value})} className="min-w-0 flex-1 h-10 bg-transparent border-0 text-xs uppercase"/>
+                </div>
+              </label>)}
+            </div>
+            <p className="text-[10px] text-gray-600">Essas opções controlam identidade, fundo, superfícies, texto e destaque. Permissões de cada colaborador continuam sendo configuradas em Colaboradores.</p>
           </div>
         </div>
       </section>
