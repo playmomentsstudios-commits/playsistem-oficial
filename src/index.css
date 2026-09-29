@@ -265,3 +265,62 @@ select option { background: #111114; color: #f2f2f4; }
 .staff-workspace select option { background: #fff; color: #1e1e22; }
 .staff-workspace .pm-skeleton { background: #e8ebef; }
 .staff-workspace ::selection { background: rgba(227,6,19,.16); color: #17171a; }
+
+
+/* ── Staff UX hardening: accessible light operational workspace ── */
+.staff-workspace {
+  --staff-danger: #b4232f;
+  --staff-success: #087a55;
+  --staff-warning: #9a6700;
+  --staff-info: #175cd3;
+  --staff-border: #d9dde3;
+  --staff-muted: #667085;
+}
+.staff-workspace main { min-width: 0; }
+.staff-workspace :is(h1,h2,h3,h4,h5,h6) { color: var(--staff-text, #17171a); }
+.staff-workspace a, .staff-workspace button { -webkit-tap-highlight-color: transparent; }
+.staff-workspace :is(button,a,input,select,textarea):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--staff-primary, #E30613) 26%, transparent);
+  outline-offset: 2px;
+}
+.staff-workspace button:disabled,
+.staff-workspace input:disabled,
+.staff-workspace select:disabled,
+.staff-workspace textarea:disabled { opacity: .55; cursor: not-allowed; }
+.staff-workspace :is(.bg-\[\#0a0a0b\],.bg-\[\#0d0d0f\],.bg-\[\#111113\],.bg-\[\#121214\],.bg-\[\#161618\],.bg-\[\#18181b\],.bg-\[\#1a1a1d\]) {
+  background: var(--staff-surface, #fff) !important;
+}
+.staff-workspace :is(.text-white,.text-\[\#f0f0f2\],.text-\[\#f5f5f6\]) { color: var(--staff-text, #17171a) !important; }
+.staff-workspace :is(.border-white\/5,.border-white\/15,.border-white\/20,.border-white\/\[0\.1\],.border-white\/\[0\.12\]) { border-color: var(--staff-border) !important; }
+.staff-workspace :is(table,thead,tbody,tr,th,td) { border-color: var(--staff-border); }
+.staff-workspace thead { background: color-mix(in srgb, var(--staff-bg, #f4f6f8) 72%, #fff); }
+.staff-workspace th { color: #475467; }
+.staff-workspace tbody tr:hover { background: color-mix(in srgb, var(--staff-primary, #E30613) 3.5%, #fff); }
+.staff-workspace :is(input,textarea,select):focus {
+  border-color: color-mix(in srgb, var(--staff-primary, #E30613) 58%, #fff) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--staff-primary, #E30613) 10%, transparent);
+}
+.staff-workspace :is(.text-red-300,.text-red-400,.text-red-500) { color: var(--staff-danger) !important; }
+.staff-workspace :is(.text-emerald-300,.text-emerald-400,.text-green-300,.text-green-400) { color: var(--staff-success) !important; }
+.staff-workspace :is(.text-amber-300,.text-amber-400,.text-yellow-300,.text-yellow-400) { color: var(--staff-warning) !important; }
+.staff-workspace :is(.text-sky-300,.text-sky-400,.text-blue-300,.text-blue-400) { color: var(--staff-info) !important; }
+.staff-workspace :is(.bg-red-500\/10,.bg-red-500\/15,.bg-\[\#E30613\]\/10) { background: #fff1f2 !important; }
+.staff-workspace :is(.bg-emerald-500\/10,.bg-green-500\/10) { background: #ecfdf3 !important; }
+.staff-workspace :is(.bg-amber-500\/10,.bg-yellow-500\/10) { background: #fffaeb !important; }
+.staff-workspace :is(.bg-sky-500\/10,.bg-blue-500\/10) { background: #eff8ff !important; }
+.staff-workspace [role="dialog"] {
+  color: var(--staff-text, #17171a);
+}
+.staff-workspace [role="menu"] {
+  background: var(--staff-surface, #fff) !important;
+  color: var(--staff-text, #17171a) !important;
+  border-color: var(--staff-border) !important;
+  box-shadow: 0 18px 48px rgba(16,24,40,.16);
+}
+.staff-workspace [role="menu"] :is(a,button) { color: #344054 !important; }
+.staff-workspace [role="menu"] :is(a,button):hover { background: #f2f4f7 !important; }
+.staff-workspace .overflow-x-auto { scrollbar-color: #c7cbd1 transparent; }
+@media (max-width: 767px) {
+  .staff-workspace main { padding: 16px; }
+  .staff-workspace table { font-size: .78rem; }
+}
