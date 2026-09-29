@@ -201,7 +201,7 @@ export function AdminProjectDetailV2(){
         client_visible:project.project_type==='internal'?false:true,
       },file,setFileProgress)
       await portalApi.linkFileVersion(uploaded.id,previousFile.id)
-      toast('Nova versão adicionada. Agora você pode solicitar a aprovação do cliente.','success')
+      toast(project.project_type==='internal'?'Nova versão adicionada ao projeto interno.':'Nova versão adicionada. Agora você pode solicitar a aprovação do cliente.','success')
       setFileMenu(null);setFileProgress(0);setFileProgressName('')
       await load()
     }catch(error:any){toast(error.message||'Não foi possível adicionar a nova versão.','error')}
@@ -400,9 +400,9 @@ export function AdminProjectDetailV2(){
                   </div>
                   <div className="mb-2">
                     {project.project_type!=='internal'&&!file.review_required&&<button type="button" onClick={()=>void requestReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-[#E30613]/10 text-[#ff5d68] text-xs text-left">Solicitar aprovação do cliente</button>}
-                    {file.review_required&&file.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-white/[0.05] text-gray-300 text-xs text-left">Cancelar solicitação de aprovação</button>}
-                    {file.review_required&&['approved','changes_requested'].includes(file.review_status)&&<button type="button" onClick={()=>void requestReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-white/[0.05] text-gray-300 text-xs text-left">Solicitar nova avaliação</button>}
-                    {file.review_required&&<button type="button" onClick={()=>void showReviewHistory(file)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-gray-400 text-xs text-left">Ver histórico e comentários</button>}
+                    {project.project_type!=='internal'&&file.review_required&&file.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-white/[0.05] text-gray-300 text-xs text-left">Cancelar solicitação de aprovação</button>}
+                    {project.project_type!=='internal'&&file.review_required&&['approved','changes_requested'].includes(file.review_status)&&<button type="button" onClick={()=>void requestReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-white/[0.05] text-gray-300 text-xs text-left">Solicitar nova avaliação</button>}
+                    {project.project_type!=='internal'&&file.review_required&&<button type="button" onClick={()=>void showReviewHistory(file)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-gray-400 text-xs text-left">Ver histórico e comentários</button>}
                   </div>
                   <label className="block text-[10px] text-gray-500">Tarefa
                     <select value={file.task_id||''} onChange={async e=>{await portalApi.assignClientFileTask(file.id,e.target.value||null);setFileMenu(null);await load()}} className="mt-1 w-full px-2 py-1.5 rounded-lg bg-black border border-white/10 text-xs">
