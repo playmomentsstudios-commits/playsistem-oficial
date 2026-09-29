@@ -38,3 +38,12 @@ test('card checkout is hosted by Asaas so PAN and CVV do not cross Play Moments'
  assert.doesNotMatch(cart,/ccv/)
  assert.doesNotMatch(cart,/expiryMonth/)
 })
+
+
+test('hosted checkout remains resumable when buyer cancels or leaves Asaas',async()=>{
+ const payments=await readFile(new URL('../src/pages/customer/PaymentsPage.tsx',import.meta.url),'utf8')
+ assert.match(payments,/asaas_checkout/)
+ assert.match(payments,/Continuar pagamento/)
+ const cardBranch=cart.slice(cart.indexOf("paymentMethod==='CARD'"))
+ assert.doesNotMatch(cardBranch.slice(0,cardBranch.indexOf('catch(paymentError')),/clearCart\(\)/)
+})
