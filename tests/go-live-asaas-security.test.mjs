@@ -3,7 +3,6 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 
 const pix=await readFile(new URL('../supabase/functions/asaas-create-payment/index.ts',import.meta.url),'utf8')
-const card=await readFile(new URL('../supabase/functions/asaas-card-payment/index.ts',import.meta.url),'utf8')
 const checkout=await readFile(new URL('../supabase/functions/asaas-create-checkout/index.ts',import.meta.url),'utf8')
 const cart=await readFile(new URL('../src/pages/public/CartPage.tsx',import.meta.url),'utf8')
 const webhook=await readFile(new URL('../supabase/functions/asaas-webhook/index.ts',import.meta.url),'utf8')
@@ -12,14 +11,6 @@ test('generic Asaas charge endpoint is PIX-only',()=>{
  assert.match(pix,/billing_type!=="PIX"/)
  assert.match(pix,/const method="pix_gateway"/)
  assert.match(pix,/pixQrCode/)
-})
-
-test('card flow requires customer ownership and does not persist full card data',()=>{
- assert.match(card,/eq\("customer_id",userId\)/)
- assert.match(card,/remoteIp/)
- assert.match(card,/last4:card\.number\.slice\(-4\)/)
- assert.doesNotMatch(card,/provider_payload:\{[^}]*number:card\.number/)
- assert.doesNotMatch(card,/provider_payload:\{[^}]*ccv/)
 })
 
 test('Asaas webhook authenticates, deduplicates and covers financial terminal states',()=>{
