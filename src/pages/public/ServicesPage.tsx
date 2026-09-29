@@ -15,7 +15,8 @@ export function ServicesPage({initialCategory='Todos',embedded=false,title='O qu
  const [rows,setRows]=useState<any[]>([]),[loading,setLoading]=useState(true),[category,setCategory]=useState(initialCategory)
  useEffect(()=>{portalApi.services().then(setRows).finally(()=>setLoading(false))},[])
  const categories=useMemo(()=>['Todos',...Array.from(new Set(rows.map(s=>s.category).filter(Boolean)))],[rows])
- const visible=category==='Todos'?rows:rows.filter(s=>s.category===category)
+ const norm=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()
+ const visible=category==='Todos'?rows:rows.filter(s=>{const current=norm(String(s.category||'')),wanted=norm(category);return current===wanted||current.includes(wanted.split(' ')[0])||wanted.includes(current)})
  async function hire(s:any){
    if(!user){navigate(authLink('/cadastro','/servicos/'+s.slug));return}
    try{
