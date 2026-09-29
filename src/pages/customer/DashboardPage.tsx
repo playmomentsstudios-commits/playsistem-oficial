@@ -39,7 +39,7 @@ export function DashboardPage(){
       })
       setLoyalty(loyaltyRow)
       setSettings(loyaltySettings)
-    }).catch(()=>setLoadError(true)).finally(()=>setLoading(false)
+    }).catch(()=>setLoadError(true)).finally(()=>setLoading(false))
   },[user?.id])
 
   const cards=[
