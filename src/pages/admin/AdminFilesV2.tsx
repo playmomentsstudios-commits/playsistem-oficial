@@ -463,9 +463,9 @@ export function AdminFilesV2(){
       <div>
         <p className="text-[11px] uppercase tracking-[.18em] text-[#E30613] font-semibold">Operação</p>
         <h1 className="text-2xl font-bold mt-1">Central de Arquivos</h1>
-        <p className="text-sm text-gray-500 mt-1">Cliente → Projeto → Tarefa → aprovação → entrega.</p>
+        <p className="text-sm text-gray-500 mt-1">Clientes e produção interna → Projeto → Tarefa/Etapa → arquivo.</p>
       </div>
-      <div className="flex items-center gap-2"><Button type="button" variant="secondary" loading={testing} onClick={testDrive}>Testar Drive</Button><button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='sem-cliente')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-10 px-3.5 rounded-xl bg-[#E30613] hover:bg-[#f01826] text-white text-sm font-bold flex items-center gap-1.5"><span className="text-lg leading-none">＋</span>Novo</button></div>
+      <div className="flex items-center gap-2"><Button type="button" variant="secondary" loading={testing} onClick={testDrive}>Testar Drive</Button><button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='__unassigned__')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-10 px-3.5 rounded-xl bg-[#E30613] hover:bg-[#f01826] text-white text-sm font-bold flex items-center gap-1.5"><span className="text-lg leading-none">＋</span>Novo</button></div>
     </div>
 
     {uploadResult&&<div className="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 flex items-start gap-3">
@@ -475,7 +475,7 @@ export function AdminFilesV2(){
     </div>}
 
     <section>
-      <div className="mb-3 flex items-end justify-between gap-3"><div><p className="text-[10px] uppercase tracking-[.16em] text-gray-600">Biblioteca</p><h2 className="text-base font-bold mt-1">Clientes e projetos</h2></div><span className="text-[10px] text-gray-600">{customers.length} clientes · {projects.length} projetos · {files.length} arquivos</span></div>
+      <div className="mb-3 flex items-end justify-between gap-3"><div><p className="text-[10px] uppercase tracking-[.16em] text-gray-600">Biblioteca</p><h2 className="text-base font-bold mt-1">Clientes e projetos internos</h2></div><span className="text-[10px] text-gray-600">{customers.length} clientes · {projects.length} projetos · {files.length} arquivos</span></div>
       <div className="mb-3">
         <input value={customerSearch} onChange={e=>setCustomerSearch(e.target.value)} placeholder="Buscar cliente, projeto ou arquivo..." className="w-full min-h-10 px-3.5 rounded-xl bg-[#141416] border border-white/10 text-sm"/>
       </div>
@@ -492,8 +492,8 @@ export function AdminFilesV2(){
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-white/[0.05] flex items-center justify-center">📁</div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold truncate">{group.customer?[group.customer.first_name,group.customer.last_name].filter(Boolean).join(' '):'Sem cliente'}</p>
-                <p className="text-[10px] text-gray-500 truncate">{group.customer?.email||''}</p>
+                <p className="text-sm font-semibold truncate">{group.label}</p>
+                <p className="text-[10px] text-gray-500 truncate">{group.internal?'Produção interna da Play Moments':(group.customer?.email||'Arquivos sem projeto')}</p>
               </div>
               <div className="text-right">
                 <p className="text-xs font-semibold">{totalFiles}</p>
@@ -686,14 +686,15 @@ export function AdminFilesV2(){
             <option value="external">Link externo</option>
           </select>
         </label>
-        <label className="text-xs text-gray-500">Cliente
-          <select value={customer} onChange={e=>{setCustomer(e.target.value);setProject('');setTask('')}} className="pm-control mt-1 w-full px-3 bg-black">
-            <option value="">Selecione o cliente</option>
+        <label className="text-xs text-gray-500">Origem
+          <select value={customer} onChange={e=>{setCustomer(e.target.value);setProject('');setTask('');setStage('');setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
+            <option value="">Selecione a origem</option>
+            <option value={INTERNAL_LIBRARY_KEY}>Play Moments — projetos internos</option>
             {customers.map(c=><option key={c.id} value={c.id}>{c.first_name} {c.last_name} — {c.email}</option>)}
           </select>
         </label>
         <label className="text-xs text-gray-500">Projeto
-          <select value={project} onChange={e=>{setProject(e.target.value);setTask('');setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
+          <select value={project} onChange={e=>{setProject(e.target.value);setTask('');setStage('');setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
             <option value="">Sem projeto</option>
             {customerProjects.map((p:any)=><option key={p.id} value={p.id}>{p.title}</option>)}
           </select>
@@ -707,20 +708,26 @@ export function AdminFilesV2(){
             {tasks.map((t:any)=><option key={t.id} value={t.id}>{t.title}</option>)}
           </select>
         </label>
-        {provider==='google_drive'&&<label className="text-xs text-gray-500">Pasta do projeto
+        {provider==='google_drive'&&(selectedProjectIsInternal?<label className="text-xs text-gray-500">Etapa / pasta do projeto
+          <select value={effectiveStage||''} disabled={Boolean(selectedTask?.stage_id)} onChange={e=>setStage(e.target.value)} className="pm-control mt-1 w-full px-3 bg-black disabled:opacity-60">
+            {stages.map((item:any)=><option key={item.id} value={item.id}>{item.name}</option>)}
+          </select>
+        </label>:<label className="text-xs text-gray-500">Pasta do projeto
           <select value={folderKind} onChange={e=>{setFolderKind(e.target.value);setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
             {folderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
           </select>
-        </label>}
-        <label className="text-xs text-gray-500">Visibilidade
+        </label>)}
+        {selectedProjectIsInternal?<label className="text-xs text-gray-500">Visibilidade
+          <div className="pm-control mt-1 w-full px-3 bg-white/[0.03] flex items-center">Somente equipe · projeto interno</div>
+        </label>:<label className="text-xs text-gray-500">Visibilidade
           <select value={clientVisible?'client':'internal'} onChange={e=>setClientVisible(e.target.value==='client')} className="pm-control mt-1 w-full px-3 bg-black">
             <option value="client">Visível ao cliente</option>
             <option value="internal">Somente equipe</option>
           </select>
-        </label>
+        </label>}
       </div>
 
-      {provider==='google_drive'&&project&&<div className="grid md:grid-cols-[1fr_auto] gap-3 items-end">
+      {provider==='google_drive'&&project&&!selectedProjectIsInternal&&<div className="grid md:grid-cols-[1fr_auto] gap-3 items-end">
         <label className="text-xs text-gray-500">Subpasta personalizada
           <select value={customFolder} onChange={e=>setCustomFolder(e.target.value)} className="pm-control mt-1 w-full px-3 bg-black">
             <option value="">Sem subpasta — usar {folderOptions.find(([value])=>value===folderKind)?.[1]||'pasta padrão'}</option>
