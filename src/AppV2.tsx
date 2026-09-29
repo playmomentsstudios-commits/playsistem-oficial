@@ -5,6 +5,7 @@ import { CartProvider } from './contexts/CartContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { useAuth } from './contexts/AuthContext'
 import { RouteSeo } from './components/RouteSeo'
+import { RouteFocus } from './components/RouteFocus'
 
 // Route-level code splitting keeps public, customer and admin screens out of the initial bundle.
 const CustomerLayoutV2 = lazy(() => import('./layouts/CustomerLayoutV2').then(m => ({ default:m.CustomerLayoutV2 })))
@@ -80,7 +81,7 @@ const AcademyCoursePage = lazy(() => import('./pages/customer/AcademyCoursePage'
 const AdminPermissionGate = lazy(() => import('./components/admin/AdminPermissionGate').then(m => ({ default:m.AdminPermissionGate })))
 
 function RouteFallback(){
-  return <div className="min-h-[35vh] flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-[#E30613] border-t-transparent animate-spin" /></div>
+  return <div role="status" aria-live="polite" className="min-h-[35vh] flex items-center justify-center gap-3 text-sm text-gray-500"><div aria-hidden="true" className="w-8 h-8 rounded-full border-2 border-[#E30613] border-t-transparent animate-spin" /><span>Carregando página...</span></div>
 }
 
 function AuthenticatedCommunity() {
@@ -98,6 +99,7 @@ export default function AppV2() {
         <CartProvider>
           <ToastProvider>
             <RouteSeo />
+            <RouteFocus />
             <Suspense fallback={<RouteFallback />}>
             <Routes>
               {/* Public */}
