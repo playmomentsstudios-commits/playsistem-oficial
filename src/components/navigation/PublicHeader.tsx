@@ -48,7 +48,8 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
               key={link.href}
               to={link.href}
               className="text-sm font-medium transition-colors duration-200"
-              style={{ color: location.pathname === link.href ? '#f0f0f2' : '#6b6b78' }}
+              aria-current={location.pathname === link.href || location.pathname.startsWith(link.href + '/') ? 'page' : undefined}
+              style={{ color: location.pathname === link.href || location.pathname.startsWith(link.href + '/') ? '#f0f0f2' : '#6b6b78' }}
             >
               {link.label}
             </Link>
@@ -121,6 +122,7 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
               {link.label}
             </Link>
           ))}
+          <Link to="/carrinho" onClick={() => setMobileOpen(false)} className="min-h-11 flex items-center justify-between text-sm font-medium" style={{color:'#c0c0cc'}}><span>Carrinho</span>{itemCount>0&&<span className="min-w-6 h-6 px-1 rounded-full bg-[#E30613] text-white text-xs font-bold flex items-center justify-center">{itemCount}</span>}</Link>
           <div className="flex flex-col gap-2 pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             {isAuthenticated ? (
               <>
