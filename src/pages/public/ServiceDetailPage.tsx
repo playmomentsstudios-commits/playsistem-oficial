@@ -5,6 +5,7 @@ import { portalApi } from '../../api/portal'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { authLink,conversationLink } from '../../lib/navigation'
+import { useSeo } from '../../lib/seo'
 
 const money=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v/100)
 
@@ -18,6 +19,7 @@ export function ServiceDetailPage(){
  const {slug}=useParams(),{user,role}=useAuth(),toast=useToast(),navigate=useNavigate()
  const [service,setService]=useState<any>(null),[loading,setLoading]=useState(true),[submitting,setSubmitting]=useState(false)
  useEffect(()=>{portalApi.services().then(rows=>setService(rows.find((x:any)=>x.slug===slug)||null)).finally(()=>setLoading(false))},[slug])
+ useSeo({title:service?.name||'Serviço',description:(service?.short_description||service?.description||'Serviço profissional Play Moments.').slice(0,160),canonicalPath:'/servicos/'+(slug||''),noindex:!loading&&!service,jsonLd:service?{'@context':'https://schema.org','@type':'Service',name:service.name,description:service.short_description||service.description||undefined,provider:{'@type':'Organization',name:'Play Moments'}}:null})
  async function hire(){
   if(!service||submitting)return
   if(!user){navigate(authLink('/cadastro','/servicos/'+service.slug));return}
