@@ -29,7 +29,6 @@ export function CartPage(){
      const checkout=await portalApi.createAsaasCheckout(orderId,window.location.origin)
      if(!checkout?.checkoutUrl)throw new Error('O Asaas não retornou o checkout seguro.')
      trackConversion('payment_created',{payment_method:'CARD',order_id:orderId})
-     clearCart()
      window.location.assign(checkout.checkoutUrl)
      return
     }
