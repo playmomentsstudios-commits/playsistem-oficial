@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { useToast } from '../../contexts/ToastContext'
+import { useAuth } from '../../contexts/AuthContext'
+import { portalApi } from '../../api/portal'
 import {
   archiveProduct,
   createProduct,
@@ -122,6 +124,7 @@ function productToForm(product: CatalogProductRow): FormState {
 
 export function AdminProducts() {
   const toast = useToast()
+  const {user}=useAuth()
 
   const [products, setProducts] = useState<PublicCatalogProduct[]>([])
   const [categories, setCategories] = useState<ProductCategoryRow[]>([])
@@ -364,6 +367,16 @@ export function AdminProducts() {
     }
   }
 
+  async function convertToService(product:CatalogProductRow){
+    if(user?.role!=='admin')return
+    if(!window.confirm('Mover "'+product.name+'" para Serviços? O produto original será arquivado para preservar histórico de pedidos.'))return
+    try{
+      await portalApi.convertProductToService(product.id)
+      toast('Item convertido em serviço. O produto original foi arquivado.','success')
+      await loadData()
+    }catch(error:any){toast(error.message||'Não foi possível converter o item.','error')}
+  }
+
   async function handleArchive(product: CatalogProductRow) {
     const confirmed = window.confirm(
       `Arquivar o produto "${product.name}"?`
@@ -579,6 +592,10 @@ export function AdminProducts() {
                 >
                   Editar
                 </button>
+
+                {user?.role==='admin'&&product.status !== 'archived' && (
+                  <button onClick={()=>void convertToService(product)} className="text-xs px-2 py-1 rounded-lg border border-sky-500/20 bg-sky-500/10 text-sky-300">Mover para Serviços</button>
+                )}
 
                 {product.status !== 'archived' && (
                   <button
