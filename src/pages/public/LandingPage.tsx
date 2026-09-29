@@ -2,10 +2,12 @@ import { useEffect,useState } from 'react'
 import { Link,useParams } from 'react-router-dom'
 import { PublicLayout } from '../../layouts/PublicLayout'
 import { siteContentApi,type SiteLandingPage } from '../../services/siteContent'
+import { useSeo } from '../../lib/seo'
 
 export function LandingPage(){
  const {slug=''}=useParams(),[page,setPage]=useState<SiteLandingPage|null>(null),[loading,setLoading]=useState(true)
- useEffect(()=>{let active=true;siteContentApi.landingPage(slug).then(p=>{if(!active)return;setPage(p);document.title=p.seo_title||p.title;const meta=document.querySelector('meta[name="description"]');if(meta&&p.seo_description)meta.setAttribute('content',p.seo_description);if(p.noindex){let robots=document.querySelector('meta[name="robots"]');if(!robots){robots=document.createElement('meta');robots.setAttribute('name','robots');document.head.appendChild(robots)}robots.setAttribute('content','noindex,nofollow')}}).catch(()=>setPage(null)).finally(()=>setLoading(false));return()=>{active=false}},[slug])
+ useEffect(()=>{let active=true;siteContentApi.landingPage(slug).then(p=>{if(active)setPage(p)}).catch(()=>setPage(null)).finally(()=>setLoading(false));return()=>{active=false}},[slug])
+ useSeo({title:page?.seo_title||page?.title||'Campanha',description:page?.seo_description||page?.subheadline||'Conheça esta solução da Play Moments.',image:page?.hero_image_url,canonicalPath:'/l/'+slug,canonicalUrl:page?.canonical_url,noindex:Boolean(page?.noindex)||(!loading&&!page)})
  if(loading)return <PublicLayout><div className="min-h-[55vh] flex items-center justify-center text-gray-400">Carregando...</div></PublicLayout>
  if(!page)return <PublicLayout><div className="min-h-[55vh] flex flex-col items-center justify-center px-5 text-center"><h1 className="text-3xl font-bold">Página não encontrada</h1><p className="text-gray-400 mt-3">Esta campanha pode ter sido encerrada ou o endereço está incorreto.</p><Link to="/" className="mt-6 px-5 py-3 rounded-xl bg-[#E30613] font-semibold">Voltar para a Play Moments</Link></div></PublicLayout>
  return <PublicLayout>
