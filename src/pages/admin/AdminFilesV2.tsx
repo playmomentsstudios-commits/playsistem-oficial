@@ -622,7 +622,7 @@ export function AdminFilesV2(){
                       <span className="text-[9px] text-gray-600">{sizeLabel(row.file_size)}</span>
                     </div>
                     <p className="text-xs font-semibold truncate mt-1" title={row.name}>{row.name}</p>
-                    <p className="text-[9px] text-gray-500 truncate mt-1">{row.custom_folder?.name?('📁 '+row.custom_folder.name):(row.task?.title||'Arquivo geral')}</p>
+                    <p className="text-[9px] text-gray-500 truncate mt-1">{row.stage?.name?('📁 '+row.stage.name):(row.custom_folder?.name?('📁 '+row.custom_folder.name):(row.task?.title||'Arquivo geral'))}</p>
                     {review&&<span className={'inline-flex mt-2 px-2 py-1 rounded-full text-[9px] font-semibold '+review.className}>{review.label}</span>}
                   </button>
 
@@ -655,7 +655,7 @@ export function AdminFilesV2(){
                           {projects.filter((projectRow:any)=>projectRow.customer_id).map((projectRow:any)=><option key={projectRow.id} value={projectRow.id}>{projectRow.title}</option>)}
                         </select>
                       </label>}
-                      {row.storage_provider==='google_drive'&&row.project_id&&<label className="relative w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer text-sm" title="Mover dentro do projeto" aria-label="Mover arquivo">
+                      {row.storage_provider==='google_drive'&&row.project_id&&!internalRow&&<label className="relative w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer text-sm" title="Mover dentro do projeto" aria-label="Mover arquivo">
                         ⇄
                         <select defaultValue="" onChange={e=>{if(e.target.value){void move(row,e.target.value);setMenuFile(null)}}} className="absolute inset-0 opacity-0 cursor-pointer">
                           <option value="">Mover</option>
@@ -688,7 +688,7 @@ export function AdminFilesV2(){
           </select>
         </label>
         <label className="text-xs text-gray-500">Origem
-          <select value={customer} onChange={e=>{setCustomer(e.target.value);setProject('');setTask('');setStage('');setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
+          <select value={customer} onChange={e=>{const next=e.target.value;setCustomer(next);if(next===INTERNAL_LIBRARY_KEY)setProvider('google_drive');setProject('');setTask('');setStage('');setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
             <option value="">Selecione a origem</option>
             <option value={INTERNAL_LIBRARY_KEY}>Play Moments — projetos internos</option>
             {customers.map(c=><option key={c.id} value={c.id}>{c.first_name} {c.last_name} — {c.email}</option>)}
