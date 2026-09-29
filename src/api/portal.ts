@@ -263,6 +263,11 @@ export const portalApi = {
     const q=id?supabase.from('project_stages').update(values).eq('id',id):supabase.from('project_stages').insert(values)
     const { data,error }=await q.select().single()
     if(error) throw error
+    if(data?.project_id){
+      void supabase.functions.invoke('google-drive-project-folder',{
+        body:{project_id:data.project_id},
+      }).catch(()=>undefined)
+    }
     return data
   },
   deleteStage: async (id:string) => {
