@@ -60,10 +60,6 @@ Deno.serve(async(req)=>{
     const {error:stockError}=await db.rpc("release_order_stock",{p_order_id:payment.order_id});
     if(stockError)throw stockError;
    }
-   if(paid){
-    const {error:notificationError}=await db.from("notifications").insert({user_id:payment.customer_id,type:"payment_confirmed",title:"Pagamento confirmado",message:"Seu pagamento foi confirmado.",link:"/app/pedidos/"+payment.order_id,metadata:{order_id:payment.order_id,payment_id:payment.id}});
-    if(notificationError)throw notificationError;
-   }
   }
   const {error:eventError}=await db.from("payment_webhook_events").insert({id:eventId,provider:"asaas",event_type:event,provider_reference:providerReference,payload});
   if(eventError?.code==="23505")return json({ok:true,duplicate:true});
