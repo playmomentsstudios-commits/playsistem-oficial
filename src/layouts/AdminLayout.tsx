@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import logoUrl from '../assets/logo-play-moments.png'
@@ -138,7 +138,7 @@ export function AdminLayout() {
   )
 
   return (
-    <div className={collaboratorMode?'staff-workspace min-h-screen flex':'min-h-screen flex'} style={collaboratorMode?{background:staffBrand.staff_background_color,color:staffBrand.staff_text_color,'--staff-primary':staffBrand.staff_primary_color,'--staff-bg':staffBrand.staff_background_color,'--staff-surface':staffBrand.staff_surface_color,'--staff-text':staffBrand.staff_text_color} as React.CSSProperties:{background:'#0d0d0f'}}>
+    <div className={collaboratorMode?'staff-workspace min-h-screen flex':'min-h-screen flex'} style={collaboratorMode?{background:staffBrand.staff_background_color,color:staffBrand.staff_text_color,'--staff-primary':staffBrand.staff_primary_color,'--staff-bg':staffBrand.staff_background_color,'--staff-surface':staffBrand.staff_surface_color,'--staff-text':staffBrand.staff_text_color} as CSSProperties:{background:'#0d0d0f'}}>
       <div className="hidden md:flex flex-shrink-0" style={{ width: 248 }}>
         <Sidebar />
       </div>
