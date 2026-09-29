@@ -11,6 +11,7 @@ Deno.serve(async (req) => {
     const taskId = body.task_id ? String(body.task_id) : null;
     const clientVisible = Boolean(body.client_visible);
     const customFolderId = body.custom_folder_id ? String(body.custom_folder_id) : null;
+    const requestedStageId = body.stage_id ? String(body.stage_id) : null;
 
     if (!projectId || (!driveFileId && !uploadId)) throw new Error("Missing file metadata");
 
@@ -24,13 +25,15 @@ Deno.serve(async (req) => {
     const staff = ctx.role === "admin" || hasPermission(ctx, "files.manage");
     if (!staff && project.customer_id !== ctx.userId) throw new Error("Forbidden");
 
+    let taskStageId:string|null = null;
     if (taskId) {
       const { data: task, error: taskError } = await ctx.db
         .from("tasks")
-        .select("id,project_id")
+        .select("id,project_id,stage_id")
         .eq("id", taskId)
         .single();
       if (taskError || task?.project_id !== projectId) throw new Error("Task does not belong to project");
+      taskStageId = task.stage_id || null;
     }
 
     if (uploadId) {
@@ -58,6 +61,7 @@ Deno.serve(async (req) => {
     const allowedFolderIds = new Set<string>([
       folders.projectFolderId,
       ...folders.folders.map((row:any) => row.drive_folder_id),
+      ...(folders.stageFolders || []).map((row:any) => row.drive_folder_id),
       ...(customFolders || []).map((row:any) => row.drive_folder_id),
     ]);
 
@@ -100,12 +104,21 @@ Deno.serve(async (req) => {
       throw new Error("Drive file is outside this project");
     }
 
+    const fileStageId = project.project_type === "internal"
+      ? (taskStageId || requestedStageId || file.appProperties?.playMomentsStageId || null)
+      : null;
+
+    if (fileStageId && !(folders.stageFolders || []).some((row:any) => row.stage_id === fileStageId)) {
+      throw new Error("Stage folder does not belong to this project");
+    }
+
     // Drive objects stay private. Visibility is enforced by Play Moments and
     // authenticated downloads are proxied by google-drive-file-download.
     const values = {
       customer_id: project.customer_id,
       project_id: projectId,
       task_id: taskId,
+      stage_id: fileStageId,
       uploaded_by: ctx.userId,
       name: file.name,
       external_url: file.webViewLink || `https://drive.google.com/file/d/${file.id}/view`,
