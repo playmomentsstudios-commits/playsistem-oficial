@@ -54,6 +54,8 @@ export function AdminLayout() {
     portalApi.myStaffProfile().then(profile=>setStaffPermissions(profile?.permissions||[])).catch(()=>setStaffPermissions([]))
   },[user?.id,user?.role])
 
+  const collaboratorMode=user?.role==='staff'
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0b' }}>
@@ -73,7 +75,7 @@ export function AdminLayout() {
   const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
     <aside style={{
       width: 248,
-      background: '#0a0a0b',
+      background: collaboratorMode ? '#ffffff' : '#0a0a0b',
       borderRight: '1px solid rgba(255,255,255,0.05)',
       display: 'flex',
       flexDirection: 'column',
@@ -89,7 +91,7 @@ export function AdminLayout() {
       </div>
 
       <nav className="flex-1 px-3 pt-4 overflow-y-auto pb-5">
-        <Link to="/admin" onClick={()=>setSidebarOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-3 text-sm font-semibold transition-all" style={{background:isActive('/admin',true)?'rgba(227,6,19,0.14)':'transparent',color:isActive('/admin',true)?'#ff6b7a':'#a0a0ad',border:isActive('/admin',true)?'1px solid rgba(227,6,19,0.22)':'1px solid transparent'}}><span className="text-[#E30613]"><MenuIcon name="dashboard" /></span>Painel</Link>
+        <Link to="/admin" onClick={()=>setSidebarOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-3 text-sm font-semibold transition-all" style={{background:isActive('/admin',true)?'rgba(227,6,19,0.14)':'transparent',color:isActive('/admin',true)?(collaboratorMode?'#b4000c':'#ff6b7a'):(collaboratorMode?'#44444d':'#a0a0ad'),border:isActive('/admin',true)?'1px solid rgba(227,6,19,0.22)':'1px solid transparent'}}><span className="text-[#E30613]"><MenuIcon name="dashboard" /></span>Painel</Link>
         {MENU_GROUPS.map(group=>{
           const visibleItems=group.items.filter((item:any)=>{
             if(user?.role==='admin')return true
@@ -100,12 +102,12 @@ export function AdminLayout() {
           const groupActive=visibleItems.some((item:any)=>isActive(item.href))
           const open=openGroups.includes(group.label)||groupActive
           return <div key={group.label} className="mb-1.5">
-            <button type="button" onClick={()=>setOpenGroups(current=>current.includes(group.label)?current.filter(value=>value!==group.label):[...current,group.label])} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all hover:bg-white/[0.025]" style={{color:groupActive?'#ff6b7a':'#9090a0',background:groupActive?'rgba(227,6,19,0.06)':'transparent'}}>
+            <button type="button" onClick={()=>setOpenGroups(current=>current.includes(group.label)?current.filter(value=>value!==group.label):[...current,group.label])} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all hover:bg-white/[0.025]" style={{color:groupActive?(collaboratorMode?'#b4000c':'#ff6b7a'):(collaboratorMode?'#55555f':'#9090a0'),background:groupActive?'rgba(227,6,19,0.06)':'transparent'}}>
               <span className="text-[#E30613]"><MenuIcon name={group.icon} size={16} /></span><span>{group.label}</span><span className="ml-auto text-[10px] text-gray-600">{open?'−':'+'}</span>
             </button>
             {open&&<div className="ml-[18px] pl-3 border-l border-white/[0.07] mt-1 mb-2">{visibleItems.map((item:any)=>{
               const active=isActive(item.href)
-              return <Link key={item.href} to={item.href} onClick={()=>setSidebarOpen(false)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all hover:bg-white/[0.025]" style={{background:active?'rgba(227,6,19,0.12)':'transparent',color:active?'#ff6b7a':'#777784'}}>
+              return <Link key={item.href} to={item.href} onClick={()=>setSidebarOpen(false)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all hover:bg-white/[0.025]" style={{background:active?'rgba(227,6,19,0.12)':'transparent',color:active?(collaboratorMode?'#b4000c':'#ff6b7a'):(collaboratorMode?'#5f5f68':'#777784')}}>
                 <span className={active?'text-[#ff5364]':'text-gray-600'}><MenuIcon name={item.icon} size={15} /></span><span className="truncate">{item.label}</span>
                 {item.href==='/admin/conversas'&&counts.messages>0&&<span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.messages}</span>}
                 {item.href==='/admin/notificacoes'&&counts.notifications>0&&<span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.notifications}</span>}
@@ -120,7 +122,7 @@ export function AdminLayout() {
   )
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#0d0d0f' }}>
+    <div className={collaboratorMode?'staff-workspace min-h-screen flex':'min-h-screen flex'} style={{ background: collaboratorMode?'#f4f6f8':'#0d0d0f' }}>
       <div className="hidden md:flex flex-shrink-0" style={{ width: 248 }}>
         <Sidebar />
       </div>
@@ -135,14 +137,14 @@ export function AdminLayout() {
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Top bar */}
         <div className="flex items-center justify-between px-4 py-3 border-b"
-          style={{ background: '#0a0a0b', borderColor: 'rgba(255,255,255,0.05)', minHeight: 56 }}>
+          style={{ background: collaboratorMode?'#ffffff':'#0a0a0b', borderColor: 'rgba(255,255,255,0.05)', minHeight: 56 }}>
           <div className="flex items-center gap-3">
             <button aria-label="Abrir menu administrativo" className="md:hidden w-11 h-11 flex items-center justify-center" onClick={() => setSidebarOpen(true)} style={{ color: '#9090a0' }}>
               <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M3 12h18M3 6h18M3 18h18" />
               </svg>
             </button>
-            <span className="text-sm font-semibold" style={{ color: '#f0f0f2' }}>Play Moments</span>
+            <span className="text-sm font-semibold" style={{ color: collaboratorMode?'#17171a':'#f0f0f2' }}>{collaboratorMode?'Área do colaborador':'Play Moments'}</span>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <Link to="/admin/conversas" aria-label="Mensagens" title="Mensagens" className="relative w-10 h-10 rounded-xl border border-white/[0.07] bg-white/[0.025] text-gray-400 hover:text-white hover:bg-white/[0.05] transition-colors flex items-center justify-center">
