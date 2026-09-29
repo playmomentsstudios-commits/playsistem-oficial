@@ -307,7 +307,7 @@ export const portalApi = {
   },
   projectFiles: async (projectId:string) => {
     const { data,error }=await supabase.from('client_files')
-      .select('*,custom_folder:project_custom_folders(id,name,parent_kind,client_visible)').eq('project_id',projectId).order('created_at',{ascending:false})
+      .select('*,stage:project_stages(id,name,position),custom_folder:project_custom_folders(id,name,parent_kind,client_visible)').eq('project_id',projectId).order('created_at',{ascending:false})
     if(error) throw error
     return data ?? []
   },
@@ -468,7 +468,7 @@ export const portalApi = {
   },
   files: async () => {
     const { data,error }=await supabase.from('client_files')
-      .select('*,project:projects(id,title),task:tasks(id,title),customer:profiles!client_files_customer_id_fkey(id,email,first_name,last_name),custom_folder:project_custom_folders(id,name,parent_kind,client_visible)')
+      .select('*,project:projects(id,title,customer_id,project_type),task:tasks(id,title,stage_id),stage:project_stages(id,name,position),customer:profiles!client_files_customer_id_fkey(id,email,first_name,last_name),custom_folder:project_custom_folders(id,name,parent_kind,client_visible)')
       .order('created_at',{ascending:false})
     if(error) throw error
     return data ?? []
@@ -512,7 +512,7 @@ export const portalApi = {
     return data as {complete:boolean;next_offset?:number;file?:any}
   },
   uploadDriveFile: async (
-    values:{project_id:string;task_id?:string|null;folder_kind?:string;custom_folder_id?:string|null;client_visible:boolean},
+    values:{project_id:string;task_id?:string|null;stage_id?:string|null;folder_kind?:string;custom_folder_id?:string|null;client_visible:boolean},
     file:File,
     onProgress?:(value:number)=>void,
   ) => {
@@ -524,6 +524,7 @@ export const portalApi = {
       body:{
         project_id:values.project_id,
         task_id:values.task_id||null,
+        stage_id:values.stage_id||null,
         folder_kind:values.folder_kind||'received',
         custom_folder_id:values.custom_folder_id||null,
         file_name:file.name,
@@ -606,6 +607,7 @@ export const portalApi = {
     const finalizeBody={
       project_id:values.project_id,
       task_id:values.task_id||null,
+      stage_id:values.stage_id||session.stage_id||null,
       drive_file_id:driveFile?.id||null,
       upload_id:session.upload_id,
       client_visible:values.client_visible,
