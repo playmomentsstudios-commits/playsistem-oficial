@@ -88,6 +88,20 @@ export type PortfolioItem={
   category?:PortfolioCategory|null
 }
 
+
+export type SiteCampaign={
+  id:string; name:string; code:string; status:'draft'|'active'|'paused'|'finished'; source:string|null; medium:string|null;
+  starts_at:string|null; ends_at:string|null; notes:string|null; created_at:string; updated_at:string;
+}
+export type LandingSection={type:'benefits'|'content'|'proof'|'faq'|'cta'; title?:string; text?:string; items?:Array<{title:string;description?:string}>}
+export type SiteLandingPage={
+  id:string; campaign_id:string|null; title:string; slug:string; status:'draft'|'published'|'paused'; eyebrow:string|null;
+  headline:string; subheadline:string|null; cta_label:string; cta_href:string; secondary_cta_label:string|null; secondary_cta_href:string|null;
+  hero_image_url:string|null; hero_image_drive_file_id:string|null; hero_image_mime_type:string|null; hero_image_file_size:number|null;
+  sections:LandingSection[]; seo_title:string|null; seo_description:string|null; canonical_url:string|null; noindex:boolean; published_at:string|null;
+  campaign?:SiteCampaign|null;
+}
+
 function slugify(value:string){
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()
     .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')
@@ -198,6 +212,48 @@ export const siteContentApi={
   deletePortfolioItem:async(id:string)=>{
     const {error}=await supabase.from('portfolio_items').delete().eq('id',id)
     if(error)throw error
+  },
+
+  campaigns:async()=>{
+    const {data,error}=await supabase.from('site_campaigns').select('*').order('created_at',{ascending:false})
+    if(error)throw error
+    return (data||[]) as SiteCampaign[]
+  },
+
+  saveCampaign:async(values:Partial<SiteCampaign>&{name:string})=>{
+    const {data:{user}}=await supabase.auth.getUser()
+    const payload={...values,code:values.code?.trim()||slugify(values.name),updated_at:new Date().toISOString(),updated_by:user?.id||null}
+    if(values.id){const {data,error}=await supabase.from('site_campaigns').update(payload).eq('id',values.id).select().single();if(error)throw error;return data as SiteCampaign}
+    const {data,error}=await supabase.from('site_campaigns').insert({...payload,created_by:user?.id||null}).select().single();if(error)throw error;return data as SiteCampaign
+  },
+
+  landingPages:async(admin=false)=>{
+    let query=supabase.from('site_landing_pages').select('*,campaign:site_campaigns(*)').order('created_at',{ascending:false})
+    if(!admin)query=query.eq('status','published')
+    const {data,error}=await query;if(error)throw error;return (data||[]) as SiteLandingPage[]
+  },
+
+  landingPage:async(slug:string,admin=false)=>{
+    if(admin){
+      const {data,error}=await supabase.from('site_landing_pages').select('*,campaign:site_campaigns(*)').eq('slug',slug).single()
+      if(error)throw error
+      return data as SiteLandingPage
+    }
+    const {data,error}=await supabase.from('site_landing_pages').select('*').eq('slug',slug).eq('status','published').single()
+    if(error)throw error
+    return data as SiteLandingPage
+  },
+
+  saveLandingPage:async(values:Partial<SiteLandingPage>&{title:string;headline:string})=>{
+    const {data:{user}}=await supabase.auth.getUser()
+    const {campaign,...rest}=values
+    const payload={...rest,slug:values.slug?.trim()||slugify(values.title),updated_at:new Date().toISOString(),updated_by:user?.id||null}
+    if(values.id){const {data,error}=await supabase.from('site_landing_pages').update(payload).eq('id',values.id).select().single();if(error)throw error;return data as SiteLandingPage}
+    const {data,error}=await supabase.from('site_landing_pages').insert({...payload,created_by:user?.id||null}).select().single();if(error)throw error;return data as SiteLandingPage
+  },
+
+  deleteLandingPage:async(id:string)=>{
+    const {error}=await supabase.from('site_landing_pages').delete().eq('id',id);if(error)throw error
   },
 
   uploadSiteAsset:async(file:File,section='HOME')=>{
