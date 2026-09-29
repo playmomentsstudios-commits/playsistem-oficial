@@ -4,6 +4,8 @@ import { readFile } from 'node:fs/promises'
 
 const pix=await readFile(new URL('../supabase/functions/asaas-create-payment/index.ts',import.meta.url),'utf8')
 const card=await readFile(new URL('../supabase/functions/asaas-card-payment/index.ts',import.meta.url),'utf8')
+const checkout=await readFile(new URL('../supabase/functions/asaas-create-checkout/index.ts',import.meta.url),'utf8')
+const cart=await readFile(new URL('../src/pages/public/CartPage.tsx',import.meta.url),'utf8')
 const webhook=await readFile(new URL('../supabase/functions/asaas-webhook/index.ts',import.meta.url),'utf8')
 
 test('generic Asaas charge endpoint is PIX-only',()=>{
@@ -26,4 +28,13 @@ test('Asaas webhook authenticates, deduplicates and covers financial terminal st
  for(const event of ['PAYMENT_CONFIRMED','PAYMENT_RECEIVED','PAYMENT_REFUNDED','PAYMENT_OVERDUE','PAYMENT_CREDIT_CARD_CAPTURE_REFUSED','PAYMENT_CHARGEBACK_REQUESTED']){
   assert.match(webhook,new RegExp(event))
  }
+})
+
+
+test('card checkout is hosted by Asaas so PAN and CVV do not cross Play Moments',()=>{
+ assert.match(checkout,/billingTypes:\["CREDIT_CARD"\]/)
+ assert.match(cart,/createAsaasCheckout/)
+ assert.doesNotMatch(cart,/credit_card/)
+ assert.doesNotMatch(cart,/ccv/)
+ assert.doesNotMatch(cart,/expiryMonth/)
 })

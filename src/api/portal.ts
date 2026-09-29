@@ -394,6 +394,16 @@ export const portalApi = {
     if(!data?.ok)throw new Error(data?.error||'Não foi possível criar a cobrança no Asaas.')
     return data
   },
+  createAsaasCheckout: async (orderId:string,returnUrl:string) => {
+    const {data,error}=await supabase.functions.invoke('asaas-create-checkout',{body:{order_id:orderId,return_url:returnUrl}})
+    if(error){
+      let message='Não foi possível abrir o checkout seguro do Asaas.'
+      try{const payload=await (error as any)?.context?.json?.();if(payload?.error)message=payload.error}catch{}
+      throw new Error(message)
+    }
+    if(!data?.ok||!data?.checkoutUrl)throw new Error(data?.error||'Não foi possível abrir o checkout seguro do Asaas.')
+    return data as {ok:true;checkoutId:string;checkoutUrl:string;reused?:boolean}
+  },
   payments: async () => {
     const { data,error } = await supabase.from('payments')
       .select('*,order:orders(order_number),customer:profiles!payments_customer_id_fkey(id,email,first_name,last_name),receipt:payment_receipts(*)')
