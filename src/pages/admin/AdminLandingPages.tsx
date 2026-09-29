@@ -4,7 +4,7 @@ import { Input } from '../../components/ui/Input'
 import { useToast } from '../../contexts/ToastContext'
 import { siteContentApi,type SiteCampaign,type SiteLandingPage,type LandingSection } from '../../services/siteContent'
 
-const blank={title:'',slug:'',headline:'',subheadline:'',eyebrow:'',cta_label:'Quero saber mais',cta_href:'/contato',secondary_cta_label:'',secondary_cta_href:'',status:'draft' as const,campaign_id:'',seo_title:'',seo_description:'',noindex:false,hero_image_url:'',hero_image_drive_file_id:'',hero_image_mime_type:'',hero_image_file_size:null as number|null}
+const blank={title:'',slug:'',headline:'',subheadline:'',eyebrow:'',cta_label:'Quero saber mais',cta_href:'/contato',secondary_cta_label:'',secondary_cta_href:'',status:'draft' as SiteLandingPage['status'],campaign_id:'',seo_title:'',seo_description:'',noindex:false,hero_image_url:'',hero_image_drive_file_id:'',hero_image_mime_type:'',hero_image_file_size:null as number|null}
 export function AdminLandingPages(){
  const toast=useToast(),[pages,setPages]=useState<SiteLandingPage[]>([]),[campaigns,setCampaigns]=useState<SiteCampaign[]>([]),[form,setForm]=useState({...blank}),[editing,setEditing]=useState<string|null>(null),[benefits,setBenefits]=useState(''),[faq,setFaq]=useState(''),[saving,setSaving]=useState(false)
  const load=()=>Promise.all([siteContentApi.landingPages(true),siteContentApi.campaigns()]).then(([p,c])=>{setPages(p);setCampaigns(c)})
