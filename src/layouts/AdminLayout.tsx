@@ -92,12 +92,12 @@ export function AdminLayout() {
     <aside style={{
       width: 248,
       background: collaboratorMode ? staffBrand.staff_surface_color : '#0a0a0b',
-      borderRight: '1px solid rgba(255,255,255,0.05)',
+      borderRight: collaboratorMode ? '1px solid #e1e4e8' : '1px solid rgba(255,255,255,0.05)',
       display: 'flex',
       flexDirection: 'column',
       ...(mobile ? { position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 50 } : {}),
     }}>
-      <div className="px-5 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+      <div className="px-5 py-5 border-b" style={{ borderColor: collaboratorMode?'#e1e4e8':'rgba(255,255,255,0.05)' }}>
         <div className="flex items-center justify-between gap-3">
           <Link to="/admin" className="block">
             <div className={collaboratorMode?'rounded-xl px-3 py-2':'contents'} style={collaboratorMode?{background:staffBrand.staff_primary_color}:undefined}><img src={collaboratorMode?(staffBrand.staff_logo_url||'/staff-logo.svg'):logoUrl} alt="Play Moments" className="h-12 w-auto max-w-full object-contain" /></div>
@@ -118,12 +118,12 @@ export function AdminLayout() {
           const groupActive=visibleItems.some((item:any)=>isActive(item.href))
           const open=openGroups.includes(group.label)||groupActive
           return <div key={group.label} className="mb-1.5">
-            <button type="button" onClick={()=>setOpenGroups(current=>current.includes(group.label)?current.filter(value=>value!==group.label):[...current,group.label])} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all hover:bg-white/[0.025]" style={{color:groupActive?(collaboratorMode?'#b4000c':'#ff6b7a'):(collaboratorMode?'#55555f':'#9090a0'),background:groupActive?'rgba(227,6,19,0.06)':'transparent'}}>
+            <button type="button" onClick={()=>setOpenGroups(current=>current.includes(group.label)?current.filter(value=>value!==group.label):[...current,group.label])} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all" style={{color:groupActive?(collaboratorMode?'#b4000c':'#ff6b7a'):(collaboratorMode?'#55555f':'#9090a0'),background:groupActive?'rgba(227,6,19,0.06)':'transparent'}}>
               <span className="text-[#E30613]"><MenuIcon name={group.icon} size={16} /></span><span>{group.label}</span><span className="ml-auto text-[10px] text-gray-600">{open?'−':'+'}</span>
             </button>
             {open&&<div className="ml-[18px] pl-3 border-l border-white/[0.07] mt-1 mb-2">{visibleItems.map((item:any)=>{
               const active=isActive(item.href)
-              return <Link key={item.href} to={item.href} onClick={()=>setSidebarOpen(false)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all hover:bg-white/[0.025]" style={{background:active?'rgba(227,6,19,0.12)':'transparent',color:active?(collaboratorMode?'#b4000c':'#ff6b7a'):(collaboratorMode?'#5f5f68':'#777784')}}>
+              return <Link key={item.href} to={item.href} onClick={()=>setSidebarOpen(false)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all" style={{background:active?'rgba(227,6,19,0.12)':'transparent',color:active?(collaboratorMode?'#b4000c':'#ff6b7a'):(collaboratorMode?'#5f5f68':'#777784')}}>
                 <span className={active?'text-[#ff5364]':'text-gray-600'}><MenuIcon name={item.icon} size={15} /></span><span className="truncate">{item.label}</span>
                 {item.href==='/admin/conversas'&&counts.messages>0&&<span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.messages}</span>}
                 {item.href==='/admin/notificacoes'&&counts.notifications>0&&<span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.notifications}</span>}
@@ -163,18 +163,18 @@ export function AdminLayout() {
             <span className="text-sm font-semibold" style={{ color: collaboratorMode?'#17171a':'#f0f0f2' }}>{collaboratorMode?staffBrand.staff_platform_name:'Play Moments'}</span>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <Link to="/admin/conversas" aria-label="Mensagens" title="Mensagens" className="relative w-10 h-10 rounded-xl border border-white/[0.07] bg-white/[0.025] text-gray-400 hover:text-white hover:bg-white/[0.05] transition-colors flex items-center justify-center">
+            <Link to="/admin/conversas" aria-label="Mensagens" title="Mensagens" className="relative w-10 h-10 rounded-xl border border-white/[0.07] bg-white/[0.025] text-gray-400 transition-colors flex items-center justify-center">
               <MenuIcon name="conversations" size={17}/>
               {counts.messages>0&&<span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-[#0a0a0b]">{counts.messages>99?'99+':counts.messages}</span>}
             </Link>
-            <Link to="/admin/notificacoes" aria-label="Notificações" title="Notificações" className="relative w-10 h-10 rounded-xl border border-white/[0.07] bg-white/[0.025] text-gray-400 hover:text-white hover:bg-white/[0.05] transition-colors flex items-center justify-center">
+            <Link to="/admin/notificacoes" aria-label="Notificações" title="Notificações" className="relative w-10 h-10 rounded-xl border border-white/[0.07] bg-white/[0.025] text-gray-400 transition-colors flex items-center justify-center">
               <MenuIcon name="notifications" size={17}/>
               {counts.notifications>0&&<span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-[#0a0a0b]">{counts.notifications>99?'99+':counts.notifications}</span>}
             </Link>
             <div className="relative">
               <button type="button" aria-haspopup="menu" aria-expanded={accountOpen} onClick={()=>setAccountOpen(v=>!v)} className="flex items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.025] px-2.5 py-1.5 hover:bg-white/[0.05] transition-colors">
                 <span className="w-8 h-8 rounded-lg bg-[#E30613] text-white text-xs font-bold flex items-center justify-center">{(user?.name||'A').trim().charAt(0).toUpperCase()}</span>
-                <span className="hidden sm:block text-left"><span className="block text-xs font-semibold text-gray-200 max-w-[150px] truncate">{user?.name||'Administrador'}</span><span className="block text-[9px] text-gray-600">{user?.role==='admin'?'Administrador':'Equipe'}</span></span>
+                <span className="hidden sm:block text-left"><span className="block text-xs font-semibold text-gray-200 max-w-[150px] truncate">{user?.name||'Administrador'}</span><span className="block text-[9px] text-gray-600">{user?.role==='admin'?'Administrador':'Colaborador'}</span></span>
                 <span className="text-gray-600 text-xs">⌄</span>
               </button>
               {accountOpen&&<><button aria-label="Fechar menu" onClick={()=>setAccountOpen(false)} className="fixed inset-0 z-40 cursor-default"/><div role="menu" className="absolute right-0 top-[calc(100%+8px)] z-50 w-56 rounded-xl border border-white/10 bg-[#111113] p-1.5 shadow-2xl">
