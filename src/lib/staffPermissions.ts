@@ -1,4 +1,4 @@
-export type StaffDepartment='commercial'|'design'|'video'|'audio'|'web'|'support'|'finance'|'operations'|'academy'|'custom'
+export type StaffDepartment='commercial'|'design'|'video'|'audio'|'web'|'support'|'finance'|'operations'|'academy'|'secondary_admin'|'custom'
 
 export const STAFF_PERMISSIONS=[
   ['customers.view','Clientes — visualizar'],
@@ -41,6 +41,7 @@ export const DEPARTMENT_LABELS:Record<StaffDepartment,string>={
   finance:'Financeiro',
   operations:'Operações',
   academy:'Academia / Educação',
+  secondary_admin:'Admin secundário',
   custom:'Personalizado',
 }
 
@@ -80,6 +81,18 @@ export const STAFF_PRESETS:Record<StaffDepartment,string[]>={
   ],
   academy:[
     'academy.view','academy.content.manage','academy.students.manage',
+  ],
+  // Acesso operacional amplo sem privilégios exclusivos do Admin Mestre.
+  // Gestão de colaboradores/configurações é adminOnly no roteamento e o financeiro
+  // fica fora deste preset por não receber payments.* nem reports.view.
+  secondary_admin:[
+    'customers.view','customers.manage','catalog.view','catalog.manage',
+    'sales.view','sales.manage','quotes.view','quotes.manage',
+    'conversations.access','conversations.view_all','conversations.manage','conversations.transfer',
+    'projects.view','projects.manage','files.view','files.manage',
+    'community.manage','site.manage',
+    'academy.view','academy.students.manage','academy.curriculum.manage','academy.content.manage',
+    'academy.documents.manage','academy.programs.manage',
   ],
   custom:[],
 }

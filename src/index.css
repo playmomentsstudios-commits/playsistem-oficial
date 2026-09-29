@@ -233,3 +233,35 @@ select option { background: #111114; color: #f2f2f4; }
   select { min-height: 46px; }
   .pm-tag { min-height: 26px; font-size: .72rem; }
 }
+
+
+/* ── Collaborator workspace: intentionally distinct from master admin ── */
+.staff-workspace {
+  color: #17171a;
+  color-scheme: light;
+}
+.staff-workspace main { background: #f4f6f8; }
+.staff-workspace aside,
+.staff-workspace > div > div:first-child { color: #34343b; }
+.staff-workspace .pm-surface {
+  background: #fff;
+  border-color: #e2e5e9;
+  box-shadow: 0 8px 28px rgba(20,24,31,.05);
+}
+.staff-workspace .pm-surface-interactive:hover { background: #fafafa; border-color: #d3d7dc; }
+.staff-workspace :is(.text-gray-100,.text-gray-200,.text-gray-300,.text-gray-400) { color: #34343b !important; }
+.staff-workspace :is(.text-gray-500,.text-gray-600,.text-gray-700) { color: #6d7078 !important; }
+.staff-workspace :is(.bg-\[\#141416\],.bg-black,.bg-black\/30,.bg-white\/5,.bg-white\/\[0\.025\],.bg-white\/\[0\.035\],.bg-white\/\[0\.04\],.bg-white\/\[0\.05\],.bg-white\/\[0\.06\]) { background: #fff !important; }
+.staff-workspace :is(.border-white\/10,.border-white\/8,.border-white\/\[0\.05\],.border-white\/\[0\.07\],.border-white\/\[0\.08\]) { border-color: #e1e4e8 !important; }
+.staff-workspace input:not([type="checkbox"]):not([type="radio"]),
+.staff-workspace textarea,
+.staff-workspace select {
+  background: #fff !important;
+  color: #1e1e22 !important;
+  border-color: #d7dbe0 !important;
+}
+.staff-workspace input::placeholder,
+.staff-workspace textarea::placeholder { color: #92969e; }
+.staff-workspace select option { background: #fff; color: #1e1e22; }
+.staff-workspace .pm-skeleton { background: #e8ebef; }
+.staff-workspace ::selection { background: rgba(227,6,19,.16); color: #17171a; }

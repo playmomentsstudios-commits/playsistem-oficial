@@ -27,7 +27,7 @@ const MENU_GROUPS = [
   ]},
   { label:'Financeiro', icon:'finance', items:[{ label:'Pagamentos', href:'/admin/pagamentos', icon:'payments', permission:['payments.view','payments.manage'] },{ label:'Relatórios', href:'/admin/relatorios', icon:'reports', permission:'reports.view' }]},
   { label:'Catálogo', icon:'catalog', items:[{ label:'Produtos', href:'/admin/produtos', icon:'products', permission:['catalog.view','catalog.manage'] },{ label:'Serviços', href:'/admin/servicos', icon:'services', permission:['catalog.view','catalog.manage'] },{ label:'Categorias', href:'/admin/categorias', icon:'categories', permission:['catalog.view','catalog.manage'] }]},
-  { label:'Academia', icon:'academy', items:[{ label:'Visão Geral / Conteúdos', href:'/admin/academia', icon:'academy', permission:'academy.view' },{ label:'Secretaria · Alunos', href:'/admin/academia/alunos', icon:'customers', permission:'academy.students.manage' },{ label:'Estrutura Curricular', href:'/admin/academia/gestao?tab=curricula', icon:'files', permission:'academy.curriculum.manage' },{ label:'Turmas e Ofertas', href:'/admin/academia/gestao?tab=offerings', icon:'community', permission:'academy.curriculum.manage' },{ label:'Programas e Trilhas', href:'/admin/academia/programas', icon:'academy', permission:'academy.programs.manage' },{ label:'Certificação', href:'/admin/academia/certificados', icon:'files', permission:'academy.documents.manage' }]},
+  { label:'Academia', icon:'academy', items:[{ label:'Visão Geral / Conteúdos', href:'/admin/academia', icon:'academy', permission:'academy.view' },{ label:'Secretaria · Alunos', href:'/admin/academia/alunos', icon:'customers', permission:'academy.students.manage' },{ label:'Estrutura Curricular', href:'/admin/academia/gestao?tab=curricula', icon:'files', permission:'academy.curriculum.manage' },{ label:'Turmas e Ofertas', href:'/admin/academia/gestao?tab=offerings', icon:'community', permission:'academy.curriculum.manage' },{ label:'Trilhas de Formação', href:'/admin/academia/programas', icon:'academy', permission:'academy.programs.manage' },{ label:'Certificação', href:'/admin/academia/certificados', icon:'files', permission:'academy.documents.manage' }]},
   { label:'Comunicação', icon:'communication', items:[{ label:'Autoatendimento', href:'/admin/autoatendimento', icon:'autoattendant', adminOnly:true },{ label:'Notificações', href:'/admin/notificacoes', icon:'notifications' },{ label:'Comunidade', href:'/admin/comunidade', icon:'community', permission:'community.manage' }]},
   { label:'Gestão', icon:'management', items:[{ label:'Colaboradores', href:'/admin/equipe', icon:'team', adminOnly:true },{ label:'Quem Somos', href:'/admin/portfolio', icon:'about', permission:'site.manage' },{ label:'Site', href:'/admin/site', icon:'site', permission:'site.manage' },{ label:'Landings', href:'/admin/landings', icon:'site', adminOnly:true },{ label:'Configurações', href:'/admin/configuracoes', icon:'settings', adminOnly:true },{ label:'Auditoria', href:'/admin/auditoria', icon:'audit', adminOnly:true }]},
 ]
@@ -54,6 +54,8 @@ export function AdminLayout() {
     portalApi.myStaffProfile().then(profile=>setStaffPermissions(profile?.permissions||[])).catch(()=>setStaffPermissions([]))
   },[user?.id,user?.role])
 
+  const collaboratorMode=user?.role==='staff'
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0b' }}>
@@ -73,7 +75,7 @@ export function AdminLayout() {
   const Sidebar = ({ mobile = false }: { mobile?: boolean }) => (
     <aside style={{
       width: 248,
-      background: '#0a0a0b',
+      background: collaboratorMode ? '#ffffff' : '#0a0a0b',
       borderRight: '1px solid rgba(255,255,255,0.05)',
       display: 'flex',
       flexDirection: 'column',
@@ -89,7 +91,7 @@ export function AdminLayout() {
       </div>
 
       <nav className="flex-1 px-3 pt-4 overflow-y-auto pb-5">
-        <Link to="/admin" onClick={()=>setSidebarOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-3 text-sm font-semibold transition-all" style={{background:isActive('/admin',true)?'rgba(227,6,19,0.14)':'transparent',color:isActive('/admin',true)?'#ff6b7a':'#a0a0ad',border:isActive('/admin',true)?'1px solid rgba(227,6,19,0.22)':'1px solid transparent'}}><span className="text-[#E30613]"><MenuIcon name="dashboard" /></span>Painel</Link>
+        <Link to="/admin" onClick={()=>setSidebarOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-3 text-sm font-semibold transition-all" style={{background:isActive('/admin',true)?'rgba(227,6,19,0.14)':'transparent',color:isActive('/admin',true)?(collaboratorMode?'#b4000c':'#ff6b7a'):(collaboratorMode?'#44444d':'#a0a0ad'),border:isActive('/admin',true)?'1px solid rgba(227,6,19,0.22)':'1px solid transparent'}}><span className="text-[#E30613]"><MenuIcon name="dashboard" /></span>Painel</Link>
         {MENU_GROUPS.map(group=>{
           const visibleItems=group.items.filter((item:any)=>{
             if(user?.role==='admin')return true
@@ -100,12 +102,12 @@ export function AdminLayout() {
           const groupActive=visibleItems.some((item:any)=>isActive(item.href))
           const open=openGroups.includes(group.label)||groupActive
           return <div key={group.label} className="mb-1.5">
-            <button type="button" onClick={()=>setOpenGroups(current=>current.includes(group.label)?current.filter(value=>value!==group.label):[...current,group.label])} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all hover:bg-white/[0.025]" style={{color:groupActive?'#ff6b7a':'#9090a0',background:groupActive?'rgba(227,6,19,0.06)':'transparent'}}>
+            <button type="button" onClick={()=>setOpenGroups(current=>current.includes(group.label)?current.filter(value=>value!==group.label):[...current,group.label])} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all hover:bg-white/[0.025]" style={{color:groupActive?(collaboratorMode?'#b4000c':'#ff6b7a'):(collaboratorMode?'#55555f':'#9090a0'),background:groupActive?'rgba(227,6,19,0.06)':'transparent'}}>
               <span className="text-[#E30613]"><MenuIcon name={group.icon} size={16} /></span><span>{group.label}</span><span className="ml-auto text-[10px] text-gray-600">{open?'−':'+'}</span>
             </button>
             {open&&<div className="ml-[18px] pl-3 border-l border-white/[0.07] mt-1 mb-2">{visibleItems.map((item:any)=>{
               const active=isActive(item.href)
-              return <Link key={item.href} to={item.href} onClick={()=>setSidebarOpen(false)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all hover:bg-white/[0.025]" style={{background:active?'rgba(227,6,19,0.12)':'transparent',color:active?'#ff6b7a':'#777784'}}>
+              return <Link key={item.href} to={item.href} onClick={()=>setSidebarOpen(false)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all hover:bg-white/[0.025]" style={{background:active?'rgba(227,6,19,0.12)':'transparent',color:active?(collaboratorMode?'#b4000c':'#ff6b7a'):(collaboratorMode?'#5f5f68':'#777784')}}>
                 <span className={active?'text-[#ff5364]':'text-gray-600'}><MenuIcon name={item.icon} size={15} /></span><span className="truncate">{item.label}</span>
                 {item.href==='/admin/conversas'&&counts.messages>0&&<span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.messages}</span>}
                 {item.href==='/admin/notificacoes'&&counts.notifications>0&&<span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.notifications}</span>}
@@ -120,7 +122,7 @@ export function AdminLayout() {
   )
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#0d0d0f' }}>
+    <div className={collaboratorMode?'staff-workspace min-h-screen flex':'min-h-screen flex'} style={{ background: collaboratorMode?'#f4f6f8':'#0d0d0f' }}>
       <div className="hidden md:flex flex-shrink-0" style={{ width: 248 }}>
         <Sidebar />
       </div>
@@ -135,14 +137,14 @@ export function AdminLayout() {
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Top bar */}
         <div className="flex items-center justify-between px-4 py-3 border-b"
-          style={{ background: '#0a0a0b', borderColor: 'rgba(255,255,255,0.05)', minHeight: 56 }}>
+          style={{ background: collaboratorMode?'#ffffff':'#0a0a0b', borderColor: 'rgba(255,255,255,0.05)', minHeight: 56 }}>
           <div className="flex items-center gap-3">
             <button aria-label="Abrir menu administrativo" className="md:hidden w-11 h-11 flex items-center justify-center" onClick={() => setSidebarOpen(true)} style={{ color: '#9090a0' }}>
               <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M3 12h18M3 6h18M3 18h18" />
               </svg>
             </button>
-            <span className="text-sm font-semibold" style={{ color: '#f0f0f2' }}>Play Moments</span>
+            <span className="text-sm font-semibold" style={{ color: collaboratorMode?'#17171a':'#f0f0f2' }}>{collaboratorMode?'Área do colaborador':'Play Moments'}</span>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <Link to="/admin/conversas" aria-label="Mensagens" title="Mensagens" className="relative w-10 h-10 rounded-xl border border-white/[0.07] bg-white/[0.025] text-gray-400 hover:text-white hover:bg-white/[0.05] transition-colors flex items-center justify-center">
@@ -161,7 +163,7 @@ export function AdminLayout() {
               </button>
               {accountOpen&&<><button aria-label="Fechar menu" onClick={()=>setAccountOpen(false)} className="fixed inset-0 z-40 cursor-default"/><div role="menu" className="absolute right-0 top-[calc(100%+8px)] z-50 w-56 rounded-xl border border-white/10 bg-[#111113] p-1.5 shadow-2xl">
                 <Link to="/app/perfil" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="about" size={15}/><span>Perfil</span></Link>
-                <Link to="/admin/configuracoes" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="settings" size={15}/><span>Configurações</span></Link>
+                {user?.role==='admin'&&<Link to="/admin/configuracoes" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="settings" size={15}/><span>Configurações</span></Link>}
                 <div className="my-1 border-t border-white/[0.07]"/>
                 <button onClick={()=>{setAccountOpen(false);void handleLogout()}} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-[#ff6573] hover:bg-[#E30613]/10"><span>↩</span><span>Sair</span></button>
               </div></>}

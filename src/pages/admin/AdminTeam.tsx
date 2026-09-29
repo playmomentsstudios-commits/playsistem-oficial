@@ -185,6 +185,7 @@ export function AdminTeam(){
               {Object.entries(DEPARTMENT_LABELS).map(([value,label])=><option key={value} value={value}>{label}</option>)}
             </select>
           </label>
+          {draft.department==='secondary_admin'&&<div className="rounded-xl border border-[#E30613]/15 bg-[#E30613]/5 p-3 text-xs leading-5 text-gray-400"><strong className="text-gray-200">Admin secundário:</strong> acesso operacional amplo, sem gestão de colaboradores, configurações exclusivas do Admin Mestre, pagamentos ou relatórios financeiros.</div>}
 
           <div>
             <div className="flex items-center justify-between gap-2 mb-2">
