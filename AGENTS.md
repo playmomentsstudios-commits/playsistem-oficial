@@ -20,7 +20,7 @@ Standalone React + Vite + Tailwind CSS application. Figma Make is not required.
 - src/components/, src/contexts/, src/api/ and src/types/ contain shared code.
 - vite.config.ts uses the React and Tailwind CSS v4 plugins and the @ alias for src.
 - index.html provides the standalone HTML shell.
-- supabase/functions/server/ contains the separate Deno/Hono backend.
+- supabase/functions/ contains specialized Deno Edge Functions; Supabase Auth/Postgres/RLS are the canonical backend.
 
 ## Styling
 
@@ -30,7 +30,6 @@ explicitly requests visual changes.
 
 ## Environment and deployment
 
-Copy .env.example to .env.local for local configuration. VITE_API_URL is public
-frontend configuration; never expose private backend credentials in VITE_ variables.
+Copy .env.example to .env.local for local configuration. VITE_ variables are public frontend configuration; never expose private backend credentials in VITE_ variables.
 Netlify builds with pnpm build, publishes dist, and rewrites SPA routes to index.html.
-No /api proxy is configured. Backend deployment and authentication are separate work.
+Backend Edge Function deployment is separate from the frontend deploy.
