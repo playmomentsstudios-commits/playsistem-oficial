@@ -274,41 +274,83 @@ export async function ensureProjectFolder(
 ) {
   const { data: project, error } = await db
     .from("projects")
-    .select("id,title,customer_id,drive_folder_id")
+    .select("id,title,customer_id,project_type,drive_folder_id")
     .eq("id", projectId)
     .single();
   if (error) throw error;
-  if (!project.customer_id) throw new Error("Project has no customer");
 
-  const { customerFolderId } = await ensureClientFolder(
-    db,
-    userId,
-    project.customer_id,
-  );
+  const isInternal = project.project_type === "internal";
+  let customerFolderId: string | null = null;
+  let projectParentId: string;
 
-  let projectsRoot = await findDriveFolder(
-    customerFolderId,
-    "customer-projects-root",
-    project.customer_id,
-  );
-  if (!projectsRoot) {
-    projectsRoot = await createDriveFolder(
-      "PROJETOS",
-      customerFolderId,
-      {
-        playMomentsKind: "customer-projects-root",
-        playMomentsEntityId: project.customer_id,
-      },
+  if (isInternal) {
+    const { rootFolderId } = await ensureDriveRoot(db, userId);
+    const { data: settings, error: settingsError } = await db
+      .from("drive_settings")
+      .select("internal_projects_folder_id")
+      .eq("id", true)
+      .maybeSingle();
+    if (settingsError) throw settingsError;
+
+    let internalRootId = settings?.internal_projects_folder_id || null;
+    if (!internalRootId) {
+      const existing = await findDriveFolder(rootFolderId, "internal-projects-root");
+      const internalRoot = existing || await createDriveFolder(
+        "PROJETOS INTERNOS",
+        rootFolderId,
+        { playMomentsKind: "internal-projects-root" },
+      );
+      internalRootId = internalRoot.id;
+      const { error: updateError } = await db
+        .from("drive_settings")
+        .update({
+          internal_projects_folder_id: internalRootId,
+          updated_at: new Date().toISOString(),
+          updated_by: userId,
+        })
+        .eq("id", true);
+      if (updateError) throw updateError;
+    }
+    projectParentId = internalRootId;
+  } else {
+    if (!project.customer_id) throw new Error("External project has no customer");
+
+    const client = await ensureClientFolder(
+      db,
+      userId,
+      project.customer_id,
     );
+    customerFolderId = client.customerFolderId;
+
+    let projectsRoot = await findDriveFolder(
+      customerFolderId,
+      "customer-projects-root",
+      project.customer_id,
+    );
+    if (!projectsRoot) {
+      projectsRoot = await createDriveFolder(
+        "PROJETOS",
+        customerFolderId,
+        {
+          playMomentsKind: "customer-projects-root",
+          playMomentsEntityId: project.customer_id,
+        },
+      );
+    }
+    projectParentId = projectsRoot.id;
   }
 
   let projectFolderId = project.drive_folder_id || null;
   if (!projectFolderId) {
-    const existing = await findDriveFolder(projectsRoot.id, "project", projectId);
+    const existing = await findDriveFolder(projectParentId, "project", projectId);
     const projectFolder = existing || await createDriveFolder(
       `PM-${projectId.slice(0,8).toUpperCase()} - ${project.title}`,
-      projectsRoot.id,
-      { playMomentsKind: "project", playMomentsEntityId: projectId },
+      projectParentId,
+      {
+        playMomentsKind: "project",
+        playMomentsEntityId: projectId,
+        playMomentsProjectScope: isInternal ? "internal" : "customer",
+      },
     );
     projectFolderId = projectFolder.id;
     await db.from("projects")
@@ -350,10 +392,10 @@ export async function ensureProjectFolder(
   return {
     projectFolderId,
     customerFolderId,
+    projectScope: isInternal ? "internal" : "customer",
     folders: folders || [],
   };
 }
-
 
 export async function ensureSiteAssetFolder(db: SupabaseClient, userId: string, section = "HOME") {
   const { rootFolderId } = await ensureDriveRoot(db, userId);

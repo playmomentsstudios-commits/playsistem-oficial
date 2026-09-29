@@ -104,14 +104,14 @@ export function AdminProjects(){
     {showForm&&<form onSubmit={create} className="p-5 mb-6 rounded-2xl bg-[#141416] border border-white/10 space-y-4">
       <div className="grid md:grid-cols-2 gap-3">
         <input value={form.title} onChange={e=>setForm({...form,title:e.target.value})} placeholder="Nome do projeto" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
-        <select value={form.customer_id} onChange={e=>setForm({...form,customer_id:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10">
-          <option value="">Projeto interno / sem cliente</option>
+        <select value={form.customer_id} disabled={form.project_type==='internal'} onChange={e=>setForm({...form,customer_id:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10 disabled:opacity-60">
+          <option value="">{form.project_type==='internal'?'Projeto interno · sem cliente':'Selecione o cliente (se aplicável)'}</option>
           {customers.map(client=><option key={client.id} value={client.id}>{client.first_name} {client.last_name}</option>)}
         </select>
       </div>
       <textarea rows={3} value={form.description} onChange={e=>setForm({...form,description:e.target.value})} placeholder="Descrição do projeto" className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <select value={form.project_type} onChange={e=>setForm({...form,project_type:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10">{tipos.map(value=><option key={value} value={value}>{rotulo(tipoProjeto,value)}</option>)}</select>
+        <select value={form.project_type} onChange={e=>setForm({...form,project_type:e.target.value,customer_id:e.target.value==='internal'?'':form.customer_id})} className="px-3 py-2 rounded-xl bg-black border border-white/10">{tipos.map(value=><option key={value} value={value}>{rotulo(tipoProjeto,value)}</option>)}</select>
         <select value={form.priority} onChange={e=>setForm({...form,priority:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10">{prioridades.map(value=><option key={value} value={value}>{rotulo(prioridade,value)}</option>)}</select>
         <select aria-label="Situação do projeto" value={form.status} onChange={e=>setForm({...form,status:e.target.value})} className={"pm-select-status px-3 py-2 rounded-xl "+(form.status==="active"?"pm-state-progress":form.status==="review"?"pm-state-review":form.status==="completed"?"pm-state-success":form.status==="cancelled"?"pm-state-danger":form.status==="paused"?"pm-state-pending":"pm-state-neutral")}>{statuses.map(value=><option key={value} value={value}>{rotulo(statusProjeto,value)}</option>)}</select>
         <input value={form.drive_folder_url} onChange={e=>setForm({...form,drive_folder_url:e.target.value})} placeholder="Link da pasta no Drive" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>

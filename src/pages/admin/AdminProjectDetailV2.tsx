@@ -155,10 +155,6 @@ export function AdminProjectDetailV2(){
     const picked=Array.from(event.target.files||[])
     event.target.value=''
     if(!picked.length||!user)return
-    if(!project?.customer_id){
-      toast('Para usar a biblioteca do cliente, vincule este projeto a um cliente.','error')
-      return
-    }
     const invalid=picked.find(file=>file.size>50*1024*1024*1024)
     if(invalid){
       toast('Cada arquivo do Google Drive pode ter até 50 GB.','error')
@@ -176,7 +172,7 @@ export function AdminProjectDetailV2(){
           project_id:id,
           task_id:fileTask||null,
           folder_kind:fileFolder,
-          client_visible:fileVisible,
+          client_visible:project.project_type==='internal'?false:fileVisible,
         },file,value=>setFileProgress(Math.round(((index+(value/100))/picked.length)*100)))
       }
       toast(picked.length===1?'Arquivo enviado ao Google Drive e adicionado ao projeto.':picked.length+' arquivos enviados ao projeto.','success')
@@ -202,10 +198,10 @@ export function AdminProjectDetailV2(){
         project_id:id,
         task_id:previousFile.task_id||null,
         folder_kind:'preview',
-        client_visible:true,
+        client_visible:project.project_type==='internal'?false:true,
       },file,setFileProgress)
       await portalApi.linkFileVersion(uploaded.id,previousFile.id)
-      toast('Nova versão adicionada. Agora você pode solicitar a aprovação do cliente.','success')
+      toast(project.project_type==='internal'?'Nova versão adicionada ao projeto interno.':'Nova versão adicionada. Agora você pode solicitar a aprovação do cliente.','success')
       setFileMenu(null);setFileProgress(0);setFileProgressName('')
       await load()
     }catch(error:any){toast(error.message||'Não foi possível adicionar a nova versão.','error')}
@@ -213,6 +209,10 @@ export function AdminProjectDetailV2(){
   }
 
   async function requestReview(file:any){
+    if(project?.project_type==='internal'){
+      toast('Projeto interno não usa aprovação de cliente.','error')
+      return
+    }
     try{
       if(file.storage_provider==='google_drive'&&!file.client_visible)await fileManagementApi.publish(file.id)
       await portalApi.requestFileReview(file.id)
@@ -352,12 +352,14 @@ export function AdminProjectDetailV2(){
               {driveFolderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
             </select>
           </label>
-          <label className="text-sm text-gray-400">Visibilidade
+          {project.project_type==='internal'?<label className="text-sm text-gray-400">Visibilidade
+            <div className="mt-1 w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300">Somente equipe · projeto interno</div>
+          </label>:<label className="text-sm text-gray-400">Visibilidade
             <select value={fileVisible?'cliente':'interno'} onChange={e=>setFileVisible(e.target.value==='cliente')} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
               <option value="interno">Somente equipe</option>
               <option value="cliente">Cliente pode visualizar</option>
             </select>
-          </label>
+          </label>}
           <label className={'px-4 py-2.5 rounded-xl text-center cursor-pointer '+(uploading?'bg-white/10 text-gray-500':'bg-[#E30613] text-white')}>
             {uploading?'Enviando...':'Adicionar arquivos'}
             <input type="file" multiple disabled={uploading} onChange={uploadProjectFile} className="hidden"/>
@@ -369,7 +371,7 @@ export function AdminProjectDetailV2(){
           <div className="h-2 rounded bg-white/10 mt-2"><div className="h-2 rounded bg-[#E30613]" style={{width:fileProgress+'%'}}/></div>
         </div>}
 
-        {!project.customer_id&&<p className="text-xs text-yellow-300 mt-3">Projeto interno: vincule um cliente para utilizar a biblioteca de arquivos.</p>}
+        {project.project_type!=='internal'&&!project.customer_id&&<p className="text-xs text-yellow-300 mt-3">Projeto externo sem cliente: vincule o cliente antes de utilizar a biblioteca de arquivos.</p>}
 
         <div className="mt-5 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {files.length===0?<p className="text-sm text-gray-500">Nenhum arquivo vinculado a este projeto.</p>:files.map(file=>{
@@ -397,10 +399,10 @@ export function AdminProjectDetailV2(){
                     <button type="button" onClick={()=>{setFileMenu(null);void deleteProjectFile(file)}} className="w-9 h-9 rounded-lg hover:bg-red-500/10 text-red-400" title="Excluir">⌫</button>
                   </div>
                   <div className="mb-2">
-                    {!file.review_required&&<button type="button" onClick={()=>void requestReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-[#E30613]/10 text-[#ff5d68] text-xs text-left">Solicitar aprovação do cliente</button>}
-                    {file.review_required&&file.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-white/[0.05] text-gray-300 text-xs text-left">Cancelar solicitação de aprovação</button>}
-                    {file.review_required&&['approved','changes_requested'].includes(file.review_status)&&<button type="button" onClick={()=>void requestReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-white/[0.05] text-gray-300 text-xs text-left">Solicitar nova avaliação</button>}
-                    {file.review_required&&<button type="button" onClick={()=>void showReviewHistory(file)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-gray-400 text-xs text-left">Ver histórico e comentários</button>}
+                    {project.project_type!=='internal'&&!file.review_required&&<button type="button" onClick={()=>void requestReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-[#E30613]/10 text-[#ff5d68] text-xs text-left">Solicitar aprovação do cliente</button>}
+                    {project.project_type!=='internal'&&file.review_required&&file.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-white/[0.05] text-gray-300 text-xs text-left">Cancelar solicitação de aprovação</button>}
+                    {project.project_type!=='internal'&&file.review_required&&['approved','changes_requested'].includes(file.review_status)&&<button type="button" onClick={()=>void requestReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-white/[0.05] text-gray-300 text-xs text-left">Solicitar nova avaliação</button>}
+                    {project.project_type!=='internal'&&file.review_required&&<button type="button" onClick={()=>void showReviewHistory(file)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-gray-400 text-xs text-left">Ver histórico e comentários</button>}
                   </div>
                   <label className="block text-[10px] text-gray-500">Tarefa
                     <select value={file.task_id||''} onChange={async e=>{await portalApi.assignClientFileTask(file.id,e.target.value||null);setFileMenu(null);await load()}} className="mt-1 w-full px-2 py-1.5 rounded-lg bg-black border border-white/10 text-xs">

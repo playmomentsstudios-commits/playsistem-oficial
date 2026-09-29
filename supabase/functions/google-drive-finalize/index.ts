@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
 
     const { data: project, error: projectError } = await ctx.db
       .from("projects")
-      .select("id,customer_id")
+      .select("id,customer_id,project_type")
       .eq("id", projectId)
       .single();
     if (projectError || !project) throw new Error("Project not found");
@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
       external_url: file.webViewLink || `https://drive.google.com/file/d/${file.id}/view`,
       storage_path: null,
       file_type: file.mimeType || null,
-      client_visible: staff ? clientVisible : true,
+      client_visible: project.project_type === "internal" ? false : (staff ? clientVisible : true),
       storage_provider: "google_drive",
       drive_file_id: file.id,
       drive_folder_id: parentId,

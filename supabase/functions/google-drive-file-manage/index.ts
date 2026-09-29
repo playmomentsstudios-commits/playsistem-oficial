@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
 
     const { data: file, error: fileError } = await ctx.db
       .from("client_files")
-      .select("id,name,project_id,storage_provider,storage_path,drive_file_id,drive_folder_id")
+      .select("id,name,project_id,storage_provider,storage_path,drive_file_id,drive_folder_id,client_visible")
       .eq("id", fileId)
       .single();
     if (fileError || !file) throw new Error("File not found");
@@ -86,6 +86,18 @@ Deno.serve(async (req) => {
         throw new Error("Only Google Drive files can be published");
       }
 
+      if (file.project_id) {
+        const { data: sourceProject, error: sourceProjectError } = await ctx.db
+          .from("projects")
+          .select("project_type")
+          .eq("id", file.project_id)
+          .single();
+        if (sourceProjectError || !sourceProject) throw new Error("Project not found");
+        if (sourceProject.project_type === "internal") {
+          throw new Error("Internal project files cannot be published to a customer");
+        }
+      }
+
       // Client visibility is controlled by Play Moments. The Drive object remains private.
       const { error: updateError } = await ctx.db
         .from("client_files")
@@ -106,10 +118,8 @@ Deno.serve(async (req) => {
       }
 
       const {data: targetProject,error: targetProjectError}=await ctx.db
-        .from("projects").select("id,customer_id").eq("id",targetProjectId).single();
+        .from("projects").select("id,customer_id,project_type").eq("id",targetProjectId).single();
       if(targetProjectError||!targetProject)throw new Error("Target project not found");
-      if(!targetProject.customer_id)throw new Error("Target project must be linked to a customer before receiving client files");
-
       await ensureProjectFolder(ctx.db,ctx.userId,targetProjectId);
       let target:any = null;
 
