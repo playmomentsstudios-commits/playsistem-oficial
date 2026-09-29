@@ -7,6 +7,11 @@
   PNPM_VERSION = "10.30.3"
 
 [[redirects]]
+  from = "/sitemap.xml"
+  to = "/.netlify/functions/sitemap"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

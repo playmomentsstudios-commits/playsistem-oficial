@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /app/
+Disallow: /login
+Disallow: /cadastro
+Disallow: /email-confirmado
+Disallow: /esqueci-senha
+Disallow: /redefinir-senha
+Disallow: /carrinho

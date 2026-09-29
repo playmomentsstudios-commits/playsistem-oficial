@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { useCart } from '../../contexts/CartContext'
 import { authLink } from '../../lib/navigation'
+import { useSeo } from '../../lib/seo'
 import { portalApi } from '../../api/portal'
 import {
   getPublicProductBySlug,
@@ -58,6 +59,17 @@ export function ProductDetailPage() {
 
     void load()
   }, [slug])
+
+  const cover=product?getCover(product):null
+  useSeo({
+    title:product?.name||'Produto',
+    description:(product?.short_description||product?.description||'Produto disponível na Play Moments.').slice(0,160),
+    image:cover,
+    canonicalPath:'/produtos/'+slug,
+    type:'product',
+    noindex:!loading&&!product,
+    jsonLd:product?{'@context':'https://schema.org','@type':'Product',name:product.name,description:product.short_description||product.description||undefined,image:cover||undefined,offers:product.sale_price!==null?{'@type':'Offer',priceCurrency:'BRL',price:(product.promotional_price??product.sale_price??0)/100,availability:product.inventory_tracked&&product.stock<=0?'https://schema.org/OutOfStock':'https://schema.org/InStock',url:window.location.href}:undefined}:null,
+  })
 
   const canBuy=(product?.commercial_mode==='sale'||product?.commercial_mode==='sale_and_rental')&&product?.sale_price!==null
   const canRent=(product?.commercial_mode==='rental'||product?.commercial_mode==='sale_and_rental')&&product?.rental_daily_price!==null
