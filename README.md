@@ -1,79 +1,48 @@
 # Play Moments Platform
 
-Plataforma web completa para relacionamento com clientes — site público, portal do cliente e painel administrativo.
+Ecossistema digital Play Moments: site público, catálogo de produtos e serviços, checkout/pagamentos, portal do cliente, projetos e arquivos no Google Drive, CRM, colaboradores e Academia.
 
 ## Stack
 
-- **Frontend**: React 19 + Vite 8 + TypeScript + Tailwind CSS v4
-- **Backend**: Supabase Edge Functions (Deno + Hono)
-- **Banco**: Supabase KV Store (Postgres via Supabase)
-- **Auth**: JWT (sign/verify via Hono JWT)
+- **Frontend:** React 19 + Vite 8 + TypeScript + Tailwind CSS v4
+- **Backend:** Supabase Postgres + Auth + RLS + Edge Functions (Deno)
+- **Arquivos:** Google Drive para mídia/arquivos pesados; Supabase para metadados e regras
+- **Pagamentos:** Asaas
+- **Deploy:** Netlify / Cloudflare conforme os componentes do projeto
 
-## Requisitos
+## Princípios
 
-- Node.js 22.22.0 (fixado em `.nvmrc` e `netlify.toml`).
-- pnpm 10.30.3 (fixado em `package.json`).
-- O frontend funciona fora do Figma Make.
+- Supabase Auth é a autenticação oficial.
+- RLS/RBAC protegem dados e permissões no banco; a UI não é a barreira de segurança.
+- Valores comerciais críticos são validados no servidor/banco.
+- Arquivos pesados priorizam Google Drive.
+- Não existe autenticação demo nem backend Hono/KV ativo no código atual.
 
-## Instalação
+## Requisitos e comandos
 
-```bash
-pnpm install
-```
+- Node.js 22.22.0
+- pnpm 10.30.3
+- `pnpm install`
+- `pnpm dev`
+- `pnpm test`
+- `pnpm typecheck`
+- `pnpm build`
 
-## Desenvolvimento
+Crie `.env.local` a partir de `.env.example` antes de iniciar o app. O frontend exige `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` para conectar ao Supabase. Variáveis `VITE_` são públicas no bundle; nunca coloque segredos privados nelas.
 
-```bash
-pnpm dev
-```
+## Áreas
 
-O servidor sobe em `http://localhost:8443`.
+- `/`: experiência pública
+- `/produtos`: catálogo
+- `/servicos`: serviços
+- `/academia`: Academia pública
+- `/l/:slug`: landing pages
+- `/app/*`: portal autenticado do cliente
+- `/admin/*`: operação Admin Master/colaboradores com RBAC
 
-## Variáveis de ambiente
+## Infraestrutura
 
-Crie um arquivo `.env.local` baseado em `.env.example`:
+Migrations ficam em `supabase/migrations/` e Edge Functions em `supabase/functions/`.
+O deploy do frontend não publica automaticamente Edge Functions. Mudanças em funções Supabase devem ser implantadas explicitamente no projeto correspondente.
 
-```bash
-cp .env.example .env.local
-```
-
-## Build para produção
-
-```bash
-pnpm build
-```
-
-## Credenciais demo (sem backend)
-
-| Usuário | Email | Senha |
-|---------|-------|-------|
-| Admin | admin@playmoments.com.br | admin123 |
-| Cliente | cliente@exemplo.com | cliente123 |
-
-## Estrutura de rotas
-
-| Rota | Descrição |
-|------|-----------|
-| `/` | Home |
-| `/produtos` | Produtos e equipamentos |
-| `/servicos` | Serviços |
-| `/portfolio` | Portfólio |
-| `/comunidade` | Mural/comunidade |
-| `/login` | Login |
-| `/cadastro` | Cadastro |
-| `/app/*` | Portal do cliente (autenticado) |
-| `/admin/*` | Painel administrativo (admin/staff) |
-
-## Netlify
-
-Conecte este repositório e selecione a branch a publicar. O arquivo `netlify.toml`
-configura `pnpm build`, saída `dist`, Node 22.22.0 e pnpm 10.30.3.
-O rewrite SPA permite abrir diretamente rotas como `/admin` e `/app/dashboard`.
-
-`VITE_API_URL` é a única variável de integração consumida pelo frontend atual.
-Deixe-a vazia enquanto o backend é padronizado: o cliente continuará usando `/api`,
-mas não há proxy de API nesta etapa. O build não exige essa variável preenchida.
-Não coloque credenciais privadas em variáveis `VITE_`.
-
-Esta configuração publica somente o frontend. Autenticação demo, dados locais e
-backend Supabase permanecem como estão; o deploy frontend não os torna operacionais.
+Consulte `docs/` para registros de arquitetura, homologação e fases da V1.
