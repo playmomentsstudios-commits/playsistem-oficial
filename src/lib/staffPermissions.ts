@@ -1,4 +1,4 @@
-export type StaffDepartment='commercial'|'design'|'video'|'audio'|'web'|'support'|'finance'|'operations'|'custom'
+export type StaffDepartment='commercial'|'design'|'video'|'audio'|'web'|'support'|'finance'|'operations'|'academy'|'custom'
 
 export const STAFF_PERMISSIONS=[
   ['customers.view','Clientes — visualizar'],
@@ -40,6 +40,7 @@ export const DEPARTMENT_LABELS:Record<StaffDepartment,string>={
   support:'Atendimento',
   finance:'Financeiro',
   operations:'Operações',
+  academy:'Academia / Educação',
   custom:'Personalizado',
 }
 
@@ -76,6 +77,9 @@ export const STAFF_PRESETS:Record<StaffDepartment,string[]>={
     'customers.view','customers.manage','catalog.view','sales.view','quotes.view',
     'conversations.access','conversations.view_all','conversations.manage','conversations.transfer',
     'projects.view','projects.manage','files.view','files.manage','payments.view','reports.view',
+  ],
+  academy:[
+    'academy.view','academy.content.manage','academy.students.manage',
   ],
   custom:[],
 }
