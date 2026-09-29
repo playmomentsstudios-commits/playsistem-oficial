@@ -47,3 +47,12 @@ test('hosted checkout remains resumable when buyer cancels or leaves Asaas',asyn
  const cardBranch=cart.slice(cart.indexOf("paymentMethod==='CARD'"))
  assert.doesNotMatch(cardBranch.slice(0,cardBranch.indexOf('catch(paymentError')),/clearCart\(\)/)
 })
+
+
+test('hosted checkout callback clears cart only on success and resume is pending-only',async()=>{
+ const payments=await readFile(new URL('../src/pages/customer/PaymentsPage.tsx',import.meta.url),'utf8')
+ assert.match(payments,/searchParams\.get\('checkout'\)!=='success'/)
+ assert.match(payments,/clearCart\(\)/)
+ assert.match(payments,/payment\.status==='pending'/)
+ assert.match(checkout,/checkoutLink:effectiveCheckoutUrl/)
+})

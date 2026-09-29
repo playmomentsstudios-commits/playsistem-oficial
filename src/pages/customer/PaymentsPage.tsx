@@ -1,4 +1,6 @@
 import { useEffect,useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { useCart } from '../../contexts/CartContext'
 import { portalApi } from '../../api/portal'
 import { useToast } from '../../contexts/ToastContext'
 import { EmptyState } from '../../components/ui/EmptyState'
@@ -9,6 +11,8 @@ const money=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency
 
 export function PaymentsPage(){
   const toast=useToast()
+  const {clearCart}=useCart()
+  const [searchParams,setSearchParams]=useSearchParams()
   const [rows,setRows]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
   const [error,setError]=useState('')
@@ -25,6 +29,12 @@ export function PaymentsPage(){
   }
 
   useEffect(()=>{void load()},[])
+  useEffect(()=>{
+    if(searchParams.get('checkout')!=='success')return
+    clearCart()
+    toast('Pagamento enviado. A confirmação final será atualizada pelo Asaas.','success')
+    setSearchParams({}, {replace:true})
+  },[searchParams,clearCart,setSearchParams,toast])
 
 
   return <div>
@@ -62,7 +72,7 @@ export function PaymentsPage(){
         : <div className="space-y-4">{rows.map(payment=>{
           const manualPix=payment.provider==='manual'&&payment.method==='pix_manual'
           const asaasPix=payment.provider==='asaas'&&payment.method==='pix_gateway'?payment.provider_payload?.pixQrCode:null
-          const hostedCard=payment.provider==='asaas_checkout'&&payment.method==='card'?payment.provider_payload?.checkoutLink:null
+          const hostedCard=payment.provider==='asaas_checkout'&&payment.method==='card'&&payment.status==='pending'?payment.provider_payload?.checkoutLink:null
           return <div key={payment.id} className="p-5 rounded-2xl bg-[#141416] border border-white/10">
             <div className="flex flex-wrap justify-between gap-4">
               <div>
