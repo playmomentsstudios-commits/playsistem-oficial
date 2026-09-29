@@ -47,7 +47,7 @@ export function AdminFiles(){
   const [saving,setSaving]=useState(false)
   const [testing,setTesting]=useState(false)
   const [progress,setProgress]=useState(0)
-  const [provider,setProvider]=useState<'google_drive'|'supabase'|'external'>('google_drive')
+  const [provider,setProvider]=useState<'google_drive'|'external'>('google_drive')
   const [customer,setCustomer]=useState('')
   const [project,setProject]=useState('')
   const [task,setTask]=useState('')
@@ -126,22 +126,6 @@ export function AdminFiles(){
           setCompletedFiles(index+1)
         }
         toast(selectedFiles.length===1?'Arquivo enviado para o Google Drive.':selectedFiles.length+' arquivos enviados para o Google Drive.','success')
-      }else if(provider==='supabase'){
-        if(!selectedFiles.length)throw new Error('Selecione um ou mais arquivos.')
-        for(let index=0;index<selectedFiles.length;index+=1){
-          const current=selectedFiles[index]
-          setCurrentFileName(current.name)
-          const storage_path=await portalApi.uploadClientFile(customer,current)
-          await portalApi.addClientFile({
-            customer_id:customer,project_id:project||null,task_id:task||null,uploaded_by:user.id,
-            name:selectedFiles.length===1&&name.trim()?name.trim():current.name,
-            storage_path,file_type:current.type||null,storage_provider:'supabase',
-            file_size:current.size,mime_type:current.type||null,client_visible:clientVisible,
-          })
-          setCompletedFiles(index+1)
-          setProgress(Math.round(((index+1)/selectedFiles.length)*100))
-        }
-        toast(selectedFiles.length===1?'Arquivo enviado ao portal.':selectedFiles.length+' arquivos enviados ao portal.','success')
       }else{
         if(!name.trim()||!url.trim())throw new Error('Informe o nome e o link externo.')
         await portalApi.addClientFile({
@@ -182,7 +166,7 @@ export function AdminFiles(){
     <div className="flex flex-wrap justify-between gap-4 items-end mb-6">
       <div>
         <h1 className="text-2xl font-bold">Central de Arquivos</h1>
-        <p className="text-sm text-gray-500">Cliente → Projeto → Tarefa, com Google Drive para arquivos pesados.</p>
+        <p className="text-sm text-gray-500">Cliente → Projeto → Tarefa. Novos arquivos ficam no Google Drive; o Supabase mantém apenas dados e referências.</p>
       </div>
       <Button type="button" variant="secondary" loading={testing} onClick={testDrive}>Testar Google Drive</Button>
     </div>
@@ -192,7 +176,6 @@ export function AdminFiles(){
         <label className="text-xs text-gray-500">Armazenamento
           <select value={provider} onChange={e=>setProvider(e.target.value as typeof provider)} className="mt-1 w-full min-h-11 px-3 py-2 rounded-xl bg-black border border-white/10">
             <option value="google_drive">Google Drive — recomendado</option>
-            <option value="supabase">Portal / Supabase — arquivos pequenos</option>
             <option value="external">Link externo</option>
           </select>
         </label>
@@ -234,8 +217,7 @@ export function AdminFiles(){
         <input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome do arquivo ou material" className="min-h-11 px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
         <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://..." className="min-h-11 px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
       </div>:<div className="space-y-3">
-        {provider==='supabase'&&<input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome personalizado (opcional quando selecionar 1 arquivo)" className="w-full min-h-11 px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>}
-        <label className="block rounded-2xl border border-dashed border-white/15 bg-white/[0.025] p-4 sm:p-5 hover:border-[#E30613]/50 transition-colors cursor-pointer">
+                <label className="block rounded-2xl border border-dashed border-white/15 bg-white/[0.025] p-4 sm:p-5 hover:border-[#E30613]/50 transition-colors cursor-pointer">
           <input type="file" multiple onChange={e=>{
             const picked=Array.from(e.target.files||[])
             const invalid=provider==='google_drive'?picked.find(item=>item.size>10*1024*1024*1024):null
@@ -273,7 +255,7 @@ export function AdminFiles(){
         <h2 className="text-lg font-bold">Recentes</h2>
         <p className="text-xs text-gray-500">Acesso rápido aos últimos arquivos.</p>
       </div>
-      {loading?<p className="text-gray-500">Carregando...</p>:recent.length===0?<p className="text-sm text-gray-500">Nenhum arquivo ainda.</p>:<div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
+      {loading?<div role="status" aria-live="polite" className="text-sm text-gray-500 py-4">Carregando arquivos recentes…</div>:recent.length===0?<p className="text-sm text-gray-500">Nenhum arquivo ainda.</p>:<div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
         {recent.map(row=><button key={row.id} type="button" onClick={()=>open(row)} className="group text-left p-2.5 rounded-xl bg-[#141416] border border-white/8 hover:border-white/20 transition-colors min-w-0">
           <div className="h-11 rounded-lg bg-white/[0.04] flex items-center justify-center text-2xl mb-2">{fileIcon(row)}</div>
           <div className="flex items-center justify-between gap-2">
@@ -292,7 +274,7 @@ export function AdminFiles(){
         <p className="text-xs text-gray-500">Abra um cliente para navegar pelos projetos e arquivos sem sair desta tela.</p>
       </div>
 
-      {loading?<p className="text-gray-500">Carregando...</p>:grouped.length===0?<p className="text-sm text-gray-500">Nenhum arquivo registrado.</p>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+      {loading?<div role="status" aria-live="polite" className="text-sm text-gray-500 py-4">Organizando biblioteca…</div>:grouped.length===0?<p className="text-sm text-gray-500">Nenhum arquivo registrado.</p>:<div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
         {grouped.map(([customerId,group])=>{
           const totalFiles=Array.from(group.projects.values()).reduce((sum,item)=>sum+item.files.length,0)
           return <button
