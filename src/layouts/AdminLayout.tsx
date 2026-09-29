@@ -100,7 +100,7 @@ export function AdminLayout() {
       <div className="px-5 py-5 border-b" style={{ borderColor: collaboratorMode?'#e1e4e8':'rgba(255,255,255,0.05)' }}>
         <div className="flex items-center justify-between gap-3">
           <Link to="/admin" className="block">
-            <div className={collaboratorMode?'rounded-xl px-3 py-2':'contents'} style={collaboratorMode?{background:staffBrand.staff_primary_color}:undefined}><img src={collaboratorMode?(staffBrand.staff_logo_url||'/staff-logo.svg'):logoUrl} alt="Play Moments" className="h-12 w-auto max-w-full object-contain" /></div>
+            <div className={collaboratorMode?'px-1 py-1':'contents'}><img src={collaboratorMode?(staffBrand.staff_logo_url||'/staff-logo.svg'):logoUrl} alt="Play Moments" className="h-12 w-auto max-w-full object-contain" /></div>
           </Link>
           {mobile && <button aria-label="Fechar menu administrativo" onClick={() => setSidebarOpen(false)} className="w-11 h-11 flex items-center justify-center text-gray-600 hover:text-gray-300">✕</button>}
         </div>

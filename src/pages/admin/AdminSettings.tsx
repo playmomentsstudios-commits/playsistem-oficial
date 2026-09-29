@@ -130,9 +130,9 @@ export function AdminSettings(){
           <span className="text-[10px] uppercase tracking-[.12em] text-[#E30613]">Somente Admin Mestre</span>
         </div>
         <div className="grid lg:grid-cols-[260px_1fr] gap-5 mt-5">
-          <div className="rounded-2xl p-5 border border-white/10" style={{background:settings.staff_primary_color}}>
+          <div className="rounded-2xl p-5 border border-white/10" style={{background:settings.staff_surface_color}}>
             <img src={settings.staff_logo_url||'/staff-logo.svg'} alt="Logo da área dos colaboradores" className="w-full h-20 object-contain"/>
-            <p className="text-center text-white text-xs mt-3">{settings.staff_platform_name}</p>
+            <p className="text-center text-xs mt-3" style={{color:settings.staff_text_color}}>{settings.staff_platform_name}</p>
           </div>
           <div className="space-y-4">
             <label className="block text-xs text-gray-500">Nome exibido no painel
