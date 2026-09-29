@@ -33,6 +33,9 @@ Deno.serve(async (req) => {
 
     const staffAllowed = ctx.role === "admin" || hasPermission(ctx, "files.manage");
     if (!staffAllowed && project.customer_id !== ctx.userId) throw new Error("Forbidden");
+    // Customers can only send material to the intake area. Internal production,
+    // approval and delivery folders are staff-controlled even when the customer owns the project.
+    if (!staffAllowed && folderKind !== "received") throw new Error("Customers can only upload to received files");
 
     if (taskId) {
       const { data: task, error: taskError } = await ctx.db
@@ -51,11 +54,14 @@ Deno.serve(async (req) => {
     if (customFolderId) {
       const { data: customFolder, error: customFolderError } = await ctx.db
         .from("project_custom_folders")
-        .select("id,project_id,parent_kind,name,drive_folder_id")
+        .select("id,project_id,parent_kind,name,drive_folder_id,client_visible")
         .eq("id", customFolderId)
         .eq("project_id", projectId)
         .single();
       if (customFolderError || !customFolder) throw new Error("Custom folder not found");
+      if (!staffAllowed && (!customFolder.client_visible || customFolder.parent_kind !== "received")) {
+        throw new Error("Custom folder is not available for customer uploads");
+      }
       target = {
         drive_folder_id: customFolder.drive_folder_id,
         folder_kind: customFolder.parent_kind,
