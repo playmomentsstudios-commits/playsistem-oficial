@@ -179,8 +179,8 @@ export function RegisterPage() {
         </p>
         {next==='/carrinho'&&<div className="mb-6 p-3 rounded-xl border border-[#E30613]/20 bg-[#E30613]/5"><p className="text-xs font-semibold" style={{color:'#f0f0f2'}}>🛒 Seu carrinho está esperando</p><p className="text-[11px] mt-1" style={{color:'#6b6b78'}}>Crie sua conta e você volta automaticamente para finalizar a compra.</p></div>}
 
-        <div className="mb-6">
-          <div className="flex items-center gap-2">
+        <div className="mb-6" aria-label={`Etapa ${step} de 3`}>
+          <div className="flex items-center gap-2" role="progressbar" aria-valuemin={1} aria-valuemax={3} aria-valuenow={step}>
             {[1,2,3].map(item => <div key={item} className="flex-1"><div className="h-1.5 rounded-full" style={{background:item<=step?'#E30613':'rgba(255,255,255,.10)'}} /></div>)}
           </div>
           <div className="flex justify-between mt-2 text-[10px] uppercase tracking-wider" style={{color:'#6b6b78'}}>
@@ -207,8 +207,8 @@ export function RegisterPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><Input label="Número" value={form.addressNumber} onChange={set('addressNumber')} error={errors.addressNumber} /><Input label="Complemento (opcional)" value={form.addressComplement} onChange={set('addressComplement')} /></div>
             <Input label="Bairro" value={form.neighborhood} onChange={set('neighborhood')} error={errors.neighborhood} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className="flex flex-col gap-2"><span className="text-xs font-semibold" style={{ color: '#9090a0' }}>Estado</span><select value={form.state} onChange={handleStateChange} className="w-full rounded-xl px-4" style={{ height: 48, background: '#141416', border: '1px solid rgba(255,255,255,.12)', color: '#f0f0f2' }}><option value="">Selecione</option>{states.map(state => <option key={state.id} value={state.sigla}>{state.nome} - {state.sigla}</option>)}</select>{errors.state && <span className="text-xs" style={{ color: '#ff6b7a' }}>{errors.state}</span>}</label>
-              <label className="flex flex-col gap-2"><span className="text-xs font-semibold" style={{ color: '#9090a0' }}>Cidade</span><select value={form.city} onChange={e => setForm(prev => ({ ...prev, city: e.target.value }))} disabled={!form.state || loadingCities} className="w-full rounded-xl px-4 disabled:opacity-50" style={{ height: 48, background: '#141416', border: '1px solid rgba(255,255,255,.12)', color: '#f0f0f2' }}><option value="">{loadingCities ? 'Carregando...' : 'Selecione'}</option>{cities.map(city => <option key={city.id} value={city.nome}>{city.nome}</option>)}</select>{errors.city && <span className="text-xs" style={{ color: '#ff6b7a' }}>{errors.city}</span>}</label>
+              <label className="flex flex-col gap-2"><span className="text-xs font-semibold" style={{ color: '#9090a0' }}>Estado</span><select aria-invalid={Boolean(errors.state)} value={form.state} onChange={handleStateChange} className="w-full rounded-xl px-4" style={{ height: 48, background: '#141416', border: '1px solid rgba(255,255,255,.12)', color: '#f0f0f2' }}><option value="">Selecione</option>{states.map(state => <option key={state.id} value={state.sigla}>{state.nome} - {state.sigla}</option>)}</select>{errors.state && <span className="text-xs" style={{ color: '#ff6b7a' }}>{errors.state}</span>}</label>
+              <label className="flex flex-col gap-2"><span className="text-xs font-semibold" style={{ color: '#9090a0' }}>Cidade</span><select aria-invalid={Boolean(errors.city)} value={form.city} onChange={e => setForm(prev => ({ ...prev, city: e.target.value }))} disabled={!form.state || loadingCities} className="w-full rounded-xl px-4 disabled:opacity-50" style={{ height: 48, background: '#141416', border: '1px solid rgba(255,255,255,.12)', color: '#f0f0f2' }}><option value="">{loadingCities ? 'Carregando...' : 'Selecione'}</option>{cities.map(city => <option key={city.id} value={city.nome}>{city.nome}</option>)}</select>{errors.city && <span className="text-xs" style={{ color: '#ff6b7a' }}>{errors.city}</span>}</label>
             </div>
           </>}
 
