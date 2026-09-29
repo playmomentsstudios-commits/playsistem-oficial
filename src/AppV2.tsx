@@ -29,6 +29,7 @@ const ContactPage = lazy(() => import('./pages/public/ContactPage').then(m => ({
 const AboutPage = lazy(() => import('./pages/public/AboutPage').then(m => ({ default:m.AboutPage })))
 const CategoryPage = lazy(() => import('./pages/public/CategoryPage').then(m => ({ default:m.CategoryPage })))
 const LandingPage = lazy(() => import('./pages/public/LandingPage').then(m => ({ default:m.LandingPage })))
+const NotFoundPage = lazy(() => import('./pages/public/NotFoundPage').then(m => ({ default:m.NotFoundPage })))
 const DashboardPage = lazy(() => import('./pages/customer/DashboardPage').then(m => ({ default:m.DashboardPage })))
 const ProfilePage = lazy(() => import('./pages/customer/ProfilePage').then(m => ({ default:m.ProfilePage })))
 const OrdersPage = lazy(() => import('./pages/customer/OrdersPage').then(m => ({ default:m.OrdersPage })))
@@ -190,7 +191,7 @@ export default function AppV2() {
               </Route>
 
               {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
             </Suspense>
           </ToastProvider>
