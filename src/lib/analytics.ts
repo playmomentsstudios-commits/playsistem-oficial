@@ -13,6 +13,7 @@ export function trackConversion(event:ConversionEvent,detail:Record<string,unkno
   window.dispatchEvent(new CustomEvent('playmoments:conversion',{detail:payload}))
   const target=window as Window & {dataLayer?:Array<Record<string,unknown>>}
   if(Array.isArray(target.dataLayer))target.dataLayer.push({event:'playmoments_conversion',conversion_event:event,...detail})
+  void persistConversion(event,detail).catch(()=>undefined)
 }
 
 
