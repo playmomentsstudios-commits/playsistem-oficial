@@ -24,8 +24,9 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#0a0a0b' }}>
+      <a href="#main-content" className="fixed left-3 top-3 z-[100] -translate-y-20 focus:translate-y-0 rounded-lg bg-white px-4 py-2 text-sm font-bold text-black transition-transform">Pular para o conteúdo</a>
       <PublicHeader settings={settings}/>
-      <main className="flex-1">{children}</main>
+      <main id="main-content" className="flex-1">{children}</main>
       <footer style={{ background: '#0d0d0f', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
         <div className="mx-auto px-6 py-12" style={{ maxWidth: 1200 }}>
           <div className="grid gap-8 md:grid-cols-4 mb-10">
@@ -56,7 +57,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               {settings?.whatsapp&&<a href={'https://wa.me/'+settings.whatsapp.replace(/\D/g,'')} target="_blank" rel="noreferrer" className="block text-sm mb-2" style={{color:'#6b6b78'}}>WhatsApp</a>}
               {settings?.address&&<p className="text-sm mb-1" style={{ color: '#6b6b78' }}>{settings.address}</p>}
               {(settings?.city||settings?.state)&&<p className="text-sm" style={{ color: '#6b6b78' }}>{[settings?.city,settings?.state].filter(Boolean).join(' · ')}</p>}
-              {!settings&&<><p className="text-sm mb-2" style={{ color: '#6b6b78' }}>contato@playmoments.com.br</p><p className="text-sm" style={{ color: '#6b6b78' }}>São Paulo, SP</p></>}
+              {!settings&&<p className="text-sm" style={{ color: '#6b6b78' }}>Carregando informações de contato…</p>}
             </div>
           </div>
           <div className="flex flex-col md:flex-row items-center justify-between pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
