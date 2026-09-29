@@ -1,5 +1,5 @@
 import { useEffect,useMemo,useState } from 'react'
-import { Link,useParams } from 'react-router-dom'
+import { Link,useNavigate,useParams } from 'react-router-dom'
 import { portalApi } from '../../api/portal'
 import { fileManagementApi } from '../../api/fileManagement'
 import { useAuth } from '../../contexts/AuthContext'
@@ -45,6 +45,7 @@ function progress(project:any){
 export function AdminProjectDetailV2(){
   const {id=''}=useParams()
   const {user}=useAuth()
+  const navigate=useNavigate()
   const toast=useToast()
   const [project,setProject]=useState<any>(null)
   const [team,setTeam]=useState<any[]>([])
@@ -83,6 +84,17 @@ export function AdminProjectDetailV2(){
       toast('Projeto atualizado.','success')
       await load()
     }catch(error:any){toast(error.message,'error')}
+  }
+
+  async function deleteProject(){
+    if(user?.role!=='admin')return
+    const confirmation=window.prompt('Exclusão definitiva. Digite EXCLUIR para remover o projeto do sistema. Os arquivos físicos no Google Drive serão preservados para segurança.')
+    if(confirmation!=='EXCLUIR')return
+    try{
+      await portalApi.deleteProject(id)
+      toast('Projeto excluído do sistema. Os arquivos do Google Drive foram preservados.','success')
+      navigate('/admin/projetos',{replace:true})
+    }catch(error:any){toast(error.message||'Não foi possível excluir o projeto.','error')}
   }
 
   async function addStage(e:React.FormEvent){
@@ -298,6 +310,7 @@ export function AdminProjectDetailV2(){
       <div className="flex flex-wrap gap-2">
         <select value={project.status} onChange={e=>updateProject({status:e.target.value})} className="pm-control px-3">{projectStatuses.map(value=><option key={value} value={value}>{rotulo(statusProjeto,value)}</option>)}</select>
         <select value={project.priority} onChange={e=>updateProject({priority:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10">{priorities.map(value=><option key={value} value={value}>{rotulo(prioridade,value)}</option>)}</select>
+        {user?.role==='admin'&&<button type="button" onClick={()=>void deleteProject()} className="min-h-10 px-3 rounded-xl border border-red-500/25 bg-red-500/10 text-red-300 text-xs font-semibold hover:bg-red-500/15">Excluir projeto</button>}
       </div>
     </div>
 

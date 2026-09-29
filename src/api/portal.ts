@@ -250,6 +250,15 @@ export const portalApi = {
     }
     return data
   },
+  deleteProject: async (id:string) => {
+    const {error}=await supabase.rpc('admin_delete_project',{p_project_id:id})
+    if(error) throw error
+  },
+  convertProductToService: async (productId:string) => {
+    const {data,error}=await supabase.rpc('admin_convert_product_to_service',{p_product_id:productId})
+    if(error) throw error
+    return data as string
+  },
   saveStage: async (values:any,id?:string) => {
     const q=id?supabase.from('project_stages').update(values).eq('id',id):supabase.from('project_stages').insert(values)
     const { data,error }=await q.select().single()
@@ -638,6 +647,17 @@ export const portalApi = {
   createAnnouncement: async (values:any) => {
     const { error }=await supabase.from('announcements').insert(values)
     if(error) throw error
+  },
+  createTargetedAnnouncement: async (values:{title:string;content:string;target_mode:string;target_ids?:string[];target_reference_id?:string|null}) => {
+    const {data,error}=await supabase.rpc('admin_create_targeted_announcement',{
+      p_title:values.title,
+      p_content:values.content,
+      p_target_mode:values.target_mode,
+      p_target_ids:values.target_ids||[],
+      p_target_reference_id:values.target_reference_id||null,
+    })
+    if(error) throw error
+    return data as string
   },
   unreadCounts: async (userId:string) => {
     const [n,m] = await Promise.all([

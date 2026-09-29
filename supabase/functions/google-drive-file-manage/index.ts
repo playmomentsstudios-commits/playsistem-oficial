@@ -1,4 +1,4 @@
-import { corsHeaders, getDriveAccessToken, json, requirePermission, requireUser } from "../_shared/googleDrive.ts";
+import { corsHeaders, ensureProjectFolder, getDriveAccessToken, json, requirePermission, requireUser } from "../_shared/googleDrive.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -97,13 +97,20 @@ Deno.serve(async (req) => {
     }
 
     if (action === "move") {
-      const folderKind = String(body.folder_kind || "");
+      const folderKind = String(body.folder_kind || "received");
       const customFolderId = body.custom_folder_id ? String(body.custom_folder_id) : null;
+      const targetProjectId = body.target_project_id ? String(body.target_project_id) : file.project_id;
 
-      if (file.storage_provider !== "google_drive" || !file.drive_file_id || !file.project_id) {
-        throw new Error("Only project files stored in Google Drive can be moved");
+      if (file.storage_provider !== "google_drive" || !file.drive_file_id || !targetProjectId) {
+        throw new Error("A Google Drive file and target project are required");
       }
 
+      const {data: targetProject,error: targetProjectError}=await ctx.db
+        .from("projects").select("id,customer_id").eq("id",targetProjectId).single();
+      if(targetProjectError||!targetProject)throw new Error("Target project not found");
+      if(!targetProject.customer_id)throw new Error("Target project must be linked to a customer before receiving client files");
+
+      await ensureProjectFolder(ctx.db,ctx.userId,targetProjectId);
       let target:any = null;
 
       if (customFolderId) {
@@ -111,7 +118,7 @@ Deno.serve(async (req) => {
           .from("project_custom_folders")
           .select("id,project_id,parent_kind,name,drive_folder_id")
           .eq("id", customFolderId)
-          .eq("project_id", file.project_id)
+          .eq("project_id", targetProjectId)
           .single();
         if (customFolderError || !customFolder) throw new Error("Target custom folder not found");
 
@@ -126,7 +133,7 @@ Deno.serve(async (req) => {
         const { data: standardFolder, error: folderError } = await ctx.db
           .from("project_drive_folders")
           .select("drive_folder_id,folder_kind,folder_name")
-          .eq("project_id", file.project_id)
+          .eq("project_id", targetProjectId)
           .eq("folder_kind", folderKind)
           .single();
         if (folderError || !standardFolder) throw new Error("Target Drive folder not found");
@@ -156,6 +163,9 @@ Deno.serve(async (req) => {
       const { error: updateError } = await ctx.db
         .from("client_files")
         .update({
+          project_id: targetProjectId,
+          customer_id: targetProject.customer_id,
+          task_id: file.project_id===targetProjectId ? undefined : null,
           drive_folder_id: target.drive_folder_id,
           custom_folder_id: customFolderId,
         })

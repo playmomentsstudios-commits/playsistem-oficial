@@ -153,9 +153,9 @@ export function AdminLayout() {
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Top bar */}
         <div className="flex items-center justify-between px-4 py-3 border-b"
-          style={{ background: collaboratorMode?staffBrand.staff_surface_color:'#0a0a0b', borderColor: 'rgba(255,255,255,0.05)', minHeight: 56 }}>
+          style={{ background: collaboratorMode?staffBrand.staff_surface_color:'#0a0a0b', borderColor: collaboratorMode?'#e1e4e8':'rgba(255,255,255,0.05)', minHeight: 56 }}>
           <div className="flex items-center gap-3">
-            <button aria-label="Abrir menu administrativo" className="md:hidden w-11 h-11 flex items-center justify-center" onClick={() => setSidebarOpen(true)} style={{ color: '#9090a0' }}>
+            <button aria-label="Abrir menu administrativo" className="md:hidden w-11 h-11 flex items-center justify-center" onClick={() => setSidebarOpen(true)} style={{ color: collaboratorMode?'#475467':'#9090a0' }}>
               <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M3 12h18M3 6h18M3 18h18" />
               </svg>
@@ -165,11 +165,11 @@ export function AdminLayout() {
           <div className="flex items-center gap-1.5 sm:gap-2">
             <Link to="/admin/conversas" aria-label="Mensagens" title="Mensagens" className="relative w-10 h-10 rounded-xl border border-white/[0.07] bg-white/[0.025] text-gray-400 transition-colors flex items-center justify-center">
               <MenuIcon name="conversations" size={17}/>
-              {counts.messages>0&&<span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-[#0a0a0b]">{counts.messages>99?'99+':counts.messages}</span>}
+              {counts.messages>0&&<span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-[var(--staff-surface,#0a0a0b)]">{counts.messages>99?'99+':counts.messages}</span>}
             </Link>
             <Link to="/admin/notificacoes" aria-label="Notificações" title="Notificações" className="relative w-10 h-10 rounded-xl border border-white/[0.07] bg-white/[0.025] text-gray-400 transition-colors flex items-center justify-center">
               <MenuIcon name="notifications" size={17}/>
-              {counts.notifications>0&&<span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-[#0a0a0b]">{counts.notifications>99?'99+':counts.notifications}</span>}
+              {counts.notifications>0&&<span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-[var(--staff-surface,#0a0a0b)]">{counts.notifications>99?'99+':counts.notifications}</span>}
             </Link>
             <div className="relative">
               <button type="button" aria-haspopup="menu" aria-expanded={accountOpen} onClick={()=>setAccountOpen(v=>!v)} className="flex items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.025] px-2.5 py-1.5 hover:bg-white/[0.05] transition-colors">

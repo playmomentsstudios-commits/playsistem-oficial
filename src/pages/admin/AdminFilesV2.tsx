@@ -302,6 +302,15 @@ export function AdminFilesV2(){
     }catch(error:any){toast(error.message||'Não foi possível mover o arquivo.','error')}
   }
 
+  async function organizeIntoProject(row:any,targetProjectId:string){
+    try{
+      await fileManagementApi.moveToProject(row.id,targetProjectId,'received')
+      toast('Arquivo conectado ao projeto e movido para Arquivos recebidos no Google Drive.','success')
+      setMenuFile(null)
+      await load()
+    }catch(error:any){toast(error.message||'Não foi possível organizar o arquivo no projeto.','error')}
+  }
+
   async function moveToCustom(row:any,folderId:string){
     try{
       await fileManagementApi.moveToCustom(row.id,folderId)
@@ -579,7 +588,14 @@ export function AdminFilesV2(){
                     <div className="flex items-center gap-1">
                       {(row.drive_file_id||row.external_url||row.storage_path)&&<button type="button" onClick={()=>{setMenuFile(null);void open(row)}} className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center text-sm" title="Abrir" aria-label="Abrir arquivo">↗</button>}
                       <button type="button" onClick={()=>void rename(row)} className="w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center text-sm" title="Renomear" aria-label="Renomear arquivo">✎</button>
-                      {row.storage_provider==='google_drive'&&row.project_id&&<label className="relative w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer text-sm" title="Mover" aria-label="Mover arquivo">
+                      {row.storage_provider==='google_drive'&&<label className="relative w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer text-sm" title="Conectar/mover para projeto" aria-label="Conectar arquivo a um projeto">
+                        📁
+                        <select defaultValue="" onChange={e=>{if(e.target.value)void organizeIntoProject(row,e.target.value)}} className="absolute inset-0 opacity-0 cursor-pointer">
+                          <option value="">Organizar em projeto</option>
+                          {projects.filter((projectRow:any)=>projectRow.customer_id).map((projectRow:any)=><option key={projectRow.id} value={projectRow.id}>{projectRow.title}</option>)}
+                        </select>
+                      </label>}
+                      {row.storage_provider==='google_drive'&&row.project_id&&<label className="relative w-9 h-9 rounded-lg hover:bg-white/[0.07] flex items-center justify-center cursor-pointer text-sm" title="Mover dentro do projeto" aria-label="Mover arquivo">
                         ⇄
                         <select defaultValue="" onChange={e=>{if(e.target.value){void move(row,e.target.value);setMenuFile(null)}}} className="absolute inset-0 opacity-0 cursor-pointer">
                           <option value="">Mover</option>
