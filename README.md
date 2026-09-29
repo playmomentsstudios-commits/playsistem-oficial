@@ -28,7 +28,7 @@ Ecossistema digital Play Moments: site público, catálogo de produtos e serviç
 - `pnpm typecheck`
 - `pnpm build`
 
-Variáveis públicas usam prefixo `VITE_`. Nunca coloque segredos privados em variáveis `VITE_`.
+Crie `.env.local` a partir de `.env.example` antes de iniciar o app. O frontend exige `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` para conectar ao Supabase. Variáveis `VITE_` são públicas no bundle; nunca coloque segredos privados nelas.
 
 ## Áreas
 
