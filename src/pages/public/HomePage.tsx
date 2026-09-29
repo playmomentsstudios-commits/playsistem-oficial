@@ -12,7 +12,7 @@ export function HomePage() {
   const [portfolio,setPortfolio]=useState<PortfolioItem[]>([])
   const [siteSettings,setSiteSettings]=useState<SiteSettings|null>(null)
   const [serviceAreas,setServiceAreas]=useState<HomeServiceArea[]>([])
-  useEffect(()=>{Promise.all([siteContentApi.profile(),siteContentApi.portfolioItems(),siteContentApi.settings(),siteContentApi.homeServiceAreas()]).then(([p,i,s,a])=>{setProfile(p);setPortfolio(i.filter(item=>item.featured).slice(0,3));setSiteSettings(s);setServiceAreas(a);if(s.meta_description){document.title=s.company_name;document.querySelector('meta[name="description"]')?.setAttribute('content',s.meta_description)}}).catch(()=>undefined)},[])
+  useEffect(()=>{Promise.all([siteContentApi.profile(),siteContentApi.portfolioItems(),siteContentApi.settings(),siteContentApi.homeServiceAreas()]).then(([p,i,s,a])=>{setProfile(p);setPortfolio(i.filter(item=>item.featured).slice(0,3));setSiteSettings(s);setServiceAreas(a)}).catch(()=>undefined)},[])
   const quote = conversationLink(role, 'orcamento')
   const academyHref = '/academia'
   const clientHref = role === 'customer' ? '/app/dashboard' : role ? '/admin' : '/login?next=%2Fapp%2Fdashboard'
