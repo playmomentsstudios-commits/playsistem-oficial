@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import { CartProvider } from './contexts/CartContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { useAuth } from './contexts/AuthContext'
+import { RouteSeo } from './components/RouteSeo'
 
 // Route-level code splitting keeps public, customer and admin screens out of the initial bundle.
 const CustomerLayoutV2 = lazy(() => import('./layouts/CustomerLayoutV2').then(m => ({ default:m.CustomerLayoutV2 })))
@@ -96,6 +97,7 @@ export default function AppV2() {
       <AuthProvider>
         <CartProvider>
           <ToastProvider>
+            <RouteSeo />
             <Suspense fallback={<RouteFallback />}>
             <Routes>
               {/* Public */}
