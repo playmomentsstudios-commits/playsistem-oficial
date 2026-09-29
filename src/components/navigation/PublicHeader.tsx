@@ -103,7 +103,7 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
         </div>
 
         {/* Mobile menu button */}
-        <button aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={mobileOpen} aria-controls="public-mobile-menu" className="lg:hidden p-3 ml-auto" style={{ color: '#9090a0' }} onClick={() => setMobileOpen(v => !v)}>
+        <button aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={mobileOpen} aria-controls="public-mobile-menu" className="lg:hidden w-11 h-11 flex items-center justify-center ml-auto" style={{ color: '#9090a0' }} onClick={() => setMobileOpen(v => !v)}>
           <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             {mobileOpen
               ? <path d="M18 6L6 18M6 6l12 12" />
@@ -118,7 +118,7 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
           style={{ borderColor: 'rgba(255,255,255,0.06)', background: '#0a0a0b' }}>
           {navLinks.map(link => (
             <Link key={link.href} to={link.href} onClick={() => setMobileOpen(false)}
-              className="text-sm font-medium min-h-11 flex items-center" style={{ color: '#c0c0cc' }}>
+              className="text-sm font-medium min-h-11 flex items-center" aria-current={location.pathname === link.href || location.pathname.startsWith(link.href + '/') ? 'page' : undefined} style={{ color: location.pathname === link.href || location.pathname.startsWith(link.href + '/') ? '#f0f0f2' : '#c0c0cc' }}>
               {link.label}
             </Link>
           ))}
