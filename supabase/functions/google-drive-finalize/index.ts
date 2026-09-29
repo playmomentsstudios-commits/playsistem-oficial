@@ -87,6 +87,14 @@ Deno.serve(async (req) => {
     }
 
     if (file.trashed) throw new Error("Drive file is in trash");
+    // Bind finalization to the resumable session that created the Drive object.
+    // Folder membership alone is not enough proof of ownership of the upload.
+    if (uploadId) {
+      if (file.appProperties?.playMomentsUploadId !== uploadId
+        || file.appProperties?.playMomentsEntityId !== projectId) {
+        throw new Error("Drive file does not belong to this upload session");
+      }
+    }
     const parentId = file.parents?.[0] || null;
     if (!parentId || !allowedFolderIds.has(parentId)) {
       throw new Error("Drive file is outside this project");
