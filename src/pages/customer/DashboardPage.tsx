@@ -13,10 +13,13 @@ export function DashboardPage(){
   const [data,setData]=useState({orders:0,projects:0,quotes:0,payments:0,messages:0,notifications:0})
   const [loyalty,setLoyalty]=useState<any>(null)
   const [settings,setSettings]=useState<any>(null)
+  const [loading,setLoading]=useState(true)
+  const [loadError,setLoadError]=useState(false)
 
   useEffect(()=>{
     if(!user)return
     void portalApi.ensureClientDriveFolder(user.id).catch(()=>undefined)
+    setLoadError(false)
     Promise.all([
       portalApi.orders(),
       portalApi.projects(),
@@ -36,7 +39,7 @@ export function DashboardPage(){
       })
       setLoyalty(loyaltyRow)
       setSettings(loyaltySettings)
-    }).catch(()=>undefined)
+    }).catch(()=>setLoadError(true)).finally(()=>setLoading(false)
   },[user?.id])
 
   const cards=[
@@ -48,6 +51,18 @@ export function DashboardPage(){
     ['Notificações',data.notifications,'/app/notificacoes',data.notifications?'text-amber-300':'text-gray-300'],
   ]
 
+  const nextAction=data.payments>0
+    ? {label:'Resolver pagamento pendente',detail:`${data.payments} pagamento(s) aguardando você`,href:'/app/pagamentos',tone:'text-amber-200'}
+    : data.quotes>0
+      ? {label:'Revisar orçamento',detail:`${data.quotes} proposta(s) esperando sua decisão`,href:'/app/orcamentos',tone:'text-violet-200'}
+      : data.messages>0
+        ? {label:'Responder mensagens',detail:`${data.messages} mensagem(ns) não lida(s)`,href:'/app/conversas',tone:'text-emerald-200'}
+        : data.notifications>0
+          ? {label:'Ver novas atualizações',detail:`${data.notifications} notificação(ões) nova(s)`,href:'/app/notificacoes',tone:'text-amber-200'}
+          : data.projects>0
+            ? {label:'Acompanhar projeto',detail:`${data.projects} projeto(s) em andamento`,href:'/app/projetos',tone:'text-blue-200'}
+            : {label:'Explorar serviços',detail:'Você está em dia. Veja o que podemos realizar agora.',href:'/servicos',tone:'text-gray-200'}
+
   const available=Math.max(0,(loyalty?.unlocked_cash||0)-(loyalty?.used_cash||0))
   const nextThreshold=loyalty?.level==='bronze'?settings?.silver_threshold:loyalty?.level==='silver'?settings?.gold_threshold:null
   const currentFloor=loyalty?.level==='silver'?(settings?.silver_threshold||0):0
@@ -58,8 +73,8 @@ export function DashboardPage(){
     <h1 className="text-2xl font-bold text-white mt-1">Olá, {user?.name}</h1>
     <p className="text-sm text-gray-500 mt-1 mb-6">Veja primeiro o que precisa da sua atenção.</p>
 
-    {(data.payments+data.quotes+data.messages+data.notifications)>0&&<section className="mb-5 p-4 rounded-2xl bg-amber-500/[0.04] border border-amber-500/15">
-      <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-semibold text-amber-100">Você tem ações pendentes</p><p className="text-xs text-gray-500 mt-1">Pagamentos, propostas, mensagens ou notificações aguardando sua atenção.</p></div><div className="flex flex-wrap gap-2">{data.payments>0&&<Link to="/app/pagamentos" className="px-3 py-2 rounded-lg bg-amber-500/10 text-amber-200 text-xs">{data.payments} pagamento(s)</Link>}{data.quotes>0&&<Link to="/app/orcamentos" className="px-3 py-2 rounded-lg bg-violet-500/10 text-violet-200 text-xs">{data.quotes} orçamento(s)</Link>}{data.messages>0&&<Link to="/app/conversas" className="px-3 py-2 rounded-lg bg-emerald-500/10 text-emerald-200 text-xs">{data.messages} mensagem(ns)</Link>}</div></div>
+    {loading?<section role="status" aria-live="polite" className="mb-5 p-4 rounded-2xl bg-white/[.025] border border-white/10 text-sm text-gray-500">Organizando sua área…</section>:loadError?<section role="alert" className="mb-5 p-4 rounded-2xl bg-red-500/[.04] border border-red-500/15"><p className="text-sm font-semibold text-red-200">Algumas informações não puderam ser atualizadas.</p><p className="text-xs text-gray-500 mt-1">Você pode continuar navegando normalmente e tentar novamente ao recarregar.</p></section>:<section className="mb-5 p-4 rounded-2xl bg-white/[.025] border border-white/10">
+      <div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-[10px] uppercase tracking-[.16em] text-gray-600 font-semibold">Próxima ação</p><p className={"text-base font-semibold mt-1 "+nextAction.tone}>{nextAction.label}</p><p className="text-xs text-gray-500 mt-1">{nextAction.detail}</p></div><Link to={nextAction.href} className="min-h-11 px-4 rounded-xl bg-[#E30613] text-white text-xs font-bold inline-flex items-center justify-center">Continuar →</Link></div>
     </section>}
 
     <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">{cards.map(([label,value,href,tone])=><Link key={String(label)} to={String(href)} className="p-4 rounded-2xl bg-[#141416] border border-white/10 hover:border-white/20 transition-colors"><p className={'text-2xl font-bold '+tone}>{value}</p><p className="text-xs text-gray-500 mt-1">{label}</p></Link>)}</div>
