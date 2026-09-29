@@ -2,6 +2,7 @@ import { useEffect,useMemo,useState } from 'react'
 import { Link,useParams } from 'react-router-dom'
 import { portalApi } from '../../api/portal'
 import { EmptyState } from '../../components/ui/EmptyState'
+import { LoadingState,ErrorState } from '../../components/ui/AsyncState'
 import { rotulo,statusEtapa,statusProjeto,statusTarefa } from '../../lib/labels.ptBR'
 
 function progress(project:any){
@@ -46,8 +47,8 @@ export function ProjectsPage(){
   const currentStage=stages.find((stage:any)=>stage.status==='in_progress')||stages.find((stage:any)=>stage.status==='pending')||stages.at(-1)
   const nextStage=currentStage?stages.find((stage:any)=>stage.position>currentStage.position&&stage.status!=='completed'):null
 
-  if(loading)return <p className="text-gray-400">Carregando...</p>
-  if(error)return <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/5"><p className="text-red-300">{error}</p><button onClick={()=>window.location.reload()} className="text-sm text-[#E30613] mt-2">Tentar novamente</button></div>
+  if(loading)return <LoadingState />
+  if(error)return <ErrorState message={error} action={<button onClick={()=>window.location.reload()} className="min-h-11 px-4 rounded-xl bg-white/5">Tentar novamente</button>}/>
 
   if(id){
     if(!project)return <div><p>Projeto não encontrado.</p><Link to="/app/projetos" className="text-[#E30613]">Voltar</Link></div>
