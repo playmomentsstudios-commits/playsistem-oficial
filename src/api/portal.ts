@@ -180,7 +180,7 @@ export const portalApi = {
   },
   projects: async () => {
     const { data,error } = await supabase.from('projects')
-      .select('*,stages:project_stages(*),tasks(*)').order('updated_at',{ascending:false})
+      .select('*,stages:project_stages(*),tasks(*,checklist:task_checklist_items(*))').order('updated_at',{ascending:false})
     if(error) throw error
     return data ?? []
   },

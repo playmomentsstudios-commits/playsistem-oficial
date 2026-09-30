@@ -6,9 +6,10 @@ import { LoadingState,ErrorState } from '../../components/ui/AsyncState'
 import { rotulo,statusEtapa,statusProjeto,statusTarefa } from '../../lib/labels.ptBR'
 
 function progress(project:any){
-  const valid=(project?.tasks||[]).filter((task:any)=>task.status!=='cancelled')
-  if(!valid.length)return 0
-  return Math.round(valid.filter((task:any)=>task.status==='completed').length/valid.length*100)
+  const tasks=(project?.tasks||[]).filter((task:any)=>task.status!=='cancelled')
+  const checklist=tasks.flatMap((task:any)=>task.checklist||[])
+  if(checklist.length)return Math.round(checklist.filter((item:any)=>item.completed).length/checklist.length*100)
+  return tasks.length?Math.round(tasks.filter((task:any)=>task.status==='completed').length/tasks.length*100):0
 }
 
 export function ProjectsPage(){
@@ -90,7 +91,7 @@ export function ProjectsPage(){
         <div className="mt-3 space-y-3">{(project.tasks||[]).filter((task:any)=>task.stage_id===stage.id&&task.client_visible).map((task:any)=><div key={task.id} className="p-3 rounded-lg bg-black/20">
           <div className="flex justify-between gap-3"><p className="text-sm font-medium">{task.title}</p><span className="text-xs text-gray-500">{rotulo(statusTarefa,task.status)}</span></div>
           {task.description&&<p className="text-xs text-gray-500 mt-1">{task.description}</p>}
-          {(task.checklist||[]).length>0&&<div className="mt-2 space-y-1">{task.checklist.sort((a:any,b:any)=>a.position-b.position).map((item:any)=><p key={item.id} className="text-xs text-gray-400">{item.completed?'✓':'○'} {item.title}</p>)}</div>}
+          {(task.checklist||[]).length>0&&<div className="mt-2 space-y-1">{task.checklist.sort((a:any,b:any)=>a.position-b.position).map((item:any)=><p key={item.id} className={'text-xs rounded-md px-2 py-1 transition-colors '+(item.completed?'bg-emerald-500/10 text-emerald-400':'text-gray-400')}>{item.completed?'✓':'○'} {item.title}</p>)}</div>}
           {(task.links||[]).filter((link:any)=>link.client_visible).length>0&&<div className="mt-2 flex flex-wrap gap-2">{task.links.filter((link:any)=>link.client_visible).map((link:any)=><a key={link.id} href={link.url} target="_blank" rel="noreferrer" className="text-xs text-[#E30613] px-2 py-1 rounded bg-white/5">{link.label} ↗</a>)}</div>}
           {files.filter((file:any)=>file.task_id===task.id).length>0&&<div className="mt-2 flex flex-wrap gap-2">{files.filter((file:any)=>file.task_id===task.id).map((file:any)=><button key={file.id} onClick={()=>openFile(file)} className="text-xs text-[#E30613] px-2 py-1 rounded bg-white/5">{file.name} ↗</button>)}</div>}
         </div>)}</div>
