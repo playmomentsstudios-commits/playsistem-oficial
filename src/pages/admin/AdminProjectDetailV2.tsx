@@ -52,6 +52,7 @@ export function AdminProjectDetailV2(){
   const [project,setProject]=useState<any>(null)
   const [team,setTeam]=useState<any[]>([])
   const [files,setFiles]=useState<any[]>([])
+  const [driveRootItems,setDriveRootItems]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
   const [stageName,setStageName]=useState('')
   const [fileTask,setFileTask]=useState('')
@@ -69,10 +70,11 @@ export function AdminProjectDetailV2(){
   const [projectTab,setProjectTab]=useState<'execucao'|'arquivos'>('execucao')
 
   const load=async()=>{
-    const [item,members,projectFiles]=await Promise.all([portalApi.project(id),portalApi.teamMembers(),portalApi.projectFiles(id)])
+    const [item,members,projectFiles,driveFolder]=await Promise.all([portalApi.project(id),portalApi.teamMembers(),portalApi.projectFiles(id),portalApi.ensureProjectDriveFolder(id)])
     setProject(item)
     setTeam(members)
     setFiles(projectFiles)
+    setDriveRootItems((driveFolder.rootItems||[]).filter((entry:any)=>entry.mimeType!=='application/vnd.google-apps.folder'))
     setLoading(false)
   }
 
@@ -349,6 +351,22 @@ export function AdminProjectDetailV2(){
         </div>
         <Link to="/admin/arquivos" className="text-sm text-[#E30613]">Abrir Central de Arquivos →</Link>
       </div>
+
+      {driveRootItems.length>0&&<div className="pm-surface p-4 mt-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-semibold">Documentos operacionais na pasta do projeto</h3>
+            <p className="text-xs text-gray-500 mt-1">Arquivos colocados diretamente na raiz do Google Drive deste projeto.</p>
+          </div>
+          {project.drive_folder_url&&<a href={project.drive_folder_url} target="_blank" rel="noreferrer" className="text-xs text-[#E30613]">Abrir pasta no Drive ↗</a>}
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-4">
+          {driveRootItems.map((entry:any)=><a key={entry.id} href={entry.webViewLink} target="_blank" rel="noreferrer" className="p-3 rounded-xl bg-white/[.04] border border-white/10 hover:bg-white/[.07]">
+            <p className="text-sm font-medium truncate" title={entry.name}>📊 {entry.name}</p>
+            <p className="text-[10px] text-gray-500 mt-1">{entry.modifiedTime?('Atualizado '+new Date(entry.modifiedTime).toLocaleString('pt-BR')):'Documento do projeto'}</p>
+          </a>)}
+        </div>
+      </div>}
 
       <div className="pm-surface p-4 mt-4">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3 items-end">
