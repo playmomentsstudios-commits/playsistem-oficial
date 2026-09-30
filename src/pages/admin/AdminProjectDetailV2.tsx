@@ -5,6 +5,7 @@ import { fileManagementApi } from '../../api/fileManagement'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
+import { exportProjectReportSpreadsheet,printProjectReportPdf } from '../../lib/projectReport'
 import { prioridade,rotulo,statusEtapa,statusProjeto,statusTarefa,tipoProjeto } from '../../lib/labels.ptBR'
 
 const projectStatuses=['planning','active','paused','review','completed','cancelled']
@@ -323,6 +324,13 @@ export function AdminProjectDetailV2(){
       <div className="flex flex-wrap gap-2">
         <select value={project.status} onChange={e=>updateProject({status:e.target.value})} className="pm-control px-3">{projectStatuses.map(value=><option key={value} value={value}>{rotulo(statusProjeto,value)}</option>)}</select>
         <select value={project.priority} onChange={e=>updateProject({priority:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10">{priorities.map(value=><option key={value} value={value}>{rotulo(prioridade,value)}</option>)}</select>
+        <div className="relative group">
+          <button type="button" className="min-h-10 px-3 rounded-xl border border-white/10 bg-white/[.04] text-gray-200 text-xs font-semibold hover:bg-white/[.08]">Exportar relatório ▾</button>
+          <div className="absolute right-0 top-full z-20 mt-1 hidden min-w-48 rounded-xl border border-white/10 bg-[#111114] p-1 shadow-xl group-hover:block group-focus-within:block">
+            <button type="button" onClick={()=>exportProjectReportSpreadsheet(project,team)} className="w-full rounded-lg px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/[.06]">Planilha (.xls)</button>
+            <button type="button" onClick={()=>printProjectReportPdf(project,team)} className="w-full rounded-lg px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/[.06]">PDF / Imprimir</button>
+          </div>
+        </div>
         {user?.role==='admin'&&<button type="button" onClick={()=>void deleteProject()} className="min-h-10 px-3 rounded-xl border border-red-500/25 bg-red-500/10 text-red-300 text-xs font-semibold hover:bg-red-500/15">Excluir projeto</button>}
       </div>
     </div>
