@@ -16,7 +16,7 @@ Checklist único para alinhar o Supabase remoto ao código homologado antes do b
 Não renumerar nem reescrever migrations históricas já registradas no projeto remoto. Confirmar o histórico antes de qualquer reconciliação.
 
 ## Edge Functions — publicar a versão atual do main
-- `asaas-webhook`: inclui validação de valor e fonte única de confirmação transacional.
+- `asaas-webhook`: inclui validação de valor e fonte única de confirmação transacional. Publicar com `npx supabase functions deploy asaas-webhook --no-verify-jwt` porque o Asaas é um chamador externo sem JWT de usuário Supabase; a função valida o `asaas-access-token` no próprio handler.
 - `asaas-create-checkout`: checkout hospedado + URL efetiva persistida para retomada.
 - `google-drive-file-manage`: organização/movimentação de arquivos por projeto.
 
