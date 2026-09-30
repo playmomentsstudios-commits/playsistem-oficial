@@ -1,4 +1,4 @@
-import { corsHeaders, ensureProjectFolder, hasPermission, json, requireUser } from "../_shared/googleDrive.ts";
+import { corsHeaders, ensureProjectFolder, hasPermission, json, listDriveFolderItems, requireUser } from "../_shared/googleDrive.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -19,7 +19,8 @@ Deno.serve(async (req) => {
     }
 
     const result = await ensureProjectFolder(ctx.db, ctx.userId, projectId);
-    return json({ ok: true, ...result });
+    const rootItems = await listDriveFolderItems(result.projectFolderId);
+    return json({ ok: true, ...result, rootItems });
   } catch (error) {
     return json({ ok: false, error: error instanceof Error ? error.message : "Unknown error" }, 400);
   }
