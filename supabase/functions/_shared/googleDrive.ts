@@ -179,6 +179,18 @@ export async function findDriveFolder(
   return result.files?.[0] || null;
 }
 
+export async function listDriveFolderItems(parentId: string) {
+  const params = new URLSearchParams({
+    q: `'${escapeDriveQuery(parentId)}' in parents and trashed=false`,
+    spaces: "drive",
+    fields: "files(id,name,mimeType,size,modifiedTime,webViewLink,iconLink)",
+    orderBy: "folder,name",
+    pageSize: "100",
+  });
+  const result = await driveJson(`https://www.googleapis.com/drive/v3/files?${params.toString()}`);
+  return result.files || [];
+}
+
 export async function ensureDriveRoot(db: SupabaseClient, userId: string) {
   const { data: settings, error } = await db
     .from("drive_settings")
