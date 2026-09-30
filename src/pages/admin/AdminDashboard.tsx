@@ -66,7 +66,7 @@ export function AdminDashboard(){
     customers:data.customers.length,
     activeProjects:data.projects.filter((item:any)=>!['completed','cancelled'].includes(item.status)).length,
     openOrders:data.orders.filter((item:any)=>!['completed','cancelled'].includes(item.status)).length,
-    pendingPayments:data.payments.filter((item:any)=>['pending','awaiting_confirmation'].includes(item.status)).length,
+    pendingPayments:data.payments.filter((item:any)=>!item.archived_at&&['pending','awaiting_confirmation'].includes(item.status)).length,
     openQuotes:data.quotes.filter((item:any)=>['draft','sent','viewed','accepted'].includes(item.status)).length,
     unread:data.unread.messages,
     pipelineValue:data.crm.filter(item=>['quote','negotiation','won'].includes(item.stage)).reduce((sum,item)=>sum+(item.estimated_value||0),0),
