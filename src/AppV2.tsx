@@ -68,6 +68,7 @@ const AdminFilesV2 = lazy(() => import('./pages/admin/AdminFilesV2').then(m => (
 const AdminAboutPortfolio = lazy(() => import('./pages/admin/AdminAboutPortfolio').then(m => ({ default:m.AdminAboutPortfolio })))
 const AdminCRM = lazy(() => import('./pages/admin/AdminCRM').then(m => ({ default:m.AdminCRM })))
 const AdminReports = lazy(() => import('./pages/admin/AdminReports').then(m => ({ default:m.AdminReports })))
+const AdminConversion = lazy(() => import('./pages/admin/AdminConversion').then(m => ({ default:m.AdminConversion })))
 const AdminAudit = lazy(() => import('./pages/admin/AdminAudit').then(m => ({ default:m.AdminAudit })))
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings').then(m => ({ default:m.AdminSettings })))
 const AdminAutoAttendant = lazy(() => import('./pages/admin/AdminAutoAttendant').then(m => ({ default:m.AdminAutoAttendant })))
@@ -183,6 +184,7 @@ export default function AppV2() {
                 <Route path="configuracoes" element={<AdminPermissionGate adminOnly><AdminSettings /></AdminPermissionGate>} />
                 <Route path="auditoria" element={<AdminPermissionGate adminOnly><AdminAudit /></AdminPermissionGate>} />
                 <Route path="relatorios" element={<AdminPermissionGate permission="reports.view"><AdminReports /></AdminPermissionGate>} />
+                <Route path="conversao" element={<AdminPermissionGate permission="reports.view"><AdminConversion /></AdminPermissionGate>} />
                 <Route path="academia" element={<AdminPermissionGate permission="academy.view"><AdminAcademy /></AdminPermissionGate>} />
                 <Route path="academia/alunos" element={<AdminPermissionGate permission="academy.students.manage"><AdminAcademyStudents /></AdminPermissionGate>} />
                 <Route path="academia/programas" element={<AdminPermissionGate permission="academy.programs.manage"><AdminAcademyPrograms /></AdminPermissionGate>} />
