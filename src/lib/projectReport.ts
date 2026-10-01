@@ -51,17 +51,205 @@ function reportId(project:any){
 function evidenceFor(project:any,taskId:string){
   return (project?.files||[]).filter((file:any)=>file.task_id===taskId)
 }
-function table(data:any[][]){
-  return '<table border="1">'+data.map(row=>'<tr>'+row.map(cell=>'<td>'+esc(cell)+'</td>').join('')+'</tr>').join('')+'</table>'
+
+function xmlEsc(value:unknown){
+  return String(value??'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&apos;')
+}
+function colName(index:number){
+  let n=index+1
+  let out=''
+  while(n>0){
+    const rem=(n-1)%26
+    out=String.fromCharCode(65+rem)+out
+    n=Math.floor((n-1)/26)
+  }
+  return out
+}
+function crc32(bytes:Uint8Array){
+  let crc=0xffffffff
+  for(const byte of bytes){
+    crc^=byte
+    for(let bit=0;bit<8;bit++)crc=(crc>>>1)^((crc&1)?0xedb88320:0)
+  }
+  return (crc^0xffffffff)>>>0
+}
+function u16(value:number){
+  return new Uint8Array([value&255,(value>>>8)&255])
+}
+function u32(value:number){
+  return new Uint8Array([value&255,(value>>>8)&255,(value>>>16)&255,(value>>>24)&255])
+}
+function concatBytes(parts:Uint8Array[]){
+  const total=parts.reduce((sum,item)=>sum+item.length,0)
+  const out=new Uint8Array(total)
+  let offset=0
+  for(const part of parts){out.set(part,offset);offset+=part.length}
+  return out
+}
+function zipStored(entries:Array<{name:string;content:string}>){
+  const encoder=new TextEncoder()
+  const now=new Date()
+  const dosTime=(now.getHours()<<11)|(now.getMinutes()<<5)|Math.floor(now.getSeconds()/2)
+  const dosDate=((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate()
+  const localParts:Uint8Array[]=[]
+  const centralParts:Uint8Array[]=[]
+  let offset=0
+  for(const entry of entries){
+    const name=encoder.encode(entry.name)
+    const data=encoder.encode(entry.content)
+    const crc=crc32(data)
+    const local=concatBytes([
+      u32(0x04034b50),u16(20),u16(0),u16(0),u16(dosTime),u16(dosDate),
+      u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),name,data
+    ])
+    localParts.push(local)
+    const central=concatBytes([
+      u32(0x02014b50),u16(20),u16(20),u16(0),u16(0),u16(dosTime),u16(dosDate),
+      u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),u16(0),u16(0),u16(0),
+      u32(0),u32(offset),name
+    ])
+    centralParts.push(central)
+    offset+=local.length
+  }
+  const central=concatBytes(centralParts)
+  const locals=concatBytes(localParts)
+  const end=concatBytes([
+    u32(0x06054b50),u16(0),u16(0),u16(entries.length),u16(entries.length),
+    u32(central.length),u32(locals.length),u16(0)
+  ])
+  return concatBytes([locals,central,end])
+}
+function xlsxCell(ref:string,value:unknown,style:number,number=false){
+  if(value===null||value===undefined||value==='')return '<c r="'+ref+'" s="'+style+'"/>'
+  if(number){
+    const raw=Number(value)
+    return Number.isFinite(raw)?'<c r="'+ref+'" s="'+style+'" t="n"><v>'+raw+'</v></c>':'<c r="'+ref+'" s="'+style+'" t="inlineStr"><is><t>'+xmlEsc(value)+'</t></is></c>'
+  }
+  return '<c r="'+ref+'" s="'+style+'" t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(value)+'</t></is></c>'
+}
+function xlsxSheet(title:string,headers:string[],rows:any[][],widths:number[]){
+  const maxCols=Math.max(headers.length,...rows.map(row=>row.length),1)
+  const titleEnd=colName(maxCols-1)
+  const cols=widths.map((width,index)=>'<col min="'+(index+1)+'" max="'+(index+1)+'" width="'+width+'" customWidth="1"/>').join('')
+  const titleRow='<row r="1" ht="28"><c r="A1" s="1" t="inlineStr"><is><t>'+xmlEsc(title)+'</t></is></c></row>'
+  const merged='<mergeCells count="1"><mergeCell ref="A1:'+titleEnd+'1"/></mergeCells>'
+  const headerCells=headers.map((value,index)=>xlsxCell(colName(index)+'3',value,2)).join('')
+  const headerRow='<row r="3" ht="24">'+headerCells+'</row>'
+  const body=rows.map((row,rowIndex)=>{
+    const excelRow=rowIndex+4
+    const styleBase=rowIndex%2===0?4:5
+    const cells=Array.from({length:headers.length},(_,index)=>{
+      const value=row[index]??''
+      const isId=index===0 && /_ID$/.test(headers[index]||'')
+      const isNumeric=typeof value==='number'
+      return xlsxCell(colName(index)+excelRow,value,isId?6:styleBase,isNumeric)
+    }).join('')
+    return '<row r="'+excelRow+'">'+cells+'</row>'
+  }).join('')
+  const lastRow=Math.max(3,rows.length+3)
+  const filter=headers.length?' autoFilter ref="A3:'+titleEnd+lastRow+'"':''
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+    '<sheetViews><sheetView workbookViewId="0"><pane ySplit="3" topLeftCell="A4" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'+
+    '<cols>'+cols+'</cols><sheetData>'+titleRow+'<row r="2" ht="8"/>'+headerRow+body+'</sheetData>'+merged+
+    '<pageMargins left="0.3" right="0.3" top="0.5" bottom="0.5" header="0.2" footer="0.2"/>'+
+    '<pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0" paperSize="9" fitToPage="1"/>'+
+    '<printOptions horizontalCentered="0" verticalCentered="0"/>'+
+    '<sheetFormatPr defaultRowHeight="18"/>'+filter+'</worksheet>'
+}
+function xlsxWorkbook(){
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+
+    '<sheets>'+
+    '<sheet name="Resumo" sheetId="1" r:id="rId1"/>'+
+    '<sheet name="Etapas" sheetId="2" r:id="rId2"/>'+
+    '<sheet name="Tarefas" sheetId="3" r:id="rId3"/>'+
+    '<sheet name="Checklist" sheetId="4" r:id="rId4"/>'+
+    '<sheet name="Links" sheetId="5" r:id="rId5"/>'+
+    '<sheet name="Arquivos" sheetId="6" r:id="rId6"/>'+
+    '<sheet name="Atualizacao" sheetId="7" r:id="rId7"/>'+
+    '</sheets></workbook>'
+}
+function xlsxStyles(){
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+    '<numFmts count="0"/>'+
+    '<fonts count="4">'+
+    '<font><sz val="10"/><name val="Aptos"/></font>'+
+    '<font><b/><sz val="16"/><color rgb="FFFFFFFF"/><name val="Aptos Display"/></font>'+
+    '<font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Aptos"/></font>'+
+    '<font><b/><sz val="10"/><color rgb="FF555555"/><name val="Aptos"/></font>'+
+    '</fonts>'+
+    '<fills count="6">'+
+    '<fill><patternFill patternType="none"/></fill>'+
+    '<fill><patternFill patternType="gray125"/></fill>'+
+    '<fill><patternFill patternType="solid"><fgColor rgb="FF151515"/><bgColor indexed="64"/></patternFill></fill>'+
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFE30613"/><bgColor indexed="64"/></patternFill></fill>'+
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFF7F7F7"/><bgColor indexed="64"/></patternFill></fill>'+
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFFFFFFF"/><bgColor indexed="64"/></patternFill></fill>'+
+    '</fills>'+
+    '<borders count="3">'+
+    '<border><left/><right/><top/><bottom/><diagonal/></border>'+
+    '<border><left style="thin"><color rgb="FFD9D9D9"/></left><right style="thin"><color rgb="FFD9D9D9"/></right><top style="thin"><color rgb="FFD9D9D9"/></top><bottom style="thin"><color rgb="FFD9D9D9"/></bottom><diagonal/></border>'+
+    '<border><left style="thin"><color rgb="FFE2E2E2"/></left><right style="thin"><color rgb="FFE2E2E2"/></right><top style="thin"><color rgb="FFE2E2E2"/></top><bottom style="thin"><color rgb="FFE2E2E2"/></bottom><diagonal/></border>'+
+    '</borders>'+
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'+
+    '<cellXfs count="7">'+
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>'+
+    '<xf numFmtId="0" fontId="1" fillId="2" borderId="0" applyAlignment="1"><alignment vertical="center"/></xf>'+
+    '<xf numFmtId="0" fontId="2" fillId="3" borderId="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'+
+    '<xf numFmtId="0" fontId="3" fillId="4" borderId="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>'+
+    '<xf numFmtId="0" fontId="0" fillId="5" borderId="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>'+
+    '<xf numFmtId="0" fontId="0" fillId="4" borderId="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>'+
+    '<xf numFmtId="0" fontId="3" fillId="5" borderId="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>'+
+    '</cellXfs></styleSheet>'
+}
+function xlsxContentTypes(){
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+    '<Default Extension="xml" ContentType="application/xml"/>'+
+    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+
+    '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+
+    Array.from({length:7},(_,i)=>'<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>').join('')+
+    '</Types>'
+}
+function xlsxRootRels(){
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'+
+    '</Relationships>'
+}
+function xlsxWorkbookRels(){
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'+
+    '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/>'+
+    '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet3.xml"/>'+
+    '<Relationship Id="rId4" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet4.xml"/>'+
+    '<Relationship Id="rId5" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet5.xml"/>'+
+    '<Relationship Id="rId6" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet6.xml"/>'+
+    '<Relationship Id="rId7" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet7.xml"/>'+
+    '<Relationship Id="rId8" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+
+    '</Relationships>'
 }
 
 export function exportProjectReportSpreadsheet(project:any,team:any[]){
   const data=normalized(project,team)
   const generatedAt=new Date().toISOString()
   const id=reportId(project)
-  const summary=[
-    ['CAMPO','VALOR'],
-    ['Versão do relatório','2.0'],
+  const taskCount=data.tasks.length
+  const completed=data.tasks.filter((task:any)=>task.status==='completed').length
+  const checklistItems=data.tasks.reduce((n:number,task:any)=>n+(task.checklist||[]).length,0)
+  const checklistDone=data.tasks.reduce((n:number,task:any)=>n+(task.checklist||[]).filter((item:any)=>item.completed).length,0)
+
+  const summaryRows=[
+    ['Versão do relatório','3.0'],
     ['ID do relatório',id],
     ['ID do projeto',project?.id||'—'],
     ['Projeto',project?.title||'—'],
@@ -73,58 +261,68 @@ export function exportProjectReportSpreadsheet(project:any,team:any[]){
     ['Prazo',date(project?.due_date)],
     ['Gerado em',dateTime(generatedAt)],
     ['Objetivo / descrição',project?.description||'Sem descrição.'],
-    ['Quantidade de etapas',String(data.stages.length)],
-    ['Quantidade de tarefas',String(data.tasks.length)],
-    ['Tarefas concluídas',String(data.tasks.filter((t:any)=>t.status==='completed').length)],
-    ['Itens de checklist',String(data.tasks.reduce((n:number,t:any)=>n+(t.checklist||[]).length,0))],
-    ['Checklist concluído',String(data.tasks.reduce((n:number,t:any)=>n+(t.checklist||[]).filter((i:any)=>i.completed).length,0))],
+    ['Quantidade de etapas',data.stages.length],
+    ['Quantidade de tarefas',taskCount],
+    ['Tarefas concluídas',completed],
+    ['Itens de checklist',checklistItems],
+    ['Checklist concluído',checklistDone],
   ]
-  const stages=[
-    ['STAGE_ID','Posição','Etapa','Status','Visível ao cliente'],
-    ...data.stages.map((stage:any)=>[stage.id,stage.position??'—',stage.name,status(stage.status),stage.client_visible?'Sim':'Não'])
+  const stageRows=data.stages.map((stage:any)=>[
+    stage.id,stage.position??'—',stage.name,status(stage.status),stage.client_visible?'Sim':'Não'
+  ])
+  const taskRows=data.tasks.map((task:any)=>{
+    const stage=data.stages.find((stage:any)=>stage.id===task.stage_id)
+    const member=team.find((member:any)=>member.id===task.assigned_to)
+    return [
+      task.id,task.stage_id||'—',stage?.name||'Sem etapa',task.title,status(task.status),priority(task.priority),
+      task.assigned_to||'—',memberName(member),dateTime(task.created_at),dateTime(task.updated_at),
+      date(task.due_date),dateTime(task.completed_at),task.client_visible?'Sim':'Não'
+    ]
+  })
+  const checklistRows=data.tasks.flatMap((task:any)=>(task.checklist||[]).map((item:any)=>[
+    item.id,task.id,task.title,item.title,item.completed?'Sim':'Não',item.position??'—',dateTime(item.created_at),dateTime(item.updated_at)
+  ]))
+  const linkRows=data.tasks.flatMap((task:any)=>(task.links||[]).map((link:any)=>[
+    link.id,task.id,task.title,link.label,link.url,link.link_type||'reference',link.client_visible?'Sim':'Não'
+  ]))
+  const fileRows=(project?.files||[]).map((file:any)=>[
+    file.id,file.task_id||'—',file.stage_id||'—',file.name,file.mime_type||file.file_type||'—',
+    file.storage_provider||'—',file.folder_kind||'—',file.client_visible?'Sim':'Não',
+    file.version_number||1,dateTime(file.created_at),dateTime(file.updated_at),file.external_url||file.storage_path||'—'
+  ])
+  const updateRows=[
+    ['Como interpretar','Use sempre os IDs como identificadores estáveis. Não use somente o nome da tarefa para gerar UPDATE.'],
+    ['Atualização incremental','Compare relatório anterior e atual por ID, status, responsável, prazo, checklist, links e evidências.'],
+    ['Checklist','Cada CHECKLIST_ID representa uma microtarefa independente e pode alterar o progresso calculado do projeto.'],
+    ['Evidências','FILE_ID e LINK_ID preservam o vínculo com tarefas e etapas; ausência em uma diferença parcial não significa exclusão.'],
+    ['SQL','Ao solicitar uma atualização SQL, este relatório deve ser a fonte operacional para montar comandos UPDATE/INSERT sem recriar itens existentes.'],
+    ['Segurança','Antes de executar SQL gerado, conferir IDs e executar primeiro SELECTs de validação.'],
   ]
-  const tasks=[
-    ['TASK_ID','STAGE_ID','Etapa','Tarefa','Status','Prioridade','Responsável ID','Responsável','Criada em','Atualizada em','Prazo','Concluída em','Visível ao cliente'],
-    ...data.tasks.map((task:any)=>{
-      const stage=data.stages.find((s:any)=>s.id===task.stage_id)
-      const member=team.find((m:any)=>m.id===task.assigned_to)
-      return [task.id,task.stage_id||'—',stage?.name||'Sem etapa',task.title,status(task.status),priority(task.priority),task.assigned_to||'—',memberName(member),dateTime(task.created_at),dateTime(task.updated_at),date(task.due_date),dateTime(task.completed_at),task.client_visible?'Sim':'Não']
-    })
-  ]
-  const checklist=[
-    ['CHECKLIST_ID','TASK_ID','Tarefa','CHECKLIST / MICROTAREFA','Concluído','Posição','Criado em','Atualizado em'],
-    ...data.tasks.flatMap((task:any)=>(task.checklist||[]).map((item:any)=>[item.id,task.id,task.title,item.title,item.completed?'Sim':'Não',item.position??'—',dateTime(item.created_at),dateTime(item.updated_at)]))
-  ]
-  const links=[
-    ['LINK_ID','TASK_ID','Tarefa','Rótulo','URL','Tipo','Visível ao cliente'],
-    ...data.tasks.flatMap((task:any)=>(task.links||[]).map((link:any)=>[link.id,task.id,task.title,link.label,link.url,link.link_type||'reference',link.client_visible?'Sim':'Não']))
-  ]
-  const files=[
-    ['FILE_ID','TASK_ID','STAGE_ID','Nome','Tipo','Provedor','Pasta','Visível ao cliente','Versão','Criado em','Atualizado em','URL/REFERÊNCIA'],
-    ...((project?.files||[]).map((file:any)=>[file.id,file.task_id||'—',file.stage_id||'—',file.name,file.mime_type||file.file_type||'—',file.storage_provider||'—',file.folder_kind||'—',file.client_visible?'Sim':'Não',file.version_number||1,dateTime(file.created_at),dateTime(file.updated_at),file.external_url||file.storage_path||'—']))
-  ]
-  const instructions=[
-    ['COMO USAR ESTE RELATÓRIO'],
-    ['Este arquivo é a fotografia operacional do projeto no momento da exportação.'],
-    ['Os IDs são mantidos propositalmente para permitir atualização incremental via SQL sem recriar tarefas.'],
-    ['Para atualizar o sistema a partir de uma execução posterior, compare ID + estado atual + checklist + vínculos.'],
-    ['Não trate nomes isolados como identificadores quando houver ID disponível.'],
-    ['Itens não presentes neste relatório não devem ser presumidos como removidos.'],
-  ]
+
   const sheets=[
-    '<h2>Play Moments — Relatório operacional do projeto</h2>'+table(summary),
-    '<h3>ETAPAS</h3>'+table(stages),
-    '<h3>TAREFAS</h3>'+table(tasks),
-    '<h3>CHECKLIST / MICROTAREFAS</h3>'+table(checklist),
-    '<h3>LINKS</h3>'+table(links),
-    '<h3>ARQUIVOS / EVIDÊNCIAS</h3>'+table(files),
-    '<h3>INSTRUÇÕES PARA ATUALIZAÇÃO</h3>'+table(instructions)
+    xlsxSheet('Play Moments — Relatório operacional do projeto',['CAMPO','VALOR'],summaryRows,[28,90]),
+    xlsxSheet('Etapas',['STAGE_ID','Posição','Etapa','Status','Visível ao cliente'],stageRows,[38,10,38,18,18]),
+    xlsxSheet('Tarefas',['TASK_ID','STAGE_ID','Etapa','Tarefa','Status','Prioridade','Responsável ID','Responsável','Criada em','Atualizada em','Prazo','Concluída em','Visível ao cliente'],taskRows,[38,38,30,52,18,16,38,28,22,22,14,22,18]),
+    xlsxSheet('Checklist / microtarefas',['CHECKLIST_ID','TASK_ID','Tarefa','CHECKLIST / MICROTAREFA','Concluído','Posição','Criado em','Atualizado em'],checklistRows,[38,38,32,58,16,10,22,22]),
+    xlsxSheet('Links vinculados',['LINK_ID','TASK_ID','Tarefa','Rótulo','URL','Tipo','Visível ao cliente'],linkRows,[38,38,32,26,70,18,18]),
+    xlsxSheet('Arquivos / evidências',['FILE_ID','TASK_ID','STAGE_ID','Nome','Tipo','Provedor','Pasta','Visível ao cliente','Versão','Criado em','Atualizado em','URL / REFERÊNCIA'],fileRows,[38,38,38,42,28,20,24,18,10,22,22,70]),
+    xlsxSheet('Guia para atualização',['CAMPO','ORIENTAÇÃO'],updateRows,[24,100]),
   ]
-  const html='<?xml version="1.0"?><html xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="UTF-8"><style>body{font-family:Arial}table{border-collapse:collapse;margin-bottom:24px}td{padding:5px;border:1px solid #bbb;vertical-align:top}h2,h3{margin-top:20px}</style></head><body>'+sheets.join('<hr/>')+'</body></html>'
-  const blob=new Blob(['\ufeff'+html],{type:'application/vnd.ms-excel;charset=utf-8'})
-  const url=URL.createObjectURL(blob),a=document.createElement('a')
+
+  const entries=[
+    {name:'[Content_Types].xml',content:xlsxContentTypes()},
+    {name:'_rels/.rels',content:xlsxRootRels()},
+    {name:'xl/workbook.xml',content:xlsxWorkbook()},
+    {name:'xl/_rels/workbook.xml.rels',content:xlsxWorkbookRels()},
+    {name:'xl/styles.xml',content:xlsxStyles()},
+    ...sheets.map((content,index)=>({name:'xl/worksheets/sheet'+(index+1)+'.xml',content})),
+  ]
+  const bytes=zipStored(entries)
+  const blob=new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})
+  const url=URL.createObjectURL(blob)
+  const a=document.createElement('a')
   a.href=url
-  a.download=filename(project,'.xls')
+  a.download=filename(project,'.xlsx')
   a.click()
   setTimeout(()=>URL.revokeObjectURL(url),1000)
 }
