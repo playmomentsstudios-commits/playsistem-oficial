@@ -328,7 +328,7 @@ export function AdminProjectDetailV2(){
           <button type="button" className="min-h-10 px-3 rounded-xl border border-white/10 bg-white/[.04] text-gray-200 text-xs font-semibold hover:bg-white/[.08]">Exportar relatório ▾</button>
           <div className="absolute right-0 top-full z-20 mt-1 hidden min-w-48 rounded-xl border border-white/10 bg-[#111114] p-1 shadow-xl group-hover:block group-focus-within:block">
             <button type="button" onClick={()=>exportProjectReportSpreadsheet(project,team)} className="w-full rounded-lg px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/[.06]">Planilha (.xls)</button>
-            <button type="button" onClick={()=>printProjectReportPdf(project,team)} className="w-full rounded-lg px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/[.06]">PDF / Imprimir</button>
+            <button type="button" onClick={()=>printProjectReportPdf(project,team)} className="w-full rounded-lg px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/[.06]">Gerar PDF / Imprimir</button>
           </div>
         </div>
         {user?.role==='admin'&&<button type="button" onClick={()=>void deleteProject()} className="min-h-10 px-3 rounded-xl border border-red-500/25 bg-red-500/10 text-red-300 text-xs font-semibold hover:bg-red-500/15">Excluir projeto</button>}
