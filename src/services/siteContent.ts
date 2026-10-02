@@ -102,6 +102,42 @@ export type SiteLandingPage={
   campaign?:SiteCampaign|null;
 }
 
+
+export type Resume={
+  id:string
+  slug:string
+  resume_type:'mini'|'complete'|'portfolio'|'custom'
+  status:'draft'|'published'|'archived'
+  internal_title:string|null
+  eyebrow:string|null
+  display_name:string|null
+  headline:string|null
+  summary:string|null
+  identity_text:string|null
+  callout:string|null
+  location:string|null
+  market_since:number|null
+  photo_url:string|null
+  photo_drive_file_id:string|null
+  contact_email:string|null
+  contact_phone:string|null
+  instagram:string|null
+  linkedin_url:string|null
+  website_url:string|null
+  whatsapp:string|null
+  skills:string[]
+  experience:Array<Record<string,unknown>>
+  portfolio:Array<Record<string,unknown>>
+  extra_sections:Array<Record<string,unknown>>
+  seo_title:string|null
+  seo_description:string|null
+  published_at:string|null
+  created_at:string
+  updated_at:string
+  created_by:string|null
+  updated_by:string|null
+}
+
 function slugify(value:string){
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()
     .replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')
@@ -254,6 +290,74 @@ export const siteContentApi={
 
   deleteLandingPage:async(id:string)=>{
     const {error}=await supabase.from('site_landing_pages').delete().eq('id',id);if(error)throw error
+  },
+
+
+  resumes:async(admin=false)=>{
+    let query=supabase.from('resumes').select('*').order('updated_at',{ascending:false})
+    if(!admin)query=query.eq('status','published')
+    const {data,error}=await query
+    if(error)throw error
+    return (data||[]) as Resume[]
+  },
+
+  resume:async(slug:string,admin=false)=>{
+    let query=supabase.from('resumes').select('*').eq('slug',slug)
+    if(!admin)query=query.eq('status','published')
+    const {data,error}=await query.maybeSingle()
+    if(error)throw error
+    return (data||null) as Resume|null
+  },
+
+  saveResume:async(values:Partial<Resume>)=>{
+    const {data:{user}}=await supabase.auth.getUser()
+    const {id,created_at,created_by,updated_at,updated_by,...rest}=values
+    const fallback=String(values.internal_title||values.display_name||'curriculo')
+    const slug=slugify(String(values.slug||''))||((slugify(fallback)||'curriculo')+'-'+Date.now().toString().slice(-6))
+    const now=new Date().toISOString()
+    const payload={
+      ...rest,
+      slug,
+      updated_at:now,
+      updated_by:user?.id||null,
+      published_at:values.status==='published'?(values.published_at||now):values.published_at||null,
+    }
+    if(id){
+      const {data,error}=await supabase.from('resumes').update(payload).eq('id',id).select().single()
+      if(error)throw error
+      return data as Resume
+    }
+    const {data,error}=await supabase.from('resumes').insert({...payload,created_by:user?.id||null}).select().single()
+    if(error)throw error
+    return data as Resume
+  },
+
+  duplicateResume:async(id:string)=>{
+    const {data:{user}}=await supabase.auth.getUser()
+    const {data:source,error:sourceError}=await supabase.from('resumes').select('*').eq('id',id).single()
+    if(sourceError)throw sourceError
+    const {id:_id,created_at,created_by,updated_at,updated_by,published_at,...copy}=source as Resume
+    const suffix=Date.now().toString().slice(-6)
+    const baseTitle=(copy.internal_title||copy.display_name||'Currículo').trim()
+    const payload={
+      ...copy,
+      internal_title:baseTitle+' — cópia',
+      slug:(slugify(copy.slug||baseTitle)||'curriculo')+'-copia-'+suffix,
+      status:'draft',
+      published_at:null,
+      created_by:user?.id||null,
+      updated_by:user?.id||null,
+      created_at:new Date().toISOString(),
+      updated_at:new Date().toISOString(),
+    }
+    const {data,error}=await supabase.from('resumes').insert(payload).select().single()
+    if(error)throw error
+    return data as Resume
+  },
+
+  deleteResume:async(id:string)=>{
+    const {error}=await supabase.from('resumes').delete().eq('id',id)
+    if(error)throw error
   },
 
   uploadSiteAsset:async(file:File,section='HOME')=>{
