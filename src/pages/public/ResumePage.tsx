@@ -1,6 +1,7 @@
 import { useEffect,useMemo,useState } from 'react'
 import { Link,useParams } from 'react-router-dom'
 import { siteContentApi,type Resume } from '../../services/siteContent'
+import { projectId } from '../../../utils/supabase/info'
 import { useSeo } from '../../lib/seo'
 
 function externalUrl(value?:string|null){
@@ -86,10 +87,11 @@ export function ResumePage(){
   const [downloadingPdf,setDownloadingPdf]=useState(false)
 
   async function downloadResume(){
-    if(downloadingPdf)return
+    if(downloadingPdf||!resume)return
     try{
       setDownloadingPdf(true)
-      const endpoint=(import.meta.env.VITE_SUPABASE_URL||'').replace(/\/$/,'')+'/functions/v1/resume-pdf?slug='+encodeURIComponent(slug)
+      const supabaseBase=(import.meta.env.VITE_SUPABASE_URL||('https://'+projectId+'.supabase.co')).replace(/\/$/,'')
+      const endpoint=supabaseBase+'/functions/v1/resume-pdf?slug='+encodeURIComponent(slug)
       const response=await fetch(endpoint)
       if(!response.ok)throw new Error('Não foi possível gerar o PDF')
       const blob=await response.blob()
