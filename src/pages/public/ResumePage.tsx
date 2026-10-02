@@ -83,8 +83,23 @@ export function ResumePage(){
   const initials=(resume.display_name||'CV').split(/\s+/).filter(Boolean).slice(0,2).map(item=>item.charAt(0)).join('').toUpperCase()
   const updated=formatDate(resume.updated_at)
 
-  function printResume(){
-    window.print()
+  const [downloadingPdf,setDownloadingPdf]=useState(false)
+
+  async function downloadResume(){
+    if(downloadingPdf)return
+    try{
+      setDownloadingPdf(true)
+      await document.fonts?.ready
+      document.documentElement.classList.add('resume-exporting')
+      const filename=(resume.display_name||'curriculo').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()+'.pdf'
+      const title=document.title
+      document.title=filename.replace(/\\.pdf$/i,'')
+      window.print()
+      document.title=title
+    }finally{
+      document.documentElement.classList.remove('resume-exporting')
+      setDownloadingPdf(false)
+    }
   }
 
   return <div className="resume-page min-h-screen bg-[#ece9e2] text-[#171717] selection:bg-[#171717] selection:text-white">
@@ -94,9 +109,9 @@ export function ResumePage(){
           <p className="text-[10px] uppercase tracking-[.24em] font-bold text-black/45">Documento profissional</p>
           <p className="text-xs text-black/60 mt-0.5">{resume.resume_type==='mini'?'Minicurrículo':'Currículo'}</p>
         </div>
-        <button onClick={printResume} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#171717] px-4 sm:px-5 text-sm font-semibold text-white hover:bg-black">
+        <button onClick={()=>void downloadResume()} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#171717] px-4 sm:px-5 text-sm font-semibold text-white hover:bg-black">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          Baixar currículo
+          {downloadingPdf?'Preparando PDF...':'Baixar currículo'}
         </button>
       </div>
     </div>
@@ -206,9 +221,9 @@ export function ResumePage(){
       </article>
 
       <div className="resume-screen-actions px-5 py-7 sm:px-0 flex justify-center">
-        <button onClick={printResume} className="w-full sm:w-auto inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#171717] px-6 text-sm font-semibold text-white">
+        <button onClick={()=>void downloadResume()} className="w-full sm:w-auto inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#171717] px-6 text-sm font-semibold text-white">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          Baixar currículo em PDF
+          {downloadingPdf?'Preparando PDF...':'Baixar currículo em PDF'}
         </button>
       </div>
     </main>

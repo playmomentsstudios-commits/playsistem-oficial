@@ -348,6 +348,7 @@ select option { background: #111114; color: #f2f2f4; }
 }
 
 @media print {
+  .resume-page, .resume-page * { font-family: Arial, Helvetica, sans-serif !important; font-variant-ligatures: none !important; font-feature-settings: normal !important; }
   @page {
     size: A4;
     margin: 11mm 12mm;
