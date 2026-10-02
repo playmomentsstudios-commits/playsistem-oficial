@@ -90,12 +90,28 @@ export function ResumePage(){
     try{
       setDownloadingPdf(true)
       await document.fonts?.ready
+      const article=document.querySelector('.resume-document article') as HTMLElement|null
+      if(!article)throw new Error('Documento não encontrado')
+      const [{default:html2canvas},{jsPDF}]=await Promise.all([import('html2canvas'),import('jspdf')])
       document.documentElement.classList.add('resume-exporting')
       const filename=(resume.display_name||'curriculo').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()+'.pdf'
-      const title=document.title
-      document.title=filename.replace(/\\.pdf$/i,'')
-      window.print()
-      document.title=title
+      const canvas=await html2canvas(article,{scale:2,useCORS:true,backgroundColor:'#fbfaf7',logging:false})
+      const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true})
+      const pageWidth=210
+      const pageHeight=297
+      const imageHeight=canvas.height*pageWidth/canvas.width
+      const image=canvas.toDataURL('image/jpeg',0.96)
+      let remaining=imageHeight
+      let y=0
+      pdf.addImage(image,'JPEG',0,y,pageWidth,imageHeight,undefined,'FAST')
+      remaining-=pageHeight
+      while(remaining>0){
+        y=remaining-imageHeight
+        pdf.addPage()
+        pdf.addImage(image,'JPEG',0,y,pageWidth,imageHeight,undefined,'FAST')
+        remaining-=pageHeight
+      }
+      pdf.save(filename)
     }finally{
       document.documentElement.classList.remove('resume-exporting')
       setDownloadingPdf(false)
