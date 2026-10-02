@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useToast } from '../../contexts/ToastContext'
 import { siteContentApi, type Resume } from '../../services/siteContent'
+import { SiteAssetImage } from '../../components/SiteAssetImage'
+import { supabase } from '../../lib/supabase'
 
 const typeLabel:Record<Resume['resume_type'],string>={
   mini:'Minicurrículo',
@@ -24,11 +26,29 @@ export function AdminResumes(){
   const [status,setStatus]=useState<'all'|Resume['status']>('all')
   const [type,setType]=useState<'all'|Resume['resume_type']>('all')
   const [busy,setBusy]=useState<string|null>(null)
+  const [viewCounts,setViewCounts]=useState<Record<string,number>|null>(null)
 
   async function load(){
     try{
       setLoading(true)
-      setRows(await siteContentApi.resumes(true))
+      const [resumeRows,viewResult]=await Promise.all([
+        siteContentApi.resumes(true),
+        supabase.rpc('public_view_summary',{p_days:90}),
+      ])
+      setRows(resumeRows)
+
+      if(viewResult.error){
+        setViewCounts(null)
+      }else{
+        const items=Array.isArray((viewResult.data as any)?.top_items)?(viewResult.data as any).top_items:[]
+        const counts:Record<string,number>={}
+        for(const item of items){
+          if(item?.content_type==='resume'&&item?.content_key){
+            counts[String(item.content_key)]=Number(item.total||0)
+          }
+        }
+        setViewCounts(counts)
+      }
     }catch(error:any){
       toast(error.message||'Não foi possível carregar os currículos.','error')
     }finally{
@@ -133,7 +153,7 @@ export function AdminResumes(){
         return <article key={row.id} className="group rounded-2xl bg-[#141416] border border-white/10 overflow-hidden hover:border-white/20 transition-colors">
           <div className="p-4 flex gap-4">
             <div className="w-20 h-24 rounded-xl overflow-hidden bg-black/40 shrink-0 flex items-center justify-center">
-              {row.photo_url?<img src={row.photo_url} alt="" className="w-full h-full object-cover"/>:<span className="text-xl font-black text-gray-700">{initials}</span>}
+              {(row.photo_url||row.photo_drive_file_id)?<SiteAssetImage driveFileId={row.photo_drive_file_id} url={row.photo_url} alt="" className="w-full h-full object-cover" fallback={<span className="text-xl font-black text-gray-700">{initials}</span>}/>:<span className="text-xl font-black text-gray-700">{initials}</span>}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-start gap-2">
@@ -147,6 +167,7 @@ export function AdminResumes(){
               <div className="flex flex-wrap gap-2 mt-3">
                 <span className="text-[10px] px-2 py-1 rounded-full bg-white/[.05] text-gray-500">{typeLabel[row.resume_type]}</span>
                 {row.location&&<span className="text-[10px] px-2 py-1 rounded-full bg-white/[.05] text-gray-500">{row.location}</span>}
+                {row.status==='published'&&<span className="text-[10px] px-2 py-1 rounded-full bg-[#E30613]/10 text-[#ff6b77]">👁 {viewCounts===null?'—':(viewCounts[row.slug]||0)} · 90 dias</span>}
               </div>
             </div>
           </div>
