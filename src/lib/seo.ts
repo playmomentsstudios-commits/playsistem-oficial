@@ -6,7 +6,7 @@ export type SeoProps={
  image?:string|null
  canonicalPath?:string
  canonicalUrl?:string|null
- type?:'website'|'article'|'product'
+ type?:'website'|'article'|'product'|'profile'
  noindex?:boolean
  jsonLd?:Record<string,unknown>|Array<Record<string,unknown>>|null
 }
@@ -40,6 +40,7 @@ export function useSeo({title,description,image,canonicalPath,canonicalUrl,type=
   upsertMeta('meta[name="twitter:title"]',{name:'twitter:title',content:fullTitle})
   upsertMeta('meta[name="twitter:description"]',{name:'twitter:description',content:description})
   if(image){const src=absolute(image);upsertMeta('meta[property="og:image"]',{property:'og:image',content:src});upsertMeta('meta[name="twitter:image"]',{name:'twitter:image',content:src})}
+  else{document.head.querySelector('meta[property="og:image"]')?.remove();document.head.querySelector('meta[name="twitter:image"]')?.remove()}
   upsertLink('canonical',canonical)
   document.querySelectorAll('script[data-play-seo-jsonld]').forEach(el=>el.remove())
   if(jsonLd){const script=document.createElement('script');script.type='application/ld+json';script.dataset.playSeoJsonld='true';script.text=JSON.stringify(jsonLd);document.head.appendChild(script)}
