@@ -46,14 +46,18 @@ export function ResumePage() {
 
   const contacts = useMemo(() => {
     if (!resume) return []
+    const whatsapp = whatsappUrl(resume.whatsapp || resume.contact_phone)
+    const emailHref = resume.contact_email
+      ? 'mailto:' + resume.contact_email + '?subject=' + encodeURIComponent('Contato profissional via currículo')
+      : null
     return [
-      resume.contact_email ? { label: 'E-mail', value: resume.contact_email, href: 'mailto:' + resume.contact_email } : null,
-      resume.contact_phone ? { label: 'Telefone', value: resume.contact_phone, href: 'tel:' + resume.contact_phone.replace(/[^\d+]/g, '') } : null,
-      resume.instagram ? { label: 'Instagram', value: resume.instagram, href: instagramUrl(resume.instagram) } : null,
-      resume.whatsapp ? { label: 'WhatsApp', value: resume.whatsapp, href: whatsappUrl(resume.whatsapp) } : null,
-      resume.linkedin_url ? { label: 'LinkedIn', value: 'Perfil profissional', href: externalUrl(resume.linkedin_url) } : null,
-      resume.website_url ? { label: 'Site', value: resume.website_url.replace(/^https?:\/\//, ''), href: externalUrl(resume.website_url) } : null,
-    ].filter(Boolean) as Array<{label:string;value:string;href:string|null}>
+      resume.contact_email ? { label:'E-mail', value:resume.contact_email, href:emailHref, action:'Escrever e-mail' } : null,
+      whatsapp ? { label:'WhatsApp', value:resume.whatsapp || resume.contact_phone || 'Conversar', href:whatsapp, action:'Conversar no WhatsApp' } : null,
+      resume.contact_phone ? { label:'Telefone', value:resume.contact_phone, href:'tel:' + resume.contact_phone.replace(/[^\d+]/g,''), action:'Ligar agora' } : null,
+      resume.instagram ? { label:'Instagram', value:resume.instagram, href:instagramUrl(resume.instagram), action:'Abrir Instagram' } : null,
+      resume.linkedin_url ? { label:'LinkedIn', value:'Perfil profissional', href:externalUrl(resume.linkedin_url), action:'Abrir LinkedIn' } : null,
+      resume.website_url ? { label:'Site', value:resume.website_url.replace(/^https?:\/\//,''), href:externalUrl(resume.website_url), action:'Abrir site' } : null,
+    ].filter(Boolean) as Array<{label:string;value:string;href:string|null;action:string}>
   }, [resume])
 
   if (loading) {
@@ -142,11 +146,12 @@ export function ResumePage() {
                   <h2 className="text-4xl md:text-6xl font-black tracking-[-.045em]">Vamos conversar.</h2>
                   <p className="text-sm text-black/50 mt-3">Contatos desta versão do currículo.</p>
                 </div>
-                <div className="grid sm:grid-cols-2 gap-x-8 gap-y-4 min-w-0">
+                <div className="grid sm:grid-cols-2 gap-3 min-w-0 w-full lg:max-w-2xl">
                   {contacts.map(item => item.href ? (
-                    <a key={item.label} href={item.href} target={item.href.startsWith('http') ? '_blank' : undefined} rel={item.href.startsWith('http') ? 'noreferrer' : undefined} className="group min-w-0">
+                    <a key={item.label} href={item.href} target={item.href.startsWith('http') ? '_blank' : undefined} rel={item.href.startsWith('http') ? 'noreferrer' : undefined} className="group min-w-0 rounded-2xl border border-black/10 bg-white/45 px-4 py-4 hover:bg-white/80 hover:border-black/20 transition-all">
                       <span className="block text-[10px] uppercase tracking-[.18em] text-black/40">{item.label}</span>
-                      <span className="block mt-1 text-sm md:text-base font-semibold break-all group-hover:text-[#b80f1c]">{item.value} ↗</span>
+                      <span className="block mt-1 text-sm md:text-base font-semibold break-all">{item.value}</span>
+                      <span className="inline-flex mt-3 text-xs font-bold text-[#b80f1c] group-hover:translate-x-0.5 transition-transform">{item.action} →</span>
                     </a>
                   ) : null)}
                 </div>
