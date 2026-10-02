@@ -1,172 +1,204 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { siteContentApi, type Resume } from '../../services/siteContent'
+import { useEffect,useMemo,useState } from 'react'
+import { Link,useParams } from 'react-router-dom'
+import { siteContentApi,type Resume } from '../../services/siteContent'
 
-function externalUrl(value?: string | null) {
-  if (!value) return null
-  const trimmed = value.trim()
-  if (!trimmed) return null
-  return /^https?:\/\//i.test(trimmed) ? trimmed : 'https://' + trimmed
+function externalUrl(value?:string|null){
+  if(!value)return null
+  const trimmed=value.trim()
+  if(!trimmed)return null
+  return /^https?:\/\//i.test(trimmed)?trimmed:'https://'+trimmed
 }
 
-function instagramUrl(value?: string | null) {
-  if (!value) return null
-  const handle = value.trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@/, '').replace(/\/$/, '')
-  return handle ? 'https://instagram.com/' + handle : null
+function instagramUrl(value?:string|null){
+  if(!value)return null
+  const handle=value.trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i,'').replace(/^@/,'').replace(/\/$/,'')
+  return handle?'https://instagram.com/'+handle:null
 }
 
-function whatsappUrl(value?: string | null) {
-  const digits = (value || '').replace(/\D/g, '')
-  if (!digits) return null
-  const normalized = digits.startsWith('55') ? digits : '55' + digits
-  return 'https://wa.me/' + normalized
+function whatsappUrl(value?:string|null){
+  const digits=(value||'').replace(/\D/g,'')
+  if(!digits)return null
+  const normalized=digits.startsWith('55')?digits:'55'+digits
+  return 'https://wa.me/'+normalized
 }
 
-export function ResumePage() {
-  const { slug = '' } = useParams()
-  const [resume, setResume] = useState<Resume | null>(null)
-  const [loading, setLoading] = useState(true)
+function textParagraphs(value?:string|null){
+  return String(value||'').split(/\n\s*\n/).map(item=>item.trim()).filter(Boolean)
+}
 
-  useEffect(() => {
-    let active = true
+function formatDate(value?:string|null){
+  if(!value)return null
+  const date=new Date(value)
+  if(Number.isNaN(date.getTime()))return null
+  return new Intl.DateTimeFormat('pt-BR',{month:'short',year:'numeric'}).format(date).replace('.','')
+}
+
+export function ResumePage(){
+  const {slug=''}=useParams()
+  const [resume,setResume]=useState<Resume|null>(null)
+  const [loading,setLoading]=useState(true)
+
+  useEffect(()=>{
+    let active=true
     setLoading(true)
     siteContentApi.resume(slug)
-      .then(row => { if (active) setResume(row) })
-      .catch(() => { if (active) setResume(null) })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
-  }, [slug])
+      .then(row=>{if(active)setResume(row)})
+      .catch(()=>{if(active)setResume(null)})
+      .finally(()=>{if(active)setLoading(false)})
+    return()=>{active=false}
+  },[slug])
 
-  useEffect(() => {
-    if (!resume) return
-    const previous = document.title
-    document.title = resume.seo_title || [resume.display_name, resume.headline].filter(Boolean).join(' — ') || 'Currículo'
-    return () => { document.title = previous }
-  }, [resume])
+  useEffect(()=>{
+    if(!resume)return
+    const previous=document.title
+    document.title=resume.seo_title||[resume.display_name,resume.headline].filter(Boolean).join(' — ')||'Currículo'
+    return()=>{document.title=previous}
+  },[resume])
 
-  const contacts = useMemo(() => {
-    if (!resume) return []
-    const whatsapp = whatsappUrl(resume.whatsapp || resume.contact_phone)
-    const emailHref = resume.contact_email
-      ? 'mailto:' + resume.contact_email + '?subject=' + encodeURIComponent('Contato profissional via currículo')
-      : null
-    return [
-      resume.contact_email ? { label:'E-mail', value:resume.contact_email, href:emailHref, action:'Escrever e-mail' } : null,
-      whatsapp ? { label:'WhatsApp', value:resume.whatsapp || resume.contact_phone || 'Conversar', href:whatsapp, action:'Conversar no WhatsApp' } : null,
-      resume.contact_phone ? { label:'Telefone', value:resume.contact_phone, href:'tel:' + resume.contact_phone.replace(/[^\d+]/g,''), action:'Ligar agora' } : null,
-      resume.instagram ? { label:'Instagram', value:resume.instagram, href:instagramUrl(resume.instagram), action:'Abrir Instagram' } : null,
-      resume.linkedin_url ? { label:'LinkedIn', value:'Perfil profissional', href:externalUrl(resume.linkedin_url), action:'Abrir LinkedIn' } : null,
-      resume.website_url ? { label:'Site', value:resume.website_url.replace(/^https?:\/\//,''), href:externalUrl(resume.website_url), action:'Abrir site' } : null,
+  const contacts=useMemo(()=>{
+    if(!resume)return[]
+    const whatsapp=whatsappUrl(resume.whatsapp||resume.contact_phone)
+    const emailHref=resume.contact_email?'mailto:'+resume.contact_email+'?subject='+encodeURIComponent('Contato profissional via currículo'):null
+    return[
+      resume.contact_email?{label:'E-mail',value:resume.contact_email,href:emailHref,action:'Escrever e-mail'}:null,
+      whatsapp?{label:'WhatsApp',value:resume.whatsapp||resume.contact_phone||'Conversar',href:whatsapp,action:'Conversar'}:null,
+      resume.contact_phone?{label:'Telefone',value:resume.contact_phone,href:'tel:'+resume.contact_phone.replace(/[^\d+]/g,''),action:'Ligar'}:null,
+      resume.instagram?{label:'Instagram',value:resume.instagram,href:instagramUrl(resume.instagram),action:'Abrir perfil'}:null,
+      resume.linkedin_url?{label:'LinkedIn',value:'Perfil profissional',href:externalUrl(resume.linkedin_url),action:'Abrir perfil'}:null,
+      resume.website_url?{label:'Site',value:resume.website_url.replace(/^https?:\/\//,''),href:externalUrl(resume.website_url),action:'Abrir site'}:null,
     ].filter(Boolean) as Array<{label:string;value:string;href:string|null;action:string}>
-  }, [resume])
+  },[resume])
 
-  if (loading) {
-    return <div className="min-h-screen bg-[#f3f0e8] flex items-center justify-center text-[#1a1a1a]"><div className="w-9 h-9 rounded-full border-2 border-[#171717] border-t-transparent animate-spin" /></div>
+  if(loading){
+    return <div className="min-h-screen bg-[#ece9e2] flex items-center justify-center text-[#171717]"><div className="w-9 h-9 rounded-full border-2 border-[#171717] border-t-transparent animate-spin"/></div>
   }
 
-  if (!resume) {
-    return <div className="min-h-screen bg-[#f3f0e8] text-[#171717] flex items-center justify-center px-6"><div className="max-w-md text-center"><p className="text-xs uppercase tracking-[.3em] text-black/45">Currículo</p><h1 className="text-4xl font-black mt-4">Página indisponível</h1><p className="text-sm text-black/55 mt-4">Este currículo não está publicado ou o endereço não existe.</p><Link to="/" className="inline-flex mt-7 px-5 py-3 rounded-full bg-[#171717] text-white text-sm font-semibold">Voltar ao site</Link></div></div>
+  if(!resume){
+    return <div className="min-h-screen bg-[#ece9e2] text-[#171717] flex items-center justify-center px-6"><div className="max-w-md text-center"><p className="text-xs uppercase tracking-[.3em] text-black/45">Currículo</p><h1 className="text-4xl font-black mt-4">Página indisponível</h1><p className="text-sm text-black/55 mt-4">Este currículo não está publicado ou o endereço não existe.</p><Link to="/" className="inline-flex mt-7 px-5 py-3 rounded-full bg-[#171717] text-white text-sm font-semibold">Voltar ao site</Link></div></div>
   }
 
-  const hasSkills = Array.isArray(resume.skills) && resume.skills.length > 0
-  const hasIdentity = Boolean(resume.identity_text?.trim())
-  const hasMeta = Boolean(resume.location || resume.market_since)
-  const initials = (resume.display_name || 'CV').split(/\s+/).filter(Boolean).slice(0, 2).map(item => item.charAt(0)).join('').toUpperCase()
+  const summary=textParagraphs(resume.summary)
+  const identity=textParagraphs(resume.identity_text)
+  const experiences=(resume.experience||[]).filter(item=>item?.title||item?.role||item?.description)
+  const hasSkills=Array.isArray(resume.skills)&&resume.skills.length>0
+  const initials=(resume.display_name||'CV').split(/\s+/).filter(Boolean).slice(0,2).map(item=>item.charAt(0)).join('').toUpperCase()
+  const updated=formatDate(resume.updated_at)
 
-  return (
-    <div className="min-h-screen bg-[#f3f0e8] text-[#171717] selection:bg-[#171717] selection:text-white">
-      <header className="border-b border-black/10">
-        <div className="max-w-[1380px] mx-auto px-5 sm:px-8 lg:px-12 h-16 flex items-center justify-between gap-4">
-          <Link to="/" className="text-[11px] uppercase tracking-[.24em] font-bold">Felipe Costa</Link>
-          <span className="text-[10px] uppercase tracking-[.2em] text-black/45">{resume.resume_type === 'mini' ? 'Minicurrículo' : 'Perfil profissional'}</span>
+  function printResume(){
+    window.print()
+  }
+
+  return <div className="resume-page min-h-screen bg-[#ece9e2] text-[#171717] selection:bg-[#171717] selection:text-white">
+    <div className="resume-screen-actions sticky top-0 z-30 border-b border-black/10 bg-[#ece9e2]/95 backdrop-blur">
+      <div className="max-w-[1040px] mx-auto px-4 sm:px-6 min-h-16 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] uppercase tracking-[.24em] font-bold text-black/45">Documento profissional</p>
+          <p className="text-xs text-black/60 mt-0.5">{resume.resume_type==='mini'?'Minicurrículo':'Currículo'}</p>
         </div>
-      </header>
+        <button onClick={printResume} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#171717] px-4 sm:px-5 text-sm font-semibold text-white hover:bg-black">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          Baixar currículo
+        </button>
+      </div>
+    </div>
 
-      <main>
-        <section className="max-w-[1380px] mx-auto px-5 sm:px-8 lg:px-12 py-10 md:py-16 lg:py-20">
-          <div className="grid lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,.75fr)] gap-10 lg:gap-16 items-end">
+    <main className="resume-document max-w-[1040px] mx-auto sm:px-6 sm:py-7">
+      <article className="bg-[#fbfaf7] sm:rounded-[28px] sm:border sm:border-black/10 sm:shadow-[0_24px_80px_rgba(20,20,20,.10)] overflow-hidden">
+        <section className="resume-section px-5 py-7 sm:px-9 sm:py-10 lg:px-12 lg:py-12">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] uppercase tracking-[.18em] font-bold text-black/45">
+            <span>{resume.eyebrow||'Currículo profissional'}</span>
+            {resume.location&&<><span className="w-1 h-1 rounded-full bg-[#b80f1c]"/><span>{resume.location}</span></>}
+            {resume.market_since&&<><span className="w-1 h-1 rounded-full bg-[#b80f1c]"/><span>Atuação desde {resume.market_since}</span></>}
+          </div>
+
+          <div className="mt-7 grid md:grid-cols-[minmax(0,1fr)_220px] lg:grid-cols-[minmax(0,1fr)_250px] gap-7 md:gap-10 items-start">
             <div>
-              {resume.eyebrow && <p className="text-[11px] md:text-xs uppercase tracking-[.28em] font-bold text-[#b80f1c]">{resume.eyebrow}</p>}
-              {resume.display_name && <h1 className="mt-5 text-[clamp(3.3rem,8vw,8.5rem)] leading-[.84] tracking-[-.065em] font-black max-w-5xl">{resume.display_name}</h1>}
-              {resume.headline && <p className="mt-7 md:mt-9 text-xl md:text-3xl leading-tight max-w-3xl font-medium">{resume.headline}</p>}
-              {resume.callout && <p className="mt-7 max-w-2xl border-l-2 border-[#b80f1c] pl-5 text-base md:text-lg italic text-black/70">{resume.callout}</p>}
+              {resume.display_name&&<h1 className="text-[clamp(2.65rem,9vw,5.7rem)] leading-[.91] tracking-[-.055em] font-black max-w-3xl">{resume.display_name}</h1>}
+              {resume.headline&&<p className="mt-5 text-lg sm:text-xl lg:text-2xl leading-snug font-semibold max-w-2xl text-black/78">{resume.headline}</p>}
+              {resume.callout&&<blockquote className="mt-6 max-w-2xl border-l-[3px] border-[#b80f1c] pl-4 sm:pl-5 text-[15px] sm:text-base leading-relaxed text-black/65">{resume.callout}</blockquote>}
             </div>
 
-            <div className="relative">
-              <div className="absolute -inset-3 md:-inset-5 border border-black/10 rounded-[2rem] rotate-2" aria-hidden="true" />
-              <div className="relative aspect-[4/5] rounded-[1.6rem] overflow-hidden bg-[#171717]">
-                {resume.photo_url ? <img src={resume.photo_url} alt={resume.display_name || 'Foto profissional'} className="w-full h-full object-cover grayscale-[10%]" /> : <div className="w-full h-full flex items-center justify-center text-[7rem] font-black text-white/15">{initials}</div>}
-                {hasMeta && <div className="absolute left-4 right-4 bottom-4 flex flex-wrap gap-2">
-                  {resume.location && <span className="px-3 py-2 rounded-full bg-white/90 backdrop-blur text-[11px] font-semibold">{resume.location}</span>}
-                  {resume.market_since && <span className="px-3 py-2 rounded-full bg-[#171717]/90 text-white text-[11px] font-semibold">Design desde {resume.market_since}</span>}
-                </div>}
+            <div className="w-[150px] sm:w-[180px] md:w-full">
+              <div className="aspect-[4/5] rounded-[20px] overflow-hidden bg-[#171717] border border-black/10">
+                {resume.photo_url?<img src={resume.photo_url} alt={resume.display_name||'Foto profissional'} className="w-full h-full object-cover"/>:<div className="w-full h-full flex items-center justify-center text-5xl md:text-7xl font-black text-white/15">{initials}</div>}
               </div>
             </div>
           </div>
         </section>
 
-        {resume.summary && (
-          <section className="border-y border-black/10 bg-white/35">
-            <div className="max-w-[1380px] mx-auto px-5 sm:px-8 lg:px-12 py-12 md:py-20 grid md:grid-cols-[220px_1fr] gap-7 md:gap-14">
-              <p className="text-[11px] uppercase tracking-[.24em] font-bold text-black/45">Sobre mim</p>
-              <p className="text-2xl md:text-4xl lg:text-[2.8rem] leading-[1.16] tracking-[-.03em] max-w-5xl">{resume.summary}</p>
+        {summary.length>0&&<section className="resume-section resume-rule px-5 py-7 sm:px-9 sm:py-9 lg:px-12">
+          <div className="grid md:grid-cols-[170px_1fr] gap-4 md:gap-8">
+            <div><p className="resume-kicker">Perfil</p></div>
+            <div className="space-y-4 max-w-3xl">
+              {summary.map((paragraph,index)=><p key={index} className="text-[16px] sm:text-[17px] leading-[1.7] text-black/78">{paragraph}</p>)}
             </div>
-          </section>
-        )}
+          </div>
+        </section>}
 
-        {hasIdentity && (
-          <section className="bg-[#171717] text-[#f3f0e8]">
-            <div className="max-w-[1380px] mx-auto px-5 sm:px-8 lg:px-12 py-14 md:py-24 grid md:grid-cols-[220px_1fr] gap-7 md:gap-14">
-              <div>
-                <p className="text-[11px] uppercase tracking-[.24em] font-bold text-white/45">Identidade & território</p>
-                <div className="mt-5 w-10 h-1 bg-[#E30613]" />
-              </div>
-              <p className="text-xl md:text-3xl leading-relaxed max-w-5xl text-white/90">{resume.identity_text}</p>
+        {identity.length>0&&<section className="resume-section resume-rule px-5 py-7 sm:px-9 sm:py-9 lg:px-12">
+          <div className="grid md:grid-cols-[170px_1fr] gap-4 md:gap-8">
+            <div>
+              <p className="resume-kicker">Identidade & território</p>
+              <div className="mt-3 w-8 h-[3px] bg-[#b80f1c]"/>
             </div>
-          </section>
-        )}
-
-        {hasSkills && (
-          <section className="max-w-[1380px] mx-auto px-5 sm:px-8 lg:px-12 py-14 md:py-20">
-            <div className="grid md:grid-cols-[220px_1fr] gap-7 md:gap-14">
-              <p className="text-[11px] uppercase tracking-[.24em] font-bold text-black/45">Atuação</p>
-              <div className="flex flex-wrap gap-2.5">
-                {resume.skills.map(skill => <span key={skill} className="px-4 py-2.5 rounded-full border border-black/15 bg-white/40 text-sm md:text-base font-medium">{skill}</span>)}
-              </div>
+            <div className="space-y-4 max-w-3xl">
+              {identity.map((paragraph,index)=><p key={index} className="text-[15px] sm:text-base leading-[1.75] text-black/72">{paragraph}</p>)}
             </div>
-          </section>
-        )}
+          </div>
+        </section>}
 
-        {contacts.length > 0 && (
-          <section className="border-t border-black/10">
-            <div className="max-w-[1380px] mx-auto px-5 sm:px-8 lg:px-12 py-14 md:py-20">
-              <p className="text-[11px] uppercase tracking-[.24em] font-bold text-[#b80f1c]">Contato</p>
-              <div className="mt-5 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-9">
-                <div>
-                  <h2 className="text-4xl md:text-6xl font-black tracking-[-.045em]">Vamos conversar.</h2>
-                  <p className="text-sm text-black/50 mt-3">Contatos desta versão do currículo.</p>
-                </div>
-                <div className="grid sm:grid-cols-2 gap-3 min-w-0 w-full lg:max-w-2xl">
-                  {contacts.map(item => item.href ? (
-                    <a key={item.label} href={item.href} target={item.href.startsWith('http') ? '_blank' : undefined} rel={item.href.startsWith('http') ? 'noreferrer' : undefined} className="group min-w-0 rounded-2xl border border-black/10 bg-white/45 px-4 py-4 hover:bg-white/80 hover:border-black/20 transition-all">
-                      <span className="block text-[10px] uppercase tracking-[.18em] text-black/40">{item.label}</span>
-                      <span className="block mt-1 text-sm md:text-base font-semibold break-all">{item.value}</span>
-                      <span className="inline-flex mt-3 text-xs font-bold text-[#b80f1c] group-hover:translate-x-0.5 transition-transform">{item.action} →</span>
-                    </a>
-                  ) : null)}
-                </div>
-              </div>
+        {experiences.length>0&&<section className="resume-section resume-rule px-5 py-7 sm:px-9 sm:py-9 lg:px-12">
+          <div className="grid md:grid-cols-[170px_1fr] gap-5 md:gap-8">
+            <div>
+              <p className="resume-kicker">Participações & projetos</p>
+              <p className="mt-2 text-xs leading-relaxed text-black/45">Experiências selecionadas para esta versão do currículo.</p>
             </div>
-          </section>
-        )}
-      </main>
+            <div className="space-y-0 max-w-3xl">
+              {experiences.map((item,index)=><div key={index} className="resume-experience relative pl-6 pb-6 last:pb-0">
+                <span className="absolute left-0 top-[7px] w-2.5 h-2.5 rounded-full bg-[#b80f1c]"/>
+                <span className="absolute left-[4px] top-5 bottom-0 w-px bg-black/10 last:hidden"/>
+                {item.title&&<h3 className="text-base sm:text-[17px] font-bold leading-snug">{item.title}</h3>}
+                {item.role&&<p className="mt-1 text-xs sm:text-sm font-semibold text-[#9f111b]">{item.role}</p>}
+                {item.description&&<p className="mt-2 text-sm sm:text-[15px] leading-[1.65] text-black/62">{item.description}</p>}
+              </div>)}
+            </div>
+          </div>
+        </section>}
 
-      <footer className="border-t border-black/10">
-        <div className="max-w-[1380px] mx-auto px-5 sm:px-8 lg:px-12 py-6 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between text-[10px] uppercase tracking-[.16em] text-black/40">
-          <span>{resume.display_name || 'Currículo profissional'}</span>
-          <span>Perfil publicado pela Play Moments</span>
-        </div>
-      </footer>
-    </div>
-  )
+        {hasSkills&&<section className="resume-section resume-rule px-5 py-7 sm:px-9 sm:py-9 lg:px-12">
+          <div className="grid md:grid-cols-[170px_1fr] gap-4 md:gap-8">
+            <div><p className="resume-kicker">Áreas de atuação</p></div>
+            <div className="flex flex-wrap gap-2">
+              {resume.skills.map(skill=><span key={skill} className="px-3 py-2 rounded-full border border-black/12 bg-black/[.025] text-xs sm:text-sm font-semibold text-black/68">{skill}</span>)}
+            </div>
+          </div>
+        </section>}
+
+        {contacts.length>0&&<section className="resume-section resume-rule px-5 py-7 sm:px-9 sm:py-9 lg:px-12">
+          <div className="grid md:grid-cols-[170px_1fr] gap-5 md:gap-8">
+            <div><p className="resume-kicker">Contato</p></div>
+            <div className="grid sm:grid-cols-2 gap-2.5 max-w-3xl">
+              {contacts.map(item=>item.href?<a key={item.label} href={item.href} target={item.href.startsWith('http')?'_blank':undefined} rel={item.href.startsWith('http')?'noreferrer':undefined} className="resume-contact group rounded-2xl border border-black/10 px-4 py-3.5 hover:border-black/25 hover:bg-black/[.025]">
+                <span className="block text-[9px] uppercase tracking-[.18em] font-bold text-black/38">{item.label}</span>
+                <span className="block mt-1 text-sm font-semibold break-all text-black/78">{item.value}</span>
+                <span className="resume-contact-action inline-flex mt-2 text-[11px] font-bold text-[#9f111b]">{item.action} →</span>
+              </a>:null)}
+            </div>
+          </div>
+        </section>}
+
+        <footer className="resume-footer px-5 py-5 sm:px-9 lg:px-12 border-t border-black/10 flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between text-[9px] uppercase tracking-[.16em] text-black/38">
+          <span>Minicurrículo profissional</span>
+          {updated&&<span>Atualizado em {updated}</span>}
+        </footer>
+      </article>
+
+      <div className="resume-screen-actions px-5 py-7 sm:px-0 flex justify-center">
+        <button onClick={printResume} className="w-full sm:w-auto inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#171717] px-6 text-sm font-semibold text-white">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          Baixar currículo em PDF
+        </button>
+      </div>
+    </main>
+  </div>
 }

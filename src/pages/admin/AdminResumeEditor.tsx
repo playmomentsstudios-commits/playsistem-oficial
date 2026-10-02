@@ -4,6 +4,8 @@ import { Button } from '../../components/ui/Button'
 import { useToast } from '../../contexts/ToastContext'
 import { siteContentApi,type Resume } from '../../services/siteContent'
 
+type ExperienceEntry={title?:string;role?:string;description?:string}
+
 function emptyResume():Partial<Resume>{
   return {
     resume_type:'mini',status:'draft',internal_title:'',slug:'',eyebrow:'',display_name:'',headline:'',summary:'',identity_text:'',callout:'',
@@ -38,6 +40,20 @@ export function AdminResumeEditor(){
     setForm(current=>({...current,[key]:value}))
   }
 
+  function updateExperience(index:number,key:keyof ExperienceEntry,value:string){
+    const next=[...(form.experience||[])] as ExperienceEntry[]
+    next[index]={...next[index],[key]:value}
+    set('experience',next)
+  }
+
+  function addExperience(){
+    set('experience',[...((form.experience||[]) as ExperienceEntry[]),{title:'',role:'',description:''}])
+  }
+
+  function removeExperience(index:number){
+    set('experience',((form.experience||[]) as ExperienceEntry[]).filter((_,itemIndex)=>itemIndex!==index))
+  }
+
   async function save(){
     try{
       setSaving(true)
@@ -70,6 +86,8 @@ export function AdminResumeEditor(){
   if(loading)return <div className="pm-surface p-8 text-sm text-gray-500">Carregando currículo...</div>
 
   const title=form.internal_title||form.display_name||(creating?'Novo currículo':'Currículo')
+  const experiences=(form.experience||[]) as ExperienceEntry[]
+
   return <div className="max-w-6xl mx-auto space-y-5">
     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
       <div className="flex items-start gap-3">
@@ -138,15 +156,44 @@ export function AdminResumeEditor(){
     <section className="pm-surface p-4 md:p-6 space-y-4">
       <div><h2 className="font-semibold">Texto do currículo</h2><p className="text-xs text-gray-600 mt-1">Para um minicurrículo, normalmente estes dois campos já resolvem a apresentação.</p></div>
       <label className="text-xs text-gray-500 block">Apresentação<textarea className={textareaClass+' mt-1'} rows={5} value={form.summary||''} onChange={e=>set('summary',e.target.value)} placeholder="Um resumo curto e forte sobre sua trajetória."/></label>
-      <label className="text-xs text-gray-500 block">Identidade, território e trajetória<textarea className={textareaClass+' mt-1'} rows={5} value={form.identity_text||''} onChange={e=>set('identity_text',e.target.value)} placeholder="Contexto que faça sentido para esta versão do currículo."/></label>
+      <label className="text-xs text-gray-500 block">Identidade, território e trajetória<textarea className={textareaClass+' mt-1'} rows={7} value={form.identity_text||''} onChange={e=>set('identity_text',e.target.value)} placeholder="Contexto que faça sentido para esta versão do currículo. Separe parágrafos com uma linha em branco."/></label>
       <div className="grid sm:grid-cols-2 gap-3">
         <label className="text-xs text-gray-500">Localização<input className={fieldClass+' mt-1'} value={form.location||''} onChange={e=>set('location',e.target.value)} placeholder="Cavalcante, Goiás"/></label>
         <label className="text-xs text-gray-500">Atuação desde<input type="number" className={fieldClass+' mt-1'} value={form.market_since??''} onChange={e=>set('market_since',e.target.value?Number(e.target.value):null)} placeholder="2008"/></label>
       </div>
       <label className="text-xs text-gray-500 block">Competências
         <span className="block text-[10px] text-gray-600 mt-1">Uma por linha.</span>
-        <textarea className={textareaClass+' mt-2'} rows={5} value={(form.skills||[]).join('\n')} onChange={e=>set('skills',e.target.value.split('\n').map(v=>v.trim()).filter(Boolean))} placeholder={'Identidade visual\nDesign gráfico\nDireção de arte'}/>
+        <textarea className={textareaClass+' mt-2'} rows={5} value={(form.skills||[]).join('\n')} onChange={e=>set('skills',e.target.value.split('\n').map(v=>v.trim()).filter(Boolean))} placeholder={'Identidade visual\nDesign editorial\nWebdesign\nComunicação comunitária'}/>
       </label>
+    </section>
+
+    <section className="pm-surface p-4 md:p-6 space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h2 className="font-semibold">Participações e projetos</h2>
+          <p className="text-xs text-gray-600 mt-1">Opcional. Use para destacar experiências diretamente ligadas ao objetivo deste currículo.</p>
+        </div>
+        <Button variant="secondary" onClick={addExperience}>+ Adicionar participação</Button>
+      </div>
+
+      {experiences.length===0&&<div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-gray-600">Nenhuma participação adicionada. Esta seção não aparece na página pública enquanto estiver vazia.</div>}
+
+      <div className="space-y-3">
+        {experiences.map((item,index)=><div key={index} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div>
+              <p className="text-xs font-semibold text-gray-300">Participação {index+1}</p>
+              <p className="text-[10px] text-gray-600 mt-1">Projeto, organização, território ou rede.</p>
+            </div>
+            <button type="button" onClick={()=>removeExperience(index)} className="text-xs text-red-400 hover:text-red-300">Remover</button>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <label className="text-xs text-gray-500">Título<input className={fieldClass+' mt-1'} value={item.title||''} onChange={e=>updateExperience(index,'title',e.target.value)} placeholder="Ex.: Instituto Sumaúma — pesquisa quilombola"/></label>
+            <label className="text-xs text-gray-500">Sua atuação<input className={fieldClass+' mt-1'} value={item.role||''} onChange={e=>updateExperience(index,'role',e.target.value)} placeholder="Ex.: Diagramação e webdesign"/></label>
+          </div>
+          <label className="text-xs text-gray-500 block mt-3">Descrição<textarea className={textareaClass+' mt-1'} rows={3} value={item.description||''} onChange={e=>updateExperience(index,'description',e.target.value)} placeholder="Explique em poucas linhas o que foi desenvolvido e por que essa experiência é relevante."/></label>
+        </div>)}
+      </div>
     </section>
 
     <section className="pm-surface p-4 md:p-6">
