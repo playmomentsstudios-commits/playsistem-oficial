@@ -6,6 +6,7 @@ import { ToastProvider } from './contexts/ToastContext'
 import { useAuth } from './contexts/AuthContext'
 import { RouteSeo } from './components/RouteSeo'
 import { RouteFocus } from './components/RouteFocus'
+import { PublicViewTracker } from './components/PublicViewTracker'
 
 // Route-level code splitting keeps public, customer and admin screens out of the initial bundle.
 const CustomerLayoutV2 = lazy(() => import('./layouts/CustomerLayoutV2').then(m => ({ default:m.CustomerLayoutV2 })))
@@ -105,6 +106,7 @@ export default function AppV2() {
           <ToastProvider>
             <RouteSeo />
             <RouteFocus />
+            <PublicViewTracker />
             <Suspense fallback={<RouteFallback />}>
             <Routes>
               {/* Public */}
