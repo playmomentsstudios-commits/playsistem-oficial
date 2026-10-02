@@ -42,8 +42,6 @@ export function PublicViewTracker(){
     if(!event)return
 
     const endpoint='https://'+projectId+'.supabase.co/functions/v1/track-public-view'
-    const controller=new AbortController()
-    const timer=window.setTimeout(()=>controller.abort(),6000)
 
     void fetch(endpoint,{
       method:'POST',
@@ -54,12 +52,7 @@ export function PublicViewTracker(){
       },
       body:JSON.stringify(event),
       keepalive:true,
-      signal:controller.signal,
-    }).catch(()=>{}).finally(()=>window.clearTimeout(timer))
-
-    return()=>{
-      window.clearTimeout(timer)
-    }
+    }).catch(()=>{})
   },[location.pathname])
 
   return null
