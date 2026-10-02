@@ -29,6 +29,7 @@ const ContactPage = lazy(() => import('./pages/public/ContactPage').then(m => ({
 const AboutPage = lazy(() => import('./pages/public/AboutPage').then(m => ({ default:m.AboutPage })))
 const CategoryPage = lazy(() => import('./pages/public/CategoryPage').then(m => ({ default:m.CategoryPage })))
 const LandingPage = lazy(() => import('./pages/public/LandingPage').then(m => ({ default:m.LandingPage })))
+const ResumePage = lazy(() => import('./pages/public/ResumePage').then(m => ({ default:m.ResumePage })))
 const NotFoundPage = lazy(() => import('./pages/public/NotFoundPage').then(m => ({ default:m.NotFoundPage })))
 const DashboardPage = lazy(() => import('./pages/customer/DashboardPage').then(m => ({ default:m.DashboardPage })))
 const ProfilePage = lazy(() => import('./pages/customer/ProfilePage').then(m => ({ default:m.ProfilePage })))
@@ -73,6 +74,7 @@ const AdminAudit = lazy(() => import('./pages/admin/AdminAudit').then(m => ({ de
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings').then(m => ({ default:m.AdminSettings })))
 const AdminAutoAttendant = lazy(() => import('./pages/admin/AdminAutoAttendant').then(m => ({ default:m.AdminAutoAttendant })))
 const AdminLandingPages = lazy(() => import('./pages/admin/AdminLandingPages').then(m => ({ default:m.AdminLandingPages })))
+const AdminResumes = lazy(() => import('./pages/admin/AdminResumes').then(m => ({ default:m.AdminResumes })))
 const AdminAcademy = lazy(() => import('./pages/admin/AdminAcademy').then(m => ({ default:m.AdminAcademy })))
 const AdminAcademyStudents = lazy(() => import('./pages/admin/AdminAcademyStudents').then(m => ({ default:m.AdminAcademyStudents })))
 const AdminAcademyManagement = lazy(() => import('./pages/admin/AdminAcademyManagement').then(m => ({ default:m.AdminAcademyManagement })))
@@ -129,6 +131,7 @@ export default function AppV2() {
               <Route path="/certificados/:code" element={<CertificateVerifyPage />} />
               <Route path="/carrinho" element={<CartPage />} />
               <Route path="/l/:slug" element={<LandingPage />} />
+              <Route path="/curriculos/:slug" element={<ResumePage />} />
 
               {/* Customer portal */}
               <Route path="/app" element={<CustomerLayoutV2 />}>
@@ -181,6 +184,7 @@ export default function AppV2() {
                 <Route path="equipe" element={<AdminPermissionGate adminOnly><AdminTeam /></AdminPermissionGate>} />
                 <Route path="site" element={<AdminPermissionGate permission="site.manage"><AdminSiteSettings /></AdminPermissionGate>} />
                 <Route path="landings" element={<AdminPermissionGate adminOnly><AdminLandingPages /></AdminPermissionGate>} />
+                <Route path="curriculos" element={<AdminPermissionGate permission="site.manage"><AdminResumes /></AdminPermissionGate>} />
                 <Route path="configuracoes" element={<AdminPermissionGate adminOnly><AdminSettings /></AdminPermissionGate>} />
                 <Route path="auditoria" element={<AdminPermissionGate adminOnly><AdminAudit /></AdminPermissionGate>} />
                 <Route path="relatorios" element={<AdminPermissionGate permission="reports.view"><AdminReports /></AdminPermissionGate>} />
