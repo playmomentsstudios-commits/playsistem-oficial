@@ -89,33 +89,19 @@ export function ResumePage(){
     if(downloadingPdf)return
     try{
       setDownloadingPdf(true)
-      await document.fonts?.ready
-      const article=document.querySelector('.resume-document article') as HTMLElement|null
-      if(!article)throw new Error('Documento não encontrado')
-      const [{default:html2canvas},{jsPDF}]=await Promise.all([import('html2canvas'),import('jspdf')])
-      document.documentElement.classList.add('resume-exporting')
-      const filename=(resume.display_name||'curriculo').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()+'.pdf'
-      const canvas=await html2canvas(article,{scale:2,useCORS:true,backgroundColor:'#fbfaf7',logging:false})
-      const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true})
-      const pageWidth=210
-      const pageHeight=297
-      const imageHeight=canvas.height*pageWidth/canvas.width
-      const image=canvas.toDataURL('image/jpeg',0.96)
-      let remaining=imageHeight
-      let y=0
-      pdf.addImage(image,'JPEG',0,y,pageWidth,imageHeight,undefined,'FAST')
-      remaining-=pageHeight
-      while(remaining>0){
-        y=remaining-imageHeight
-        pdf.addPage()
-        pdf.addImage(image,'JPEG',0,y,pageWidth,imageHeight,undefined,'FAST')
-        remaining-=pageHeight
-      }
-      pdf.save(filename)
-    }finally{
-      document.documentElement.classList.remove('resume-exporting')
-      setDownloadingPdf(false)
-    }
+      const endpoint=(import.meta.env.VITE_SUPABASE_URL||'').replace(/\/$/,'')+'/functions/v1/resume-pdf?slug='+encodeURIComponent(slug)
+      const response=await fetch(endpoint)
+      if(!response.ok)throw new Error('Não foi possível gerar o PDF')
+      const blob=await response.blob()
+      const url=URL.createObjectURL(blob)
+      const link=document.createElement('a')
+      link.href=url
+      link.download=(resume.display_name||'curriculo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()+'.pdf'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    }finally{setDownloadingPdf(false)}
   }
 
   return <div className="resume-page min-h-screen bg-[#ece9e2] text-[#171717] selection:bg-[#171717] selection:text-white">
