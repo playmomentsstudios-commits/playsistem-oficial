@@ -75,6 +75,7 @@ const AdminSettings = lazy(() => import('./pages/admin/AdminSettings').then(m =>
 const AdminAutoAttendant = lazy(() => import('./pages/admin/AdminAutoAttendant').then(m => ({ default:m.AdminAutoAttendant })))
 const AdminLandingPages = lazy(() => import('./pages/admin/AdminLandingPages').then(m => ({ default:m.AdminLandingPages })))
 const AdminResumes = lazy(() => import('./pages/admin/AdminResumes').then(m => ({ default:m.AdminResumes })))
+const AdminResumeEditor = lazy(() => import('./pages/admin/AdminResumeEditor').then(m => ({ default:m.AdminResumeEditor })))
 const AdminAcademy = lazy(() => import('./pages/admin/AdminAcademy').then(m => ({ default:m.AdminAcademy })))
 const AdminAcademyStudents = lazy(() => import('./pages/admin/AdminAcademyStudents').then(m => ({ default:m.AdminAcademyStudents })))
 const AdminAcademyManagement = lazy(() => import('./pages/admin/AdminAcademyManagement').then(m => ({ default:m.AdminAcademyManagement })))
@@ -185,6 +186,8 @@ export default function AppV2() {
                 <Route path="site" element={<AdminPermissionGate permission="site.manage"><AdminSiteSettings /></AdminPermissionGate>} />
                 <Route path="landings" element={<AdminPermissionGate adminOnly><AdminLandingPages /></AdminPermissionGate>} />
                 <Route path="curriculos" element={<AdminPermissionGate permission="site.manage"><AdminResumes /></AdminPermissionGate>} />
+                <Route path="curriculos/novo" element={<AdminPermissionGate permission="site.manage"><AdminResumeEditor /></AdminPermissionGate>} />
+                <Route path="curriculos/:id" element={<AdminPermissionGate permission="site.manage"><AdminResumeEditor /></AdminPermissionGate>} />
                 <Route path="configuracoes" element={<AdminPermissionGate adminOnly><AdminSettings /></AdminPermissionGate>} />
                 <Route path="auditoria" element={<AdminPermissionGate adminOnly><AdminAudit /></AdminPermissionGate>} />
                 <Route path="relatorios" element={<AdminPermissionGate permission="reports.view"><AdminReports /></AdminPermissionGate>} />
