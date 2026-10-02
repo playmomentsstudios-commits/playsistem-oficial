@@ -85,24 +85,61 @@ export function ResumePage(){
   const initials=(resume.display_name||'CV').split(/\s+/).filter(Boolean).slice(0,2).map(item=>item.charAt(0)).join('').toUpperCase()
   const updated=formatDate(resume.updated_at)
 
+  function pdfFilename(){
+    return (resume?.display_name||'curriculo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()+'.pdf'
+  }
+
+  async function waitForPrintAssets(){
+    try{await document.fonts?.ready}catch{}
+    const images=Array.from(document.querySelectorAll<HTMLImageElement>('.resume-page img'))
+    await Promise.all(images.map(async image=>{
+      if(image.complete)return
+      try{await image.decode()}catch{}
+    }))
+  }
+
+  async function printResumeFallback(){
+    await waitForPrintAssets()
+    const originalTitle=document.title
+    const filename=pdfFilename()
+    document.title=filename.replace(/\.pdf$/i,'')
+    const restore=()=>{document.title=originalTitle;window.removeEventListener('afterprint',restore)}
+    window.addEventListener('afterprint',restore)
+    window.print()
+    window.setTimeout(()=>{document.title=originalTitle},1500)
+  }
+
   async function downloadResume(){
     if(downloadingPdf||!resume)return
+    setDownloadingPdf(true)
     try{
-      setDownloadingPdf(true)
       const supabaseBase=(import.meta.env.VITE_SUPABASE_URL||('https://'+projectId+'.supabase.co')).replace(/\/$/,'')
       const endpoint=supabaseBase+'/functions/v1/resume-pdf?slug='+encodeURIComponent(slug)
-      const response=await fetch(endpoint)
-      if(!response.ok)throw new Error('Não foi possível gerar o PDF')
-      const blob=await response.blob()
-      const url=URL.createObjectURL(blob)
-      const link=document.createElement('a')
-      link.href=url
-      link.download=(resume.display_name||'curriculo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()+'.pdf'
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      URL.revokeObjectURL(url)
-    }finally{setDownloadingPdf(false)}
+      const controller=new AbortController()
+      const timeout=window.setTimeout(()=>controller.abort(),5000)
+      try{
+        const response=await fetch(endpoint,{signal:controller.signal})
+        window.clearTimeout(timeout)
+        if(!response.ok)throw new Error('PDF direto indisponível')
+        const contentType=response.headers.get('content-type')||''
+        if(!contentType.includes('application/pdf'))throw new Error('Resposta de PDF inválida')
+        const blob=await response.blob()
+        const url=URL.createObjectURL(blob)
+        const link=document.createElement('a')
+        link.href=url
+        link.download=pdfFilename()
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        window.setTimeout(()=>URL.revokeObjectURL(url),1000)
+        return
+      }catch{
+        window.clearTimeout(timeout)
+      }
+      await printResumeFallback()
+    }finally{
+      setDownloadingPdf(false)
+    }
   }
 
   return <div className="resume-page min-h-screen bg-[#ece9e2] text-[#171717] selection:bg-[#171717] selection:text-white">
