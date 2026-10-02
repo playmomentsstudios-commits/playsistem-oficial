@@ -1,6 +1,7 @@
 import { useEffect,useMemo,useState } from 'react'
 import { Link,useParams } from 'react-router-dom'
 import { siteContentApi,type Resume } from '../../services/siteContent'
+import { useSeo } from '../../lib/seo'
 
 function externalUrl(value?:string|null){
   if(!value)return null
@@ -48,12 +49,10 @@ export function ResumePage(){
     return()=>{active=false}
   },[slug])
 
-  useEffect(()=>{
-    if(!resume)return
-    const previous=document.title
-    document.title=resume.seo_title||[resume.display_name,resume.headline].filter(Boolean).join(' — ')||'Currículo'
-    return()=>{document.title=previous}
-  },[resume])
+
+  const seoTitle=resume?.seo_title||[resume?.display_name,resume?.headline].filter(Boolean).join(' — ')||'Currículo'
+  const seoDescription=resume?.seo_description||resume?.summary||'Currículo profissional na Play Moments.'
+  useSeo({title:seoTitle,description:seoDescription,image:resume?.seo_image_url||resume?.photo_url,canonicalPath:'/curriculos/'+slug,type:'profile',noindex:!resume})
 
   const contacts=useMemo(()=>{
     if(!resume)return[]
