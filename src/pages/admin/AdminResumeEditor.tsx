@@ -10,7 +10,7 @@ function emptyResume():Partial<Resume>{
   return {
     resume_type:'mini',status:'draft',internal_title:'',slug:'',eyebrow:'',display_name:'',headline:'',summary:'',identity_text:'',callout:'',
     location:'',market_since:null,photo_url:'',photo_drive_file_id:null,contact_email:'',contact_phone:'',instagram:'',linkedin_url:'',
-    website_url:'',whatsapp:'',skills:[],experience:[],portfolio:[],extra_sections:[],seo_title:'',seo_description:'',
+    website_url:'',whatsapp:'',skills:[],experience:[],portfolio:[],extra_sections:[],seo_title:'',seo_description:'',seo_image_url:'',seo_image_drive_file_id:null,
   }
 }
 const fieldClass='w-full min-h-11 px-3 rounded-xl bg-black/50 border border-white/10 outline-none focus:border-[#E30613]/60'
@@ -26,6 +26,7 @@ export function AdminResumeEditor(){
   const [saving,setSaving]=useState(false)
   const [uploading,setUploading]=useState(false)
   const [uploadProgress,setUploadProgress]=useState(0)
+  const [uploadingSeoImage,setUploadingSeoImage]=useState(false)
 
   useEffect(()=>{
     if(creating){setForm(emptyResume());setLoading(false);return}
@@ -81,6 +82,19 @@ export function AdminResumeEditor(){
     }finally{
       setUploading(false);setUploadProgress(0)
     }
+  }
+
+  async function uploadSeoImage(file?:File){
+    if(!file)return
+    if(!file.type.startsWith('image/')){toast('Selecione uma imagem válida.','error');return}
+    try{
+      setUploadingSeoImage(true)
+      const asset=await siteContentApi.uploadSiteAsset(file,'PROFILE')
+      setForm(current=>({...current,seo_image_url:asset.url,seo_image_drive_file_id:asset.driveFileId}))
+      toast('Imagem de compartilhamento enviada.','success')
+    }catch(error:any){
+      toast(error.message||'Não foi possível enviar a imagem de compartilhamento.','error')
+    }finally{setUploadingSeoImage(false)}
   }
 
   if(loading)return <div className="pm-surface p-8 text-sm text-gray-500">Carregando currículo...</div>
@@ -213,6 +227,18 @@ export function AdminResumeEditor(){
       <div className="grid sm:grid-cols-2 gap-3 mt-4">
         <label className="text-xs text-gray-500">Título SEO<input className={fieldClass+' mt-1'} value={form.seo_title||''} onChange={e=>set('seo_title',e.target.value)}/></label>
         <label className="text-xs text-gray-500">Descrição SEO<input className={fieldClass+' mt-1'} value={form.seo_description||''} onChange={e=>set('seo_description',e.target.value)}/></label>
+        <div className="sm:col-span-2 rounded-xl border border-white/10 p-3">
+          <p className="text-xs text-gray-500">Imagem de compartilhamento (WhatsApp, LinkedIn e redes sociais)</p>
+          <div className="mt-3 flex flex-col sm:flex-row gap-3 sm:items-center">
+            {form.seo_image_url&&<img src={form.seo_image_url} alt="" className="w-full sm:w-48 aspect-[1.91/1] rounded-lg object-cover border border-white/10"/>}
+            <label className={'min-h-11 px-4 rounded-xl border border-white/10 inline-flex items-center justify-center text-xs font-semibold '+(uploadingSeoImage?'opacity-60 cursor-wait':'cursor-pointer bg-white/[.06] hover:bg-white/[.09]')}>
+              <input disabled={uploadingSeoImage} type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" onChange={e=>void uploadSeoImage(e.target.files?.[0])}/>
+              {uploadingSeoImage?'Enviando...':form.seo_image_url?'Trocar imagem':'Adicionar imagem'}
+            </label>
+            {form.seo_image_url&&<button type="button" className="text-xs text-red-400" onClick={()=>setForm(current=>({...current,seo_image_url:'',seo_image_drive_file_id:null}))}>Remover</button>}
+          </div>
+          <p className="text-[10px] text-gray-600 mt-2">Recomendado: 1200 × 630 px. Se ficar vazio, a foto do currículo será usada como alternativa.</p>
+        </div>
       </div>
     </details>
 
