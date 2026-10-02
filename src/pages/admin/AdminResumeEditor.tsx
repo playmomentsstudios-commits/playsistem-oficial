@@ -3,6 +3,7 @@ import { Link,useNavigate,useParams } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { useToast } from '../../contexts/ToastContext'
 import { siteContentApi,type Resume } from '../../services/siteContent'
+import { SiteAssetImage } from '../../components/SiteAssetImage'
 
 type ExperienceEntry={title?:string;role?:string;description?:string}
 
@@ -147,7 +148,7 @@ export function AdminResumeEditor(){
       <div className="grid lg:grid-cols-[240px_1fr] gap-6">
         <div>
           <div className="aspect-[4/5] rounded-2xl overflow-hidden bg-black/40 border border-white/10 flex items-center justify-center">
-            {form.photo_url?<img src={form.photo_url} alt="" className="w-full h-full object-cover"/>:<span className="text-5xl font-black text-gray-800">FC</span>}
+            {(form.photo_url||form.photo_drive_file_id)?<SiteAssetImage driveFileId={form.photo_drive_file_id} url={form.photo_url} alt="" className="w-full h-full object-cover" fallback={<span className="text-5xl font-black text-gray-800">FC</span>}/>:<span className="text-5xl font-black text-gray-800">FC</span>}
           </div>
           <label className={'mt-3 min-h-11 rounded-xl border border-white/10 flex items-center justify-center text-xs font-semibold '+(uploading?'bg-white/[.03] text-gray-600 cursor-wait':'bg-white/[.06] hover:bg-white/[.09] cursor-pointer')}>
             <input disabled={uploading} type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" onChange={e=>void uploadPhoto(e.target.files?.[0])}/>
@@ -230,7 +231,7 @@ export function AdminResumeEditor(){
         <div className="sm:col-span-2 rounded-xl border border-white/10 p-3">
           <p className="text-xs text-gray-500">Imagem de compartilhamento (WhatsApp, LinkedIn e redes sociais)</p>
           <div className="mt-3 flex flex-col sm:flex-row gap-3 sm:items-center">
-            {form.seo_image_url&&<img src={form.seo_image_url} alt="" className="w-full sm:w-48 aspect-[1.91/1] rounded-lg object-cover border border-white/10"/>}
+            {(form.seo_image_url||form.seo_image_drive_file_id)&&<SiteAssetImage driveFileId={form.seo_image_drive_file_id} url={form.seo_image_url} alt="" className="w-full sm:w-48 aspect-[1.91/1] rounded-lg object-cover border border-white/10" fallback={<div className="w-full sm:w-48 aspect-[1.91/1] rounded-lg border border-white/10 bg-black/30 flex items-center justify-center text-[10px] text-gray-600">Prévia indisponível</div>}/>} 
             <label className={'min-h-11 px-4 rounded-xl border border-white/10 inline-flex items-center justify-center text-xs font-semibold '+(uploadingSeoImage?'opacity-60 cursor-wait':'cursor-pointer bg-white/[.06] hover:bg-white/[.09]')}>
               <input disabled={uploadingSeoImage} type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" onChange={e=>void uploadSeoImage(e.target.files?.[0])}/>
               {uploadingSeoImage?'Enviando...':form.seo_image_url?'Trocar imagem':'Adicionar imagem'}
