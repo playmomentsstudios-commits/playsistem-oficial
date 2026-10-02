@@ -1,11 +1,20 @@
 import { readFile, mkdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
-const base=(process.env.VITE_SUPABASE_URL||process.env.SUPABASE_URL||'').replace(/\/$/,'')
-const key=process.env.VITE_SUPABASE_ANON_KEY||process.env.SUPABASE_ANON_KEY||''
+let base=(process.env.VITE_SUPABASE_URL||process.env.SUPABASE_URL||'').replace(/\/$/,'')
+let key=process.env.VITE_SUPABASE_ANON_KEY||process.env.SUPABASE_ANON_KEY||''
+if(!base||!key){
+  try{
+    const publicInfo=await readFile(resolve('utils/supabase/info.tsx'),'utf8')
+    const projectId=publicInfo.match(/projectId\s*=\s*["']([^"']+)["']/)?.[1]||''
+    const publicAnonKey=publicInfo.match(/publicAnonKey\s*=\s*["']([^"']+)["']/)?.[1]||''
+    if(!base&&projectId)base='https://'+projectId+'.supabase.co'
+    if(!key&&publicAnonKey)key=publicAnonKey
+  }catch{}
+}
 const origin=(process.env.PUBLIC_SITE_URL||process.env.URL||'https://playsistem-oficial.playmomentsstudios.workers.dev').replace(/\/$/,'')
 if(!base||!key){
-  console.warn('[resume-prerender] Supabase env unavailable; skipping resume prerender.')
+  console.warn('[resume-prerender] Supabase config unavailable; skipping resume prerender.')
   process.exit(0)
 }
 const escapeHtml=value=>String(value||'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]||char))
