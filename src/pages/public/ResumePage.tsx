@@ -39,6 +39,7 @@ export function ResumePage(){
   const {slug=''}=useParams()
   const [resume,setResume]=useState<Resume|null>(null)
   const [loading,setLoading]=useState(true)
+  const [downloadingPdf,setDownloadingPdf]=useState(false)
 
   useEffect(()=>{
     let active=true
@@ -83,8 +84,6 @@ export function ResumePage(){
   const hasSkills=Array.isArray(resume.skills)&&resume.skills.length>0
   const initials=(resume.display_name||'CV').split(/\s+/).filter(Boolean).slice(0,2).map(item=>item.charAt(0)).join('').toUpperCase()
   const updated=formatDate(resume.updated_at)
-
-  const [downloadingPdf,setDownloadingPdf]=useState(false)
 
   async function downloadResume(){
     if(downloadingPdf||!resume)return
