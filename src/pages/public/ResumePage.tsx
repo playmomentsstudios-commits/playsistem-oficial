@@ -1,7 +1,7 @@
 import { useEffect,useMemo,useState } from 'react'
 import { Link,useParams } from 'react-router-dom'
 import { siteContentApi,type Resume } from '../../services/siteContent'
-import { projectId } from '../../../utils/supabase/info'
+import { projectId,publicAnonKey } from '../../../utils/supabase/info'
 import { useSeo } from '../../lib/seo'
 
 function externalUrl(value?:string|null){
@@ -40,6 +40,7 @@ export function ResumePage(){
   const [resume,setResume]=useState<Resume|null>(null)
   const [loading,setLoading]=useState(true)
   const [downloadingPdf,setDownloadingPdf]=useState(false)
+  const [pdfError,setPdfError]=useState('')
 
   useEffect(()=>{
     let active=true
@@ -89,55 +90,51 @@ export function ResumePage(){
     return (resume?.display_name||'curriculo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()+'.pdf'
   }
 
-  async function waitForPrintAssets(){
-    try{await document.fonts?.ready}catch{}
-    const images=Array.from(document.querySelectorAll<HTMLImageElement>('.resume-page img'))
-    await Promise.all(images.map(async image=>{
-      if(image.complete)return
-      try{await image.decode()}catch{}
-    }))
-  }
-
-  async function printResumeFallback(){
-    await waitForPrintAssets()
-    const originalTitle=document.title
-    const filename=pdfFilename()
-    document.title=filename.replace(/\.pdf$/i,'')
-    const restore=()=>{document.title=originalTitle;window.removeEventListener('afterprint',restore)}
-    window.addEventListener('afterprint',restore)
-    window.print()
-    window.setTimeout(()=>{document.title=originalTitle},1500)
-  }
-
   async function downloadResume(){
     if(downloadingPdf||!resume)return
     setDownloadingPdf(true)
+    setPdfError('')
+    const controller=new AbortController()
+    const timeout=window.setTimeout(()=>controller.abort(),15000)
     try{
       const supabaseBase=(import.meta.env.VITE_SUPABASE_URL||('https://'+projectId+'.supabase.co')).replace(/\/$/,'')
       const endpoint=supabaseBase+'/functions/v1/resume-pdf?slug='+encodeURIComponent(slug)
-      const controller=new AbortController()
-      const timeout=window.setTimeout(()=>controller.abort(),5000)
-      try{
-        const response=await fetch(endpoint,{signal:controller.signal})
-        window.clearTimeout(timeout)
-        if(!response.ok)throw new Error('PDF direto indisponível')
-        const contentType=response.headers.get('content-type')||''
-        if(!contentType.includes('application/pdf'))throw new Error('Resposta de PDF inválida')
-        const blob=await response.blob()
-        const url=URL.createObjectURL(blob)
-        const link=document.createElement('a')
-        link.href=url
-        link.download=pdfFilename()
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.setTimeout(()=>URL.revokeObjectURL(url),1000)
-        return
-      }catch{
-        window.clearTimeout(timeout)
+      const response=await fetch(endpoint,{
+        signal:controller.signal,
+        headers:{
+          apikey:publicAnonKey,
+          Authorization:'Bearer '+publicAnonKey,
+          Accept:'application/pdf',
+        },
+      })
+      if(!response.ok){
+        let message='Não foi possível gerar o PDF.'
+        try{
+          const payload=await response.json()
+          if(payload?.error)message=String(payload.error)
+        }catch{}
+        throw new Error(message)
       }
-      await printResumeFallback()
+      const contentType=response.headers.get('content-type')||''
+      if(!contentType.includes('application/pdf'))throw new Error('O servidor não retornou um PDF válido.')
+
+      const blob=await response.blob()
+      const url=URL.createObjectURL(blob)
+      const link=document.createElement('a')
+      link.href=url
+      link.download=pdfFilename()
+      link.rel='noopener'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.setTimeout(()=>URL.revokeObjectURL(url),1500)
+    }catch(error:any){
+      const message=error?.name==='AbortError'
+        ?'A geração do PDF demorou mais que o esperado. Tente novamente.'
+        :(error?.message||'Não foi possível baixar o PDF.')
+      setPdfError(message)
     }finally{
+      window.clearTimeout(timeout)
       setDownloadingPdf(false)
     }
   }
@@ -149,12 +146,19 @@ export function ResumePage(){
           <p className="text-[10px] uppercase tracking-[.24em] font-bold text-black/45">Documento profissional</p>
           <p className="text-xs text-black/60 mt-0.5">{resume.resume_type==='mini'?'Minicurrículo':'Currículo'}</p>
         </div>
-        <button onClick={()=>void downloadResume()} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#171717] px-4 sm:px-5 text-sm font-semibold text-white hover:bg-black">
+        <button disabled={downloadingPdf} onClick={()=>void downloadResume()} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#171717] px-4 sm:px-5 text-sm font-semibold text-white hover:bg-black disabled:opacity-60 disabled:cursor-wait">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
           {downloadingPdf?'Preparando PDF...':'Baixar currículo'}
         </button>
       </div>
     </div>
+
+    {pdfError&&<div className="resume-screen-actions border-b border-[#b80f1c]/15 bg-[#fff4f4] text-[#8b1018]">
+      <div className="max-w-[1040px] mx-auto px-4 sm:px-6 py-2.5 flex items-start justify-between gap-3">
+        <p className="text-xs sm:text-sm leading-relaxed">{pdfError}</p>
+        <button type="button" onClick={()=>setPdfError('')} className="shrink-0 text-xs font-bold underline underline-offset-2">Fechar</button>
+      </div>
+    </div>}
 
     <main className="resume-document max-w-[1040px] mx-auto sm:px-6 sm:py-7">
       <article className="bg-[#fbfaf7] sm:rounded-[28px] sm:border sm:border-black/10 sm:shadow-[0_24px_80px_rgba(20,20,20,.10)] overflow-hidden">
@@ -261,7 +265,7 @@ export function ResumePage(){
       </article>
 
       <div className="resume-screen-actions px-5 py-7 sm:px-0 flex justify-center">
-        <button onClick={()=>void downloadResume()} className="w-full sm:w-auto inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#171717] px-6 text-sm font-semibold text-white">
+        <button disabled={downloadingPdf} onClick={()=>void downloadResume()} className="w-full sm:w-auto inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#171717] px-6 text-sm font-semibold text-white disabled:opacity-60 disabled:cursor-wait">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
           {downloadingPdf?'Preparando PDF...':'Baixar currículo em PDF'}
         </button>
