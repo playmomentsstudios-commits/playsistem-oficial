@@ -367,36 +367,37 @@ export const siteContentApi={
   },
 
   uploadSiteAsset:async(file:File,section='HOME',onProgress?:(value:number)=>void)=>{
-    const mime=file.type||'application/octet-stream'
-    const {data,error}=await supabase.functions.invoke('google-drive-site-asset-upload',{body:{file_name:file.name,mime_type:mime,file_size:file.size,section}})
-    if(error)throw error
-    if(!data?.upload_url)throw new Error(data?.error||'Não foi possível iniciar o upload no Google Drive.')
+    const {data:{session}}=await supabase.auth.getSession()
+    if(!session)throw new Error('Sessão expirada. Entre novamente para enviar a imagem.')
+    const base=(import.meta.env.VITE_SUPABASE_URL||'').replace(/\/$/,'')
+    const anonKey=import.meta.env.VITE_SUPABASE_ANON_KEY||''
+    const form=new FormData()
+    form.append('file',file)
+    form.append('section',section)
 
-    const driveFile=await new Promise<any>((resolve,reject)=>{
+    const payload=await new Promise<any>((resolve,reject)=>{
       const xhr=new XMLHttpRequest()
-      xhr.open('PUT',data.upload_url)
-      xhr.setRequestHeader('Content-Type',mime)
-      xhr.setRequestHeader('Content-Range','bytes 0-'+(file.size-1)+'/'+file.size)
+      xhr.open('POST',base+'/functions/v1/google-drive-site-asset-upload')
+      xhr.setRequestHeader('Authorization','Bearer '+session.access_token)
+      if(anonKey)xhr.setRequestHeader('apikey',anonKey)
       xhr.upload.onprogress=event=>{
-        if(event.lengthComputable)onProgress?.(Math.min(99,Math.max(1,Math.round(event.loaded/event.total*99))))
+        if(event.lengthComputable)onProgress?.(Math.min(95,Math.max(1,Math.round(event.loaded/event.total*95))))
       }
-      xhr.onerror=()=>reject(new Error('Falha de conexão ao enviar a imagem para o Google Drive. Tente novamente.'))
+      xhr.onerror=()=>reject(new Error('Falha de conexão com o serviço de upload. Tente novamente.'))
       xhr.onload=()=>{
-        if(xhr.status>=200&&xhr.status<300){
-          try{
-            const payload=xhr.responseText?JSON.parse(xhr.responseText):null
-            if(!payload?.id)throw new Error('Google Drive não retornou o arquivo enviado.')
-            resolve(payload)
-          }catch(error){reject(error)}
+        let response:any={}
+        try{response=xhr.responseText?JSON.parse(xhr.responseText):{}}catch{}
+        if(xhr.status>=200&&xhr.status<300&&response?.ok&&response?.file?.id){
+          resolve(response)
           return
         }
-        reject(new Error('Google Drive recusou o upload ('+xhr.status+').'))
+        reject(new Error(response?.error||('Não foi possível enviar o arquivo ('+xhr.status+').')))
       }
-      xhr.send(file)
+      xhr.send(form)
     })
 
     onProgress?.(100)
-    const base=(import.meta.env.VITE_SUPABASE_URL||'').replace(/\/$/,'')
-    return {driveFileId:driveFile.id as string,url:`${base}/functions/v1/google-drive-site-asset?id=${encodeURIComponent(driveFile.id)}`,mimeType:driveFile.mimeType||mime||null,fileSize:Number(driveFile.size||file.size)||null}
+    const driveFile=payload.file
+    return {driveFileId:driveFile.id as string,url:`${base}/functions/v1/google-drive-site-asset?id=${encodeURIComponent(driveFile.id)}`,mimeType:driveFile.mimeType||file.type||null,fileSize:Number(driveFile.size||file.size)||null}
   }
 }
