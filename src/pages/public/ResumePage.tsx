@@ -111,16 +111,29 @@ export function ResumePage(){
             {resume.market_since&&<><span className="w-1 h-1 rounded-full bg-[#b80f1c]"/><span>Atuação desde {resume.market_since}</span></>}
           </div>
 
-          <div className="mt-7 grid md:grid-cols-[minmax(0,1fr)_220px] lg:grid-cols-[minmax(0,1fr)_250px] gap-7 md:gap-10 items-start">
+          <div className="mt-6 md:hidden">
+            <div className="grid grid-cols-[112px_minmax(0,1fr)] gap-4 items-start">
+              <div className="aspect-[4/5] rounded-[18px] overflow-hidden bg-[#171717] border border-black/10 shadow-[0_10px_30px_rgba(20,20,20,.08)]">
+                {resume.photo_url?<img src={resume.photo_url} alt={resume.display_name||'Foto profissional'} className="w-full h-full object-cover"/>:<div className="w-full h-full flex items-center justify-center text-4xl font-black text-white/15">{initials}</div>}
+              </div>
+              <div className="min-w-0 pt-1">
+                {resume.display_name&&<h1 className="text-[2rem] leading-[.98] tracking-[-.045em] font-black break-words">{resume.display_name}</h1>}
+                {resume.headline&&<p className="mt-3 text-[14px] leading-[1.35] font-semibold text-black/76">{resume.headline}</p>}
+                {resume.callout&&<p className="mt-3 text-[13px] leading-[1.45] text-black/58">{resume.callout}</p>}
+              </div>
+            </div>
+          </div>
+
+          <div className="hidden md:grid mt-7 md:grid-cols-[minmax(0,1fr)_220px] lg:grid-cols-[minmax(0,1fr)_250px] gap-7 md:gap-10 items-start">
             <div>
-              {resume.display_name&&<h1 className="text-[clamp(2.65rem,9vw,5.7rem)] leading-[.91] tracking-[-.055em] font-black max-w-3xl">{resume.display_name}</h1>}
-              {resume.headline&&<p className="mt-5 text-lg sm:text-xl lg:text-2xl leading-snug font-semibold max-w-2xl text-black/78">{resume.headline}</p>}
-              {resume.callout&&<blockquote className="mt-6 max-w-2xl border-l-[3px] border-[#b80f1c] pl-4 sm:pl-5 text-[15px] sm:text-base leading-relaxed text-black/65">{resume.callout}</blockquote>}
+              {resume.display_name&&<h1 className="text-[clamp(3rem,7vw,5.7rem)] leading-[.91] tracking-[-.055em] font-black max-w-3xl">{resume.display_name}</h1>}
+              {resume.headline&&<p className="mt-5 text-xl lg:text-2xl leading-snug font-semibold max-w-2xl text-black/78">{resume.headline}</p>}
+              {resume.callout&&<blockquote className="mt-6 max-w-2xl border-l-[3px] border-[#b80f1c] pl-5 text-base leading-relaxed text-black/65">{resume.callout}</blockquote>}
             </div>
 
-            <div className="w-[150px] sm:w-[180px] md:w-full">
+            <div className="w-full">
               <div className="aspect-[4/5] rounded-[20px] overflow-hidden bg-[#171717] border border-black/10">
-                {resume.photo_url?<img src={resume.photo_url} alt={resume.display_name||'Foto profissional'} className="w-full h-full object-cover"/>:<div className="w-full h-full flex items-center justify-center text-5xl md:text-7xl font-black text-white/15">{initials}</div>}
+                {resume.photo_url?<img src={resume.photo_url} alt={resume.display_name||'Foto profissional'} className="w-full h-full object-cover"/>:<div className="w-full h-full flex items-center justify-center text-7xl font-black text-white/15">{initials}</div>}
               </div>
             </div>
           </div>
