@@ -126,7 +126,7 @@ export type Resume={
   website_url:string|null
   whatsapp:string|null
   skills:string[]
-  experience:Array<Record<string,unknown>>
+  experience:Array<{title?:string;role?:string;description?:string}>
   portfolio:Array<Record<string,unknown>>
   extra_sections:Array<Record<string,unknown>>
   seo_title:string|null
