@@ -3,6 +3,7 @@ import { Link,useParams } from 'react-router-dom'
 import { siteContentApi,type Resume } from '../../services/siteContent'
 import { projectId,publicAnonKey } from '../../../utils/supabase/info'
 import { useSeo } from '../../lib/seo'
+import { SiteAssetImage,siteAssetUrl } from '../../components/SiteAssetImage'
 
 function externalUrl(value?:string|null){
   if(!value)return null
@@ -55,7 +56,7 @@ export function ResumePage(){
 
   const seoTitle=resume?.seo_title||[resume?.display_name,resume?.headline].filter(Boolean).join(' — ')||'Currículo'
   const seoDescription=resume?.seo_description||resume?.summary||'Currículo profissional na Play Moments.'
-  useSeo({title:seoTitle,description:seoDescription,image:resume?.seo_image_url||resume?.photo_url,canonicalPath:'/curriculos/'+slug,type:'profile',noindex:!resume})
+  useSeo({title:seoTitle,description:seoDescription,image:resume?.seo_image_url||siteAssetUrl(resume?.photo_drive_file_id,resume?.photo_url)||undefined,canonicalPath:'/curriculos/'+slug,type:'profile',noindex:!resume})
 
   const contacts=useMemo(()=>{
     if(!resume)return[]
@@ -172,7 +173,7 @@ export function ResumePage(){
           <div className="mt-6 md:hidden">
             <div className="grid grid-cols-[112px_minmax(0,1fr)] gap-4 items-start">
               <div className="aspect-[4/5] rounded-[18px] overflow-hidden bg-[#171717] border border-black/10 shadow-[0_10px_30px_rgba(20,20,20,.08)]">
-                {resume.photo_url?<img src={resume.photo_url} alt={resume.display_name||'Foto profissional'} className="w-full h-full object-cover"/>:<div className="w-full h-full flex items-center justify-center text-4xl font-black text-white/15">{initials}</div>}
+                {(resume.photo_url||resume.photo_drive_file_id)?<SiteAssetImage driveFileId={resume.photo_drive_file_id} url={resume.photo_url} alt={resume.display_name||'Foto profissional'} className="w-full h-full object-cover" fallback={<div className="w-full h-full flex items-center justify-center text-4xl font-black text-white/15">{initials}</div>}/>:<div className="w-full h-full flex items-center justify-center text-4xl font-black text-white/15">{initials}</div>}
               </div>
               <div className="min-w-0 pt-1">
                 {resume.display_name&&<h1 className="text-[2rem] leading-[.98] tracking-[-.045em] font-black break-words">{resume.display_name}</h1>}
@@ -191,7 +192,7 @@ export function ResumePage(){
 
             <div className="w-full">
               <div className="aspect-[4/5] rounded-[20px] overflow-hidden bg-[#171717] border border-black/10">
-                {resume.photo_url?<img src={resume.photo_url} alt={resume.display_name||'Foto profissional'} className="w-full h-full object-cover"/>:<div className="w-full h-full flex items-center justify-center text-7xl font-black text-white/15">{initials}</div>}
+                {(resume.photo_url||resume.photo_drive_file_id)?<SiteAssetImage driveFileId={resume.photo_drive_file_id} url={resume.photo_url} alt={resume.display_name||'Foto profissional'} className="w-full h-full object-cover" fallback={<div className="w-full h-full flex items-center justify-center text-7xl font-black text-white/15">{initials}</div>}/>:<div className="w-full h-full flex items-center justify-center text-7xl font-black text-white/15">{initials}</div>}
               </div>
             </div>
           </div>
