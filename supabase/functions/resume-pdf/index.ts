@@ -1,4 +1,5 @@
 import { PDFDocument, StandardFonts, rgb } from "npm:pdf-lib@1.17.1";
+import QRCode from "npm:qrcode@1.5.4";
 import { corsHeaders } from "../_shared/googleDrive.ts";
 
 const PAGE_W = 595.28;
@@ -111,11 +112,36 @@ async function embedPhoto(pdf:any,url:unknown){
   return null;
 }
 
-async function buildResumePdf(resume:any){
+async function dataUrlToBytes(dataUrl:string){
+  const encoded=dataUrl.split(",")[1]||"";
+  if(!encoded)return new Uint8Array();
+  const binary=atob(encoded);
+  return Uint8Array.from(binary,char=>char.charCodeAt(0));
+}
+
+async function embedQr(pdf:any,url:string){
+  try{
+    const dataUrl=await QRCode.toDataURL(url,{
+      errorCorrectionLevel:"M",
+      margin:1,
+      width:320,
+      color:{dark:"#151515",light:"#FFFFFF"},
+    });
+    const bytes=await dataUrlToBytes(dataUrl);
+    if(!bytes.length)return null;
+    return await pdf.embedPng(bytes);
+  }catch(error){
+    console.warn("[resume-pdf] qr generation failed",error);
+    return null;
+  }
+}
+
+async function buildResumePdf(resume:any,onlineUrl:string){
   const pdf=await PDFDocument.create();
   const regular=await pdf.embedFont(StandardFonts.Helvetica);
   const bold=await pdf.embedFont(StandardFonts.HelveticaBold);
   const photo=await embedPhoto(pdf,resume.photo_url);
+  const qr=await embedQr(pdf,onlineUrl);
 
   let page:any;
   let y=0;
@@ -181,6 +207,29 @@ async function buildResumePdf(resume:any){
     y=sectionStart;
     for(const item of items)drawParagraph(item);
     y-=2;
+  }
+
+  function drawContinuationHeader(){
+    page.drawText(safeText(resume.display_name||"Currículo"),{
+      x:MARGIN,y,font:bold,size:15,color:DARK,maxWidth:300,
+    });
+    page.drawText("Informações complementares",{
+      x:MARGIN,y:y-16,font:regular,size:8.5,color:MUTED,maxWidth:220,
+    });
+    page.drawLine({
+      start:{x:MARGIN,y:y-28},
+      end:{x:PAGE_W-MARGIN,y:y-28},
+      thickness:0.6,
+      color:rgb(0.84,0.84,0.84),
+    });
+    y-=44;
+  }
+
+  function ensureClosingSpace(height:number){
+    if(y-height<BOTTOM){
+      newPage();
+      drawContinuationHeader();
+    }
   }
 
   newPage();
@@ -265,32 +314,47 @@ async function buildResumePdf(resume:any){
 
   const skills=Array.isArray(resume.skills)?resume.skills.map((item:any)=>safeText(item)).filter(Boolean):[];
   if(skills.length){
+    ensureClosingSpace(310);
     drawRule();
-    ensureSpace(52);
+    ensureSpace(70);
     const sectionStart=y;
     drawSectionHeading("Áreas de atuação");
     y=sectionStart;
 
-    let x=CONTENT_X;
-    let rowY=y;
-    for(const skill of skills){
-      const size=7.8;
-      const width=Math.min(CONTENT_W,regular.widthOfTextAtSize(skill,size)+16);
-      if(x+width>PAGE_W-MARGIN){
-        x=CONTENT_X;
-        rowY-=24;
-        y=rowY;
-        ensureSpace(28);
+    const gap=16;
+    const colWidth=(CONTENT_W-gap)/2;
+    const rowCount=Math.ceil(skills.length/2);
+    for(let row=0;row<rowCount;row++){
+      const left=skills[row*2]||"";
+      const right=skills[row*2+1]||"";
+      const leftLines=left?wrapText(left,bold,9.4,colWidth-18):[];
+      const rightLines=right?wrapText(right,bold,9.4,colWidth-18):[];
+      const maxLines=Math.max(leftLines.length,rightLines.length,1);
+      const rowHeight=(maxLines*12.3)+7;
+      ensureSpace(rowHeight+3);
+
+      const items=[
+        {value:left,lines:leftLines,x:CONTENT_X},
+        {value:right,lines:rightLines,x:CONTENT_X+colWidth+gap},
+      ];
+
+      for(const item of items){
+        if(!item.value)continue;
+        page.drawCircle({x:item.x+3,y:y+3,size:2.5,color:RED});
+        item.lines.forEach((line,lineIndex)=>{
+          page.drawText(line,{
+            x:item.x+13,
+            y:y-(lineIndex*12.3),
+            font:bold,
+            size:9.4,
+            color:DARK,
+            maxWidth:colWidth-18,
+          });
+        });
       }
-      page.drawRectangle({
-        x,y:rowY-5,width,height:18,
-        borderColor:rgb(0.75,0.75,0.75),borderWidth:0.6,
-        color:rgb(0.975,0.97,0.96),
-      });
-      page.drawText(skill,{x:x+8,y:rowY+0.5,font:bold,size,color:MUTED,maxWidth:width-12});
-      x+=width+6;
+      y-=rowHeight;
     }
-    y=rowY-24;
+    y-=2;
   }
 
   const contactRows=[
@@ -324,6 +388,54 @@ async function buildResumePdf(resume:any){
       y-=34;
     }
   }
+
+  drawRule();
+  ensureSpace(145);
+  const onlineSectionTop=y;
+  drawSectionHeading("Currículo online");
+  y=onlineSectionTop;
+
+  const qrSize=88;
+  const qrX=CONTENT_X;
+  const qrY=y-qrSize+4;
+  if(qr){
+    page.drawRectangle({
+      x:qrX-4,y:qrY-4,width:qrSize+8,height:qrSize+8,
+      color:rgb(1,1,1),
+      borderColor:rgb(0.82,0.82,0.82),
+      borderWidth:0.6,
+    });
+    page.drawImage(qr,{x:qrX,y:qrY,width:qrSize,height:qrSize});
+  }
+
+  const onlineTextX=qr?CONTENT_X+108:CONTENT_X;
+  const onlineTextW=qr?CONTENT_W-108:CONTENT_W;
+  let onlineTextY=y;
+
+  const onlineTitle="Acompanhe a versão atualizada deste currículo";
+  const onlineTitleLines=wrapText(onlineTitle,bold,10.5,onlineTextW);
+  for(const line of onlineTitleLines){
+    page.drawText(line,{x:onlineTextX,y:onlineTextY,font:bold,size:10.5,color:DARK,maxWidth:onlineTextW});
+    onlineTextY-=13.5;
+  }
+
+  onlineTextY-=4;
+  const onlineDescription="Escaneie o QR Code para acessar o currículo online e consultar sempre a versão mais recente.";
+  const onlineDescriptionLines=wrapText(onlineDescription,regular,9.1,onlineTextW);
+  for(const line of onlineDescriptionLines){
+    page.drawText(line,{x:onlineTextX,y:onlineTextY,font:regular,size:9.1,color:MUTED,maxWidth:onlineTextW});
+    onlineTextY-=12.2;
+  }
+
+  onlineTextY-=5;
+  const displayOnlineUrl=safeText(onlineUrl.replace(/^https?:\/\//,""));
+  const onlineUrlLines=wrapText(displayOnlineUrl,regular,7.3,onlineTextW);
+  for(const line of onlineUrlLines.slice(0,3)){
+    page.drawText(line,{x:onlineTextX,y:onlineTextY,font:regular,size:7.3,color:RED,maxWidth:onlineTextW});
+    onlineTextY-=9.5;
+  }
+
+  y=Math.min(qrY-14,onlineTextY-6);
 
   const updated=resume.updated_at?new Date(resume.updated_at):null;
   const updatedLabel=updated&&!Number.isNaN(updated.getTime())
@@ -369,7 +481,9 @@ Deno.serve(async(req)=>{
     const resume=await fetchResume(slug);
     if(!resume)return json("Currículo não encontrado",404);
 
-    const bytes=await buildResumePdf(resume);
+    const site=(Deno.env.get("PUBLIC_SITE_URL")||"https://playsistem-oficial.playmomentsstudios.workers.dev").replace(/\/$/,"");
+    const onlineUrl=site+"/curriculos/"+encodeURIComponent(slug)+"/";
+    const bytes=await buildResumePdf(resume,onlineUrl);
     return new Response(bytes,{
       status:200,
       headers:{
