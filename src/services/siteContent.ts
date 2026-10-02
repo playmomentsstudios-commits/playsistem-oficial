@@ -309,6 +309,12 @@ export const siteContentApi={
     return (data||null) as Resume|null
   },
 
+  resumeById:async(id:string)=>{
+    const {data,error}=await supabase.from('resumes').select('*').eq('id',id).maybeSingle()
+    if(error)throw error
+    return (data||null) as Resume|null
+  },
+
   saveResume:async(values:Partial<Resume>)=>{
     const {data:{user}}=await supabase.auth.getUser()
     const {id,created_at,created_by,updated_at,updated_by,...rest}=values
@@ -360,14 +366,37 @@ export const siteContentApi={
     if(error)throw error
   },
 
-  uploadSiteAsset:async(file:File,section='HOME')=>{
-    const {data,error}=await supabase.functions.invoke('google-drive-site-asset-upload',{body:{file_name:file.name,mime_type:file.type||'application/octet-stream',file_size:file.size,section}})
+  uploadSiteAsset:async(file:File,section='HOME',onProgress?:(value:number)=>void)=>{
+    const mime=file.type||'application/octet-stream'
+    const {data,error}=await supabase.functions.invoke('google-drive-site-asset-upload',{body:{file_name:file.name,mime_type:mime,file_size:file.size,section}})
     if(error)throw error
-    if(!data?.upload_url)throw new Error(data?.error||'Não foi possível iniciar o upload no Drive.')
-    const uploaded=await fetch(data.upload_url,{method:'PUT',headers:{'Content-Type':file.type||'application/octet-stream'},body:file})
-    if(!uploaded.ok)throw new Error('Não foi possível concluir o upload no Drive.')
-    const driveFile=await uploaded.json()
+    if(!data?.upload_url)throw new Error(data?.error||'Não foi possível iniciar o upload no Google Drive.')
+
+    const driveFile=await new Promise<any>((resolve,reject)=>{
+      const xhr=new XMLHttpRequest()
+      xhr.open('PUT',data.upload_url)
+      xhr.setRequestHeader('Content-Type',mime)
+      xhr.setRequestHeader('Content-Range','bytes 0-'+(file.size-1)+'/'+file.size)
+      xhr.upload.onprogress=event=>{
+        if(event.lengthComputable)onProgress?.(Math.min(99,Math.max(1,Math.round(event.loaded/event.total*99))))
+      }
+      xhr.onerror=()=>reject(new Error('Falha de conexão ao enviar a imagem para o Google Drive. Tente novamente.'))
+      xhr.onload=()=>{
+        if(xhr.status>=200&&xhr.status<300){
+          try{
+            const payload=xhr.responseText?JSON.parse(xhr.responseText):null
+            if(!payload?.id)throw new Error('Google Drive não retornou o arquivo enviado.')
+            resolve(payload)
+          }catch(error){reject(error)}
+          return
+        }
+        reject(new Error('Google Drive recusou o upload ('+xhr.status+').'))
+      }
+      xhr.send(file)
+    })
+
+    onProgress?.(100)
     const base=(import.meta.env.VITE_SUPABASE_URL||'').replace(/\/$/,'')
-    return {driveFileId:driveFile.id as string,url:`${base}/functions/v1/google-drive-site-asset?id=${encodeURIComponent(driveFile.id)}`,mimeType:driveFile.mimeType||file.type||null,fileSize:Number(driveFile.size||file.size)||null}
+    return {driveFileId:driveFile.id as string,url:`${base}/functions/v1/google-drive-site-asset?id=${encodeURIComponent(driveFile.id)}`,mimeType:driveFile.mimeType||mime||null,fileSize:Number(driveFile.size||file.size)||null}
   }
 }
