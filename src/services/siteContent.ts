@@ -131,6 +131,8 @@ export type Resume={
   extra_sections:Array<Record<string,unknown>>
   seo_title:string|null
   seo_description:string|null
+  seo_image_url:string|null
+  seo_image_drive_file_id:string|null
   published_at:string|null
   created_at:string
   updated_at:string
