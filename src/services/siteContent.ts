@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { projectId,publicAnonKey } from '../../utils/supabase/info'
 
 export type SiteSettings={
   id:boolean
@@ -371,8 +372,8 @@ export const siteContentApi={
   uploadSiteAsset:async(file:File,section='HOME',onProgress?:(value:number)=>void)=>{
     const {data:{session}}=await supabase.auth.getSession()
     if(!session)throw new Error('Sessão expirada. Entre novamente para enviar a imagem.')
-    const base=(import.meta.env.VITE_SUPABASE_URL||'').replace(/\/$/,'')
-    const anonKey=import.meta.env.VITE_SUPABASE_ANON_KEY||''
+    const base=(import.meta.env.VITE_SUPABASE_URL||('https://'+projectId+'.supabase.co')).replace(/\/$/,'')
+    const anonKey=import.meta.env.VITE_SUPABASE_ANON_KEY||publicAnonKey
     const form=new FormData()
     form.append('file',file)
     form.append('section',section)
