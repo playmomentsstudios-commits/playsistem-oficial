@@ -370,34 +370,60 @@ export const siteContentApi={
   },
 
   uploadSiteAsset:async(file:File,section='HOME',onProgress?:(value:number)=>void)=>{
-    const {data:{session}}=await supabase.auth.getSession()
-    if(!session)throw new Error('Sessão expirada. Entre novamente para enviar a imagem.')
     const base=(import.meta.env.VITE_SUPABASE_URL||('https://'+projectId+'.supabase.co')).replace(/\/$/,'')
     const anonKey=import.meta.env.VITE_SUPABASE_ANON_KEY||publicAnonKey
-    const form=new FormData()
-    form.append('file',file)
-    form.append('section',section)
 
-    const payload=await new Promise<any>((resolve,reject)=>{
-      const xhr=new XMLHttpRequest()
-      xhr.open('POST',base+'/functions/v1/google-drive-site-asset-upload')
-      xhr.setRequestHeader('Authorization','Bearer '+session.access_token)
-      if(anonKey)xhr.setRequestHeader('apikey',anonKey)
-      xhr.upload.onprogress=event=>{
-        if(event.lengthComputable)onProgress?.(Math.min(95,Math.max(1,Math.round(event.loaded/event.total*95))))
+    async function freshSession(){
+      let {data:{session}}=await supabase.auth.getSession()
+      const expiresSoon=!!session?.expires_at && (session.expires_at*1000-Date.now())<60000
+      if(!session||expiresSoon){
+        const {data,error}=await supabase.auth.refreshSession()
+        if(error||!data.session)throw new Error('Sua sessão expirou. Entre novamente para continuar.')
+        session=data.session
       }
-      xhr.onerror=()=>reject(new Error('Falha de conexão com o serviço de upload. Tente novamente.'))
-      xhr.onload=()=>{
-        let response:any={}
-        try{response=xhr.responseText?JSON.parse(xhr.responseText):{}}catch{}
-        if(xhr.status>=200&&xhr.status<300&&response?.ok&&response?.file?.id){
-          resolve(response)
-          return
+      return session
+    }
+
+    async function send(accessToken:string){
+      const form=new FormData()
+      form.append('file',file)
+      form.append('section',section)
+
+      return await new Promise<any>((resolve,reject)=>{
+        const xhr=new XMLHttpRequest()
+        xhr.open('POST',base+'/functions/v1/google-drive-site-asset-upload')
+        xhr.setRequestHeader('Authorization','Bearer '+accessToken)
+        if(anonKey)xhr.setRequestHeader('apikey',anonKey)
+        xhr.upload.onprogress=event=>{
+          if(event.lengthComputable)onProgress?.(Math.min(95,Math.max(1,Math.round(event.loaded/event.total*95))))
         }
-        reject(new Error(response?.error||('Não foi possível enviar o arquivo ('+xhr.status+').')))
-      }
-      xhr.send(form)
-    })
+        xhr.onerror=()=>reject(new Error('Falha de conexão com o serviço de upload. Tente novamente.'))
+        xhr.onload=()=>{
+          let response:any={}
+          try{response=xhr.responseText?JSON.parse(xhr.responseText):{}}catch{}
+          if(xhr.status>=200&&xhr.status<300&&response?.ok&&response?.file?.id){
+            resolve(response)
+            return
+          }
+          const message=String(response?.error||xhr.responseText||('Não foi possível enviar o arquivo ('+xhr.status+').'))
+          reject(Object.assign(new Error(message),{status:xhr.status}))
+        }
+        xhr.send(form)
+      })
+    }
+
+    let session=await freshSession()
+    let payload:any
+    try{
+      payload=await send(session.access_token)
+    }catch(error:any){
+      const tokenProblem=error?.status===401||error?.status===403||/expired|revoked|jwt|token/i.test(String(error?.message||''))
+      if(!tokenProblem)throw error
+      const refreshed=await supabase.auth.refreshSession()
+      if(refreshed.error||!refreshed.data.session)throw new Error('Sua sessão expirou. Entre novamente para continuar.')
+      session=refreshed.data.session
+      payload=await send(session.access_token)
+    }
 
     onProgress?.(100)
     const driveFile=payload.file
