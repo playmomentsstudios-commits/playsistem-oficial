@@ -324,3 +324,93 @@ select option { background: #111114; color: #f2f2f4; }
   .staff-workspace main { padding: 16px; }
   .staff-workspace table { font-size: .78rem; }
 }
+
+
+/* ── Public resume / print-ready document ── */
+.resume-page {
+  color-scheme: light;
+  font-family: 'Outfit', system-ui, sans-serif;
+}
+.resume-page .resume-kicker {
+  margin: 0;
+  color: rgba(23,23,23,.54);
+  font-size: .68rem;
+  line-height: 1rem;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+.resume-page .resume-rule { border-top: 1px solid rgba(0,0,0,.10); }
+
+@media (max-width: 640px) {
+  .resume-page .resume-document { padding: 0; }
+  .resume-page .resume-section { scroll-margin-top: 76px; }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 11mm 12mm;
+  }
+
+  html, body {
+    background: white !important;
+    color: #171717 !important;
+  }
+
+  body {
+    min-width: 0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .resume-screen-actions { display: none !important; }
+
+  .resume-page {
+    min-height: 0 !important;
+    background: white !important;
+  }
+
+  .resume-page .resume-document {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .resume-page article {
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+
+  .resume-page .resume-section {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    break-inside: avoid;
+  }
+
+  .resume-page .resume-section:first-child {
+    padding-top: 0 !important;
+  }
+
+  .resume-page .resume-contact {
+    background: white !important;
+    break-inside: avoid;
+  }
+
+  .resume-page .resume-contact-action { display: none !important; }
+
+  .resume-page .resume-experience { break-inside: avoid; }
+
+  .resume-page .resume-footer {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .resume-page a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+}
