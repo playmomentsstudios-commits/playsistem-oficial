@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useEffect,useState } from 'react'
 import { siteContentApi,type HomeServiceArea,type PortfolioItem,type SiteProfile,type SiteSettings } from '../../services/siteContent'
 import { PublicLayout } from '../../layouts/PublicLayout'
+import { PlayLabExperience } from '../../components/public/PlayLabExperience'
 import { useAuth } from '../../contexts/AuthContext'
 import { conversationLink } from '../../lib/navigation'
 import { trackConversion } from '../../lib/analytics'
@@ -50,6 +51,8 @@ export function HomePage() {
           <span className="mx-2 text-xs" style={{ color: '#4f4f59' }}>•</span><Link to={conversationLink(role, 'duvida')} className="inline-flex items-center min-h-11 mt-3 text-sm underline underline-offset-4" style={{ color: '#9090a0' }}>Falar com a Play Moments</Link>
         </div>
       </section>
+
+      <PlayLabExperience accent={siteSettings?.primary_color||'#E30613'} />
 
       <section className="px-5 py-10" aria-labelledby="free-course-title">
         <div className="max-w-6xl mx-auto rounded-3xl overflow-hidden relative p-6 md:p-10" style={{background:'linear-gradient(135deg,#171719,#101011)',border:'1px solid rgba(227,6,19,.22)'}}>
