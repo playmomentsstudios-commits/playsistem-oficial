@@ -95,7 +95,12 @@ export async function getDriveAccessToken() {
 
   const payload = await response.json();
   if (!response.ok || !payload.access_token) {
-    throw new Error(payload.error_description || payload.error || "Google OAuth token refresh failed");
+    const raw = String(payload?.error_description || payload?.error || "Google OAuth token refresh failed");
+    const normalized = raw.toLowerCase();
+    if (normalized.includes("expired") || normalized.includes("revoked") || normalized.includes("invalid_grant")) {
+      throw new Error("A conexão do Google Drive expirou ou foi revogada. Atualize o segredo GOOGLE_DRIVE_REFRESH_TOKEN no Supabase e tente novamente.");
+    }
+    throw new Error(raw);
   }
 
   return payload.access_token as string;
