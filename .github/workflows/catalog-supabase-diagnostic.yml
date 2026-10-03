@@ -148,3 +148,35 @@ jobs:
           }
           })().catch(error => { console.error(error); process.exit(1) })
           NODE
+
+      - name: Validate live catalog DOM
+        shell: bash
+        run: |
+          BROWSER="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$BROWSER" ]; then
+            echo "No Chromium browser available on runner"
+            exit 1
+          fi
+          "$BROWSER" --headless=new --no-sandbox --disable-gpu --virtual-time-budget=12000 --dump-dom "https://playsistem-oficial.playmomentsstudios.workers.dev/produtos" > /tmp/products.html
+          "$BROWSER" --headless=new --no-sandbox --disable-gpu --virtual-time-budget=12000 --dump-dom "https://playsistem-oficial.playmomentsstudios.workers.dev/servicos" > /tmp/services.html
+          node <<'NODE'
+          const fs=require('node:fs')
+          const products=fs.readFileSync('/tmp/products.html','utf8')
+          const services=fs.readFileSync('/tmp/services.html','utf8')
+          const result={
+            products:{
+              unavailable:/Catálogo temporariamente indisponível/i.test(products),
+              designer:/Designer/.test(products),
+              produtoTeste:/Produto teste/.test(products),
+              detailLinks:(products.match(/href="\/produtos\/[^"]+"/g)||[]).length,
+            },
+            services:{
+              unavailable:/Catálogo temporariamente indisponível/i.test(services),
+              landingPage:/Landing Page/.test(services),
+              logoAnimada:/Logo Animada/.test(services),
+              detailLinks:(services.match(/href="\/servicos\/[^"]+"/g)||[]).length,
+            },
+          }
+          console.log(JSON.stringify({name:'live_dom',...result}))
+          if(result.products.unavailable||result.services.unavailable) process.exit(2)
+          NODE
