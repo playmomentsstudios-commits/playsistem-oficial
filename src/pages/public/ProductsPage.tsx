@@ -67,6 +67,11 @@ export function ProductsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
+  useEffect(()=>{
+    const desiredView=(location.pathname==='/equipamentos'?'equipamentos':(params.get('tipo')||'todos')) as CatalogView
+    if(VIEWS.some(item=>item.key===desiredView))setView(desiredView)
+  },[location.pathname,params.toString()])
+
   useEffect(() => {
     let active=true
     async function load() {
