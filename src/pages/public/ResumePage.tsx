@@ -223,7 +223,7 @@ export function ResumePage(){
           <div className="grid md:grid-cols-[170px_1fr] gap-5 md:gap-8">
             <div>
               <p className="resume-kicker">Participações & projetos</p>
-              <p className="mt-2 text-xs leading-relaxed text-black/45">Experiências selecionadas para esta versão do currículo.</p>
+              <p className="mt-2 text-xs leading-relaxed text-black/45">Projetos selecionados em design, comunicação, cultura e território.</p>
             </div>
             <div className="space-y-0 max-w-3xl">
               {experiences.map((item,index)=><div key={index} className="resume-experience relative pl-6 pb-6 last:pb-0">
