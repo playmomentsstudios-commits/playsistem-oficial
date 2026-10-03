@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
+import { LoginExperiencePanel } from '../../components/auth/LoginExperiencePanel'
 import { afterAuthPath, authLink, safeReturnPath } from '../../lib/navigation'
 import logoUrl from '../../assets/logo-play-moments.png'
 
@@ -41,24 +42,7 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen flex" style={{ background: '#0a0a0b' }}>
-      {/* Left panel — decorative */}
-      <div className="hidden lg:flex flex-col justify-between flex-1 p-12 relative overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #0d0d0f 0%, #1a0a0a 100%)', borderRight: '1px solid rgba(255,255,255,0.05)' }}>
-        <Link to="/"><img src={logoUrl} alt="Play Moments" style={{ height: 32 }} /></Link>
-        <div>
-          <div className="max-w-lg">
-            <p className="text-xs uppercase tracking-[.2em] font-bold mb-4" style={{color:'#ff5364'}}>Sua experiência Play Moments</p>
-            <h2 className="text-4xl xl:text-5xl font-extrabold leading-[1.05] mb-5" style={{ color: '#f0f0f2' }}>Tudo o que você cria,<br/><span style={{ color: '#E30613' }}>aprende e acompanha.</span></h2>
-            <p className="leading-relaxed max-w-md" style={{ color: '#858593' }}>Entre para continuar seus cursos na Academia, acompanhar projetos e pedidos, acessar arquivos e manter suas conversas organizadas.</p>
-            <div className="grid grid-cols-2 gap-3 mt-8 max-w-md">{['Academia e cursos','Projetos e pedidos','Arquivos organizados','Conversas em um só lugar'].map((item,i)=><div key={item} className="px-4 py-3 rounded-xl text-xs" style={{background:'rgba(255,255,255,.035)',border:'1px solid rgba(255,255,255,.06)',color:'#b0b0ba'}}><span style={{color:'#E30613'}}>{['▶','◇','↗','◌'][i]}</span> <span className="ml-2">{item}</span></div>)}</div>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 text-xs" style={{ color: '#4b4b55' }}><span>© {new Date().getFullYear()} Play Moments</span><Link to="/academia" className="hover:text-white">Conhecer a Academia →</Link></div>
-
-        {/* Glow */}
-        <div style={{ position: 'absolute', bottom: '20%', left: '30%', width: 400, height: 400, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(227,6,19,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
-      </div>
+      <LoginExperiencePanel />
 
       {/* Right panel — form */}
       <div className="flex-1 flex flex-col items-center justify-center p-6">
