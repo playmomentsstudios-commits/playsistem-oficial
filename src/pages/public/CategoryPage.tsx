@@ -90,7 +90,7 @@ export function CategoryPage(){
           <p className="text-xs uppercase tracking-widest font-semibold" style={{color:cat.color}}>Catálogo da área</p>
           <h2 className="text-2xl sm:text-3xl font-bold mt-2">{cat.productTitle}</h2>
          </div>
-         <Link to={cat.area==='tech'?'/produtos?tipo=equipamentos':'/produtos'} className="text-sm font-semibold text-gray-400">Abrir catálogo completo →</Link>
+         <Link to={cat.area==='tech'?'/equipamentos':'/produtos'} className="text-sm font-semibold text-gray-400">Abrir catálogo completo →</Link>
         </div>
 
         {productsLoading?<div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{[0,1,2].map(i=><div key={i} className="pm-skeleton rounded-2xl h-52"/>)}</div>:
