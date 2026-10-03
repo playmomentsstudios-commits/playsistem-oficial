@@ -7,15 +7,26 @@ import { DigitalLiteracyCover } from '../../components/academy/DigitalLiteracyCo
 import { useAuth } from '../../contexts/AuthContext'
 import { conversationLink } from '../../lib/navigation'
 import { trackConversion } from '../../lib/analytics'
+import { supabase } from '../../lib/supabase'
 
 export function HomePage() {
   const { role } = useAuth()
   const [profile,setProfile]=useState<SiteProfile|null>(null)
   const [siteSettings,setSiteSettings]=useState<SiteSettings|null>(null)
+  const [courseCoverUrl,setCourseCoverUrl]=useState<string|null>(null)
 
   useEffect(()=>{
-    Promise.all([siteContentApi.profile(),siteContentApi.settings()])
-      .then(([p,s])=>{setProfile(p);setSiteSettings(s)})
+    Promise.all([
+      siteContentApi.profile(),
+      siteContentApi.settings(),
+      supabase.rpc('academy_public_course',{course_slug:'letramento-digital'}),
+    ])
+      .then(([p,s,course])=>{
+        setProfile(p)
+        setSiteSettings(s)
+        const url=course?.data?.course?.cover_url
+        setCourseCoverUrl(typeof url==='string'&&url.trim()?url:null)
+      })
       .catch(()=>undefined)
   },[])
 
@@ -76,7 +87,13 @@ export function HomePage() {
               className="relative min-h-[280px] lg:min-h-[390px] group overflow-hidden"
               aria-label="Abrir o curso Letramento Digital"
             >
-              <DigitalLiteracyCover className="rounded-none transition-transform duration-500 group-hover:scale-[1.015]" />
+              {courseCoverUrl
+                ? <img
+                    src={courseCoverUrl}
+                    alt="Capa do curso Letramento Digital"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.015]"
+                  />
+                : <DigitalLiteracyCover className="rounded-none transition-transform duration-500 group-hover:scale-[1.015]" />}
               <div className="absolute inset-y-0 left-0 w-24 pointer-events-none" style={{background:'linear-gradient(90deg,#121214,transparent)'}}/>
             </Link>
           </div>
