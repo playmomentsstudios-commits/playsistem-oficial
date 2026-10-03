@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { PublicLayout } from '../../layouts/PublicLayout'
 import { Badge } from '../../components/ui/Badge'
 import {
@@ -55,8 +55,9 @@ const VIEWS:Array<{key:CatalogView;label:string;description:string}>= [
 ]
 
 export function ProductsPage() {
+  const location=useLocation()
   const [params,setParams]=useSearchParams()
-  const initial=(params.get('tipo')||'todos') as CatalogView
+  const initial=(location.pathname==='/equipamentos'?'equipamentos':(params.get('tipo')||'todos')) as CatalogView
   const [products, setProducts] = useState<PublicCatalogProduct[]>([])
   const [search, setSearch] = useState('')
   const [view,setView]=useState<CatalogView>(VIEWS.some(x=>x.key===initial)?initial:'todos')
