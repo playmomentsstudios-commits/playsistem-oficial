@@ -88,7 +88,17 @@ export function ResumePage(){
   const updated=formatDate(resume.updated_at)
 
   function pdfFilename(){
-    return (resume?.display_name||'curriculo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()+'.pdf'
+    const name=resume?.display_name||'Felipe Costa Souza'
+    const professionalTitle=resume?.headline||'Designer e Comunicador'
+    const label=resume?.resume_type==='mini'?'Minicurriculo':'Curriculo'
+    return [label,name,professionalTitle]
+      .join(' - ')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-zA-Z0-9]+/g,'-')
+      .replace(/^-|-$/g,'')
+      .replace(/-+/g,'-')
+      +'.pdf'
   }
 
   async function downloadResume(){
