@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { PublicLayout } from '../../layouts/PublicLayout'
 import { Badge } from '../../components/ui/Badge'
 import {
   isEquipmentProduct,
-  isRentalProduct,
   listPublicStoreItems,
 } from '../../services/publicCatalog'
 import type { PublicCatalogProduct } from '../../services/catalog'
@@ -45,32 +44,11 @@ function categoryColor(slug?:string|null){
   return (slug&&CATEGORY_COLORS[slug])||'#E30613'
 }
 
-type CatalogView='todos'|'produtos'|'equipamentos'|'locacao'
-
-const VIEWS:Array<{key:CatalogView;label:string;description:string}>= [
-  {key:'todos',label:'Todos',description:'Tudo que está publicado para compra ou locação.'},
-  {key:'produtos',label:'Produtos',description:'Itens físicos e digitais disponíveis no catálogo.'},
-  {key:'equipamentos',label:'Equipamentos',description:'Equipamentos disponíveis para compra ou uso em projetos.'},
-  {key:'locacao',label:'Locação',description:'Itens com diária de locação configurada.'},
-]
-
 export function ProductsPage() {
   const location=useLocation()
-  const navigate=useNavigate()
-  const [params,setParams]=useSearchParams()
-  const initial=(location.pathname==='/equipamentos'?'equipamentos':(params.get('tipo')||'todos')) as CatalogView
   const [products, setProducts] = useState<PublicCatalogProduct[]>([])
-  const [search, setSearch] = useState('')
-  const [view,setView]=useState<CatalogView>(VIEWS.some(x=>x.key===initial)?initial:'todos')
-  const [category, setCategory] = useState('todos')
-  const [maxPrice,setMaxPrice]=useState('todos')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-
-  useEffect(()=>{
-    const desiredView=(location.pathname==='/equipamentos'?'equipamentos':(params.get('tipo')||'todos')) as CatalogView
-    if(VIEWS.some(item=>item.key===desiredView))setView(desiredView)
-  },[location.pathname,params.toString()])
 
   useEffect(() => {
     let active=true
@@ -91,58 +69,12 @@ export function ProductsPage() {
     return()=>{active=false}
   }, [])
 
-  function chooseView(next:CatalogView){
-    setView(next)
-    setCategory('todos')
-    if(location.pathname==='/equipamentos'&&next!=='equipamentos'){
-      navigate(next==='todos'?'/produtos':('/produtos?tipo='+next))
-      return
-    }
-    if(location.pathname!=='/equipamentos'&&next==='equipamentos'){
-      navigate('/equipamentos')
-      return
-    }
-    const copy=new URLSearchParams(params)
-    if(next==='todos')copy.delete('tipo')
-    else copy.set('tipo',next)
-    setParams(copy,{replace:true})
-  }
-
-  const scoped=useMemo(()=>{
-    if(view==='equipamentos')return products.filter(isEquipmentProduct)
-    if(view==='locacao')return products.filter(isRentalProduct)
-    if(view==='produtos')return products.filter(product=>!isEquipmentProduct(product))
-    return products
-  },[products,view])
-
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase()
-    return scoped.filter(product => {
-      const matchesTerm = !term ||
-        product.name.toLowerCase().includes(term) ||
-        (product.short_description ?? '').toLowerCase().includes(term)
-      const matchesCategory = category === 'todos' || product.category?.slug === category
-      const effectivePrice = product.promotional_price ?? product.sale_price ?? product.rental_daily_price ?? 0
-      const matchesPrice = maxPrice === 'todos' || effectivePrice <= Number(maxPrice)
-      return matchesTerm && matchesCategory && matchesPrice
-    })
-  }, [scoped, search, category, maxPrice])
-
-  const categories = useMemo(() => {
-    const map = new Map<string,string>()
-    for (const product of scoped) {
-      if (product.category?.slug && product.category?.name) {
-        map.set(product.category.slug, product.category.name)
-      }
-    }
-    return Array.from(map.entries()).sort((a,b)=>a[1].localeCompare(b[1],'pt-BR'))
-  }, [scoped])
-
-  const equipmentCount=products.filter(isEquipmentProduct).length
-  const rentalCount=products.filter(isRentalProduct).length
-  const productCount=products.filter(product=>!isEquipmentProduct(product)).length
-  const activeView=VIEWS.find(item=>item.key===view)??VIEWS[0]
   const dedicatedEquipment=location.pathname==='/equipamentos'
+  const scoped=useMemo(
+    ()=>dedicatedEquipment?products.filter(isEquipmentProduct):products.filter(product=>!isEquipmentProduct(product)),
+    [products,dedicatedEquipment],
+  )
+  const filtered=scoped
 
   return (
     <PublicLayout>
@@ -162,47 +94,6 @@ export function ProductsPage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-          {VIEWS.map(item=>{
-            const count=item.key==='todos'?products.length:item.key==='equipamentos'?equipmentCount:item.key==='locacao'?rentalCount:productCount
-            const selected=view===item.key
-            return <button key={item.key} type="button" onClick={()=>chooseView(item.key)} className="text-left rounded-2xl p-4 sm:p-5 transition-all" style={{background:selected?'linear-gradient(135deg,rgba(227,6,19,.16),rgba(255,255,255,.04))':'#141416',border:'1px solid '+(selected?'rgba(227,6,19,.55)':'rgba(255,255,255,.08)')}}>
-              <div className="flex items-start justify-between gap-3">
-                <span className="font-bold text-sm sm:text-base">{item.label}</span>
-                <span className="text-xs px-2 py-1 rounded-full bg-white/5 text-gray-400">{count}</span>
-              </div>
-              <p className="hidden sm:block text-xs text-gray-500 mt-2 leading-relaxed">{item.description}</p>
-            </button>
-          })}
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-[#111113] p-4 sm:p-5 mb-7">
-          <div className="flex flex-col lg:flex-row gap-3 lg:items-center">
-            <input
-              value={search}
-              onChange={event => setSearch(event.target.value)}
-              placeholder={view==='equipamentos'?'Buscar equipamento...':'Buscar no catálogo...'}
-              className="w-full lg:max-w-sm px-4 py-3 rounded-xl text-sm outline-none"
-              style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.09)',color:'#f0f0f2'}}
-            />
-            <div className="flex gap-2 overflow-x-auto lg:flex-1">
-              <button type="button" onClick={()=>setCategory('todos')} className="shrink-0 px-3 py-2 rounded-full text-xs" style={{background:category==='todos'?'#E30613':'rgba(255,255,255,0.04)',color:category==='todos'?'#fff':'#9090a0',border:'1px solid rgba(255,255,255,0.08)'}}>Todas as categorias</button>
-              {categories.map(([slug,name])=>{
-                const color=categoryColor(slug)
-                return <button key={slug} type="button" onClick={()=>setCategory(slug)} className="shrink-0 px-3 py-2 rounded-full text-xs" style={{background:category===slug?color:'rgba(255,255,255,0.04)',color:category===slug?'#fff':color,border:'1px solid '+(category===slug?color:'rgba(255,255,255,0.08)')}}>{name}</button>
-              })}
-            </div>
-            <select value={maxPrice} onChange={event=>setMaxPrice(event.target.value)} className="px-4 py-3 rounded-xl text-xs outline-none">
-              <option value="todos">Todos os valores</option>
-              <option value="50000">Até R$ 500</option>
-              <option value="100000">Até R$ 1.000</option>
-              <option value="200000">Até R$ 2.000</option>
-              <option value="500000">Até R$ 5.000</option>
-              <option value="1000000">Até R$ 10.000</option>
-            </select>
-          </div>
-        </div>
-
         {loading && <ProductSkeleton/>}
 
         {!loading && error && (
@@ -214,16 +105,15 @@ export function ProductsPage() {
 
         {!loading && !error && filtered.length === 0 && (
           <CatalogEmpty
-            title={scoped.length===0?`Ainda não há ${activeView.label.toLowerCase()} publicados.`:'Nenhum item corresponde aos filtros.'}
-            text={scoped.length===0?'Esta seção já está preparada e aparecerá automaticamente quando um item for publicado no catálogo.':'Limpe a busca ou escolha outra categoria para continuar.'}
-            onReset={scoped.length>0?()=>{setSearch('');setCategory('todos');setMaxPrice('todos')}:undefined}
+            title={dedicatedEquipment?'Ainda não há equipamentos publicados.':'Ainda não há produtos publicados.'}
+            text="Esta seção aparecerá automaticamente quando houver itens publicados no catálogo."
           />
         )}
 
         {!loading && !error && filtered.length>0 && (
           <>
             <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-semibold">{activeView.label}</p>
+              <p className="text-sm font-semibold">{dedicatedEquipment?'Equipamentos':'Produtos'}</p>
               <p className="text-xs text-gray-500">{filtered.length} {filtered.length===1?'item':'itens'}</p>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
