@@ -64,8 +64,8 @@ export function ResumePage(){
     const emailHref=resume.contact_email?'mailto:'+resume.contact_email+'?subject='+encodeURIComponent('Contato profissional via currículo'):null
     return[
       resume.contact_email?{label:'E-mail',value:resume.contact_email,href:emailHref,action:'Escrever e-mail'}:null,
-      whatsapp?{label:'WhatsApp',value:resume.whatsapp||resume.contact_phone||'Conversar',href:whatsapp,action:'Conversar'}:null,
-      resume.contact_phone?{label:'Telefone',value:resume.contact_phone,href:'tel:'+resume.contact_phone.replace(/[^\d+]/g,''),action:'Ligar'}:null,
+      resume.contact_phone?{label:'Contato',value:resume.contact_phone,href:'tel:'+resume.contact_phone.replace(/[^\d+]/g,''),action:'Ligar'}:null,
+      whatsapp?{label:'WhatsApp',value:'Conversar pelo WhatsApp',href:whatsapp,action:'Abrir WhatsApp'}:null,
       resume.instagram?{label:'Instagram',value:resume.instagram,href:instagramUrl(resume.instagram),action:'Abrir perfil'}:null,
       resume.linkedin_url?{label:'LinkedIn',value:'Perfil profissional',href:externalUrl(resume.linkedin_url),action:'Abrir perfil'}:null,
       resume.website_url?{label:'Site',value:resume.website_url.replace(/^https?:\/\//,''),href:externalUrl(resume.website_url),action:'Abrir site'}:null,
@@ -217,18 +217,6 @@ export function ResumePage(){
           </div>
         </section>}
 
-        {identity.length>0&&<section className="resume-section resume-rule px-5 py-7 sm:px-9 sm:py-9 lg:px-12">
-          <div className="grid md:grid-cols-[170px_1fr] gap-4 md:gap-8">
-            <div>
-              <p className="resume-kicker">Identidade & território</p>
-              <div className="mt-3 w-8 h-[3px] bg-[#b80f1c]"/>
-            </div>
-            <div className="space-y-4 max-w-3xl">
-              {identity.map((paragraph,index)=><p key={index} className="text-[15px] sm:text-base leading-[1.75] text-black/72">{paragraph}</p>)}
-            </div>
-          </div>
-        </section>}
-
         {experiences.length>0&&<section className="resume-section resume-rule px-5 py-7 sm:px-9 sm:py-9 lg:px-12">
           <div className="grid md:grid-cols-[170px_1fr] gap-5 md:gap-8">
             <div>
@@ -255,6 +243,19 @@ export function ResumePage(){
             </div>
           </div>
         </section>}
+
+        {identity.length>0&&<section className="resume-section resume-rule px-5 py-7 sm:px-9 sm:py-9 lg:px-12">
+          <div className="grid md:grid-cols-[170px_1fr] gap-4 md:gap-8">
+            <div>
+              <p className="resume-kicker">Identidade & território</p>
+              <div className="mt-3 w-8 h-[3px] bg-[#b80f1c]"/>
+            </div>
+            <div className="space-y-4 max-w-3xl">
+              {identity.map((paragraph,index)=><p key={index} className="text-[15px] sm:text-base leading-[1.75] text-black/72">{paragraph}</p>)}
+            </div>
+          </div>
+        </section>}
+
 
         {contacts.length>0&&<section className="resume-section resume-rule px-5 py-7 sm:px-9 sm:py-9 lg:px-12">
           <div className="grid md:grid-cols-[170px_1fr] gap-5 md:gap-8">
