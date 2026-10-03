@@ -1,0 +1,68 @@
+name: Public experience diagnostic
+
+on:
+  push:
+    branches:
+      - diag/catalog-supabase-public
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate public experiences
+        shell: bash
+        run: |
+          BROWSER="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$BROWSER" ]; then
+            echo "No Chromium browser available on runner"
+            exit 1
+          fi
+
+          for route in "" academia login produtos servicos; do
+            name="${route:-home}"
+            "$BROWSER" --headless=new --no-sandbox --disable-gpu --virtual-time-budget=14000 --dump-dom "https://playsistem-oficial.playmomentsstudios.workers.dev/${route}" > "/tmp/${name}.html"
+          done
+
+          node <<'NODE'
+          const fs=require('node:fs')
+          const read=name=>fs.readFileSync('/tmp/'+name+'.html','utf8')
+          const home=read('home')
+          const academy=read('academia')
+          const login=read('login')
+          const products=read('produtos')
+          const services=read('servicos')
+          const result={
+            home:{
+              digitalCover:home.includes('pm-digital-cover'),
+              letramento:/Letramento Digital/.test(home),
+              oldAreas:/Nossas áreas|Tudo em um só lugar/.test(home),
+              oldPortfolio:/Trabalhos e projetos/.test(home),
+            },
+            academy:{
+              letramento:/Letramento Digital/.test(academy),
+              digitalCover:academy.includes('pm-digital-cover'),
+              empty:/Os primeiros conteúdos gratuitos estão sendo preparados/.test(academy),
+            },
+            login:{
+              animatedPanel:login.includes('pm-login-lab'),
+              animatedObject:login.includes('pm-login-object'),
+            },
+            products:{
+              designer:/Designer/.test(products),
+              productTest:/Produto teste/.test(products),
+            },
+            services:{
+              landingPage:/Landing Page/.test(services),
+              links:(services.match(/href="\/servicos\/[^"]+"/g)||[]).length,
+            },
+          }
+          console.log(JSON.stringify({name:'public_experience',...result}))
+          NODE
