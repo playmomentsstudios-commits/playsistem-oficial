@@ -1,23 +1,28 @@
 import { Link } from 'react-router-dom'
 import { useEffect,useState } from 'react'
-import { siteContentApi,type HomeServiceArea,type PortfolioItem,type SiteProfile,type SiteSettings } from '../../services/siteContent'
+import { siteContentApi,type SiteProfile,type SiteSettings } from '../../services/siteContent'
 import { PublicLayout } from '../../layouts/PublicLayout'
 import { PlayLabExperience } from '../../components/public/PlayLabExperience'
+import { DigitalLiteracyCover } from '../../components/academy/DigitalLiteracyCover'
 import { useAuth } from '../../contexts/AuthContext'
 import { conversationLink } from '../../lib/navigation'
 import { trackConversion } from '../../lib/analytics'
 
-
 export function HomePage() {
   const { role } = useAuth()
   const [profile,setProfile]=useState<SiteProfile|null>(null)
-  const [portfolio,setPortfolio]=useState<PortfolioItem[]>([])
   const [siteSettings,setSiteSettings]=useState<SiteSettings|null>(null)
-  const [serviceAreas,setServiceAreas]=useState<HomeServiceArea[]>([])
-  useEffect(()=>{Promise.all([siteContentApi.profile(),siteContentApi.portfolioItems(),siteContentApi.settings(),siteContentApi.homeServiceAreas()]).then(([p,i,s,a])=>{setProfile(p);setPortfolio(i.filter(item=>item.featured).slice(0,3));setSiteSettings(s);setServiceAreas(a)}).catch(()=>undefined)},[])
+
+  useEffect(()=>{
+    Promise.all([siteContentApi.profile(),siteContentApi.settings()])
+      .then(([p,s])=>{setProfile(p);setSiteSettings(s)})
+      .catch(()=>undefined)
+  },[])
+
   const quote = conversationLink(role, 'orcamento')
   const academyHref = '/academia'
   const clientHref = role === 'customer' ? '/app/dashboard' : role ? '/admin' : '/login?next=%2Fapp%2Fdashboard'
+
   return (
     <PublicLayout>
       <PlayLabExperience
@@ -27,19 +32,57 @@ export function HomePage() {
         academyHref={academyHref}
       />
 
-      <section className="px-5 py-10" aria-labelledby="free-course-title">
-        <div className="max-w-6xl mx-auto rounded-3xl overflow-hidden relative p-6 md:p-10" style={{background:'linear-gradient(135deg,#171719,#101011)',border:'1px solid rgba(227,6,19,.22)'}}>
-          <div className="absolute right-0 top-0 w-72 h-72 pointer-events-none" style={{background:'radial-gradient(circle,rgba(227,6,19,.14),transparent 68%)'}} />
-          <div className="relative max-w-3xl">
-            <span className="inline-flex px-3 py-1 rounded-full text-xs font-bold" style={{background:'rgba(16,185,129,.1)',color:'#6ee7b7'}}>Curso gratuito · sem cadastro para assistir</span>
-            <h2 id="free-course-title" className="text-3xl md:text-4xl font-extrabold mt-4" style={{color:'#f0f0f2'}}>Letramento Digital <span style={{color:'#E30613'}}>gratuito e aberto</span></h2>
-            <p className="mt-4 max-w-2xl leading-relaxed" style={{color:'#9090a0'}}>Comece agora, sem criar conta. Aprenda fundamentos de tecnologia, comunicação, informação e inteligência artificial no seu ritmo.</p>
-            <div className="flex flex-wrap items-center gap-4 mt-6"><Link to="/curso/letramento-digital" onClick={()=>trackConversion('academy_interest',{source:'home_free_course'})} className="px-6 py-3 rounded-xl font-bold text-sm" style={{background:'#E30613',color:'#fff'}}>Começar curso grátis →</Link><span className="text-xs" style={{color:'#6b6b78'}}>Sem login para assistir · entre apenas para salvar progresso, fazer atividades e emitir certificado.</span></div>
+      <section className="px-5 py-10 md:py-14" aria-labelledby="free-course-title">
+        <div
+          className="max-w-6xl mx-auto rounded-3xl overflow-hidden relative"
+          style={{
+            background:'linear-gradient(135deg,#171719,#101011)',
+            border:'1px solid rgba(227,6,19,.22)',
+            boxShadow:'0 28px 90px rgba(0,0,0,.22)',
+          }}
+        >
+          <div className="grid lg:grid-cols-[1.08fr_.92fr] items-stretch">
+            <div className="relative p-6 md:p-10 lg:p-12 flex flex-col justify-center">
+              <div className="absolute left-0 top-0 w-72 h-72 pointer-events-none" style={{background:'radial-gradient(circle,rgba(227,6,19,.11),transparent 68%)'}} />
+              <div className="relative">
+                <span className="inline-flex px-3 py-1 rounded-full text-xs font-bold" style={{background:'rgba(16,185,129,.1)',color:'#6ee7b7'}}>
+                  Curso gratuito · sem cadastro para assistir
+                </span>
+                <h2 id="free-course-title" className="text-3xl md:text-5xl font-extrabold mt-4 leading-[.98]" style={{color:'#f0f0f2'}}>
+                  Letramento Digital <span style={{color:'#E30613'}}>gratuito e aberto</span>
+                </h2>
+                <p className="mt-4 max-w-2xl leading-relaxed" style={{color:'#9090a0'}}>
+                  Comece agora, sem criar conta. Aprenda fundamentos de tecnologia, comunicação, informação e inteligência artificial no seu ritmo.
+                </p>
+                <div className="flex flex-wrap items-center gap-4 mt-6">
+                  <Link
+                    to="/curso/letramento-digital"
+                    onClick={()=>trackConversion('academy_interest',{source:'home_free_course'})}
+                    className="px-6 py-3 rounded-xl font-bold text-sm"
+                    style={{background:'#E30613',color:'#fff'}}
+                  >
+                    Começar curso grátis →
+                  </Link>
+                  <span className="text-xs max-w-sm" style={{color:'#6b6b78'}}>
+                    Sem login para assistir · entre apenas para salvar progresso, fazer atividades e emitir certificado.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <Link
+              to="/curso/letramento-digital"
+              onClick={()=>trackConversion('academy_interest',{source:'home_free_course_cover'})}
+              className="relative min-h-[280px] lg:min-h-[390px] group overflow-hidden"
+              aria-label="Abrir o curso Letramento Digital"
+            >
+              <DigitalLiteracyCover className="rounded-none transition-transform duration-500 group-hover:scale-[1.015]" />
+              <div className="absolute inset-y-0 left-0 w-24 pointer-events-none" style={{background:'linear-gradient(90deg,#121214,transparent)'}}/>
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* ── STATS ────────────────────────────────────────────────────────── */}
       <section className="px-6 py-12">
         <div className="mx-auto grid grid-cols-2 md:grid-cols-4 gap-4" style={{ maxWidth: 900 }}>
           {[
@@ -57,77 +100,6 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* ── AREAS ────────────────────────────────────────────────────────── */}
-      <section className="px-6 py-20">
-        <div className="mx-auto" style={{ maxWidth: 1100 }}>
-          <div className="text-center mb-12">
-            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#E30613' }}>
-              {siteSettings?.home_areas_eyebrow||'Nossas áreas'}
-            </p>
-            <h2 className="text-4xl font-bold" style={{ color: '#f0f0f2' }}>
-              {siteSettings?.home_areas_title||'Tudo em um só lugar'}
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {serviceAreas.map(area => (
-              <Link key={area.id} to={area.href}
-                className="group relative overflow-hidden rounded-2xl transition-transform duration-300 hover:-translate-y-1"
-                style={{ background: '#141416', border: '1px solid rgba(255,255,255,0.07)' }}>
-                <div className="relative overflow-hidden" style={{ height: 200 }}>
-                  <img src={area.image_url||''} alt={area.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                  <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(20,20,22,0.95) 0%, rgba(20,20,22,0.3) 100%)' }} />
-                  <span className="absolute top-4 left-4 text-3xl">{area.icon||'◆'}</span>
-                </div>
-                <div className="p-5">
-                  <p className="font-bold text-base mb-3" style={{ color: '#f0f0f2' }}>{area.title}</p>
-                  <div className="flex flex-col gap-1.5">
-                    {area.topics.map(s => (
-                      <p key={s} className="text-sm" style={{ color: '#6b6b78' }}>· {s}</p>
-                    ))}
-                  </div>
-                  <div className="mt-4 flex items-center gap-2 text-sm font-semibold" style={{ color: area.accent_color }}>
-                    Conhecer →
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── PORTFOLIO PREVIEW ────────────────────────────────────────────── */}
-      <section className="px-6 py-20" style={{ background: 'rgba(255,255,255,0.02)' }}>
-        <div className="mx-auto" style={{ maxWidth: 1100 }}>
-          <div className="flex items-end justify-between mb-10">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: '#E30613' }}>Portfólio</p>
-              <h2 className="text-3xl font-bold" style={{ color: '#f0f0f2' }}>Trabalhos e projetos</h2>
-            </div>
-            <Link to="/quem-somos#portfolio" className="text-sm font-semibold" style={{ color: '#9090a0' }}>
-              Ver todos →
-            </Link>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-5">
-            {portfolio.map(item => (
-              <Link key={item.id} to="/quem-somos#portfolio"
-                className="group overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1"
-                style={{ background: '#141416', border: '1px solid rgba(255,255,255,0.07)' }}>
-                <div className="relative overflow-hidden bg-white/[0.03]" style={{ height: 200 }}>
-                  {item.cover_url?<img src={item.cover_url} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />:<div className="w-full h-full flex items-center justify-center text-4xl opacity-30">◆</div>}
-                </div>
-                <div className="p-4">
-                  <p className="text-xs mb-1" style={{ color: '#E30613' }}>{item.category?.name||item.client||'Projeto'}</p>
-                  <p className="font-semibold text-sm" style={{ color: '#f0f0f2' }}>{item.title}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA CADASTRO ─────────────────────────────────────────────────── */}
       <section className="px-6 py-24">
         <div className="mx-auto text-center max-w-2xl" style={{ maxWidth: 700 }}>
           <h2 className="text-4xl font-extrabold mb-5 leading-tight" style={{ color: '#f0f0f2' }}>
