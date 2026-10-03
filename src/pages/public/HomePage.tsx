@@ -20,39 +20,12 @@ export function HomePage() {
   const clientHref = role === 'customer' ? '/app/dashboard' : role ? '/admin' : '/login?next=%2Fapp%2Fdashboard'
   return (
     <PublicLayout>
-      <section className="relative text-center px-5 py-10 sm:py-16 overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse at top, rgba(227,6,19,0.09), transparent 70%)' }} />
-        <div className="relative max-w-4xl mx-auto">
-          <h1 className="font-extrabold leading-tight mb-4" style={{ fontSize: 'clamp(2rem, 5vw, 3.75rem)', letterSpacing: '-0.02em', color: '#f0f0f2' }}>
-            Criação, tecnologia e conhecimento <span style={{ color: siteSettings?.primary_color||'#E30613' }}>para tirar projetos do papel.</span>
-          </h1>
-          <p className="text-base sm:text-lg mb-6 max-w-xl mx-auto" style={{ color: '#9090a0' }}>
-            Da ideia à entrega: contrate serviços, encontre equipamentos, aprenda e acompanhe tudo pela mesma plataforma.
-          </p>
-          <div className="grid grid-cols-2 gap-3 max-w-2xl mx-auto">
-            <Link to="/servicos" onClick={()=>trackConversion('service_interest',{source:'home_hero'})} className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: '#E30613', color: '#fff' }}>
-              <span className="block text-sm font-bold">Contratar um serviço</span>
-              <span className="block text-xs mt-1 opacity-80">Serviços e soluções</span>
-            </Link>
-            <Link to="/produtos" onClick={()=>trackConversion('product_interest',{source:'home_hero'})} className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: 'rgba(255,255,255,0.07)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <span className="block text-sm font-bold">Comprar ou alugar</span>
-              <span className="block text-xs mt-1" style={{ color: '#9090a0' }}>Produtos e equipamentos</span>
-            </Link>
-            <Link to={academyHref} onClick={()=>trackConversion('academy_interest',{source:'home_hero'})} className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: 'rgba(255,255,255,0.07)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <span className="block text-sm font-bold">Aprender gratuitamente</span>
-              <span className="block text-xs mt-1" style={{ color: '#9090a0' }}>Cursos e Academia</span>
-            </Link>
-            <Link to={clientHref} onClick={()=>trackConversion('account_interest',{source:'home_hero'})} className="px-4 py-4 rounded-2xl font-semibold text-left" style={{ background: 'rgba(255,255,255,0.07)', color: '#f0f0f2', border: '1px solid rgba(255,255,255,0.08)' }}>
-              <span className="block text-sm font-bold">Acessar minha área</span>
-              <span className="block text-xs mt-1" style={{ color: '#9090a0' }}>Acompanhar meu trabalho</span>
-            </Link>
-          </div>
-          <Link to={quote} className="inline-flex items-center min-h-11 mt-4 text-sm font-semibold underline underline-offset-4" style={{ color: '#ff6b7a' }}>Preciso de algo personalizado</Link>
-          <span className="mx-2 text-xs" style={{ color: '#4f4f59' }}>•</span><Link to={conversationLink(role, 'duvida')} className="inline-flex items-center min-h-11 mt-3 text-sm underline underline-offset-4" style={{ color: '#9090a0' }}>Falar com a Play Moments</Link>
-        </div>
-      </section>
-
-      <PlayLabExperience accent={siteSettings?.primary_color||'#E30613'} />
+      <PlayLabExperience
+        accent={siteSettings?.primary_color||'#E30613'}
+        clientHref={clientHref}
+        quoteHref={quote}
+        academyHref={academyHref}
+      />
 
       <section className="px-5 py-10" aria-labelledby="free-course-title">
         <div className="max-w-6xl mx-auto rounded-3xl overflow-hidden relative p-6 md:p-10" style={{background:'linear-gradient(135deg,#171719,#101011)',border:'1px solid rgba(227,6,19,.22)'}}>

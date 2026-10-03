@@ -119,6 +119,7 @@ export default function AppV2() {
               <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
               <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
               <Route path="/produtos" element={<ProductsPage />} />
+              <Route path="/equipamentos" element={<ProductsPage />} />
               <Route path="/produtos/:slug" element={<ProductDetailPage />} />
               <Route path="/servicos" element={<ServicesPage />} />
               <Route path="/servicos/:slug" element={<ServiceDetailPage />} />
