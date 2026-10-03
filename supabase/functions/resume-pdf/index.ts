@@ -357,12 +357,47 @@ async function buildResumePdf(resume:any,onlineUrl:string){
     y-=2;
   }
 
+  const extraSections=Array.isArray(resume.extra_sections)?resume.extra_sections:[];
+  for(const section of extraSections){
+    const title=safeText(section?.title);
+    const items=Array.isArray(section?.items)?section.items.map((item:any)=>safeText(item)).filter(Boolean):[];
+    const content=safeText(section?.content);
+    if(!title||(!items.length&&!content))continue;
+
+    drawRule();
+    ensureSpace(62);
+    const sectionStart=y;
+    drawSectionHeading(title);
+    y=sectionStart;
+
+    if(items.length){
+      const gap=16;
+      const colWidth=(CONTENT_W-gap)/2;
+      const rowCount=Math.ceil(items.length/2);
+      for(let row=0;row<rowCount;row++){
+        const pair=[items[row*2]||"",items[row*2+1]||""];
+        const lineSets=pair.map(value=>value?wrapText(value,bold,9,colWidth-18):[]);
+        const rowHeight=(Math.max(lineSets[0].length,lineSets[1].length,1)*12)+7;
+        ensureSpace(rowHeight+3);
+        pair.forEach((value,index)=>{
+          if(!value)return;
+          const x=CONTENT_X+(index*(colWidth+gap));
+          page.drawCircle({x:x+3,y:y+3,size:2.4,color:RED});
+          lineSets[index].forEach((line,lineIndex)=>page.drawText(line,{x:x+13,y:y-(lineIndex*12),font:bold,size:9,color:DARK,maxWidth:colWidth-18}));
+        });
+        y-=rowHeight;
+      }
+    }
+    if(content)drawParagraph(content);
+    y-=2;
+  }
+
   const contactRows=[
     ["E-mail",resume.contact_email],
-    ["Telefone",resume.contact_phone],
+    ["Contato",resume.contact_phone],
     ["Instagram",resume.instagram],
     ["LinkedIn",resume.linkedin_url],
-    ["Site",resume.website_url],
+    ["Portfólio",resume.website_url],
   ].map(([label,value])=>[label,safeText(value)] as [string,string]).filter(([,value])=>Boolean(value));
 
   if(contactRows.length){
