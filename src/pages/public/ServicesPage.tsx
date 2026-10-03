@@ -133,7 +133,7 @@ function CatalogSkeleton(){
  </div>
 }
 
-function CatalogState({title,text,role}:{title:string;text:string;role:string|null}){
+function CatalogState({title,text,role}:{title:string;text:string;role:Parameters<typeof conversationLink>[0]}){
  return <div className="rounded-3xl border border-white/10 bg-[#141416] p-7 sm:p-10 text-center">
   <div className="mx-auto w-12 h-12 rounded-2xl grid place-items-center text-xl bg-white/5">◆</div>
   <h2 className="font-bold text-xl mt-4">{title}</h2>
