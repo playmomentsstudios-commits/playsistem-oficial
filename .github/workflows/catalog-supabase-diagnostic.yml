@@ -63,6 +63,8 @@ jobs:
                   }
                   if (body.includes('supabase.co') || refs.length) scanned.push({ chunkPath, refs, hasSupabaseHost: body.includes('supabase.co') })
                 }
+                const hostMatches = [...new Set([...mainBundle.matchAll(/[A-Za-z0-9._-]{1,100}supabase\.co/g)].map(match => match[0]))]
+                console.log(JSON.stringify({ name: 'live_supabase_hosts', hosts: hostMatches.slice(0, 20) }))
                 console.log(JSON.stringify({ name: 'live_bundle_chunks', scanned }))
               } catch (error) {
                 console.log(JSON.stringify({ name: 'live_bundle_chunks', error: String(error) }))
