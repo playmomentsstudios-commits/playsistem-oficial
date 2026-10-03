@@ -115,7 +115,7 @@ export async function listAdminProducts() {
 }
 
 export async function listPublicProducts() {
-  const { data, error } = await supabase
+  const rich = await supabase
     .from('products')
     .select(`
       *,
@@ -139,18 +139,69 @@ export async function listPublicProducts() {
     .order('featured', { ascending: false })
     .order('created_at', { ascending: false })
 
-  if (error) throw error
+  if (!rich.error) {
+    return ((rich.data ?? []) as PublicCatalogProduct[]).map(product => ({
+      ...product,
+      product_images: [...(product.product_images ?? [])].sort(
+        (a, b) => a.display_order - b.display_order,
+      ),
+    }))
+  }
 
-  return ((data ?? []) as PublicCatalogProduct[]).map(product => ({
+  console.warn('[catalog] consulta relacional falhou; tentando leitura básica de products', rich.error)
+
+  const basic = await supabase
+    .from('products')
+    .select('*')
+    .eq('active', true)
+    .eq('status', 'published')
+    .order('featured', { ascending: false })
+    .order('created_at', { ascending: false })
+
+  if (basic.error) throw basic.error
+
+  const rows = (basic.data ?? []) as CatalogProductRow[]
+  if (!rows.length) return []
+
+  const ids = rows.map(product => product.id)
+  const categoryIds = Array.from(
+    new Set(rows.map(product => product.category_id).filter((id): id is string => Boolean(id))),
+  )
+
+  const [imagesResult, categoriesResult] = await Promise.all([
+    supabase
+      .from('product_images')
+      .select('id,product_id,storage_path,public_url,alt_text,display_order,is_cover')
+      .in('product_id', ids),
+    categoryIds.length
+      ? supabase
+          .from('product_categories')
+          .select('id,name,slug')
+          .in('id', categoryIds)
+      : Promise.resolve({ data: [], error: null }),
+  ])
+
+  if (imagesResult.error) {
+    console.warn('[catalog] product_images indisponível; seguindo sem imagens', imagesResult.error)
+  }
+  if (categoriesResult.error) {
+    console.warn('[catalog] product_categories indisponível; seguindo sem categorias', categoriesResult.error)
+  }
+
+  const images = (imagesResult.data ?? []) as ProductImageRow[]
+  const categories = (categoriesResult.data ?? []) as Array<Pick<ProductCategoryRow,'id'|'name'|'slug'>>
+
+  return rows.map(product => ({
     ...product,
-    product_images: [...(product.product_images ?? [])].sort(
-      (a, b) => a.display_order - b.display_order,
-    ),
+    product_images: images
+      .filter(image => image.product_id === product.id)
+      .sort((a, b) => a.display_order - b.display_order),
+    category: categories.find(category => category.id === product.category_id) ?? null,
   }))
 }
 
 export async function getPublicProductBySlug(slug: string) {
-  const { data, error } = await supabase
+  const rich = await supabase
     .from('products')
     .select(`
       *,
@@ -174,16 +225,51 @@ export async function getPublicProductBySlug(slug: string) {
     .eq('status', 'published')
     .maybeSingle()
 
-  if (error) throw error
-  if (!data) return null
+  if (!rich.error) {
+    if (!rich.data) return null
+    const product = rich.data as PublicCatalogProduct
+    return {
+      ...product,
+      product_images: [...(product.product_images ?? [])].sort(
+        (a, b) => a.display_order - b.display_order,
+      ),
+    }
+  }
 
-  const product = data as PublicCatalogProduct
+  console.warn('[catalog] detalhe relacional falhou; tentando produto básico', rich.error)
+
+  const basic = await supabase
+    .from('products')
+    .select('*')
+    .eq('slug', slug)
+    .eq('active', true)
+    .eq('status', 'published')
+    .maybeSingle()
+
+  if (basic.error) throw basic.error
+  if (!basic.data) return null
+
+  const product = basic.data as CatalogProductRow
+  const [imagesResult, categoryResult] = await Promise.all([
+    supabase
+      .from('product_images')
+      .select('id,product_id,storage_path,public_url,alt_text,display_order,is_cover')
+      .eq('product_id', product.id),
+    product.category_id
+      ? supabase
+          .from('product_categories')
+          .select('id,name,slug')
+          .eq('id', product.category_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ])
 
   return {
     ...product,
-    product_images: [...(product.product_images ?? [])].sort(
+    product_images: ((imagesResult.data ?? []) as ProductImageRow[]).sort(
       (a, b) => a.display_order - b.display_order,
     ),
+    category: (categoryResult.data as Pick<ProductCategoryRow,'id'|'name'|'slug'> | null) ?? null,
   }
 }
 
