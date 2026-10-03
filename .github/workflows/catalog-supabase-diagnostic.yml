@@ -36,6 +36,29 @@ jobs:
             Prefer: 'count=exact',
           }
 
+          try {
+            const liveHtml = await (await fetch('https://playsistem-oficial.playmomentsstudios.workers.dev/')).text()
+            const assetMatches = [...liveHtml.matchAll(/(?:src|href)=["']([^"']+\.(?:js|mjs))["']/g)].map(match => match[1])
+            const jsAsset = assetMatches.find(asset => asset.includes('/assets/')) ?? assetMatches[0] ?? null
+            let deployedSupabaseRefs = []
+            let deployedProjectRefs = []
+            if (jsAsset) {
+              const assetUrl = new URL(jsAsset, 'https://playsistem-oficial.playmomentsstudios.workers.dev/').href
+              const bundle = await (await fetch(assetUrl)).text()
+              deployedSupabaseRefs = [...new Set([...bundle.matchAll(/https:\/\/([a-z0-9]{20})\.supabase\.co/g)].map(match => match[1]))]
+              deployedProjectRefs = [...new Set([...bundle.matchAll(/\b[a-z0-9]{20}\b/g)].map(match => match[0]))].filter(ref => ref === projectId || ref === 'rpkkpgigddazlneprunh' || ref === 'lfmjqctiutajgtacvxfq')
+            }
+            console.log(JSON.stringify({
+              name: 'live_bundle',
+              jsAsset,
+              deployedSupabaseRefs,
+              deployedProjectRefs,
+              expectedProjectId: projectId,
+            }))
+          } catch (error) {
+            console.log(JSON.stringify({ name: 'live_bundle', error: String(error) }))
+          }
+
           const probes = [
             ['products', '/products?select=id&active=eq.true&status=eq.published&limit=1'],
             ['services', '/services?select=id&active=eq.true&status=eq.published&limit=1'],
