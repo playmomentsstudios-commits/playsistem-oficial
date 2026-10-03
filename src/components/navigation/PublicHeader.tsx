@@ -7,6 +7,7 @@ import type { SiteSettings } from '../../services/siteContent'
 
 const PUBLIC_NAV_LINKS = [
   { label: 'Produtos', href: '/produtos' },
+  { label: 'Equipamentos', href: '/equipamentos' },
   { label: 'Serviços', href: '/servicos' },
   { label: 'Academia', href: '/academia' },
   { label: 'Quem Somos', href: '/quem-somos' },
