@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { PublicLayout } from '../../layouts/PublicLayout'
 import { Badge } from '../../components/ui/Badge'
 import {
@@ -56,6 +56,7 @@ const VIEWS:Array<{key:CatalogView;label:string;description:string}>= [
 
 export function ProductsPage() {
   const location=useLocation()
+  const navigate=useNavigate()
   const [params,setParams]=useSearchParams()
   const initial=(location.pathname==='/equipamentos'?'equipamentos':(params.get('tipo')||'todos')) as CatalogView
   const [products, setProducts] = useState<PublicCatalogProduct[]>([])
@@ -88,6 +89,14 @@ export function ProductsPage() {
   function chooseView(next:CatalogView){
     setView(next)
     setCategory('todos')
+    if(location.pathname==='/equipamentos'&&next!=='equipamentos'){
+      navigate(next==='todos'?'/produtos':('/produtos?tipo='+next))
+      return
+    }
+    if(location.pathname!=='/equipamentos'&&next==='equipamentos'){
+      navigate('/equipamentos')
+      return
+    }
     const copy=new URLSearchParams(params)
     if(next==='todos')copy.delete('tipo')
     else copy.set('tipo',next)
@@ -128,16 +137,19 @@ export function ProductsPage() {
   const rentalCount=products.filter(isRentalProduct).length
   const productCount=products.filter(product=>!isEquipmentProduct(product)).length
   const activeView=VIEWS.find(item=>item.key===view)??VIEWS[0]
+  const dedicatedEquipment=location.pathname==='/equipamentos'
 
   return (
     <PublicLayout>
       <div className="mx-auto px-4 py-10 sm:py-14" style={{ maxWidth: 1160 }}>
         <div className="grid lg:grid-cols-[1fr_auto] gap-6 items-end mb-9">
           <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#E30613' }}>Loja Play Moments</p>
-            <h1 className="text-4xl sm:text-5xl font-bold mb-4" style={{ color: '#f0f0f2' }}>Produtos & Equipamentos</h1>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#E30613' }}>{dedicatedEquipment?'Tech & Equipamentos':'Loja Play Moments'}</p>
+            <h1 className="text-4xl sm:text-5xl font-bold mb-4" style={{ color: '#f0f0f2' }}>{dedicatedEquipment?'Equipamentos':'Produtos & Equipamentos'}</h1>
             <p className="text-sm sm:text-base" style={{ color: '#8b8b98' }}>
-              Compra e locação ficam separadas dos serviços criativos. O que for serviço está em uma vitrine própria.
+              {dedicatedEquipment
+                ? 'Equipamentos publicados para compra ou locação. Quando não houver item disponível, a página mantém alternativas úteis sem ficar vazia.'
+                : 'Compra e locação ficam separadas dos serviços criativos. O que for serviço está em uma vitrine própria.'}
             </p>
           </div>
           <Link to="/servicos" className="min-h-11 inline-flex items-center justify-center px-5 py-3 rounded-xl border border-white/10 bg-white/5 text-sm font-semibold">
