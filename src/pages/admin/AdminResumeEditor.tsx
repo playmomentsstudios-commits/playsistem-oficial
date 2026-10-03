@@ -211,6 +211,18 @@ export function AdminResumeEditor(){
       </div>
     </section>
 
+    <section className="pm-surface p-4 md:p-6 space-y-4">
+      <div><h2 className="font-semibold">Ferramentas & tecnologias</h2><p className="text-xs text-gray-600 mt-1">Uma por linha. Esta seção aparece no currículo quando houver itens cadastrados.</p></div>
+      <textarea className={textareaClass} rows={6} value={((((form.extra_sections||[]) as any[]).find(section=>section?.title==='Ferramentas & tecnologias')?.items)||[]).join('\n')} onChange={e=>{
+        const items=e.target.value.split('\n').map(value=>value.trim()).filter(Boolean)
+        const sections=[...((form.extra_sections||[]) as any[])]
+        const index=sections.findIndex(section=>section?.title==='Ferramentas & tecnologias')
+        const next={title:'Ferramentas & tecnologias',items}
+        if(index>=0)sections[index]={...sections[index],...next};else sections.push(next)
+        set('extra_sections',sections)
+      }} placeholder={'Figma\nAdobe Photoshop\nAdobe Illustrator\nDaVinci Resolve\nWordPress\nReact'}/>
+    </section>
+
     <section className="pm-surface p-4 md:p-6">
       <div><h2 className="font-semibold">Contatos</h2><p className="text-xs text-gray-600 mt-1">O telefone também pode abrir o WhatsApp automaticamente na página pública. Se o campo WhatsApp estiver vazio, usamos o telefone como referência.</p></div>
       <div className="grid sm:grid-cols-2 gap-3 mt-4">
