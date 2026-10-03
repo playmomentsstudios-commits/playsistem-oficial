@@ -48,6 +48,27 @@ jobs:
               deployedSupabaseRefs = [...new Set([...bundle.matchAll(/https:\/\/([a-z0-9]{20})\.supabase\.co/g)].map(match => match[1]))]
               deployedProjectRefs = [...new Set([...bundle.matchAll(/\b[a-z0-9]{20}\b/g)].map(match => match[0]))].filter(ref => ref === projectId || ref === 'rpkkpgigddazlneprunh' || ref === 'lfmjqctiutajgtacvxfq')
             }
+            if (jsAsset) {
+              try {
+                const mainUrl = new URL(jsAsset, 'https://playsistem-oficial.playmomentsstudios.workers.dev/').href
+                const mainBundle = await (await fetch(mainUrl)).text()
+                const chunkPaths = [...new Set([...mainBundle.matchAll(/\/assets\/[A-Za-z0-9_.-]+\.js/g)].map(match => match[0]))].slice(0, 80)
+                const scanned = []
+                for (const chunkPath of [jsAsset, ...chunkPaths]) {
+                  const chunkUrl = new URL(chunkPath, 'https://playsistem-oficial.playmomentsstudios.workers.dev/').href
+                  const body = chunkPath === jsAsset ? mainBundle : await (await fetch(chunkUrl)).text()
+                  const refs = []
+                  for (const ref of ['lfmjqctiutajgtacvxfq','rpkkpgigddazlneprunh']) {
+                    if (body.includes(ref)) refs.push(ref)
+                  }
+                  if (body.includes('supabase.co') || refs.length) scanned.push({ chunkPath, refs, hasSupabaseHost: body.includes('supabase.co') })
+                }
+                console.log(JSON.stringify({ name: 'live_bundle_chunks', scanned }))
+              } catch (error) {
+                console.log(JSON.stringify({ name: 'live_bundle_chunks', error: String(error) }))
+              }
+            }
+
             console.log(JSON.stringify({
               name: 'live_bundle',
               jsAsset,
