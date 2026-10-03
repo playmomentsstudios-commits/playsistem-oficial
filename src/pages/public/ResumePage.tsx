@@ -84,6 +84,7 @@ export function ResumePage(){
   const identity=textParagraphs(resume.identity_text)
   const experiences=(resume.experience||[]).filter(item=>item?.title||item?.role||item?.description)
   const hasSkills=Array.isArray(resume.skills)&&resume.skills.length>0
+  const extraSections=Array.isArray(resume.extra_sections)?resume.extra_sections.filter((section:any)=>section?.title&&(section?.items?.length||section?.content)):[]
   const initials=(resume.display_name||'CV').split(/\s+/).filter(Boolean).slice(0,2).map(item=>item.charAt(0)).join('').toUpperCase()
   const updated=formatDate(resume.updated_at)
 
@@ -243,6 +244,16 @@ export function ResumePage(){
             </div>
           </div>
         </section>}
+
+        {extraSections.map((section:any,index:number)=><section key={index} className="resume-section resume-rule px-5 py-7 sm:px-9 sm:py-9 lg:px-12">
+          <div className="grid md:grid-cols-[170px_1fr] gap-4 md:gap-8">
+            <div><p className="resume-kicker">{section.title}</p></div>
+            <div className="max-w-3xl">
+              {Array.isArray(section.items)&&section.items.length>0&&<div className="flex flex-wrap gap-2">{section.items.map((item:string)=><span key={item} className="px-3 py-2 rounded-full border border-black/12 bg-black/[.025] text-xs sm:text-sm font-semibold text-black/68">{item}</span>)}</div>}
+              {section.content&&<p className="text-[15px] sm:text-base leading-[1.75] text-black/72">{section.content}</p>}
+            </div>
+          </div>
+        </section>)}
 
         {identity.length>0&&<section className="resume-section resume-rule px-5 py-7 sm:px-9 sm:py-9 lg:px-12">
           <div className="grid md:grid-cols-[170px_1fr] gap-4 md:gap-8">
