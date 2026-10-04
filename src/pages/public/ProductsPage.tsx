@@ -189,7 +189,7 @@ export function ProductsPage() {
               <button type="button" onClick={()=>setCategory('todos')} className="shrink-0 min-h-10 px-3 py-2 rounded-full text-xs" style={{background:category==='todos'?'#E30613':'rgba(255,255,255,0.04)',color:category==='todos'?'#fff':'#9090a0',border:'1px solid rgba(255,255,255,0.08)'}}>Todas as categorias</button>
               {categories.map(([slug,name])=>{
                 const color=categoryColor(slug)
-                return <button key={slug} type="button" onClick={()=>setCategory(slug)} className="shrink-0 px-3 py-2 rounded-full text-xs" style={{background:category===slug?color:'rgba(255,255,255,0.04)',color:category===slug?'#fff':color,border:'1px solid '+(category===slug?color:'rgba(255,255,255,0.08)')}}>{name}</button>
+                return <button key={slug} type="button" onClick={()=>setCategory(slug)} className="shrink-0 min-h-10 px-3 py-2 rounded-full text-xs" style={{background:category===slug?color:'rgba(255,255,255,0.04)',color:category===slug?'#fff':color,border:'1px solid '+(category===slug?color:'rgba(255,255,255,0.08)')}}>{name}</button>
               })}
             </div>
             <select value={maxPrice} onChange={event=>setMaxPrice(event.target.value)} className="w-full lg:w-auto min-h-12 px-4 py-3 rounded-xl text-xs outline-none bg-[#171719] border border-white/10 text-gray-200">
