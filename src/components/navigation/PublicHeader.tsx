@@ -32,14 +32,26 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
       borderBottom: '1px solid rgba(255,255,255,0.06)',
       backdropFilter: 'blur(20px)',
     }}>
-      <div className="mx-auto px-4 flex items-center justify-between relative" style={{ maxWidth: 1200, height: 64 }}>
+      <div className="mx-auto px-3 sm:px-4 flex items-center justify-between relative h-[58px] lg:h-16" style={{ maxWidth: 1200 }}>
         {/* Logo */}
         <Link to="/" className="hidden lg:block">
           <img src={logoUrl} alt="Play Moments" style={{ height: 30, width: 'auto' }} />
         </Link>
 
         <Link to="/" className="lg:hidden absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
-          <img src={logoUrl} alt="Play Moments" style={{ height: 34, width: 'auto' }} />
+          <img src={logoUrl} alt="Play Moments" style={{ height: 28, width: 'auto' }} />
+        </Link>
+
+        <Link
+          to="/carrinho"
+          className="lg:hidden relative w-11 h-11 flex items-center justify-center rounded-xl"
+          aria-label="Carrinho"
+          style={{ color: '#9090a0' }}
+        >
+          <svg width="19" height="19" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
+          </svg>
+          {itemCount>0&&<span className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-[#E30613] text-white text-[9px] font-bold flex items-center justify-center">{itemCount}</span>}
         </Link>
 
         {/* Desktop Nav */}
@@ -104,7 +116,7 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
         </div>
 
         {/* Mobile menu button */}
-        <button aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={mobileOpen} aria-controls="public-mobile-menu" className="lg:hidden w-11 h-11 flex items-center justify-center ml-auto" style={{ color: '#9090a0' }} onClick={() => setMobileOpen(v => !v)}>
+        <button aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={mobileOpen} aria-controls="public-mobile-menu" className="lg:hidden w-11 h-11 flex items-center justify-center rounded-xl ml-auto" style={{ color: '#9090a0' }} onClick={() => setMobileOpen(v => !v)}>
           <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             {mobileOpen
               ? <path d="M18 6L6 18M6 6l12 12" />
@@ -115,19 +127,19 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div id="public-mobile-menu" className="lg:hidden border-t flex flex-col py-4 px-6 gap-4"
-          style={{ borderColor: 'rgba(255,255,255,0.06)', background: '#0a0a0b' }}>
+        <div id="public-mobile-menu" className="lg:hidden border-t flex flex-col py-3 px-4 gap-1 max-h-[calc(100dvh-58px)] overflow-y-auto"
+          style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(10,10,11,.98)', boxShadow:'0 24px 60px rgba(0,0,0,.38)' }}>
           {navLinks.map(link => (
             <Link key={link.href} to={link.href} onClick={() => setMobileOpen(false)}
-              className="text-sm font-medium min-h-11 flex items-center" aria-current={location.pathname === link.href || location.pathname.startsWith(link.href + '/') ? 'page' : undefined} style={{ color: location.pathname === link.href || location.pathname.startsWith(link.href + '/') ? '#f0f0f2' : '#c0c0cc' }}>
+              className="text-sm font-medium min-h-12 flex items-center px-3 rounded-xl" aria-current={location.pathname === link.href || location.pathname.startsWith(link.href + '/') ? 'page' : undefined} style={{ color: location.pathname === link.href || location.pathname.startsWith(link.href + '/') ? '#f0f0f2' : '#c0c0cc', background: location.pathname === link.href || location.pathname.startsWith(link.href + '/') ? 'rgba(255,255,255,.05)' : 'transparent' }}>
               {link.label}
             </Link>
           ))}
-          <Link to="/carrinho" onClick={() => setMobileOpen(false)} className="min-h-11 flex items-center justify-between text-sm font-medium" style={{color:'#c0c0cc'}}><span>Carrinho</span>{itemCount>0&&<span className="min-w-6 h-6 px-1 rounded-full bg-[#E30613] text-white text-xs font-bold flex items-center justify-center">{itemCount}</span>}</Link>
-          <div className="flex flex-col gap-2 pt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <Link to="/carrinho" onClick={() => setMobileOpen(false)} className="min-h-12 flex items-center justify-between px-3 rounded-xl text-sm font-medium" style={{color:'#c0c0cc'}}><span>Carrinho</span>{itemCount>0&&<span className="min-w-6 h-6 px-1 rounded-full bg-[#E30613] text-white text-xs font-bold flex items-center justify-center">{itemCount}</span>}</Link>
+          <div className="flex flex-col gap-2 pt-3 mt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             {isAuthenticated ? (
               <>
-                <Link to={user?.role === 'admin' || user?.role === 'staff' ? '/admin' : '/app/dashboard'} onClick={() => setMobileOpen(false)} className="py-3 text-sm font-semibold text-center rounded-xl"
+                <Link to={user?.role === 'admin' || user?.role === 'staff' ? '/admin' : '/app/dashboard'} onClick={() => setMobileOpen(false)} className="min-h-12 py-3 text-sm font-semibold text-center rounded-xl flex items-center justify-center"
                   style={{ background: 'rgba(255,255,255,0.08)', color: '#f0f0f2' }}>
                   {user?.role === 'admin' || user?.role === 'staff' ? 'Admin' : 'Minha conta'}
                 </Link>
@@ -135,8 +147,8 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
               </>
             ) : (
               <>
-                <Link to="/login" onClick={() => setMobileOpen(false)} className="py-3 text-sm text-center" style={{ color: '#9090a0' }}>Entrar</Link>
-                <Link to="/cadastro" onClick={() => setMobileOpen(false)} className="py-3 text-sm font-semibold text-center rounded-full"
+                <Link to="/login" onClick={() => setMobileOpen(false)} className="min-h-12 py-3 text-sm text-center flex items-center justify-center" style={{ color: '#9090a0' }}>Entrar</Link>
+                <Link to="/cadastro" onClick={() => setMobileOpen(false)} className="min-h-12 py-3 text-sm font-semibold text-center rounded-xl flex items-center justify-center"
                   style={{ background: primaryColor, color: '#fff' }}>
                   Criar conta
                 </Link>

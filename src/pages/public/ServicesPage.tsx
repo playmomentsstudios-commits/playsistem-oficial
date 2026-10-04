@@ -80,29 +80,29 @@ export function ServicesPage({
    }catch(e:any){toast(e.message,'error')}
  }
 
- const content=<div className="mx-auto px-4 py-10 sm:py-14" style={{maxWidth:1100}}>
-   <div className="max-w-2xl mb-8">
+ const content=<div className="mx-auto px-3 sm:px-4 py-7 sm:py-14" style={{maxWidth:1100}}>
+   <div className="max-w-2xl mb-6 sm:mb-8">
     <p className="text-xs uppercase tracking-widest text-[#E30613] mb-2">Serviços Play Moments</p>
-    <h1 className="text-3xl sm:text-4xl font-bold">{title}</h1>
-    <p className="text-sm sm:text-base text-gray-400 mt-3">{subtitle}</p>
+    <h1 className="text-[1.9rem] sm:text-4xl font-bold leading-tight">{title}</h1>
+    <p className="text-sm sm:text-base text-gray-400 mt-3 leading-relaxed">{subtitle}</p>
    </div>
 
-   {!loading&&scoped.length>0&&<div className="grid sm:grid-cols-3 gap-3 mb-7">
-    <div className="rounded-2xl border border-white/10 bg-[#141416] p-4"><p className="text-2xl font-bold">{scoped.length}</p><p className="text-xs text-gray-500 mt-1">soluções publicadas</p></div>
-    <div className="rounded-2xl border border-white/10 bg-[#141416] p-4"><p className="text-2xl font-bold">{categories.length-1}</p><p className="text-xs text-gray-500 mt-1">áreas do catálogo</p></div>
-    <div className="rounded-2xl border border-white/10 bg-[#141416] p-4"><p className="text-2xl font-bold">{scoped.filter(x=>x.price_type==='fixed').length}</p><p className="text-xs text-gray-500 mt-1">opções com preço fechado</p></div>
+   {!loading&&scoped.length>0&&<div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6 sm:mb-7">
+    <div className="rounded-2xl border border-white/10 bg-[#141416] p-3 sm:p-4"><p className="text-xl sm:text-2xl font-bold">{scoped.length}</p><p className="text-[10px] sm:text-xs text-gray-500 mt-1 leading-tight">soluções publicadas</p></div>
+    <div className="rounded-2xl border border-white/10 bg-[#141416] p-3 sm:p-4"><p className="text-xl sm:text-2xl font-bold">{categories.length-1}</p><p className="text-[10px] sm:text-xs text-gray-500 mt-1 leading-tight">áreas do catálogo</p></div>
+    <div className="rounded-2xl border border-white/10 bg-[#141416] p-3 sm:p-4"><p className="text-xl sm:text-2xl font-bold">{scoped.filter(x=>x.price_type==='fixed').length}</p><p className="text-[10px] sm:text-xs text-gray-500 mt-1 leading-tight">opções com preço fechado</p></div>
    </div>}
 
-   {!loading&&categories.length>1&&<div className="flex gap-2 overflow-x-auto pb-3 mb-5" aria-label="Filtrar serviços por categoria">
-    {categories.map(c=><button key={c} onClick={()=>setCategory(c)} className="shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-colors" style={{background:category===c?'#E30613':'#171719',color:category===c?'#fff':'#b0b0ba',border:'1px solid '+(category===c?'#E30613':'rgba(255,255,255,.08)')}}>{c}</button>)}
+   {!loading&&categories.length>1&&<div className="flex gap-2 overflow-x-auto pb-3 mb-4 sm:mb-5 -mx-3 px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Filtrar serviços por categoria">
+    {categories.map(c=><button key={c} onClick={()=>setCategory(c)} className="shrink-0 min-h-10 px-4 py-2 rounded-full text-sm font-semibold transition-colors" style={{background:category===c?'#E30613':'#171719',color:category===c?'#fff':'#b0b0ba',border:'1px solid '+(category===c?'#E30613':'rgba(255,255,255,.08)')}}>{c}</button>)}
    </div>}
 
    {loading?<CatalogSkeleton/>:error?
     <CatalogState title="Catálogo temporariamente indisponível" text={error} role={role}/>:
     visible.length===0?
     <CatalogState title={area?'Ainda não há uma oferta publicada nesta área.':'Nenhum serviço publicado no momento.'} text="A página continua útil: explore o restante do catálogo ou envie uma necessidade personalizada." role={role}/>:
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">{visible.map(s=>
-     <article key={s.source+'-'+s.id} className="p-5 rounded-2xl bg-[#141416] border border-white/10 flex flex-col">
+    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">{visible.map(s=>
+     <article key={s.source+'-'+s.id} className="p-4 sm:p-5 rounded-2xl bg-[#141416] border border-white/10 flex flex-col">
       <div className="flex items-start justify-between gap-3">
        <p className="text-xs font-semibold text-[#ff6b7a]">{s.category||'Serviço'}</p>
        {s.source==='catalog'&&<span className="text-[10px] px-2 py-1 rounded-full border border-white/10 text-gray-500">Catálogo</span>}
@@ -112,35 +112,35 @@ export function ServicesPage({
       <div className="mt-5 pt-4 border-t border-white/10">
        <p className="text-xs text-gray-500 mb-1">{s.price_type==='quote'?'Projeto sob medida':'Contratação direta'}</p>
        <p className="font-semibold">{s.price_type==='quote'?'Orçamento personalizado':(s.price_type==='starting_at'?'A partir de ':'')+money(s.price??s.starting_price??0)}</p>
-       <div className="flex items-center gap-3 mt-4">
-        <Link to={'/servicos/'+s.slug} className="min-h-11 inline-flex items-center text-sm text-gray-300 underline underline-offset-4">Ver detalhes</Link>
-        <button onClick={()=>hire(s)} className="ml-auto min-h-11 px-4 py-2 rounded-xl bg-[#E30613] text-sm font-semibold">{s.source==='catalog'?'Ver e contratar':s.price_type==='fixed'?'Contratar':'Pedir proposta'}</button>
+       <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 mt-4">
+        <Link to={'/servicos/'+s.slug} className="w-full sm:w-auto min-h-11 inline-flex items-center justify-center sm:justify-start text-sm text-gray-300 underline underline-offset-4">Ver detalhes</Link>
+        <button onClick={()=>hire(s)} className="w-full sm:w-auto sm:ml-auto min-h-12 px-4 py-2 rounded-xl bg-[#E30613] text-sm font-semibold">{s.source==='catalog'?'Ver e contratar':s.price_type==='fixed'?'Contratar':'Pedir proposta'}</button>
        </div>
       </div>
      </article>)}</div>}
 
-   <section className="mt-10 rounded-2xl border border-white/10 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4" style={{background:'linear-gradient(135deg,rgba(227,6,19,.09),rgba(255,255,255,.02))'}}>
+   <section className="mt-8 sm:mt-10 rounded-2xl border border-white/10 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4" style={{background:'linear-gradient(135deg,rgba(227,6,19,.09),rgba(255,255,255,.02))'}}>
     <div className="flex-1"><p className="font-bold">Seu projeto não cabe em uma opção pronta?</p><p className="text-sm text-gray-400 mt-1">Conte somente o essencial. A equipe recebe a necessidade já contextualizada.</p></div>
-    <Link to={conversationLink(role,'orcamento')} className="min-h-11 inline-flex items-center justify-center px-5 py-3 rounded-xl border border-[#E30613] text-[#ff6b7a] font-semibold">Projeto personalizado</Link>
+    <Link to={conversationLink(role,'orcamento')} className="w-full sm:w-auto min-h-12 inline-flex items-center justify-center px-5 py-3 rounded-xl border border-[#E30613] text-[#ff6b7a] font-semibold">Projeto personalizado</Link>
    </section>
   </div>
  return embedded?content:<PublicLayout>{content}</PublicLayout>
 }
 
 function CatalogSkeleton(){
- return <div className="grid md:grid-cols-3 gap-5" aria-label="Carregando serviços">
+ return <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5" aria-label="Carregando serviços">
   {[0,1,2].map(i=><div key={i} className="rounded-2xl border border-white/10 bg-[#141416] p-5 min-h-56"><div className="pm-skeleton h-3 w-24 rounded mb-4"/><div className="pm-skeleton h-6 w-3/4 rounded mb-3"/><div className="pm-skeleton h-16 w-full rounded mb-6"/><div className="pm-skeleton h-10 w-full rounded"/></div>)}
  </div>
 }
 
 function CatalogState({title,text,role}:{title:string;text:string;role:Parameters<typeof conversationLink>[0]}){
- return <div className="rounded-3xl border border-white/10 bg-[#141416] p-7 sm:p-10 text-center">
+ return <div className="rounded-2xl sm:rounded-3xl border border-white/10 bg-[#141416] p-5 sm:p-10 text-center">
   <div className="mx-auto w-12 h-12 rounded-2xl grid place-items-center text-xl bg-white/5">◆</div>
   <h2 className="font-bold text-xl mt-4">{title}</h2>
   <p className="text-sm text-gray-400 mt-2 max-w-xl mx-auto">{text}</p>
-  <div className="flex flex-wrap justify-center gap-3 mt-6">
-   <Link to="/produtos" className="min-h-11 inline-flex items-center px-5 py-3 rounded-xl bg-white/5 border border-white/10 font-semibold text-sm">Produtos e equipamentos</Link>
-   <Link to={conversationLink(role,'orcamento')} className="min-h-11 inline-flex items-center px-5 py-3 rounded-xl bg-[#E30613] font-semibold text-sm">Pedir solução personalizada</Link>
+  <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center gap-3 mt-6">
+   <Link to="/produtos" className="w-full sm:w-auto min-h-12 inline-flex items-center justify-center px-5 py-3 rounded-xl bg-white/5 border border-white/10 font-semibold text-sm">Produtos e equipamentos</Link>
+   <Link to={conversationLink(role,'orcamento')} className="w-full sm:w-auto min-h-12 inline-flex items-center justify-center px-5 py-3 rounded-xl bg-[#E30613] font-semibold text-sm">Pedir solução personalizada</Link>
   </div>
  </div>
 }
