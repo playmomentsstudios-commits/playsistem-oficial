@@ -45,7 +45,7 @@ export function LoginPage() {
       <LoginExperiencePanel />
 
       {/* Right panel — form */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
+      <div className="flex-1 flex flex-col items-center justify-start lg:justify-center p-4 sm:p-6">
         <div className="w-full max-w-sm">
           <LoginMobileExperience />
           <Link to="/" className="lg:hidden flex justify-center mb-6">
@@ -71,7 +71,7 @@ export function LoginPage() {
               Entrar
             </Button>
           </form>
-          <div className="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-white/[.06] flex flex-col xs:flex-row sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3"><span className="text-xs text-gray-600">Quer apenas conhecer os cursos?</span><Link to="/academia" className="text-xs font-bold text-[#ff5364]">Ver Academia →</Link></div>
+          <div className="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-white/[.06] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3"><span className="text-xs text-gray-600">Quer apenas conhecer os cursos?</span><Link to="/academia" className="text-xs font-bold text-[#ff5364]">Ver Academia →</Link></div>
         </div>
       </div>
     </div>
