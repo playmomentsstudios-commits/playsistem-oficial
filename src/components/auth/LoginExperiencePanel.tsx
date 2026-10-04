@@ -113,6 +113,22 @@ export function LoginExperiencePanel(){
  </div>
 }
 
+export function LoginMobileExperience(){
+ return <div className="pm-login-mobile lg:hidden" aria-hidden="true">
+  <div className="pm-login-mobile-grid"/>
+  <div className="pm-login-mobile-glow"/>
+  <div className="pm-login-mobile-orbit"/>
+  <div className="pm-login-mobile-object">
+   <div className="pm-login-mobile-object-face"/>
+   <div className="pm-login-mobile-object-screen"><span>PM</span></div>
+  </div>
+  <div className="pm-login-mobile-copy">
+   <p>PLAY MOMENTS / ÁREA PESSOAL</p>
+   <h2>Crie. Aprenda.<br/><b>Acompanhe.</b></h2>
+  </div>
+ </div>
+}
+
 const LOGIN_LAB_STYLES=`
 .pm-login-lab{
  --pm-login-x:0deg;
@@ -188,10 +204,47 @@ const LOGIN_LAB_STYLES=`
 .pm-login-features div{position:relative;display:flex;align-items:center;gap:.65rem;min-height:48px;padding:.75rem .85rem;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(255,255,255,.03);backdrop-filter:blur(8px)}
 .pm-login-features span{color:#E30613;font-size:.7rem}.pm-login-features b{color:#b4b4bd;font-size:.68rem;font-weight:650}.pm-login-features small{margin-left:auto;color:#494952;font-size:.48rem}
 .pm-login-footer{display:flex;align-items:center;gap:1rem;color:#4d4d57;font-size:.62rem}.pm-login-footer a:hover{color:#fff}
+
+.pm-login-mobile{
+ position:relative;
+ height:210px;
+ margin:-1.5rem -1.5rem 1.5rem;
+ overflow:hidden;
+ isolation:isolate;
+ border-bottom:1px solid rgba(255,255,255,.06);
+ background:linear-gradient(145deg,#111114 0%,#0a0a0c 60%,#180708 100%);
+}
+.pm-login-mobile-grid{
+ position:absolute;left:-22%;right:-30%;top:38%;bottom:-65%;
+ transform:rotateX(66deg) rotateZ(-8deg);
+ transform-origin:center top;
+ background-image:linear-gradient(rgba(255,255,255,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.055) 1px,transparent 1px);
+ background-size:32px 32px;
+ mask-image:linear-gradient(to bottom,#000,transparent 78%);
+ opacity:.55;
+}
+.pm-login-mobile-glow{position:absolute;width:230px;height:230px;right:-72px;top:-70px;border-radius:50%;background:#E30613;filter:blur(55px);opacity:.24}
+.pm-login-mobile-orbit{position:absolute;width:230px;height:230px;right:-60px;top:-4px;border:1px solid rgba(255,65,78,.3);border-radius:50%;transform:rotateX(72deg) rotateZ(10deg);animation:pm-login-mobile-orbit 12s linear infinite}
+.pm-login-mobile-object{position:absolute;right:28px;top:24px;width:105px;height:130px;animation:pm-login-float 5s ease-in-out infinite}
+.pm-login-mobile-object-face,.pm-login-mobile-object-screen{position:absolute;inset:0;border-radius:24px}
+.pm-login-mobile-object-face{background:linear-gradient(145deg,rgba(255,255,255,.17),transparent 20%),linear-gradient(145deg,#53131a,#141419 53%,#08080b);border:1px solid rgba(255,255,255,.16);box-shadow:inset -12px -12px 30px rgba(0,0,0,.42),18px 22px 50px rgba(0,0,0,.4);transform:rotateX(-6deg) rotateY(-22deg)}
+.pm-login-mobile-object-screen{inset:12px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.08);background:radial-gradient(circle,rgba(227,6,19,.18),transparent 58%);transform:translateZ(16px) rotateX(-6deg) rotateY(-22deg)}
+.pm-login-mobile-object-screen span{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;border:1px solid rgba(255,70,82,.38);background:rgba(227,6,19,.08);font-size:.85rem;font-weight:900;color:#fff}
+.pm-login-mobile-copy{position:absolute;z-index:2;left:1.25rem;right:138px;top:50%;transform:translateY(-50%)}
+.pm-login-mobile-copy p{margin:0 0 .55rem;color:#ff5967;font-size:.48rem;font-weight:800;letter-spacing:.13em}
+.pm-login-mobile-copy h2{margin:0;color:#f2f2f4;font-size:1.75rem;line-height:.9;letter-spacing:-.045em;font-weight:900}
+.pm-login-mobile-copy h2 b{color:#E30613}
+@keyframes pm-login-mobile-orbit{to{transform:rotateX(72deg) rotateZ(370deg)}}
+@media(max-width:390px){
+ .pm-login-mobile{height:188px}
+ .pm-login-mobile-object{right:14px;top:20px;transform:scale(.9)}
+ .pm-login-mobile-copy{right:116px;left:1rem}
+ .pm-login-mobile-copy h2{font-size:1.48rem}
+}
 @keyframes pm-login-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
 @keyframes pm-login-orbit-a{to{transform:translateY(-50%) rotateX(72deg) rotateZ(372deg)}}
 @keyframes pm-login-orbit-b{to{transform:translateY(-50%) rotateY(72deg) rotateZ(395deg)}}
 @keyframes pm-login-particle{0%,100%{opacity:.08;transform:translateY(0) scale(.7)}50%{opacity:.32;transform:translateY(-16px) scale(1.2)}}
 @media(max-width:1180px){.pm-login-object-zone{right:-10%;opacity:.65}.pm-login-copy{max-width:460px}.pm-login-content{padding:2.4rem}}
-@media(prefers-reduced-motion:reduce){.pm-login-object,.pm-login-orbit,.pm-login-particles i{animation:none!important}.pm-login-object-zone{transition:none}}
+@media(prefers-reduced-motion:reduce){.pm-login-object,.pm-login-orbit,.pm-login-particles i,.pm-login-mobile-orbit,.pm-login-mobile-object{animation:none!important}.pm-login-object-zone{transition:none}}
 `
