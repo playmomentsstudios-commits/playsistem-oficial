@@ -89,8 +89,8 @@ export function ServicesPage({
 
    {!loading&&scoped.length>0&&<div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6 sm:mb-7">
     <div className="rounded-2xl border border-white/10 bg-[#141416] p-3 sm:p-4"><p className="text-xl sm:text-2xl font-bold">{scoped.length}</p><p className="text-[10px] sm:text-xs text-gray-500 mt-1 leading-tight">soluções publicadas</p></div>
-    <div className="rounded-2xl border border-white/10 bg-[#141416] p-4"><p className="text-2xl font-bold">{categories.length-1}</p><p className="text-xs text-gray-500 mt-1">áreas do catálogo</p></div>
-    <div className="rounded-2xl border border-white/10 bg-[#141416] p-4"><p className="text-2xl font-bold">{scoped.filter(x=>x.price_type==='fixed').length}</p><p className="text-xs text-gray-500 mt-1">opções com preço fechado</p></div>
+    <div className="rounded-2xl border border-white/10 bg-[#141416] p-3 sm:p-4"><p className="text-xl sm:text-2xl font-bold">{categories.length-1}</p><p className="text-[10px] sm:text-xs text-gray-500 mt-1 leading-tight">áreas do catálogo</p></div>
+    <div className="rounded-2xl border border-white/10 bg-[#141416] p-3 sm:p-4"><p className="text-xl sm:text-2xl font-bold">{scoped.filter(x=>x.price_type==='fixed').length}</p><p className="text-[10px] sm:text-xs text-gray-500 mt-1 leading-tight">opções com preço fechado</p></div>
    </div>}
 
    {!loading&&categories.length>1&&<div className="flex gap-2 overflow-x-auto pb-3 mb-4 sm:mb-5 -mx-3 px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Filtrar serviços por categoria">
