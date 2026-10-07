@@ -541,7 +541,7 @@ export function AdminProjectDetailV2(){
         const complete=stageTasks.filter((task:any)=>task.status==='completed').length
         return <details key={stage.id} className="pm-surface rounded-xl border border-white/10" open={undefined}>
           <summary className="cursor-pointer select-none p-4 hover:bg-white/[.035] rounded-xl">
-            <span className="font-bold text-base">{/^\\d{4}-\\d{2}$/.test(stage.name)?new Date(stage.name+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):stage.name}</span>
+            <span className="font-bold text-base">{/^\d{4}-\d{2}$/.test(stage.name)?new Date(stage.name+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):stage.name}</span>
             <span className="ml-3 text-xs text-gray-400">{complete}/{stageTasks.length} tarefas concluídas</span>
           </summary>
           <div className="px-4 pb-4 space-y-3">
