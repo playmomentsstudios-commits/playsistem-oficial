@@ -536,7 +536,18 @@ export function AdminProjectDetailV2(){
       </form>
 
       <div className="space-y-3">{[...sortedStages,{id:'sem-etapa',name:'Sem etapa',status:'pending',client_visible:false}].map((stage:any)=>{
-        const stageTasks=tasks.filter((task:any)=>stage.id==='sem-etapa'?!task.stage_id:task.stage_id===stage.id)
+        const stageTasks=tasks.filter((task:any)=>stage.id==='sem-etapa'?!task.stage_id:task.stage_id===stage.id).sort((a:any,b:any)=>{
+          const rank=(task:any)=>{
+            const title=String(task.title||'').trim()
+            const card=title.match(/^card\\s*0*(\\d+)/i)
+            if(card)return [0,Number(card[1])]
+            if(/^cartaz\\b/i.test(title))return [1,0]
+            if(/^banner\\b/i.test(title))return [2,0]
+            return [3,Number(task.position)||0]
+          }
+          const x=rank(a),y=rank(b)
+          return x[0]-y[0]||x[1]-y[1]||String(a.title).localeCompare(String(b.title),'pt-BR')
+        })
         if(stage.id==='sem-etapa'&&!stageTasks.length)return null
         const complete=stageTasks.filter((task:any)=>task.status==='completed').length
         return <details key={stage.id} className="pm-surface rounded-xl border border-white/10" open={undefined}>
