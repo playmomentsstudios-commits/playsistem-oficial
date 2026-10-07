@@ -83,16 +83,13 @@ export function AdminProjectDetailV2(){
       const results=await Promise.allSettled([
         portalApi.teamMembers(),
         portalApi.projectFiles(id),
-        portalApi.ensureProjectDriveFolder(id),
       ])
-      const [members,projectFiles,driveFolder]=results
+      const [members,projectFiles]=results
       setTeam(members.status==='fulfilled'?members.value:[])
       setFiles(projectFiles.status==='fulfilled'?projectFiles.value:[])
-      setDriveRootItems(driveFolder.status==='fulfilled'?(driveFolder.value.rootItems||[]).filter((entry:any)=>entry.mimeType!=='application/vnd.google-apps.folder'):[])
       const warnings=[]
       if(members.status==='rejected')warnings.push('equipe')
       if(projectFiles.status==='rejected')warnings.push('arquivos')
-      if(driveFolder.status==='rejected')warnings.push('Google Drive')
       if(warnings.length)setLoadWarning('Alguns recursos não puderam ser carregados: '+warnings.join(', ')+'. O projeto continua disponível.')
     }catch(error:any){
       setLoadError(error?.message||'Falha ao carregar o projeto.')
@@ -102,6 +99,32 @@ export function AdminProjectDetailV2(){
   }
 
   useEffect(()=>{void load()},[id])
+
+  useEffect(()=>{
+    if(projectTab!=='arquivos'||!project)return
+    let active=true
+    // Drive folder provisioning is optional and should never block task management.
+    void portalApi.ensureProjectDriveFolder(id).then(folder=>{
+      if(active)setDriveRootItems((folder.rootItems||[]).filter((entry:any)=>entry.mimeType!=='application/vnd.google-apps.folder'))
+    }).catch(error=>{
+      if(active)setLoadWarning('Google Drive indisponível: '+(error?.message||'não foi possível acessar a pasta')+'. As tarefas continuam disponíveis.')
+    })
+    return ()=>{active=false}
+  },[projectTab,id,project?.id])
+
+  async function toggleChecklist(taskId:string,itemId:string,completed:boolean){
+    setProject((current:any)=>current?{...current,tasks:(current.tasks||[]).map((task:any)=>
+      task.id!==taskId?task:{...task,checklist:(task.checklist||[]).map((item:any)=>item.id===itemId?{...item,completed}:item)}
+    )}:current)
+    try{
+      await portalApi.saveChecklistItem({completed},itemId)
+    }catch(error:any){
+      setProject((current:any)=>current?{...current,tasks:(current.tasks||[]).map((task:any)=>
+        task.id!==taskId?task:{...task,checklist:(task.checklist||[]).map((item:any)=>item.id===itemId?{...item,completed:!completed}:item)}
+      )}:current)
+      toast(error?.message||'Erro ao salvar checklist.','error')
+    }
+  }
 
   const sortedStages=useMemo(()=>[...(project?.stages||[])].sort((a:any,b:any)=>a.position-b.position),[project])
   const tasks=project?.tasks||[]
@@ -540,7 +563,7 @@ export function AdminProjectDetailV2(){
           <div className="grid lg:grid-cols-2 gap-4 mt-4">
             <div>
               <div className="flex justify-between"><p className="text-sm font-semibold">Checklist</p><button onClick={()=>addChecklist(task.id)} className="text-xs text-[#E30613]">+ item</button></div>
-              <div className="space-y-1 mt-2">{(task.checklist||[]).sort((a:any,b:any)=>a.position-b.position).map((item:any)=><label key={item.id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={item.completed} onChange={async e=>{await portalApi.saveChecklistItem({completed:e.target.checked},item.id);await load()}}/><span className={item.completed?'line-through text-gray-500':''}>{item.title}</span><button type="button" onClick={async()=>{await portalApi.deleteChecklistItem(item.id);await load()}} className="ml-auto text-xs text-red-400">×</button></label>)}</div>
+              <div className="space-y-1 mt-2">{(task.checklist||[]).sort((a:any,b:any)=>a.position-b.position).map((item:any)=><label key={item.id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={item.completed} onChange={e=>void toggleChecklist(task.id,item.id,e.target.checked)}/><span className={item.completed?'line-through text-gray-500':''}>{item.title}</span><button type="button" onClick={async()=>{await portalApi.deleteChecklistItem(item.id);await load()}} className="ml-auto text-xs text-red-400">×</button></label>)}</div>
             </div>
             <div>
               <div className="flex justify-between"><p className="text-sm font-semibold">Links</p><button onClick={()=>addLink(task.id)} className="text-xs text-[#E30613]">+ link</button></div>
