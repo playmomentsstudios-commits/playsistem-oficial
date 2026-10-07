@@ -55,6 +55,8 @@ export function AdminProjectDetailV2(){
   const [files,setFiles]=useState<any[]>([])
   const [driveRootItems,setDriveRootItems]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
+  const [loadError,setLoadError]=useState<string|null>(null)
+  const [loadWarning,setLoadWarning]=useState<string|null>(null)
   const [stageName,setStageName]=useState('')
   const [fileTask,setFileTask]=useState('')
   const [fileStage,setFileStage]=useState('')
@@ -71,12 +73,32 @@ export function AdminProjectDetailV2(){
   const [projectTab,setProjectTab]=useState<'execucao'|'arquivos'>('execucao')
 
   const load=async()=>{
-    const [item,members,projectFiles,driveFolder]=await Promise.all([portalApi.project(id),portalApi.teamMembers(),portalApi.projectFiles(id),portalApi.ensureProjectDriveFolder(id)])
-    setProject(item)
-    setTeam(members)
-    setFiles(projectFiles)
-    setDriveRootItems((driveFolder.rootItems||[]).filter((entry:any)=>entry.mimeType!=='application/vnd.google-apps.folder'))
-    setLoading(false)
+    setLoading(true)
+    setLoadError(null)
+    setLoadWarning(null)
+    try{
+      // Only the project is essential. A Drive/API failure must not block the project screen.
+      const item=await portalApi.project(id)
+      setProject(item)
+      const results=await Promise.allSettled([
+        portalApi.teamMembers(),
+        portalApi.projectFiles(id),
+        portalApi.ensureProjectDriveFolder(id),
+      ])
+      const [members,projectFiles,driveFolder]=results
+      setTeam(members.status==='fulfilled'?members.value:[])
+      setFiles(projectFiles.status==='fulfilled'?projectFiles.value:[])
+      setDriveRootItems(driveFolder.status==='fulfilled'?(driveFolder.value.rootItems||[]).filter((entry:any)=>entry.mimeType!=='application/vnd.google-apps.folder'):[])
+      const warnings=[]
+      if(members.status==='rejected')warnings.push('equipe')
+      if(projectFiles.status==='rejected')warnings.push('arquivos')
+      if(driveFolder.status==='rejected')warnings.push('Google Drive')
+      if(warnings.length)setLoadWarning('Alguns recursos não puderam ser carregados: '+warnings.join(', ')+'. O projeto continua disponível.')
+    }catch(error:any){
+      setLoadError(error?.message||'Falha ao carregar o projeto.')
+    }finally{
+      setLoading(false)
+    }
   }
 
   useEffect(()=>{void load()},[id])
@@ -310,10 +332,12 @@ export function AdminProjectDetailV2(){
     }catch(error:any){toast(error.message,'error')}
   }
 
-  if(loading)return <p className="text-gray-400">Carregando projeto...</p>
+  if(loading)return <p role="status" className="text-gray-400">Carregando projeto...</p>
+  if(loadError)return <div role="alert" className="pm-surface p-5 space-y-3"><p className="text-red-300">Não foi possível carregar este projeto: {loadError}</p><button type="button" onClick={()=>void load()} className="px-4 py-2 rounded-xl bg-[#E30613] text-white">Tentar novamente</button></div>
   if(!project)return <div><p>Projeto não encontrado.</p><Link to="/admin/projetos" className="text-[#E30613]">Voltar</Link></div>
 
   return <div>
+    {loadWarning&&<div role="alert" className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">{loadWarning} <button type="button" className="ml-2 underline" onClick={()=>void load()}>Tentar novamente</button></div>}
     <Link to="/admin/projetos" className="inline-flex items-center min-h-10 text-sm text-gray-400 hover:text-white">← Voltar para projetos</Link>
 
     <div className="pm-surface p-5 flex flex-wrap justify-between gap-4 mt-3">
