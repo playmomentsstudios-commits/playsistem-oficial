@@ -519,16 +519,11 @@ export function AdminProjectDetailV2(){
       <h2 className="text-xl font-bold">Etapas</h2>
       <p className="text-sm text-gray-500 mb-3">Organize o fluxo e o que o cliente pode acompanhar</p>
       <form onSubmit={addStage} className="flex gap-2 mb-4"><input value={stageName} onChange={e=>setStageName(e.target.value)} placeholder="Nova etapa" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 flex-1"/><Button type="submit">Adicionar etapa</Button></form>
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">{sortedStages.map((stage:any)=><div key={stage.id} className="pm-surface p-4">
-        <div className="flex justify-between gap-2"><b>{stage.name}</b><button onClick={async()=>{if(window.confirm('Excluir esta etapa? As tarefas permanecem sem etapa.')){await portalApi.deleteStage(stage.id);await load()}}} className="text-xs text-red-400">Excluir</button></div>
-        <select value={stage.status} onChange={async e=>{await portalApi.saveStage({status:e.target.value},stage.id);await load()}} className={"pm-select-status mt-3 w-full px-3 py-2 rounded-lg text-sm "+(stage.status==="pending"?"pm-state-pending":stage.status==="in_progress"?"pm-state-progress":"pm-state-success")}>{stageStatuses.map(value=><option key={value} value={value}>{rotulo(statusEtapa,value)}</option>)}</select>
-        <label className="mt-3 flex items-center gap-2 text-xs text-gray-400"><input type="checkbox" checked={stage.client_visible} onChange={async e=>{await portalApi.saveStage({client_visible:e.target.checked},stage.id);await load()}}/> Visível para o cliente</label>
-      </div>)}</div>
     </section>
 
     <section className="mt-8">
-      <h2 className="text-xl font-bold">Tarefas</h2>
-      <p className="text-sm text-gray-500 mb-4">Responsáveis, prazos, checklist e links</p>
+      <h2 className="text-xl font-bold">Tarefas por etapa</h2>
+      <p className="text-sm text-gray-500 mb-4">Expanda um mês para ver as tarefas; abra uma tarefa para editar checklist e links.</p>
 
       <form onSubmit={addTask} className="pm-surface p-4 mb-5 grid md:grid-cols-2 lg:grid-cols-5 gap-3">
         <input value={taskForm.title} onChange={e=>setTaskForm({...taskForm,title:e.target.value})} placeholder="Nova tarefa" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 lg:col-span-2"/>
@@ -540,10 +535,28 @@ export function AdminProjectDetailV2(){
         <div className="lg:col-span-3"><Button type="submit">Criar tarefa</Button></div>
       </form>
 
-      <div className="space-y-3">{tasks.map((task:any)=>{
+      <div className="space-y-3">{[...sortedStages,{id:'sem-etapa',name:'Sem etapa',status:'pending',client_visible:false}].map((stage:any)=>{
+        const stageTasks=tasks.filter((task:any)=>stage.id==='sem-etapa'?!task.stage_id:task.stage_id===stage.id)
+        if(stage.id==='sem-etapa'&&!stageTasks.length)return null
+        const complete=stageTasks.filter((task:any)=>task.status==='completed').length
+        return <details key={stage.id} className="pm-surface rounded-xl border border-white/10" open={undefined}>
+          <summary className="cursor-pointer select-none p-4 hover:bg-white/[.035] rounded-xl">
+            <span className="font-bold text-base">{/^\\d{4}-\\d{2}$/.test(stage.name)?new Date(stage.name+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):stage.name}</span>
+            <span className="ml-3 text-xs text-gray-400">{complete}/{stageTasks.length} tarefas concluídas</span>
+          </summary>
+          <div className="px-4 pb-4 space-y-3">
+            {stage.id!=='sem-etapa'&&<div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 border-b border-white/10 pb-3">
+              <label>Etapa <select value={stage.status} onChange={async e=>{await portalApi.saveStage({status:e.target.value},stage.id);await load()}} className="ml-2 pm-control rounded-lg p-2">{stageStatuses.map(value=><option key={value} value={value}>{rotulo(statusEtapa,value)}</option>)}</select></label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={stage.client_visible} onChange={async e=>{await portalApi.saveStage({client_visible:e.target.checked},stage.id);await load()}}/> Visível ao cliente</label>
+              <button type="button" className="text-red-400 ml-auto" onClick={async()=>{if(window.confirm('Excluir esta etapa? As tarefas permanecem sem etapa.')){await portalApi.deleteStage(stage.id);await load()}}}>Excluir etapa</button>
+            </div>}
+            {stageTasks.length===0&&<p className="text-sm text-gray-500">Nenhuma tarefa nesta etapa.</p>}
+            {stageTasks.map((task:any)=>{
         const member=team.find(item=>item.id===task.assigned_to)
         const stage=sortedStages.find((item:any)=>item.id===task.stage_id)
-        return <div key={task.id} className="pm-surface p-4">
+        return <details key={task.id} className="rounded-xl border border-white/10 bg-black/20 p-3">
+          <summary className="cursor-pointer font-semibold text-sm select-none">{task.title} <span className="ml-2 text-xs font-normal text-gray-400">· {rotulo(statusTarefa,task.status)}</span></summary>
+          <div className="mt-3">
           <div className="flex flex-wrap justify-between gap-3">
             <div>
               <b>{task.title}</b>
@@ -570,7 +583,11 @@ export function AdminProjectDetailV2(){
               <div className="space-y-1 mt-2">{(task.links||[]).map((link:any)=><div key={link.id} className="flex items-center gap-2 text-sm"><a href={link.url} target="_blank" rel="noreferrer" className="text-[#E30613]">{link.label} ↗</a>{link.client_visible&&<span className="text-[10px] text-emerald-400">cliente</span>}<button onClick={async()=>{await portalApi.deleteTaskLink(link.id);await load()}} className="ml-auto text-xs text-red-400">×</button></div>)}</div>
             </div>
           </div>
-        </div>
+          </div>
+        </details>
+      })}
+          </div>
+        </details>
       })}</div>
     </section>
     </div>}
