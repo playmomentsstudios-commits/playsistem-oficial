@@ -148,9 +148,9 @@ export function AdminTeam(){
 
   return <div>
     <div className="mb-6">
-      <p className="text-[11px] uppercase tracking-[.18em] text-[#E30613] font-semibold">Gestão</p>
+      <p className="text-[11px] uppercase tracking-[.18em] text-[#A65A2A] font-semibold">Gestão</p>
       <h1 className="text-2xl font-bold mt-1">Colaboradores</h1>
-      <p className="text-sm text-gray-500 mt-1">Funções, áreas e acessos da equipe Play Moments.</p>
+      <p className="text-sm text-gray-500 mt-1">Funções, áreas e acessos da equipe Sagamente.</p>
     </div>
 
     <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-5"><div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Equipe</p><p className="text-xl font-bold mt-2">{team.length}</p></div><div className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Ativos</p><p className="text-xl font-bold text-emerald-300 mt-2">{team.filter(m=>m.role==='admin'||staffInfo(m)?.active!==false).length}</p></div><div className="p-4 rounded-2xl bg-[#141416] border border-white/10 col-span-2 lg:col-span-1"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Inativos</p><p className="text-xl font-bold text-gray-400 mt-2">{team.filter(m=>m.role!=='admin'&&staffInfo(m)?.active===false).length}</p></div></div>
@@ -158,8 +158,8 @@ export function AdminTeam(){
     <div className="grid xl:grid-cols-[420px_1fr] gap-5">
       <section className="p-4 sm:p-5 rounded-2xl bg-[#141416] border border-white/10 h-fit">
         <div className="flex gap-2 mb-4">
-          <button onClick={()=>{setMode('existing');setEditing(null)}} className={'min-h-10 px-3 rounded-xl text-xs '+(mode==='existing'?'bg-[#E30613] text-white':'bg-white/[0.05] text-gray-400')}>Conta existente</button>
-          <button onClick={()=>{setMode('invite');setEditing(null);setCandidate('')}} className={'min-h-10 px-3 rounded-xl text-xs '+(mode==='invite'?'bg-[#E30613] text-white':'bg-white/[0.05] text-gray-400')}>Convidar por e-mail</button>
+          <button onClick={()=>{setMode('existing');setEditing(null)}} className={'min-h-10 px-3 rounded-xl text-xs '+(mode==='existing'?'bg-[#A65A2A] text-white':'bg-white/[0.05] text-gray-400')}>Conta existente</button>
+          <button onClick={()=>{setMode('invite');setEditing(null);setCandidate('')}} className={'min-h-10 px-3 rounded-xl text-xs '+(mode==='invite'?'bg-[#A65A2A] text-white':'bg-white/[0.05] text-gray-400')}>Convidar por e-mail</button>
         </div>
 
         <h2 className="font-bold">{editing?'Editar colaborador':mode==='invite'?'Novo colaborador':'Adicionar conta cadastrada'}</h2>
@@ -185,7 +185,7 @@ export function AdminTeam(){
               {Object.entries(DEPARTMENT_LABELS).map(([value,label])=><option key={value} value={value}>{label}</option>)}
             </select>
           </label>
-          {draft.department==='secondary_admin'&&<div className="rounded-xl border border-[#E30613]/15 bg-[#E30613]/5 p-3 text-xs leading-5 text-gray-400"><strong className="text-gray-200">Admin secundário:</strong> acesso operacional amplo, sem gestão de colaboradores, configurações exclusivas do Admin Mestre, pagamentos ou relatórios financeiros.</div>}
+          {draft.department==='secondary_admin'&&<div className="rounded-xl border border-[#A65A2A]/15 bg-[#A65A2A]/5 p-3 text-xs leading-5 text-gray-400"><strong className="text-gray-200">Admin secundário:</strong> acesso operacional amplo, sem gestão de colaboradores, configurações exclusivas do Admin Mestre, pagamentos ou relatórios financeiros.</div>}
 
           <div>
             <div className="flex items-center justify-between gap-2 mb-2">
@@ -194,16 +194,16 @@ export function AdminTeam(){
             </div>
             <div className="max-h-72 overflow-y-auto rounded-xl border border-white/8 bg-black/30 p-2 space-y-1">
               {STAFF_PERMISSIONS.map(([permission,label])=><label key={permission} className="flex gap-2 items-center min-h-9 px-2 rounded-lg hover:bg-white/[0.04] text-xs cursor-pointer">
-                <input type="checkbox" checked={draft.permissions.includes(permission)} onChange={()=>togglePermission(permission)} className="accent-[#E30613]"/>
+                <input type="checkbox" checked={draft.permissions.includes(permission)} onChange={()=>togglePermission(permission)} className="accent-[#A65A2A]"/>
                 <span>{label}</span>
               </label>)}
             </div>
           </div>
 
-          {editing&&<label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={draft.active} onChange={e=>setDraft({...draft,active:e.target.checked})} className="accent-[#E30613]"/> Colaborador ativo</label>}
+          {editing&&<label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={draft.active} onChange={e=>setDraft({...draft,active:e.target.checked})} className="accent-[#A65A2A]"/> Colaborador ativo</label>}
 
           <div className="flex gap-2">
-            <button disabled={saving||(!editing&&mode==='existing'&&!candidate)||(!editing&&mode==='invite'&&(!draft.email||!draft.first_name))} onClick={()=>void (mode==='invite'&&!editing?invite():saveExisting())} className="flex-1 min-h-11 rounded-xl bg-[#E30613] text-white text-sm font-semibold disabled:opacity-40">{saving?'Salvando...':editing?'Salvar alterações':mode==='invite'?'Enviar convite':'Adicionar à equipe'}</button>
+            <button disabled={saving||(!editing&&mode==='existing'&&!candidate)||(!editing&&mode==='invite'&&(!draft.email||!draft.first_name))} onClick={()=>void (mode==='invite'&&!editing?invite():saveExisting())} className="flex-1 min-h-11 rounded-xl bg-[#A65A2A] text-white text-sm font-semibold disabled:opacity-40">{saving?'Salvando...':editing?'Salvar alterações':mode==='invite'?'Enviar convite':'Adicionar à equipe'}</button>
             {editing&&<button onClick={reset} className="min-h-11 px-4 rounded-xl bg-white/[0.06] text-sm">Cancelar</button>}
           </div>
         </div>
@@ -221,11 +221,11 @@ export function AdminTeam(){
                   <p className="font-semibold truncate">{member.first_name} {member.last_name}</p>
                   <p className="text-xs text-gray-500 truncate">{member.email}</p>
                 </div>
-                <span className={'px-2 py-1 rounded-full text-[10px] '+(admin?'bg-[#E30613]/15 text-[#ff5d68]':'bg-emerald-500/10 text-emerald-400')}>{admin?'Administrador':s?.active===false?'Inativo':'Colaborador'}</span>
+                <span className={'px-2 py-1 rounded-full text-[10px] '+(admin?'bg-[#A65A2A]/15 text-[#ff5d68]':'bg-emerald-500/10 text-emerald-400')}>{admin?'Administrador':s?.active===false?'Inativo':'Colaborador'}</span>
               </div>
               <div className="mt-4">
                 <p className="text-sm font-semibold">{admin?'Administrador':s?.job_title||'Colaborador'}</p>
-                {!admin&&<p className="text-xs text-[#E30613] mt-1">{DEPARTMENT_LABELS[(s?.department||'custom') as StaffDepartment]}</p>}
+                {!admin&&<p className="text-xs text-[#A65A2A] mt-1">{DEPARTMENT_LABELS[(s?.department||'custom') as StaffDepartment]}</p>}
                 <p className="text-[10px] text-gray-600 mt-2">{admin?'Acesso total ao sistema':(s?.permissions?.includes('*')?'Acesso total legado':(s?.permissions?.length||0)+' permissões configuradas')}</p>
               </div>
               <div className="flex gap-2 mt-4">

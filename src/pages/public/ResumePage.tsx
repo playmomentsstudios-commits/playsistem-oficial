@@ -55,7 +55,7 @@ export function ResumePage(){
 
 
   const seoTitle=resume?.seo_title||[resume?.display_name,resume?.headline].filter(Boolean).join(' — ')||'Currículo'
-  const seoDescription=resume?.seo_description||resume?.summary||'Currículo profissional na Play Moments.'
+  const seoDescription=resume?.seo_description||resume?.summary||'Currículo profissional na Sagamente.'
   useSeo({title:seoTitle,description:seoDescription,image:resume?.seo_image_url||siteAssetUrl(resume?.photo_drive_file_id,resume?.photo_url)||undefined,canonicalPath:'/curriculos/'+slug,type:'profile',noindex:!resume})
 
   const contacts=useMemo(()=>{

@@ -67,13 +67,13 @@ export function CustomerSettings(){
   const option=(title:string,description:string,key:keyof UserPreferences)=>(
     <label className="flex items-center justify-between gap-4 p-3 rounded-xl bg-white/[0.035] border border-white/8 cursor-pointer">
       <div><p className="text-sm font-medium">{title}</p><p className="text-[10px] text-gray-500 mt-1">{description}</p></div>
-      <input type="checkbox" checked={Boolean(prefs?.[key])} onChange={toggle(key)} className="accent-[#E30613]"/>
+      <input type="checkbox" checked={Boolean(prefs?.[key])} onChange={toggle(key)} className="accent-[#A65A2A]"/>
     </label>
   )
 
   return <div className="max-w-5xl">
     <div className="mb-6">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-[#E30613] font-semibold">Conta</p>
+      <p className="text-[11px] uppercase tracking-[0.18em] text-[#A65A2A] font-semibold">Conta</p>
       <h1 className="text-2xl font-bold mt-1">Configurações</h1>
       <p className="text-sm text-gray-500 mt-1">Controle sua experiência, notificações, privacidade e segurança.</p>
     </div>
@@ -135,6 +135,6 @@ export function CustomerSettings(){
       </section>
     </div>
 
-    <button disabled={saving||!prefs} onClick={()=>void save()} className="mt-5 min-h-11 px-5 rounded-xl bg-[#E30613] text-white text-sm font-semibold disabled:opacity-40">{saving?'Salvando...':'Salvar configurações'}</button>
+    <button disabled={saving||!prefs} onClick={()=>void save()} className="mt-5 min-h-11 px-5 rounded-xl bg-[#A65A2A] text-white text-sm font-semibold disabled:opacity-40">{saving?'Salvando...':'Salvar configurações'}</button>
   </div>
 }

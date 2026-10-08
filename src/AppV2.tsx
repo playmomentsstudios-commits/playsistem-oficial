@@ -87,13 +87,13 @@ const AcademyCoursePage = lazy(() => import('./pages/customer/AcademyCoursePage'
 const AdminPermissionGate = lazy(() => import('./components/admin/AdminPermissionGate').then(m => ({ default:m.AdminPermissionGate })))
 
 function RouteFallback(){
-  return <div role="status" aria-live="polite" className="min-h-[35vh] flex items-center justify-center gap-3 text-sm text-gray-500"><div aria-hidden="true" className="w-8 h-8 rounded-full border-2 border-[#E30613] border-t-transparent animate-spin" /><span>Carregando página...</span></div>
+  return <div role="status" aria-live="polite" className="min-h-[35vh] flex items-center justify-center gap-3 text-sm text-gray-500"><div aria-hidden="true" className="w-8 h-8 rounded-full border-2 border-[#A65A2A] border-t-transparent animate-spin" /><span>Carregando página...</span></div>
 }
 
 function AuthenticatedCommunity() {
   const { isAuthenticated, isLoading } = useAuth()
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center bg-[#0a0a0b]"><div className="w-8 h-8 rounded-full border-2 border-[#E30613] border-t-transparent animate-spin" /></div>
+    return <div className="min-h-screen flex items-center justify-center bg-[#0a0a0b]"><div className="w-8 h-8 rounded-full border-2 border-[#A65A2A] border-t-transparent animate-spin" /></div>
   }
   return isAuthenticated ? <CommunityPage /> : <Navigate to="/login" replace />
 }

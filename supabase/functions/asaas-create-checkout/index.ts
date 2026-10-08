@@ -25,7 +25,7 @@ Deno.serve(async(req)=>{
     cancelUrl:base+"/app/pagamentos?checkout=cancelled",
     expiredUrl:base+"/app/pagamentos?checkout=expired"
    },
-   items:[{name:"Play Moments - "+order.order_number,description:"Pagamento do pedido "+order.order_number,quantity:1,value:order.total/100}],
+   items:[{name:"Sagamente - "+order.order_number,description:"Pagamento do pedido "+order.order_number,quantity:1,value:order.total/100}],
    installment:{maxInstallmentCount:12}
   })});
   if(!checkout?.id)throw new Error("O Asaas não retornou o checkout.");

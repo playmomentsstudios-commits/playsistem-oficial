@@ -65,7 +65,7 @@ export function AdminLayout() {
     settingsApi.appSettings().then(row=>{if(row)setStaffBrand({
       staff_logo_url:row.staff_logo_url||'/staff-logo.svg',
       staff_platform_name:row.staff_platform_name||'Área do colaborador',
-      staff_primary_color:row.staff_primary_color||'#A65A2A',
+      staff_primary_color:row.staff_primary_color?.toLowerCase()==='#e30613'?'#A65A2A':(row.staff_primary_color||'#A65A2A'),
       staff_background_color:row.staff_background_color||'#F4F6F8',
       staff_surface_color:row.staff_surface_color||'#FFFFFF',
       staff_text_color:row.staff_text_color||'#17171A',

@@ -142,7 +142,7 @@ export function AdminServices(){
     <div className="flex flex-wrap justify-between items-end gap-3 mb-6">
       <div>
         <h1 className="text-2xl font-bold text-white">Serviços</h1>
-        <p className="text-sm text-gray-500">Cadastre, publique e gerencie os serviços da Play Moments</p>
+        <p className="text-sm text-gray-500">Cadastre, publique e gerencie os serviços da Sagamente</p>
       </div>
       <Button onClick={openNew}>Novo serviço</Button>
     </div>

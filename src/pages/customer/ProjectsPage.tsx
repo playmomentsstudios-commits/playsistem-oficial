@@ -52,10 +52,10 @@ export function ProjectsPage(){
   if(error)return <ErrorState message={error} action={<button onClick={()=>window.location.reload()} className="min-h-11 px-4 rounded-xl bg-white/5">Tentar novamente</button>}/>
 
   if(id){
-    if(!project)return <div><p>Projeto não encontrado.</p><Link to="/app/projetos" className="text-[#E30613]">Voltar</Link></div>
+    if(!project)return <div><p>Projeto não encontrado.</p><Link to="/app/projetos" className="text-[#A65A2A]">Voltar</Link></div>
 
     return <div>
-      <Link to="/app/projetos" className="text-sm text-[#E30613]">← Meus projetos</Link>
+      <Link to="/app/projetos" className="text-sm text-[#A65A2A]">← Meus projetos</Link>
       <div className="flex flex-wrap justify-between gap-4 mt-4">
         <div>
           <h1 className="text-2xl font-bold text-white">{project.title}</h1>
@@ -67,7 +67,7 @@ export function ProjectsPage(){
       <div className="grid md:grid-cols-3 gap-4 mt-6">
         <div className="md:col-span-2 p-5 rounded-2xl bg-[#141416] border border-white/10">
           <div className="flex justify-between"><span>Progresso</span><b>{progress(project)}%</b></div>
-          <div className="h-2 bg-white/10 rounded mt-2"><div className="h-2 bg-[#E30613] rounded" style={{width:progress(project)+'%'}}/></div>
+          <div className="h-2 bg-white/10 rounded mt-2"><div className="h-2 bg-[#A65A2A] rounded" style={{width:progress(project)+'%'}}/></div>
           <div className="grid sm:grid-cols-2 gap-4 mt-5">
             <div><p className="text-xs text-gray-500">Etapa atual</p><p className="font-semibold mt-1">{currentStage?.name||'A definir'}</p></div>
             <div><p className="text-xs text-gray-500">Próxima etapa</p><p className="font-semibold mt-1">{nextStage?.name||'—'}</p></div>
@@ -92,8 +92,8 @@ export function ProjectsPage(){
           <div className="flex justify-between gap-3"><p className="text-sm font-medium">{task.title}</p><span className="text-xs text-gray-500">{rotulo(statusTarefa,task.status)}</span></div>
           {task.description&&<p className="text-xs text-gray-500 mt-1">{task.description}</p>}
           {(task.checklist||[]).length>0&&<div className="mt-2 space-y-1">{task.checklist.sort((a:any,b:any)=>a.position-b.position).map((item:any)=><p key={item.id} className={'text-xs rounded-md px-2 py-1 transition-colors '+(item.completed?'bg-emerald-500/10 text-emerald-400':'text-gray-400')}>{item.completed?'✓':'○'} {item.title}</p>)}</div>}
-          {(task.links||[]).filter((link:any)=>link.client_visible).length>0&&<div className="mt-2 flex flex-wrap gap-2">{task.links.filter((link:any)=>link.client_visible).map((link:any)=><a key={link.id} href={link.url} target="_blank" rel="noreferrer" className="text-xs text-[#E30613] px-2 py-1 rounded bg-white/5">{link.label} ↗</a>)}</div>}
-          {files.filter((file:any)=>file.task_id===task.id).length>0&&<div className="mt-2 flex flex-wrap gap-2">{files.filter((file:any)=>file.task_id===task.id).map((file:any)=><button key={file.id} onClick={()=>openFile(file)} className="text-xs text-[#E30613] px-2 py-1 rounded bg-white/5">{file.name} ↗</button>)}</div>}
+          {(task.links||[]).filter((link:any)=>link.client_visible).length>0&&<div className="mt-2 flex flex-wrap gap-2">{task.links.filter((link:any)=>link.client_visible).map((link:any)=><a key={link.id} href={link.url} target="_blank" rel="noreferrer" className="text-xs text-[#A65A2A] px-2 py-1 rounded bg-white/5">{link.label} ↗</a>)}</div>}
+          {files.filter((file:any)=>file.task_id===task.id).length>0&&<div className="mt-2 flex flex-wrap gap-2">{files.filter((file:any)=>file.task_id===task.id).map((file:any)=><button key={file.id} onClick={()=>openFile(file)} className="text-xs text-[#A65A2A] px-2 py-1 rounded bg-white/5">{file.name} ↗</button>)}</div>}
         </div>)}</div>
       </div>)}</div>
     </div>
@@ -105,7 +105,7 @@ export function ProjectsPage(){
     {!rows.length?<EmptyState icon="📈" title="Nenhum projeto ativo"/>:<div className="grid md:grid-cols-2 gap-4">{rows.map(project=><Link key={project.id} to={'/app/projetos/'+project.id} className="p-5 rounded-2xl bg-[#141416] border border-white/10">
       <div className="flex justify-between gap-3"><b>{project.title}</b><span className="text-xs text-gray-400">{rotulo(statusProjeto,project.status)}</span></div>
       <p className="text-sm text-gray-500 mt-2">{progress(project)}% concluído</p>
-      <div className="h-2 bg-white/10 rounded mt-2"><div className="h-2 bg-[#E30613] rounded" style={{width:progress(project)+'%'}}/></div>
+      <div className="h-2 bg-white/10 rounded mt-2"><div className="h-2 bg-[#A65A2A] rounded" style={{width:progress(project)+'%'}}/></div>
       {project.due_date&&<p className="text-xs text-gray-500 mt-3">Prazo: {new Date(project.due_date+'T12:00').toLocaleDateString('pt-BR')}</p>}
     </Link>)}</div>}
   </div>

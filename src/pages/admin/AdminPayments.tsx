@@ -71,7 +71,7 @@ export function AdminPayments(){
 
   return <div>
     <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
-      <div><p className="text-[11px] uppercase tracking-[.18em] text-[#E30613] font-semibold">Financeiro</p><h1 className="text-2xl font-bold text-white mt-1">Pagamentos</h1><p className="text-sm text-gray-500 mt-1">Cobranças, recebimentos e histórico financeiro em um só lugar.</p></div>
+      <div><p className="text-[11px] uppercase tracking-[.18em] text-[#A65A2A] font-semibold">Financeiro</p><h1 className="text-2xl font-bold text-white mt-1">Pagamentos</h1><p className="text-sm text-gray-500 mt-1">Cobranças, recebimentos e histórico financeiro em um só lugar.</p></div>
       <button onClick={()=>void load()} className="min-h-10 px-4 rounded-xl bg-white/[0.05] border border-white/10 text-sm text-gray-300 hover:bg-white/[0.08]">Atualizar</button>
     </div>
 
@@ -91,7 +91,7 @@ export function AdminPayments(){
     {showLegacy&&<div className="mb-4 px-4 py-3 rounded-xl bg-amber-500/[0.035] border border-amber-500/10 text-xs text-amber-200">Existem {unknownCount} registros antigos sem ambiente identificado. Eles permanecem preservados para auditoria e podem ser consultados em “Todos os registros”.</div>}
 
     <div className="p-3 rounded-2xl bg-[#111113] border border-white/10 flex flex-wrap gap-3 mb-5">
-      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar cliente, pedido ou ID..." className="min-h-11 flex-1 min-w-64 px-4 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-[#E30613]/50"/>
+      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar cliente, pedido ou ID..." className="min-h-11 flex-1 min-w-64 px-4 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-[#A65A2A]/50"/>
       <select value={scopeFilter} onChange={e=>setScopeFilter(e.target.value)} className="min-h-11 px-3 rounded-xl bg-black border border-white/10">
         <option value="operacionais">Recebidos</option><option value="rascunhos">Rascunhos / pendentes</option><option value="arquivados">Encerrados / arquivados</option><option value="testes">Ambiente de testes</option><option value="todos">Todos os registros</option>
       </select>
@@ -116,7 +116,7 @@ export function AdminPayments(){
 
     {selected&&<div className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex justify-end" onClick={()=>setSelected(null)}>
       <aside className="w-full max-w-lg h-full bg-[#101012] border-l border-white/10 p-5 sm:p-6 overflow-y-auto" onClick={e=>e.stopPropagation()}>
-        <div className="flex justify-between gap-4"><div><p className="text-[10px] uppercase tracking-[.16em] text-[#E30613]">Detalhes financeiros</p><h2 className="text-xl font-bold mt-1">{selected.order?.order_number||'Pagamento'}</h2></div><button onClick={()=>setSelected(null)} className="w-9 h-9 rounded-xl bg-white/5 text-gray-400">✕</button></div>
+        <div className="flex justify-between gap-4"><div><p className="text-[10px] uppercase tracking-[.16em] text-[#A65A2A]">Detalhes financeiros</p><h2 className="text-xl font-bold mt-1">{selected.order?.order_number||'Pagamento'}</h2></div><button onClick={()=>setSelected(null)} className="w-9 h-9 rounded-xl bg-white/5 text-gray-400">✕</button></div>
         <div className="mt-6 p-5 rounded-2xl bg-[#171719] border border-white/10"><p className="text-xs text-gray-500">Valor</p><p className="text-3xl font-bold mt-1">{money(selected.amount)}</p><span className={'pm-tag mt-4 '+(selected.status==='paid'?'pm-tag-success':selected.status==='pending'||selected.status==='awaiting_confirmation'?'pm-tag-pending':selected.status==='refunded'?'pm-tag-review':selected.status==='failed'?'pm-tag-danger':'pm-tag-neutral')}>{rotulo(statusPagamento,selected.status)}</span></div>
         <div className="mt-4 rounded-2xl border border-white/10 divide-y divide-white/[0.07]">
           {[['Cliente',[selected.customer?.first_name,selected.customer?.last_name].filter(Boolean).join(' ')||'Cliente'],['E-mail',selected.customer?.email||'—'],['Método',rotulo(metodoPagamento,selected.method)],['Provedor',selected.provider||'—'],['Criado em',new Date(selected.created_at).toLocaleString('pt-BR')],['ID interno',selected.id]].map(([label,value])=><div key={label} className="p-4"><p className="text-[10px] uppercase text-gray-600">{label}</p><p className="text-sm text-gray-300 mt-1 break-all">{value}</p></div>)}

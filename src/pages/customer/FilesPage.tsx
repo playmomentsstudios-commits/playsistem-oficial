@@ -143,7 +143,7 @@ export function FilesPage(){
         },current,value=>setUploadProgress(Math.round(((index+(value/100))/uploadFiles.length)*100)))
       }
       setUploadFiles([]);setUploadProgress(0);setUploadName('')
-      toast('Arquivos enviados para a Play Moments.','success')
+      toast('Arquivos enviados para a Sagamente.','success')
       await load()
     }catch(error:any){
       toast(error.message||'Não foi possível enviar os arquivos.','error')
@@ -221,7 +221,7 @@ export function FilesPage(){
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
           {filteredGroups.map(([id,group])=><button key={id} type="button" onClick={()=>{setProjectId(id);setVersionGroup(null);setFileSearch('');setFileType('all');setFileReview('all');setUploadFiles([]);setUploadProgress(0)}} className="group text-left p-3 sm:p-4 min-h-[112px] rounded-2xl border border-white/8 bg-[#121214] hover:bg-[#171719] hover:border-white/15 transition-all">
             <div className="flex items-start gap-3">
-              <div className="w-11 h-11 rounded-xl bg-[#E30613]/10 text-[#E30613] flex items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-xl bg-[#A65A2A]/10 text-[#A65A2A] flex items-center justify-center shrink-0">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h6l2 2h8v10H4z"/><path d="M8 12h8"/></svg>
               </div>
               <div className="min-w-0 flex-1">
@@ -229,7 +229,7 @@ export function FilesPage(){
                 <p className="text-[10px] text-gray-500 mt-1">{group.files.length} arquivo(s)</p>
                 <p className="text-[10px] text-gray-600 mt-2">{group.files[0]?.created_at?'Atualizado em '+new Date(group.files[0].created_at).toLocaleDateString('pt-BR'):'Sem arquivos ainda'}</p>
               </div>
-              <span className="text-gray-600 group-hover:text-[#E30613] transition-colors">›</span>
+              <span className="text-gray-600 group-hover:text-[#A65A2A] transition-colors">›</span>
             </div>
           </button>)}
         </div>
@@ -244,7 +244,7 @@ export function FilesPage(){
             <p className="text-sm font-semibold truncate">{selected.project?.title||'Arquivos gerais'}</p>
             <p className="text-[10px] text-gray-500">{selected.files.length} arquivo(s) disponíveis</p>
           </div>
-          {projectId!=='general'&&<label className="min-h-10 px-3 rounded-xl bg-[#E30613] text-white text-xs font-semibold flex items-center justify-center cursor-pointer">
+          {projectId!=='general'&&<label className="min-h-10 px-3 rounded-xl bg-[#A65A2A] text-white text-xs font-semibold flex items-center justify-center cursor-pointer">
             <input type="file" multiple className="sr-only" disabled={uploading} onChange={event=>{
               const picked=Array.from(event.target.files||[])
               const invalid=picked.find(file=>file.size>50*1024*1024*1024)
@@ -267,9 +267,9 @@ export function FilesPage(){
                 <p className="text-sm font-semibold">{uploadFiles.length} arquivo(s) na fila</p>
                 <p className="text-[10px] text-gray-500 truncate mt-1">{uploading?(uploadName||'Enviando...'):'Até 50 GB por arquivo · enviados para Arquivos recebidos'}</p>
               </div>
-              <button type="button" disabled={uploading} onClick={()=>void uploadToProject()} className="min-h-11 px-4 rounded-xl bg-[#E30613] text-white text-xs font-semibold shrink-0">{uploading?uploadProgress+'%':'Enviar agora'}</button>
+              <button type="button" disabled={uploading} onClick={()=>void uploadToProject()} className="min-h-11 px-4 rounded-xl bg-[#A65A2A] text-white text-xs font-semibold shrink-0">{uploading?uploadProgress+'%':'Enviar agora'}</button>
             </div>
-            {uploading&&<div className="h-2 bg-white/10 rounded-full overflow-hidden mt-3"><div className="h-full bg-[#E30613] transition-[width]" style={{width:uploadProgress+'%'}}/></div>}
+            {uploading&&<div className="h-2 bg-white/10 rounded-full overflow-hidden mt-3"><div className="h-full bg-[#A65A2A] transition-[width]" style={{width:uploadProgress+'%'}}/></div>}
           </div>}
           <div className="grid sm:grid-cols-3 gap-2 mb-4">
             <input value={fileSearch} onChange={e=>setFileSearch(e.target.value)} placeholder="Buscar arquivo..." className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs"/>
@@ -298,7 +298,7 @@ export function FilesPage(){
                 <button type="button" onClick={()=>void open(file)} className="w-full text-left">
                   <div className="h-24 rounded-lg bg-white/[0.035] flex items-center justify-center text-3xl">{fileIcon(file)}</div>
                   <div className="mt-2 flex items-center justify-between gap-2">
-                    <span className="text-[9px] font-bold text-[#E30613]">{extension(file.name)} · v{file.version_number||1}</span>
+                    <span className="text-[9px] font-bold text-[#A65A2A]">{extension(file.name)} · v{file.version_number||1}</span>
                     <span className="text-[9px] text-gray-600">{sizeLabel(file.file_size)}</span>
                   </div>
                   <p className="text-xs font-semibold truncate mt-1" title={file.name}>{file.name}</p>
@@ -333,14 +333,14 @@ export function FilesPage(){
             <textarea value={adjustDescription} onChange={e=>setAdjustDescription(e.target.value)} rows={4} placeholder="Explique o resultado esperado..." className="mt-1.5 w-full px-3 py-3 rounded-xl bg-black border border-white/10 text-sm resize-y"/>
           </label>
           <div>
-            <div className="flex items-center justify-between gap-3 mb-2"><p className="text-xs text-gray-400">Tópicos do ajuste</p><button type="button" onClick={()=>setAdjustItems(items=>[...items,''])} className="text-[10px] font-semibold text-[#E30613]">+ Adicionar tópico</button></div>
+            <div className="flex items-center justify-between gap-3 mb-2"><p className="text-xs text-gray-400">Tópicos do ajuste</p><button type="button" onClick={()=>setAdjustItems(items=>[...items,''])} className="text-[10px] font-semibold text-[#A65A2A]">+ Adicionar tópico</button></div>
             <div className="space-y-2">{adjustItems.map((item,index)=><div key={index} className="flex gap-2"><span className="w-6 h-10 flex items-center justify-center text-xs text-gray-600">{index+1}.</span><input value={item} onChange={e=>setAdjustItems(items=>items.map((value,i)=>i===index?e.target.value:value))} placeholder="Descreva uma alteração específica" className="min-h-10 flex-1 px-3 rounded-xl bg-black border border-white/10 text-xs"/>{adjustItems.length>1&&<button type="button" onClick={()=>setAdjustItems(items=>items.filter((_,i)=>i!==index))} className="w-9 rounded-lg bg-white/[0.04] text-gray-500">×</button>}</div>)}</div>
           </div>
           <label className="block p-4 rounded-xl border border-dashed border-white/15 bg-white/[0.025] cursor-pointer">
             <input type="file" multiple accept="image/*,.pdf" className="hidden" onChange={e=>setAdjustAttachments(Array.from(e.target.files||[]))}/>
             <span className="text-sm font-semibold">Anexar referências</span>
             <span className="block text-[10px] text-gray-500 mt-1">Prints, imagens ou PDF · até 10 MB por arquivo</span>
-            {adjustAttachments.length>0&&<span className="block text-xs text-[#E30613] mt-2">{adjustAttachments.length} anexo(s) selecionado(s)</span>}
+            {adjustAttachments.length>0&&<span className="block text-xs text-[#A65A2A] mt-2">{adjustAttachments.length} anexo(s) selecionado(s)</span>}
           </label>
         </div>
         <div className="flex gap-2 mt-5">
@@ -363,7 +363,7 @@ export function FilesPage(){
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-lg bg-black/30 flex items-center justify-center text-xl">{fileIcon(file)}</div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2"><p className="text-sm font-semibold truncate">{file.name}</p><span className="text-[10px] text-[#E30613]">v{file.version_number||1}</span></div>
+                  <div className="flex items-center gap-2"><p className="text-sm font-semibold truncate">{file.name}</p><span className="text-[10px] text-[#A65A2A]">v{file.version_number||1}</span></div>
                   <p className="text-[10px] text-gray-500 mt-1">{sizeLabel(file.file_size)} · {new Date(file.created_at).toLocaleString('pt-BR')}</p>
                   {status&&<span className={'inline-flex mt-1 px-2 py-0.5 rounded-full text-[9px] '+status.className}>{status.text}</span>}
                 </div>

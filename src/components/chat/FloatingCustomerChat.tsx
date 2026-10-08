@@ -57,7 +57,7 @@ export function FloatingCustomerChat({unread=0}:{unread?:number}){
       <div className="h-12 px-4 flex items-center justify-between border-b border-white/10 bg-[#0d0d0f]">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400"/>
-          <div><p className="text-sm font-semibold leading-tight">Play Moments</p><p className="text-[10px] text-gray-500">Converse com a gente</p></div>
+          <div><p className="text-sm font-semibold leading-tight">Sagamente</p><p className="text-[10px] text-gray-500">Converse com a gente</p></div>
         </div>
         <button type="button" onClick={()=>setOpen(false)} className="w-10 h-10 rounded-xl hover:bg-white/[0.06] text-gray-400" aria-label="Fechar chat">×</button>
       </div>
@@ -69,7 +69,7 @@ export function FloatingCustomerChat({unread=0}:{unread?:number}){
       onPointerDown={down}
       onPointerMove={move}
       onPointerUp={up}
-      className="fixed z-[90] w-14 h-14 sm:w-14 sm:h-14 rounded-full bg-[#E30613] text-white shadow-2xl flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
+      className="fixed z-[90] w-14 h-14 sm:w-14 sm:h-14 rounded-full bg-[#A65A2A] text-white shadow-2xl flex items-center justify-center cursor-grab active:cursor-grabbing select-none"
       style={{right:position.x,bottom:position.y}}
       aria-label={open?'Fechar chat':'Abrir chat'}
       title="Chat"

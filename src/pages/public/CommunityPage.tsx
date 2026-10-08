@@ -10,7 +10,7 @@ const SEED_POSTS: Post[] = [
   {
     id: '1',
     authorId: 'admin-1',
-    authorName: 'Play Moments',
+    authorName: 'Sagamente',
     authorRole: 'Studio & Criação',
     authorAvatar: '▶',
     type: 'project',
@@ -58,7 +58,7 @@ const SEED_POSTS: Post[] = [
   {
     id: '4',
     authorId: 'admin-1',
-    authorName: 'Play Moments',
+    authorName: 'Sagamente',
     authorRole: 'Comunicado',
     authorAvatar: '▶',
     type: 'announcement',
@@ -107,14 +107,14 @@ export function CommunityPage() {
       <div className="mx-auto px-4 py-12" style={{ maxWidth: 640 }}>
         {/* Header */}
         <div className="text-center mb-12">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#E30613', letterSpacing: '0.2em' }}>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#A65A2A', letterSpacing: '0.2em' }}>
             Comunidade
           </p>
           <h1 className="text-4xl font-bold mb-4" style={{
             background: 'linear-gradient(135deg, #fff 40%, #6b6b78 100%)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
           }}>
-            Mural Play Moments
+            Mural Sagamente
           </h1>
           <p className="text-sm" style={{ color: '#6b6b78', lineHeight: 1.7 }}>
             Novidades, projetos, comunicados e muito mais direto da nossa equipe.
@@ -127,7 +127,7 @@ export function CommunityPage() {
             {[1, 2, 3].map(n => <CardSkeleton key={n} />)}
           </div>
         ) : posts.length === 0 ? (
-          <EmptyState icon="📭" title="Nenhuma publicação ainda" description="Em breve a equipe Play Moments publicará novidades aqui." />
+          <EmptyState icon="📭" title="Nenhuma publicação ainda" description="Em breve a equipe Sagamente publicará novidades aqui." />
         ) : (
           <div className="flex flex-col gap-5">
             {posts.map((post, i) => (

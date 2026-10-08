@@ -117,7 +117,7 @@ export function AssessmentRunner({
           <button
             disabled={busy}
             onClick={() => start()}
-            className="min-h-11 px-5 rounded-xl bg-[#E30613] disabled:opacity-50"
+            className="min-h-11 px-5 rounded-xl bg-[#A65A2A] disabled:opacity-50"
           >
             {busy ? "Abrindo…" : "Iniciar / retomar"}
           </button>
@@ -136,7 +136,7 @@ export function AssessmentRunner({
                   className={
                     "flex gap-3 p-4 rounded-xl border cursor-pointer " +
                     (choice === index
-                      ? "border-[#E30613] bg-red-500/10"
+                      ? "border-red-500 bg-red-500/10"
                       : "border-white/10 bg-white/[.02]")
                   }
                 >
@@ -173,7 +173,7 @@ export function AssessmentRunner({
             </div>
             <div className="h-1 bg-white/10 rounded mt-3">
               <div
-                className="h-1 bg-[#E30613] rounded"
+                className="h-1 bg-[#A65A2A] rounded"
                 style={{ width: `${((attempt.position + 1) / attempt.total) * 100}%` }}
               />
             </div>
@@ -181,7 +181,7 @@ export function AssessmentRunner({
           <button
             onClick={() => send(choice)}
             disabled={busy || choice === null || remaining === 0}
-            className="min-h-11 px-5 mt-5 rounded-xl bg-[#E30613] disabled:opacity-40"
+            className="min-h-11 px-5 mt-5 rounded-xl bg-[#A65A2A] disabled:opacity-40"
           >
             {busy
               ? "Salvando…"

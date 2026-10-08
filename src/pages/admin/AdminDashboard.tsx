@@ -103,13 +103,13 @@ export function AdminDashboard(){
     {error&&<div className="mb-4 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 text-sm text-amber-200">{error}</div>}
     <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
       <div>
-        <p className="text-[11px] uppercase tracking-[0.18em] text-[#E30613] font-semibold">Visão geral</p>
+        <p className="text-[11px] uppercase tracking-[0.18em] text-[#A65A2A] font-semibold">Visão geral</p>
         <h1 className="text-2xl md:text-3xl font-bold mt-1">Painel administrativo</h1>
         <p className="text-sm text-gray-500 mt-1">Acompanhe operação, comercial e financeiro em uma única visão.</p>
       </div>
       <div className="flex flex-wrap gap-2">
         <Link to="/admin/projetos" className="min-h-11 px-4 rounded-xl border border-white/[0.08] bg-white/[0.025] hover:bg-white/[0.05] text-gray-300 text-sm font-semibold flex items-center justify-center">Ver operação</Link>
-        <Link to="/admin/crm" className="min-h-11 px-4 rounded-xl bg-[#E30613] hover:bg-[#f01826] shadow-[0_8px_24px_rgba(227,6,19,.16)] text-white text-sm font-semibold flex items-center justify-center">Abrir CRM</Link>
+        <Link to="/admin/crm" className="min-h-11 px-4 rounded-xl bg-[#A65A2A] hover:bg-[#87441f] shadow-[0_8px_24px_rgba(166,90,42,.16)] text-white text-sm font-semibold flex items-center justify-center">Abrir CRM</Link>
       </div>
     </div>
 
@@ -130,7 +130,7 @@ export function AdminDashboard(){
     <div className="grid md:grid-cols-2 gap-2.5 mt-2.5">
       <Link to="/admin/crm" className="pm-surface p-4">
         <p className="text-[10px] uppercase text-gray-500">Funil comercial em negociação</p>
-        <p className="text-xl font-bold text-[#E30613] mt-2">{money(metrics.pipelineValue)}</p>
+        <p className="text-xl font-bold text-[#A65A2A] mt-2">{money(metrics.pipelineValue)}</p>
         <p className="text-xs text-gray-600 mt-1">Orçamentos, negociações e clientes fechados no CRM</p>
       </Link>
       <Link to="/admin/crm" className="pm-surface p-4">

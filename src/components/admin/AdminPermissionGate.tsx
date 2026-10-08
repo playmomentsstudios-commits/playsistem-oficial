@@ -24,7 +24,7 @@ export function AdminPermissionGate({permission,adminOnly=false,children}:{permi
 
 function Denied(){
   return <div className="max-w-lg mx-auto mt-16 p-6 rounded-2xl border border-white/10 bg-[#141416] text-center">
-    <div className="w-12 h-12 rounded-full bg-[#E30613]/10 text-[#E30613] mx-auto flex items-center justify-center text-xl">🔒</div>
+    <div className="w-12 h-12 rounded-full bg-[#A65A2A]/10 text-[#A65A2A] mx-auto flex items-center justify-center text-xl">🔒</div>
     <h2 className="font-bold text-lg mt-4">Acesso não liberado</h2>
     <p className="text-sm text-gray-500 mt-2">Seu perfil de colaborador não possui permissão para este módulo. Um administrador pode ajustar seus acessos em Colaboradores.</p>
   </div>

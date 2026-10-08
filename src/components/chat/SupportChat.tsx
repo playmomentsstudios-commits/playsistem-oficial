@@ -185,7 +185,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
 
   return (
     <div className={compact ? 'h-full flex flex-col' : 'flex flex-col gap-3'} style={{ color: '#f0f0f2' }}>
-      {!compact&&<div className="flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-2xl font-bold">Conversas</h1><p className="text-sm text-gray-500">{staff ? 'Central de atendimento ao cliente' : 'Chat direto com a equipe Play Moments'}</p></div>{staff&&<div className="flex items-center gap-2 text-xs text-gray-500"><span>{counts.unread} não lida(s)</span><span>•</span><span>{counts.unassigned} sem responsável</span></div>}</div>}
+      {!compact&&<div className="flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-2xl font-bold">Conversas</h1><p className="text-sm text-gray-500">{staff ? 'Central de atendimento ao cliente' : 'Chat direto com a equipe Sagamente'}</p></div>{staff&&<div className="flex items-center gap-2 text-xs text-gray-500"><span>{counts.unread} não lida(s)</span><span>•</span><span>{counts.unassigned} sem responsável</span></div>}</div>}
       {error && <div role="alert" className="p-3 rounded-xl bg-red-950/40 text-sm">{error} <button className="underline min-h-11 px-2" onClick={() => setRetry(value => value + 1)}>Tentar novamente</button></div>}
       {loading ? <p role="status">Carregando conversas…</p> : (
         <div className={'relative flex overflow-hidden bg-[#141416] '+(compact?'rounded-none h-full':'md:rounded-2xl md:border md:border-white/10 h-[calc(100dvh-150px)] min-h-[600px]')}>
@@ -206,7 +206,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
                   ['mine','Minhas',counts.mine],
                   ['unassigned','Sem responsável',counts.unassigned],
                   ['urgent','Urgentes',counts.urgent],
-                ] as Array<[InboxFilter,string,number]>).map(([value,label,count])=><button type="button" key={value} onClick={()=>setInboxFilter(value)} className={'shrink-0 min-h-8 px-2.5 rounded-lg border text-[10px] font-semibold '+(inboxFilter===value?'border-[#E30613]/40 bg-[#E30613]/10 text-red-200':'border-white/10 bg-white/[.025] text-gray-400')}>{label}{count>0&&value!=='all'?(' '+count):''}</button>)}
+                ] as Array<[InboxFilter,string,number]>).map(([value,label,count])=><button type="button" key={value} onClick={()=>setInboxFilter(value)} className={'shrink-0 min-h-8 px-2.5 rounded-lg border text-[10px] font-semibold '+(inboxFilter===value?'border-[#A65A2A]/40 bg-[#A65A2A]/10 text-red-200':'border-white/10 bg-white/[.025] text-gray-400')}>{label}{count>0&&value!=='all'?(' '+count):''}</button>)}
               </div>
             </div>
             <div className="flex-1 overflow-y-auto min-h-0">
@@ -216,7 +216,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
                 return <button key={item.id} disabled={sending} aria-pressed={selected===item.id} onClick={()=>{setSelected(item.id);setMobileChat(true);setInfoOpen(false)}} className={'w-full text-left px-3 py-3.5 border-b border-white/[.05] hover:bg-white/[.035] transition-colors disabled:opacity-50 '+(selected===item.id?'bg-white/[.045]':'')}>
                   <div className="flex gap-3">
                     <div className="relative shrink-0">
-                      <div className={'w-11 h-11 rounded-full flex items-center justify-center text-xs font-bold '+(selected===item.id?'bg-[#E30613] text-white':'bg-white/[.07] text-gray-300')}>{initials(itemName)}</div>
+                      <div className={'w-11 h-11 rounded-full flex items-center justify-center text-xs font-bold '+(selected===item.id?'bg-[#A65A2A] text-white':'bg-white/[.07] text-gray-300')}>{initials(itemName)}</div>
                       {item.priority==='urgent'&&<span className="absolute -right-0.5 -bottom-0.5 w-3 h-3 rounded-full bg-red-500 border-2 border-[#101012]"/>}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -226,7 +226,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <p className={'text-xs truncate flex-1 '+(unread?'text-gray-300':'text-gray-500')}>{item.last_sender_id===user?.id?'Você: ':''}{item.last_message||'Conversa iniciada'}</p>
-                        {unread>0&&<span className="min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] font-bold flex items-center justify-center">{unread>99?'99+':unread}</span>}
+                        {unread>0&&<span className="min-w-5 h-5 px-1 rounded-full bg-[#A65A2A] text-white text-[10px] font-bold flex items-center justify-center">{unread>99?'99+':unread}</span>}
                       </div>
                       <div className="flex items-center gap-1.5 mt-2 min-w-0">
                         <span className={"pm-tag "+(item.status==='resolved'?'pm-tag-success':item.status==='pending'?'pm-tag-pending':'pm-tag-info')}>{statusLabel[item.status||'open']}</span>
@@ -242,9 +242,9 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
           <div className={"flex-1 min-w-0 flex-col "+(staff&&!mobileChat?"hidden md:flex":"flex")}>
             <div className="min-h-[64px] px-3 md:px-4 border-b border-white/10 flex items-center gap-3 bg-[#141416]/95 backdrop-blur shrink-0">
               {staff&&<button onClick={()=>setMobileChat(false)} className="md:hidden w-9 h-9 rounded-lg hover:bg-white/[.05] text-gray-300" aria-label="Voltar para conversas">←</button>}
-              <div className={'w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0 '+(staff?'bg-white/[.07]':'bg-[#E30613] text-white')}>{staff&&conversation?initials(name(conversation)):'PM'}</div>
+              <div className={'w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0 '+(staff?'bg-white/[.07]':'bg-[#A65A2A] text-white')}>{staff&&conversation?initials(name(conversation)):'SA'}</div>
               <div className="min-w-0 flex-1">
-                <p className="font-semibold truncate">{staff ? (conversation ? name(conversation) : 'Selecione uma conversa') : 'Play Moments'}</p>
+                <p className="font-semibold truncate">{staff ? (conversation ? name(conversation) : 'Selecione uma conversa') : 'Sagamente'}</p>
                 {!staff&&<p className="text-[10px] text-emerald-400">{humanMode?'Atendimento com a equipe':'Autoatendimento disponível'}</p>}
                 {staff&&conversation&&<div className="flex items-center gap-1.5 mt-0.5"><span className="text-[10px] text-gray-500 truncate">{assigneeName(conversation)}</span><span className="text-gray-700">•</span><span className="text-[10px] text-gray-500">{statusLabel[conversation.status||'open']}</span></div>}
               </div>
@@ -269,7 +269,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
                 return <div key={message.id}>
                   {dayChanged&&<div className="flex justify-center py-3"><span className="px-2.5 py-1 rounded-full bg-black/35 border border-white/[.05] text-[10px] text-gray-500">{label}</span></div>}
                   <div className={`flex ${mine?'justify-end':'justify-start'} ${sameNext?'mb-[3px]':'mb-2'}`}>
-                    <div className={`max-w-[86%] md:max-w-[68%] px-3 py-2 text-[13px] md:text-sm leading-[1.35] shadow-sm ${mine?'bg-[#E30613] text-white':'bg-[#232326] text-gray-100'} ${mine?(samePrevious?'rounded-tr-md':'rounded-tr-[18px]'):(samePrevious?'rounded-tl-md':'rounded-tl-[18px]')} ${mine?(sameNext?'rounded-br-md':'rounded-br-[18px]'):(sameNext?'rounded-bl-md':'rounded-bl-[18px]')} rounded-l-[18px] rounded-r-[18px]`}>
+                    <div className={`max-w-[86%] md:max-w-[68%] px-3 py-2 text-[13px] md:text-sm leading-[1.35] shadow-sm ${mine?'bg-[#A65A2A] text-white':'bg-[#232326] text-gray-100'} ${mine?(samePrevious?'rounded-tr-md':'rounded-tr-[18px]'):(samePrevious?'rounded-tl-md':'rounded-tl-[18px]')} ${mine?(sameNext?'rounded-br-md':'rounded-br-[18px]'):(sameNext?'rounded-bl-md':'rounded-bl-[18px]')} rounded-l-[18px] rounded-r-[18px]`}>
                       <AttachmentView message={message} />
                       {message.content&&<p className="whitespace-pre-wrap break-words" style={{ overflowWrap:'anywhere' }}>{message.content}</p>}
                       <p className="text-[9px] mt-1 opacity-55 text-right leading-none">{new Date(message.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</p>
@@ -289,9 +289,9 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
             </div>
             <div className="p-4 space-y-5">
               <section className="text-center">
-                <div className="w-16 h-16 rounded-full bg-[#E30613]/15 text-[#ff6573] mx-auto flex items-center justify-center font-bold">{initials(name(conversation))}</div>
+                <div className="w-16 h-16 rounded-full bg-[#A65A2A]/15 text-[#ff6573] mx-auto flex items-center justify-center font-bold">{initials(name(conversation))}</div>
                 <p className="font-bold mt-3">{name(conversation)}</p>
-                <p className="text-xs text-gray-500 mt-1">Cliente Play Moments</p>
+                <p className="text-xs text-gray-500 mt-1">Cliente Sagamente</p>
               </section>
               <section className="space-y-3">
                 <label className="block text-[10px] uppercase tracking-wide text-gray-500">Responsável

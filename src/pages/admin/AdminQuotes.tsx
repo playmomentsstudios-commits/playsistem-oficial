@@ -60,8 +60,8 @@ export function AdminQuotes(){
 
   return <div>
     <div className="flex flex-wrap justify-between gap-4 items-end mb-6">
-      <div><p className="text-[11px] uppercase tracking-[.18em] text-[#E30613] font-semibold">Comercial</p><h1 className="text-2xl font-bold text-white mt-1">Orçamentos</h1><p className="text-sm text-gray-500 mt-1">Crie, envie e acompanhe propostas comerciais.</p></div>
-      <button onClick={()=>setShowForm(v=>!v)} className="px-4 py-2.5 rounded-xl bg-[#E30613]">{showForm?'Fechar':'Novo orçamento'}</button>
+      <div><p className="text-[11px] uppercase tracking-[.18em] text-[#A65A2A] font-semibold">Comercial</p><h1 className="text-2xl font-bold text-white mt-1">Orçamentos</h1><p className="text-sm text-gray-500 mt-1">Crie, envie e acompanhe propostas comerciais.</p></div>
+      <button onClick={()=>setShowForm(v=>!v)} className="px-4 py-2.5 rounded-xl bg-[#A65A2A]">{showForm?'Fechar':'Novo orçamento'}</button>
     </div>
 
     {showForm&&<form onSubmit={create} className="p-5 rounded-2xl bg-[#141416] border border-white/10 mb-5 space-y-3">
@@ -74,7 +74,7 @@ export function AdminQuotes(){
         <label className="text-sm text-gray-400">Validade<input type="date" value={form.valid_until} onChange={e=>setForm({...form,valid_until:e.target.value})} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10"/></label>
         <label className="text-sm text-gray-400">Observações<input value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})} className="mt-1 w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10"/></label>
       </div>
-      <button type="submit" className="px-4 py-2 rounded-xl bg-[#E30613]">Criar orçamento</button>
+      <button type="submit" className="px-4 py-2 rounded-xl bg-[#A65A2A]">Criar orçamento</button>
     </form>}
 
     <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">{[['Em aberto',rows.filter(q=>['draft','sent','viewed'].includes(q.status)).length,'text-amber-300'],['Aceitos',rows.filter(q=>q.status==='accepted').length,'text-emerald-300'],['Recusados',rows.filter(q=>q.status==='rejected').length,'text-red-300'],['Total',rows.length,'text-white']].map(([l,v,t])=><div key={String(l)} className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">{l}</p><p className={'text-xl font-bold mt-2 '+t}>{v}</p></div>)}</div>
@@ -85,7 +85,7 @@ export function AdminQuotes(){
     </div>
 
     <div className="space-y-2">{filtered.map(q=><Link key={q.id} to={'/admin/orcamentos/'+q.id} className="p-4 rounded-2xl bg-[#141416] border border-white/10 flex justify-between gap-4 hover:border-white/20 hover:bg-white/[0.025] transition-colors">
-      <div><b className="text-[#E30613]">{q.quote_number}</b><p>{q.title}</p><p className="text-xs text-gray-500">{q.customer?q.customer.first_name+' '+q.customer.last_name:'Cliente'}</p></div>
+      <div><b className="text-[#A65A2A]">{q.quote_number}</b><p>{q.title}</p><p className="text-xs text-gray-500">{q.customer?q.customer.first_name+' '+q.customer.last_name:'Cliente'}</p></div>
       <div className="text-right"><b>{money(q.total)}</b><div className="mt-2"><span className={"pm-tag "+quoteTag(q.status)}>{rotulo(statusOrcamento,q.status)}</span></div></div>
     </Link>)}</div>
   </div>

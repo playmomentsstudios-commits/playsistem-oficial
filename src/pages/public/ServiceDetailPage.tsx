@@ -45,11 +45,11 @@ export function ServiceDetailPage(){
 
  useSeo({
   title:service?.name||'Serviço',
-  description:(service?.short_description||service?.description||'Serviço profissional Play Moments.').slice(0,160),
+  description:(service?.short_description||service?.description||'Serviço profissional Sagamente.').slice(0,160),
   image:service?catalogCover(service):null,
   canonicalPath:'/servicos/'+slug,
   noindex:!loading&&!service,
-  jsonLd:service?{'@context':'https://schema.org','@type':'Service',name:service.name,description:service.short_description||service.description||undefined,provider:{'@type':'Organization',name:'Play Moments'}}:null,
+  jsonLd:service?{'@context':'https://schema.org','@type':'Service',name:service.name,description:service.short_description||service.description||undefined,provider:{'@type':'Organization',name:'Sagamente'}}:null,
  })
 
  async function hire(){
@@ -80,16 +80,16 @@ export function ServiceDetailPage(){
  }
 
  if(loading)return <PublicLayout><div className="mx-auto px-4 py-16 text-center text-gray-400" style={{maxWidth:900}}>Carregando serviço...</div></PublicLayout>
- if(!service)return <PublicLayout><div className="mx-auto px-4 py-16 text-center" style={{maxWidth:900}}><div className="mx-auto w-14 h-14 rounded-2xl grid place-items-center bg-white/5 text-2xl">◆</div><h1 className="text-2xl font-bold mt-5">Serviço não encontrado</h1><p className="text-gray-400 text-sm mt-2">Ele pode estar em revisão ou ainda não ter sido publicado.</p><div className="flex justify-center gap-3 mt-5"><Link to="/servicos" className="min-h-11 inline-flex items-center px-5 rounded-xl bg-[#E30613] font-semibold">Ver serviços</Link><Link to="/produtos" className="min-h-11 inline-flex items-center px-5 rounded-xl border border-white/10">Produtos e equipamentos</Link></div></div></PublicLayout>
+ if(!service)return <PublicLayout><div className="mx-auto px-4 py-16 text-center" style={{maxWidth:900}}><div className="mx-auto w-14 h-14 rounded-2xl grid place-items-center bg-white/5 text-2xl">◆</div><h1 className="text-2xl font-bold mt-5">Serviço não encontrado</h1><p className="text-gray-400 text-sm mt-2">Ele pode estar em revisão ou ainda não ter sido publicado.</p><div className="flex justify-center gap-3 mt-5"><Link to="/servicos" className="min-h-11 inline-flex items-center px-5 rounded-xl bg-[#A65A2A] font-semibold">Ver serviços</Link><Link to="/produtos" className="min-h-11 inline-flex items-center px-5 rounded-xl border border-white/10">Produtos e equipamentos</Link></div></div></PublicLayout>
 
  const description=lines(service.description)
- const summary=service.short_description||description[0]||'Solução profissional Play Moments.'
+ const summary=service.short_description||description[0]||'Solução profissional Sagamente.'
  const isFixed=service.price_type==='fixed'
  const deliverables=service.deliverables
  const requirements=service.customer_requirements
  const included=service.included_items
  const excluded=service.excluded_items
- const sourceLabel=service.source==='catalog'?'Catálogo Play Moments':'Serviço Play Moments'
+ const sourceLabel=service.source==='catalog'?'Catálogo Sagamente':'Serviço Sagamente'
 
  return <PublicLayout>
   <main className="mx-auto px-4 py-10 sm:py-14" style={{maxWidth:1000}}>
@@ -98,7 +98,7 @@ export function ServiceDetailPage(){
    <div className="grid lg:grid-cols-[1fr_340px] gap-7 lg:gap-10 mt-3">
     <div>
      <div className="flex flex-wrap items-center gap-2">
-      <p className="text-xs uppercase tracking-widest font-semibold text-[#ff6b7a]">{service.category||'Serviço Play Moments'}</p>
+      <p className="text-xs uppercase tracking-widest font-semibold text-[#DFA269]">{service.category||'Serviço Sagamente'}</p>
       <span className="text-[10px] rounded-full border border-white/10 px-2 py-1 text-gray-500">{sourceLabel}</span>
      </div>
      <h1 className="text-3xl sm:text-5xl font-bold mt-2 leading-tight">{service.name}</h1>
@@ -107,7 +107,7 @@ export function ServiceDetailPage(){
      <section className="mt-8">
       <h2 className="text-xl font-bold">O que você recebe</h2>
       <div className="mt-3 rounded-2xl bg-[#141416] border border-white/10 p-5">
-       {description.length>1?<ul className="space-y-3">{description.map((item,i)=><li key={i} className="flex gap-3 text-sm text-gray-300"><span className="text-[#E30613] font-bold">✓</span><span>{item}</span></li>)}</ul>:<p className="text-sm text-gray-300 whitespace-pre-wrap">{service.description||summary}</p>}
+       {description.length>1?<ul className="space-y-3">{description.map((item,i)=><li key={i} className="flex gap-3 text-sm text-gray-300"><span className="text-[#A65A2A] font-bold">✓</span><span>{item}</span></li>)}</ul>:<p className="text-sm text-gray-300 whitespace-pre-wrap">{service.description||summary}</p>}
       </div>
      </section>
 
@@ -135,7 +135,7 @@ export function ServiceDetailPage(){
      <section className="mt-8 border-t border-white/10 pt-6">
       <h2 className="font-bold">Precisa de algo diferente?</h2>
       <p className="text-sm text-gray-400 mt-1">Se o escopo desta solução não atende ao projeto, envie uma necessidade personalizada.</p>
-      <Link to={conversationLink(role,'orcamento')} className="inline-flex min-h-11 items-center mt-2 text-sm text-[#ff6b7a] underline underline-offset-4">Enviar projeto personalizado</Link>
+      <Link to={conversationLink(role,'orcamento')} className="inline-flex min-h-11 items-center mt-2 text-sm text-[#DFA269] underline underline-offset-4">Enviar projeto personalizado</Link>
      </section>
     </div>
 
@@ -143,7 +143,7 @@ export function ServiceDetailPage(){
      <p className="text-xs text-gray-500">{isFixed?'Contratação direta':service.price_type==='starting_at'?'Valor inicial':'Projeto sob medida'}</p>
      <p className="text-2xl font-bold mt-1">{service.price_type==='quote'?'Orçamento personalizado':(service.price_type==='starting_at'?'A partir de ':'')+money(service.price??service.starting_price??0)}</p>
      <p className="text-xs text-gray-400 mt-3">{service.source==='catalog'?'Adicione ao carrinho e siga o checkout da plataforma.':isFixed?'Depois da contratação, você acompanha tudo pela Área do Cliente.':'Você envia a solicitação pela plataforma e recebe a proposta no seu portal.'}</p>
-     <button onClick={hire} disabled={submitting} className="w-full min-h-12 mt-5 px-5 py-3 rounded-xl bg-[#E30613] font-semibold disabled:opacity-60">{submitting?'Enviando...':service.source==='catalog'?'Adicionar e continuar':isFixed?'Contratar pela plataforma':'Pedir proposta'}</button>
+     <button onClick={hire} disabled={submitting} className="w-full min-h-12 mt-5 px-5 py-3 rounded-xl bg-[#A65A2A] font-semibold disabled:opacity-60">{submitting?'Enviando...':service.source==='catalog'?'Adicionar e continuar':isFixed?'Contratar pela plataforma':'Pedir proposta'}</button>
      {!user&&<p className="text-xs text-gray-500 mt-3 text-center">Você cria ou acessa sua conta antes de concluir.</p>}
      <div className="mt-5 pt-4 border-t border-white/10 space-y-2 text-xs text-gray-400">
       <p>✓ Solicitação registrada</p><p>✓ Histórico no portal</p><p>✓ Acompanhamento centralizado</p>

@@ -23,7 +23,7 @@ export function DigitalLiteracyCover({compact=false,className='',style}:Props){
    <span>AI</span><span>WEB</span><span>INFO</span>
   </div>
   <div className="pm-digital-cover__content">
-   <p>ACADEMIA PLAY MOMENTS</p>
+   <p>ACADEMIA SAGAMENTE</p>
    <div className="pm-digital-cover__symbol" aria-hidden="true">⌘</div>
    <h3>Letramento<br/><b>Digital</b></h3>
    <span>Tecnologia · autonomia · futuro</span>
@@ -45,7 +45,7 @@ const DIGITAL_COVER_STYLES=`
  isolation:isolate;
  border-radius:inherit;
  background:
-  radial-gradient(circle at 78% 28%,rgba(227,6,19,.2),transparent 28%),
+  radial-gradient(circle at 78% 28%,rgba(166,90,42,.2),transparent 28%),
   linear-gradient(145deg,#161619 0%,#0b0b0d 58%,#170607 100%);
  color:#fff;
 }
@@ -60,7 +60,7 @@ const DIGITAL_COVER_STYLES=`
  mask-image:linear-gradient(to bottom,#000,transparent 78%);
 }
 .pm-digital-cover__glow{position:absolute;border-radius:50%;filter:blur(34px);opacity:.4}
-.pm-digital-cover__glow-a{width:160px;height:160px;right:-40px;top:-25px;background:#E30613}
+.pm-digital-cover__glow-a{width:160px;height:160px;right:-40px;top:-25px;background:#A65A2A}
 .pm-digital-cover__glow-b{width:130px;height:130px;left:-50px;bottom:-45px;background:#5b33ff;opacity:.2}
 .pm-digital-cover__orbit{position:absolute;border:1px solid rgba(255,61,76,.35);border-radius:50%;pointer-events:none}
 .pm-digital-cover__orbit-a{width:210px;height:210px;right:-45px;top:8%;transform:rotateX(70deg);animation:pm-digital-orbit 11s linear infinite}
@@ -73,10 +73,10 @@ const DIGITAL_COVER_STYLES=`
  border:1px solid rgba(255,255,255,.14);
  border-radius:14px;background:rgba(255,255,255,.045);
  color:#ff4b59;font-size:1.25rem;font-weight:800;
- box-shadow:0 0 30px rgba(227,6,19,.13)
+ box-shadow:0 0 30px rgba(166,90,42,.13)
 }
 .pm-digital-cover__content h3{margin:0;font-size:clamp(1.7rem,4vw,3.4rem);line-height:.87;letter-spacing:-.05em;font-weight:850}
-.pm-digital-cover__content h3 b{color:#E30613;font-weight:900}
+.pm-digital-cover__content h3 b{color:#A65A2A;font-weight:900}
 .pm-digital-cover__content>span{display:block;margin-top:.8rem;color:#8b8b96;font-size:.7rem;line-height:1.4}
 .pm-digital-cover__footer{
  position:absolute;z-index:2;left:1.4rem;right:1.4rem;bottom:1rem;

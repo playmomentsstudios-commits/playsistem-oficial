@@ -27,7 +27,7 @@ Deno.serve(async(req)=>{
   const dueDate=new Date();dueDate.setDate(dueDate.getDate()+1);
   const charge=await asaas("/payments",{method:"POST",body:JSON.stringify({
     customer:customerId,billingType:billing_type,value:order.total/100,
-    dueDate:dueDate.toISOString().slice(0,10),description:"Play Moments - "+order.order_number,
+    dueDate:dueDate.toISOString().slice(0,10),description:"Sagamente - "+order.order_number,
     externalReference:order.id
   })});
   const method="pix_gateway";

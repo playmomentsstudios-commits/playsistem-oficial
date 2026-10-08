@@ -27,7 +27,7 @@ export function AdminCustomers(){
 
   return <div>
     <div className="mb-6">
-      <p className="text-[11px] uppercase tracking-[.18em] text-[#E30613] font-semibold">Comercial</p>
+      <p className="text-[11px] uppercase tracking-[.18em] text-[#A65A2A] font-semibold">Comercial</p>
       <h1 className="text-2xl font-bold text-white mt-1">Clientes</h1>
       <p className="text-sm text-gray-500">Gestão de contas, acesso e relacionamento.</p>
     </div>
@@ -38,7 +38,7 @@ export function AdminCustomers(){
         ['active','Ativos',counts.active],
         ['inactive','Inativos',counts.inactive],
         ['blocked','Bloqueados',counts.blocked],
-      ].map(([value,label,count])=><button key={String(value)} type="button" onClick={()=>setStatus(String(value))} className={'text-left p-3 rounded-xl border transition-colors '+(status===value?'border-[#E30613]/40 bg-[#E30613]/10':'border-white/10 bg-[#141416] hover:border-white/20')}>
+      ].map(([value,label,count])=><button key={String(value)} type="button" onClick={()=>setStatus(String(value))} className={'text-left p-3 rounded-xl border transition-colors '+(status===value?'border-[#A65A2A]/40 bg-[#A65A2A]/10':'border-white/10 bg-[#141416] hover:border-white/20')}>
         <p className="text-[10px] uppercase tracking-wide text-gray-500">{label}</p>
         <p className={'text-xl font-bold mt-2 '+(value==='active'?'text-emerald-300':value==='blocked'?'text-red-300':value==='inactive'?'text-amber-300':'text-white')}>{count}</p>
       </button>)}
@@ -54,7 +54,7 @@ export function AdminCustomers(){
       </select>
     </div>
 
-    {loading?<p>Carregando...</p>:error?<div className="p-6 rounded-2xl border border-red-500/20 bg-red-500/5 text-sm"><p className="text-red-300">{error}</p><button onClick={()=>{setLoading(true);void load()}} className="text-[#E30613] mt-2">Tentar novamente</button></div>:filtered.length===0?<div className="p-6 rounded-2xl border border-white/10 bg-[#141416] text-sm text-gray-500">Nenhum cliente encontrado.</div>:<div className="rounded-2xl border border-white/10 bg-[#111113] overflow-hidden">
+    {loading?<p>Carregando...</p>:error?<div className="p-6 rounded-2xl border border-red-500/20 bg-red-500/5 text-sm"><p className="text-red-300">{error}</p><button onClick={()=>{setLoading(true);void load()}} className="text-[#A65A2A] mt-2">Tentar novamente</button></div>:filtered.length===0?<div className="p-6 rounded-2xl border border-white/10 bg-[#141416] text-sm text-gray-500">Nenhum cliente encontrado.</div>:<div className="rounded-2xl border border-white/10 bg-[#111113] overflow-hidden">
       {filtered.map((customer,index)=><Link key={customer.id} to={'/admin/clientes/'+customer.id} className={'flex items-center gap-4 p-4 hover:bg-white/[0.03] transition-colors '+(index?'border-t border-white/8':'')}>
         <div className="w-10 h-10 rounded-xl bg-white/[0.05] flex items-center justify-center font-bold text-sm">{((customer.first_name||'?').charAt(0)+(customer.last_name||'').charAt(0)).toUpperCase()}</div>
         <div className="min-w-0 flex-1">
