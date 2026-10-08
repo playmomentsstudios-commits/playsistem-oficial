@@ -58,6 +58,8 @@ export function AdminProjectDetailV2(){
   const [loadError,setLoadError]=useState<string|null>(null)
   const [loadWarning,setLoadWarning]=useState<string|null>(null)
   const [stageName,setStageName]=useState('')
+  const [showStageForm,setShowStageForm]=useState(false)
+  const [showTaskForm,setShowTaskForm]=useState(false)
   const [fileTask,setFileTask]=useState('')
   const [fileStage,setFileStage]=useState('')
   const [fileVisible,setFileVisible]=useState(false)
@@ -199,6 +201,7 @@ export function AdminProjectDetailV2(){
     try{
       await portalApi.saveStage({project_id:id,name:stageName.trim(),position:sortedStages.length,status:'pending',client_visible:true})
       setStageName('')
+      setShowStageForm(false)
       toast('Etapa criada.','success')
       await load()
     }catch(error:any){toast(error.message,'error')}
@@ -221,6 +224,7 @@ export function AdminProjectDetailV2(){
         position:tasks.length,
       })
       setTaskForm({title:'',stage_id:'',assigned_to:'',priority:'medium',due_date:'',client_visible:true})
+      setShowTaskForm(false)
       toast('Tarefa criada.','success')
       await load()
     }catch(error:any){toast(error.message,'error')}
@@ -557,22 +561,24 @@ export function AdminProjectDetailV2(){
     <section className="mt-8">
       <h2 className="text-xl font-bold">Etapas</h2>
       <p className="text-sm text-gray-500 mb-3">Organize o fluxo e o que o cliente pode acompanhar</p>
-      <form onSubmit={addStage} className="flex gap-2 mb-4"><input value={stageName} onChange={e=>setStageName(e.target.value)} placeholder="Nova etapa" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 flex-1"/><Button type="submit">Adicionar etapa</Button></form>
+      <button type="button" aria-expanded={showStageForm} onClick={()=>setShowStageForm(value=>!value)} className="mb-4 min-h-10 px-4 rounded-xl border border-[#E30613]/40 bg-[#E30613]/10 text-red-200 text-sm font-semibold hover:bg-[#E30613]/20">{showStageForm?'Fechar formulário':'+ Nova etapa'}</button>
+      {showStageForm&&<form onSubmit={addStage} className="pm-surface p-4 mb-4 flex flex-col sm:flex-row gap-3"><input autoFocus required value={stageName} onChange={e=>setStageName(e.target.value)} placeholder="Nome da etapa (ex.: Produção Dezembro/Janeiro)" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 flex-1"/><div className="flex gap-2"><Button type="submit">Salvar etapa</Button><button type="button" onClick={()=>setShowStageForm(false)} className="px-3 py-2 text-sm text-gray-400">Cancelar</button></div></form>}
     </section>
 
     <section className="mt-8">
       <h2 className="text-xl font-bold">Tarefas por etapa</h2>
       <p className="text-sm text-gray-500 mb-4">Expanda um mês para ver as tarefas; abra uma tarefa para editar checklist e links.</p>
 
-      <form onSubmit={addTask} className="pm-surface p-4 mb-5 grid md:grid-cols-2 lg:grid-cols-5 gap-3">
+      <button type="button" aria-expanded={showTaskForm} onClick={()=>setShowTaskForm(value=>!value)} className="mb-4 min-h-10 px-4 rounded-xl border border-[#E30613]/40 bg-[#E30613]/10 text-red-200 text-sm font-semibold hover:bg-[#E30613]/20">{showTaskForm?'Fechar formulário':'+ Nova tarefa'}</button>
+      {showTaskForm&&<form onSubmit={addTask} className="pm-surface p-4 mb-5 grid md:grid-cols-2 lg:grid-cols-5 gap-3">
         <input value={taskForm.title} onChange={e=>setTaskForm({...taskForm,title:e.target.value})} placeholder="Nova tarefa" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 lg:col-span-2"/>
         <select value={taskForm.stage_id} onChange={e=>setTaskForm({...taskForm,stage_id:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10"><option value="">Sem etapa</option>{sortedStages.map((stage:any)=><option key={stage.id} value={stage.id}>{stage.name}</option>)}</select>
         <select value={taskForm.assigned_to} onChange={e=>setTaskForm({...taskForm,assigned_to:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10"><option value="">Sem responsável</option>{team.map(member=><option key={member.id} value={member.id}>{member.first_name} {member.last_name}</option>)}</select>
         <input type="date" value={taskForm.due_date} onChange={e=>setTaskForm({...taskForm,due_date:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10"/>
         <select value={taskForm.priority} onChange={e=>setTaskForm({...taskForm,priority:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10">{priorities.map(value=><option key={value} value={value}>{rotulo(prioridade,value)}</option>)}</select>
         <label className="flex items-center gap-2 text-sm text-gray-400"><input type="checkbox" checked={taskForm.client_visible} onChange={e=>setTaskForm({...taskForm,client_visible:e.target.checked})}/> Visível ao cliente</label>
-        <div className="lg:col-span-3"><Button type="submit">Criar tarefa</Button></div>
-      </form>
+        <div className="lg:col-span-3 flex items-center gap-3"><Button type="submit">Criar tarefa</Button><button type="button" onClick={()=>setShowTaskForm(false)} className="text-sm text-gray-400">Cancelar</button></div>
+      </form>}
 
       <div className="space-y-3">{[...sortedStages,{id:'sem-etapa',name:'Sem etapa',status:'pending',client_visible:false}].map((stage:any)=>{
         const stageTasks=tasks.filter((task:any)=>stage.id==='sem-etapa'?!task.stage_id:task.stage_id===stage.id).sort((a:any,b:any)=>{
