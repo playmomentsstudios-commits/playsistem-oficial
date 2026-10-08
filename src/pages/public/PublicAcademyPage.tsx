@@ -70,15 +70,15 @@ export function PublicAcademyPage(){
  return <PublicLayout><main>
   <section className="px-4 sm:px-5 py-10 sm:py-14 md:py-20 text-center">
    <div className="max-w-4xl mx-auto">
-    <p className="text-xs uppercase tracking-[.22em] font-bold text-[#E30613]">Academia Play Moments</p>
+    <p className="text-xs uppercase tracking-[.22em] font-bold text-[#A65A2A]">Academia Sagamente</p>
     <h1 className="text-[2.35rem] sm:text-4xl md:text-6xl font-extrabold mt-4 leading-[1.02]">
-     Conhecimento para <span className="text-[#E30613]">fazer acontecer.</span>
+     Conhecimento para <span className="text-[#A65A2A]">fazer acontecer.</span>
     </h1>
     <p className="max-w-2xl mx-auto text-sm sm:text-base text-gray-400 mt-4 sm:mt-5 leading-relaxed">
      Cursos e formações práticas em tecnologia, comunicação e criação. Comece pelos conteúdos gratuitos e avance no seu ritmo.
     </p>
     <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center gap-3 mt-6 sm:mt-7">
-     <button type="button" onClick={goToFreeCourses} className="w-full sm:w-auto min-h-12 px-6 py-3 rounded-xl bg-[#E30613] text-white text-sm font-bold">
+     <button type="button" onClick={goToFreeCourses} className="w-full sm:w-auto min-h-12 px-6 py-3 rounded-xl bg-[#A65A2A] text-white text-sm font-bold">
       Começar gratuitamente
      </button>
      {!isAuthenticated&&<Link to="/cadastro?next=%2Fapp%2Facademia" className="w-full sm:w-auto min-h-12 inline-flex items-center justify-center px-6 py-3 rounded-xl border border-white/10 text-sm font-bold text-gray-300">Criar conta</Link>}
@@ -108,7 +108,7 @@ export function PublicAcademyPage(){
          ? <img src={c.cover_url} alt={`Capa do curso ${c.title}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
          : c.slug==='letramento-digital'
           ? <DigitalLiteracyCover compact className="rounded-none transition-transform duration-500 group-hover:scale-[1.02]"/>
-          : <div className="w-full h-full flex items-center justify-center text-4xl text-[#E30613]">▶</div>}
+          : <div className="w-full h-full flex items-center justify-center text-4xl text-[#A65A2A]">▶</div>}
        </div>
        <div className="p-4 sm:p-5">
         <div className="flex items-center justify-between">

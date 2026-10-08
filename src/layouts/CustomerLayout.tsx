@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { afterAuthPath } from '../lib/navigation'
-import logoUrl from '../assets/logo-play-moments.png'
+const logoUrl = '/sagamente-logo-dark.svg'
 import { portalApi } from '../api/portal'
 
 const MENU = [
@@ -37,7 +37,7 @@ export function CustomerLayout() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0b' }}>
-        <div className="w-8 h-8 rounded-full border-2 border-[#E30613] border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-[#A65A2A] border-t-transparent animate-spin" />
       </div>
     )
   }
@@ -60,7 +60,7 @@ export function CustomerLayout() {
     }}>
       <div className="flex items-center justify-between p-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
         <Link to="/">
-          <img src={logoUrl} alt="Play Moments" style={{ height: 26, width: 'auto' }} />
+          <img src={logoUrl} alt="Sagamente" style={{ height: 26, width: 'auto' }} />
         </Link>
         {mobile && (
           <button onClick={() => setSidebarOpen(false)} style={{ color: '#6b6b78' }}>✕</button>
@@ -69,7 +69,7 @@ export function CustomerLayout() {
 
       <div className="flex items-center gap-3 p-4 mx-3 my-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
         <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg, #E30613, #ff4d6d)', color: '#fff' }}>
+          style={{ background: 'linear-gradient(135deg, #A65A2A, #ff4d6d)', color: '#fff' }}>
           {user?.name?.charAt(0) ?? '?'}
         </div>
         <div className="min-w-0">
@@ -88,14 +88,14 @@ export function CustomerLayout() {
               onClick={() => setSidebarOpen(false)}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 text-sm font-medium transition-all duration-150"
               style={{
-                background: active ? 'rgba(227,6,19,0.12)' : 'transparent',
-                color: active ? '#ff6b7a' : '#9090a0',
-                border: active ? '1px solid rgba(227,6,19,0.2)' : '1px solid transparent',
+                background: active ? 'rgba(166,90,42,0.12)' : 'transparent',
+                color: active ? '#DFA269' : '#9090a0',
+                border: active ? '1px solid rgba(166,90,42,0.2)' : '1px solid transparent',
               }}>
               <span style={{ fontSize: 15 }}>{item.icon}</span>
               {item.label}
-              {item.href === '/app/conversas' && counts.messages > 0 && <span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.messages}</span>}
-              {item.href === '/app/notificacoes' && counts.notifications > 0 && <span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.notifications}</span>}
+              {item.href === '/app/conversas' && counts.messages > 0 && <span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#A65A2A] text-white text-[10px] flex items-center justify-center">{counts.messages}</span>}
+              {item.href === '/app/notificacoes' && counts.notifications > 0 && <span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#A65A2A] text-white text-[10px] flex items-center justify-center">{counts.notifications}</span>}
             </Link>
           )
         })}
@@ -136,7 +136,7 @@ export function CustomerLayout() {
               <path d="M3 12h18M3 6h18M3 18h18" />
             </svg>
           </button>
-          <img src={logoUrl} alt="Play Moments" style={{ height: 24 }} />
+          <img src={logoUrl} alt="Sagamente" style={{ height: 24 }} />
           <div style={{ width: 22 }} />
         </div>
 

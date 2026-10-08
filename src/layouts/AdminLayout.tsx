@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import logoUrl from '../assets/logo-play-moments.png'
+const logoUrl = '/sagamente-logo-dark.svg'
 import { portalApi } from '../api/portal'
 import { hasStaffPermission } from '../lib/staffPermissions'
 import { settingsApi,type AppSettings } from '../api/settings'
@@ -43,7 +43,7 @@ export function AdminLayout() {
   const [openGroups,setOpenGroups]=useState<string[]>([])
   const [accountOpen,setAccountOpen]=useState(false)
   const [staffBrand,setStaffBrand]=useState<Pick<AppSettings,'staff_logo_url'|'staff_platform_name'|'staff_primary_color'|'staff_background_color'|'staff_surface_color'|'staff_text_color'>>({
-    staff_logo_url:'/staff-logo.svg',staff_platform_name:'Área do colaborador',staff_primary_color:'#E30613',
+    staff_logo_url:'/staff-logo.svg',staff_platform_name:'Área do colaborador',staff_primary_color:'#A65A2A',
     staff_background_color:'#F4F6F8',staff_surface_color:'#FFFFFF',staff_text_color:'#17171A',
   })
   useEffect(() => {
@@ -65,7 +65,7 @@ export function AdminLayout() {
     settingsApi.appSettings().then(row=>{if(row)setStaffBrand({
       staff_logo_url:row.staff_logo_url||'/staff-logo.svg',
       staff_platform_name:row.staff_platform_name||'Área do colaborador',
-      staff_primary_color:row.staff_primary_color||'#E30613',
+      staff_primary_color:row.staff_primary_color||'#A65A2A',
       staff_background_color:row.staff_background_color||'#F4F6F8',
       staff_surface_color:row.staff_surface_color||'#FFFFFF',
       staff_text_color:row.staff_text_color||'#17171A',
@@ -75,7 +75,7 @@ export function AdminLayout() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#0a0a0b' }}>
-        <div className="w-8 h-8 rounded-full border-2 border-[#E30613] border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-[#A65A2A] border-t-transparent animate-spin" />
       </div>
     )
   }
@@ -100,14 +100,14 @@ export function AdminLayout() {
       <div className="px-5 py-5 border-b" style={{ borderColor: collaboratorMode?'#e1e4e8':'rgba(255,255,255,0.05)' }}>
         <div className="flex items-center justify-between gap-3">
           <Link to="/admin" className="block">
-            <div className={collaboratorMode?'px-1 py-1':'contents'}><img src={collaboratorMode?(staffBrand.staff_logo_url||'/staff-logo.svg'):logoUrl} alt="Play Moments" className="h-12 w-auto max-w-full object-contain" /></div>
+            <div className={collaboratorMode?'px-1 py-1':'contents'}><img src={collaboratorMode?(staffBrand.staff_logo_url||'/staff-logo.svg'):logoUrl} alt="Sagamente" className="h-12 w-auto max-w-full object-contain" /></div>
           </Link>
           {mobile && <button aria-label="Fechar menu administrativo" onClick={() => setSidebarOpen(false)} className="w-11 h-11 flex items-center justify-center text-gray-600 hover:text-gray-300">✕</button>}
         </div>
       </div>
 
       <nav className="flex-1 px-3 pt-4 overflow-y-auto pb-5">
-        <Link to="/admin" onClick={()=>setSidebarOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-3 text-sm font-semibold transition-all" style={{background:isActive('/admin',true)?'rgba(227,6,19,0.14)':'transparent',color:isActive('/admin',true)?(collaboratorMode?'#b4000c':'#ff6b7a'):(collaboratorMode?'#44444d':'#a0a0ad'),border:isActive('/admin',true)?'1px solid rgba(227,6,19,0.22)':'1px solid transparent'}}><span className="text-[#E30613]"><MenuIcon name="dashboard" /></span>Painel</Link>
+        <Link to="/admin" onClick={()=>setSidebarOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-3 text-sm font-semibold transition-all" style={{background:isActive('/admin',true)?'rgba(166,90,42,0.14)':'transparent',color:isActive('/admin',true)?(collaboratorMode?'#b4000c':'#DFA269'):(collaboratorMode?'#44444d':'#a0a0ad'),border:isActive('/admin',true)?'1px solid rgba(166,90,42,0.22)':'1px solid transparent'}}><span className="text-[#A65A2A]"><MenuIcon name="dashboard" /></span>Painel</Link>
         {MENU_GROUPS.map(group=>{
           const visibleItems=group.items.filter((item:any)=>{
             if(user?.role==='admin')return true
@@ -118,15 +118,15 @@ export function AdminLayout() {
           const groupActive=visibleItems.some((item:any)=>isActive(item.href))
           const open=openGroups.includes(group.label)||groupActive
           return <div key={group.label} className="mb-1.5">
-            <button type="button" onClick={()=>setOpenGroups(current=>current.includes(group.label)?current.filter(value=>value!==group.label):[...current,group.label])} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all" style={{color:groupActive?(collaboratorMode?'#b4000c':'#ff6b7a'):(collaboratorMode?'#55555f':'#9090a0'),background:groupActive?'rgba(227,6,19,0.06)':'transparent'}}>
-              <span className="text-[#E30613]"><MenuIcon name={group.icon} size={16} /></span><span>{group.label}</span><span className="ml-auto text-[10px] text-gray-600">{open?'−':'+'}</span>
+            <button type="button" onClick={()=>setOpenGroups(current=>current.includes(group.label)?current.filter(value=>value!==group.label):[...current,group.label])} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all" style={{color:groupActive?(collaboratorMode?'#b4000c':'#DFA269'):(collaboratorMode?'#55555f':'#9090a0'),background:groupActive?'rgba(166,90,42,0.06)':'transparent'}}>
+              <span className="text-[#A65A2A]"><MenuIcon name={group.icon} size={16} /></span><span>{group.label}</span><span className="ml-auto text-[10px] text-gray-600">{open?'−':'+'}</span>
             </button>
             {open&&<div className="ml-[18px] pl-3 border-l border-white/[0.07] mt-1 mb-2">{visibleItems.map((item:any)=>{
               const active=isActive(item.href)
-              return <Link key={item.href} to={item.href} onClick={()=>setSidebarOpen(false)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all" style={{background:active?'rgba(227,6,19,0.12)':'transparent',color:active?(collaboratorMode?'#b4000c':'#ff6b7a'):(collaboratorMode?'#5f5f68':'#777784')}}>
-                <span className={active?'text-[#ff5364]':'text-gray-600'}><MenuIcon name={item.icon} size={15} /></span><span className="truncate">{item.label}</span>
-                {item.href==='/admin/conversas'&&counts.messages>0&&<span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.messages}</span>}
-                {item.href==='/admin/notificacoes'&&counts.notifications>0&&<span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[10px] flex items-center justify-center">{counts.notifications}</span>}
+              return <Link key={item.href} to={item.href} onClick={()=>setSidebarOpen(false)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all" style={{background:active?'rgba(166,90,42,0.12)':'transparent',color:active?(collaboratorMode?'#b4000c':'#DFA269'):(collaboratorMode?'#5f5f68':'#777784')}}>
+                <span className={active?'text-[#DFA269]':'text-gray-600'}><MenuIcon name={item.icon} size={15} /></span><span className="truncate">{item.label}</span>
+                {item.href==='/admin/conversas'&&counts.messages>0&&<span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#A65A2A] text-white text-[10px] flex items-center justify-center">{counts.messages}</span>}
+                {item.href==='/admin/notificacoes'&&counts.notifications>0&&<span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#A65A2A] text-white text-[10px] flex items-center justify-center">{counts.notifications}</span>}
               </Link>
             })}</div>}
           </div>
@@ -160,20 +160,20 @@ export function AdminLayout() {
                 <path d="M3 12h18M3 6h18M3 18h18" />
               </svg>
             </button>
-            <span className="text-sm font-semibold" style={{ color: collaboratorMode?'#17171a':'#f0f0f2' }}>{collaboratorMode?staffBrand.staff_platform_name:'Play Moments'}</span>
+            <span className="text-sm font-semibold" style={{ color: collaboratorMode?'#17171a':'#f0f0f2' }}>{collaboratorMode?staffBrand.staff_platform_name:'Sagamente'}</span>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <Link to="/admin/conversas" aria-label="Mensagens" title="Mensagens" className="relative w-10 h-10 rounded-xl border border-white/[0.07] bg-white/[0.025] text-gray-400 transition-colors flex items-center justify-center">
               <MenuIcon name="conversations" size={17}/>
-              {counts.messages>0&&<span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-[var(--staff-surface,#0a0a0b)]">{counts.messages>99?'99+':counts.messages}</span>}
+              {counts.messages>0&&<span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-[#A65A2A] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-[var(--staff-surface,#0a0a0b)]">{counts.messages>99?'99+':counts.messages}</span>}
             </Link>
             <Link to="/admin/notificacoes" aria-label="Notificações" title="Notificações" className="relative w-10 h-10 rounded-xl border border-white/[0.07] bg-white/[0.025] text-gray-400 transition-colors flex items-center justify-center">
               <MenuIcon name="notifications" size={17}/>
-              {counts.notifications>0&&<span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-[#E30613] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-[var(--staff-surface,#0a0a0b)]">{counts.notifications>99?'99+':counts.notifications}</span>}
+              {counts.notifications>0&&<span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-[#A65A2A] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-[var(--staff-surface,#0a0a0b)]">{counts.notifications>99?'99+':counts.notifications}</span>}
             </Link>
             <div className="relative">
               <button type="button" aria-haspopup="menu" aria-expanded={accountOpen} onClick={()=>setAccountOpen(v=>!v)} className="flex items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.025] px-2.5 py-1.5 hover:bg-white/[0.05] transition-colors">
-                <span className="w-8 h-8 rounded-lg bg-[#E30613] text-white text-xs font-bold flex items-center justify-center">{(user?.name||'A').trim().charAt(0).toUpperCase()}</span>
+                <span className="w-8 h-8 rounded-lg bg-[#A65A2A] text-white text-xs font-bold flex items-center justify-center">{(user?.name||'A').trim().charAt(0).toUpperCase()}</span>
                 <span className="hidden sm:block text-left"><span className="block text-xs font-semibold text-gray-200 max-w-[150px] truncate">{user?.name||'Administrador'}</span><span className="block text-[9px] text-gray-600">{user?.role==='admin'?'Administrador':'Colaborador'}</span></span>
                 <span className="text-gray-600 text-xs">⌄</span>
               </button>
@@ -181,7 +181,7 @@ export function AdminLayout() {
                 <Link to="/app/perfil" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="about" size={15}/><span>Perfil</span></Link>
                 {user?.role==='admin'&&<Link to="/admin/configuracoes" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="settings" size={15}/><span>Configurações</span></Link>}
                 <div className="my-1 border-t border-white/[0.07]"/>
-                <button onClick={()=>{setAccountOpen(false);void handleLogout()}} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-[#ff6573] hover:bg-[#E30613]/10"><span>↩</span><span>Sair</span></button>
+                <button onClick={()=>{setAccountOpen(false);void handleLogout()}} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-[#ff6573] hover:bg-[#A65A2A]/10"><span>↩</span><span>Sair</span></button>
               </div></>}
             </div>
           </div>

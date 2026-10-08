@@ -1,6 +1,6 @@
 import { useEffect,useState,type CSSProperties,type PointerEvent } from 'react'
 import { Link } from 'react-router-dom'
-import logoUrl from '../../assets/logo-play-moments.png'
+const logoUrl = '/sagamente-logo-dark.svg'
 
 const PARTICLES=Array.from({length:24},(_,i)=>({
  id:i,
@@ -74,7 +74,7 @@ export function LoginExperiencePanel(){
 
   <div className="pm-login-content">
    <Link to="/" className="relative z-10 w-fit">
-    <img src={logoUrl} alt="Play Moments" style={{height:32}}/>
+    <img src={logoUrl} alt="Sagamente" style={{height:32}}/>
    </Link>
 
    <div className="pm-login-copy">
@@ -106,7 +106,7 @@ export function LoginExperiencePanel(){
    </div>
 
    <div className="pm-login-footer">
-    <span>© {new Date().getFullYear()} Play Moments</span>
+    <span>© {new Date().getFullYear()} Sagamente</span>
     <Link to="/academia">Conhecer a Academia →</Link>
    </div>
   </div>
@@ -156,7 +156,7 @@ const LOGIN_LAB_STYLES=`
  opacity:.55;
 }
 .pm-login-glow{position:absolute;border-radius:50%;filter:blur(75px);opacity:.3}
-.pm-login-glow-a{width:440px;height:440px;right:-130px;top:4%;background:#E30613}
+.pm-login-glow-a{width:440px;height:440px;right:-130px;top:4%;background:#A65A2A}
 .pm-login-glow-b{width:340px;height:340px;right:18%;bottom:-170px;background:#6539ff;opacity:.16}
 .pm-login-orbit{position:absolute;border:1px solid rgba(255,55,70,.34);border-radius:50%;right:4%;top:49%}
 .pm-login-orbit-a{width:430px;height:430px;transform:translateY(-50%) rotateX(72deg) rotateZ(12deg);animation:pm-login-orbit-a 15s linear infinite}
@@ -180,15 +180,15 @@ const LOGIN_LAB_STYLES=`
 .pm-login-object-screen{
  inset:22px;
  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.75rem;
- background:radial-gradient(circle at 50% 42%,rgba(227,6,19,.18),transparent 44%),rgba(0,0,0,.14);
+ background:radial-gradient(circle at 50% 42%,rgba(166,90,42,.18),transparent 44%),rgba(0,0,0,.14);
  border:1px solid rgba(255,255,255,.1);
  transform:translateZ(28px) rotateX(-7deg) rotateY(-24deg);
 }
-.pm-login-object-screen span{display:grid;place-items:center;width:82px;height:82px;border-radius:26px;border:1px solid rgba(255,70,82,.45);background:rgba(227,6,19,.1);color:#fff;font-size:1.6rem;font-weight:900;box-shadow:0 0 50px rgba(227,6,19,.18)}
+.pm-login-object-screen span{display:grid;place-items:center;width:82px;height:82px;border-radius:26px;border:1px solid rgba(255,70,82,.45);background:rgba(166,90,42,.1);color:#fff;font-size:1.6rem;font-weight:900;box-shadow:0 0 50px rgba(166,90,42,.18)}
 .pm-login-object-screen small{font-size:.55rem;letter-spacing:.22em;font-weight:800;color:#73737d}
 .pm-login-object-shadow{position:absolute;left:50%;bottom:11%;width:220px;height:44px;transform:translateX(-50%) rotateX(76deg);border-radius:50%;background:#5b0910;filter:blur(24px);opacity:.55}
 .pm-login-particles{position:absolute;inset:0}
-.pm-login-particles i{position:absolute;display:block;border-radius:50%;background:#E30613;box-shadow:0 0 12px #E30613;opacity:.12;animation:pm-login-particle 3.6s ease-in-out infinite}
+.pm-login-particles i{position:absolute;display:block;border-radius:50%;background:#A65A2A;box-shadow:0 0 12px #A65A2A;opacity:.12;animation:pm-login-particle 3.6s ease-in-out infinite}
 .pm-login-float{position:absolute;right:3%;z-index:2;min-width:145px;padding:.7rem .85rem;border:1px solid rgba(255,255,255,.08);background:rgba(8,8,10,.42);backdrop-filter:blur(14px);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:1rem}
 .pm-login-float span{font-size:.48rem;letter-spacing:.14em;color:#5d5d68}.pm-login-float b{font-size:.58rem;color:#d8d8dd}
 .pm-login-float-a{top:15%}.pm-login-float-b{bottom:23%;right:17%}
@@ -197,12 +197,12 @@ const LOGIN_LAB_STYLES=`
 .pm-login-copy{max-width:520px}
 .pm-login-copy>p:first-child{margin:0 0 1rem;color:#ff5967;font-size:.66rem;font-weight:800;letter-spacing:.18em}
 .pm-login-copy h2{margin:0;color:#f3f3f5;font-size:clamp(2.5rem,4vw,4.4rem);line-height:.9;letter-spacing:-.05em;font-weight:900}
-.pm-login-copy h2 span{display:block;color:#E30613;text-shadow:0 0 45px rgba(227,6,19,.13)}
-.pm-login-copyline{display:flex;align-items:center;gap:.7rem;margin-top:1.15rem}.pm-login-copyline i{width:36px;height:1px;background:#E30613;box-shadow:0 0 14px rgba(227,6,19,.6)}.pm-login-copyline b{font-size:.52rem;letter-spacing:.12em;color:#60606b}
+.pm-login-copy h2 span{display:block;color:#A65A2A;text-shadow:0 0 45px rgba(166,90,42,.13)}
+.pm-login-copyline{display:flex;align-items:center;gap:.7rem;margin-top:1.15rem}.pm-login-copyline i{width:36px;height:1px;background:#A65A2A;box-shadow:0 0 14px rgba(166,90,42,.6)}.pm-login-copyline b{font-size:.52rem;letter-spacing:.12em;color:#60606b}
 .pm-login-lead{max-width:430px;margin:1.15rem 0 0;color:#868692;font-size:.9rem;line-height:1.65}
 .pm-login-features{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem;margin-top:1.6rem;max-width:440px}
 .pm-login-features div{position:relative;display:flex;align-items:center;gap:.65rem;min-height:48px;padding:.75rem .85rem;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(255,255,255,.03);backdrop-filter:blur(8px)}
-.pm-login-features span{color:#E30613;font-size:.7rem}.pm-login-features b{color:#b4b4bd;font-size:.68rem;font-weight:650}.pm-login-features small{margin-left:auto;color:#494952;font-size:.48rem}
+.pm-login-features span{color:#A65A2A;font-size:.7rem}.pm-login-features b{color:#b4b4bd;font-size:.68rem;font-weight:650}.pm-login-features small{margin-left:auto;color:#494952;font-size:.48rem}
 .pm-login-footer{display:flex;align-items:center;gap:1rem;color:#4d4d57;font-size:.62rem}.pm-login-footer a:hover{color:#fff}
 
 .pm-login-mobile{
@@ -223,17 +223,17 @@ const LOGIN_LAB_STYLES=`
  mask-image:linear-gradient(to bottom,#000,transparent 78%);
  opacity:.55;
 }
-.pm-login-mobile-glow{position:absolute;width:230px;height:230px;right:-72px;top:-70px;border-radius:50%;background:#E30613;filter:blur(55px);opacity:.24}
+.pm-login-mobile-glow{position:absolute;width:230px;height:230px;right:-72px;top:-70px;border-radius:50%;background:#A65A2A;filter:blur(55px);opacity:.24}
 .pm-login-mobile-orbit{position:absolute;width:230px;height:230px;right:-60px;top:-4px;border:1px solid rgba(255,65,78,.3);border-radius:50%;transform:rotateX(72deg) rotateZ(10deg);animation:pm-login-mobile-orbit 12s linear infinite}
 .pm-login-mobile-object{position:absolute;right:28px;top:24px;width:105px;height:130px;animation:pm-login-float 5s ease-in-out infinite}
 .pm-login-mobile-object-face,.pm-login-mobile-object-screen{position:absolute;inset:0;border-radius:24px}
 .pm-login-mobile-object-face{background:linear-gradient(145deg,rgba(255,255,255,.17),transparent 20%),linear-gradient(145deg,#53131a,#141419 53%,#08080b);border:1px solid rgba(255,255,255,.16);box-shadow:inset -12px -12px 30px rgba(0,0,0,.42),18px 22px 50px rgba(0,0,0,.4);transform:rotateX(-6deg) rotateY(-22deg)}
-.pm-login-mobile-object-screen{inset:12px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.08);background:radial-gradient(circle,rgba(227,6,19,.18),transparent 58%);transform:translateZ(16px) rotateX(-6deg) rotateY(-22deg)}
-.pm-login-mobile-object-screen span{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;border:1px solid rgba(255,70,82,.38);background:rgba(227,6,19,.08);font-size:.85rem;font-weight:900;color:#fff}
+.pm-login-mobile-object-screen{inset:12px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.08);background:radial-gradient(circle,rgba(166,90,42,.18),transparent 58%);transform:translateZ(16px) rotateX(-6deg) rotateY(-22deg)}
+.pm-login-mobile-object-screen span{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;border:1px solid rgba(255,70,82,.38);background:rgba(166,90,42,.08);font-size:.85rem;font-weight:900;color:#fff}
 .pm-login-mobile-copy{position:absolute;z-index:2;left:1.25rem;right:138px;top:50%;transform:translateY(-50%)}
 .pm-login-mobile-copy p{margin:0 0 .55rem;color:#ff5967;font-size:.48rem;font-weight:800;letter-spacing:.13em}
 .pm-login-mobile-copy h2{margin:0;color:#f2f2f4;font-size:1.75rem;line-height:.9;letter-spacing:-.045em;font-weight:900}
-.pm-login-mobile-copy h2 b{color:#E30613}
+.pm-login-mobile-copy h2 b{color:#A65A2A}
 @keyframes pm-login-mobile-orbit{to{transform:rotateX(72deg) rotateZ(370deg)}}
 @media(max-width:390px){
  .pm-login-mobile{height:188px}

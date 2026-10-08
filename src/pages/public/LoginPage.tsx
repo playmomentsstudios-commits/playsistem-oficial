@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { LoginExperiencePanel, LoginMobileExperience } from '../../components/auth/LoginExperiencePanel'
 import { afterAuthPath, authLink, safeReturnPath } from '../../lib/navigation'
-import logoUrl from '../../assets/logo-play-moments.png'
+const logoUrl = '/sagamente-logo-dark.svg'
 
 export function LoginPage() {
   const [email, setEmail] = useState('')
@@ -49,11 +49,11 @@ export function LoginPage() {
         <div className="w-full max-w-sm">
           <LoginMobileExperience />
           <Link to="/" className="lg:hidden flex justify-center mb-6">
-            <img src={logoUrl} alt="Play Moments" style={{ height: 26 }} />
+            <img src={logoUrl} alt="Sagamente" style={{ height: 26 }} />
           </Link>
 
-          <p className="text-[10px] sm:text-xs uppercase tracking-[.18em] font-bold mb-2 sm:mb-3" style={{color:'#E30613'}}>Área pessoal</p><h1 className="text-[1.85rem] sm:text-3xl font-extrabold mb-2" style={{ color: '#f0f0f2' }}>Acesse sua conta</h1>
-          <p className="text-sm mb-6 sm:mb-7 leading-relaxed" style={{ color: '#777784' }}>Continue de onde parou na Play Moments. Ainda não tem conta? <Link to={authLink('/cadastro', from)} className="font-semibold" style={{ color: '#ff5364' }}>Criar gratuitamente</Link>.</p>
+          <p className="text-[10px] sm:text-xs uppercase tracking-[.18em] font-bold mb-2 sm:mb-3" style={{color:'#A65A2A'}}>Área pessoal</p><h1 className="text-[1.85rem] sm:text-3xl font-extrabold mb-2" style={{ color: '#f0f0f2' }}>Acesse sua conta</h1>
+          <p className="text-sm mb-6 sm:mb-7 leading-relaxed" style={{ color: '#777784' }}>Continue de onde parou na Sagamente. Ainda não tem conta? <Link to={authLink('/cadastro', from)} className="font-semibold" style={{ color: '#DFA269' }}>Criar gratuitamente</Link>.</p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 sm:gap-4">
             <Input label="E-mail" type="email" placeholder="seu@email.com"
@@ -71,7 +71,7 @@ export function LoginPage() {
               Entrar
             </Button>
           </form>
-          <div className="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-white/[.06] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3"><span className="text-xs text-gray-600">Quer apenas conhecer os cursos?</span><Link to="/academia" className="text-xs font-bold text-[#ff5364]">Ver Academia →</Link></div>
+          <div className="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-white/[.06] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3"><span className="text-xs text-gray-600">Quer apenas conhecer os cursos?</span><Link to="/academia" className="text-xs font-bold text-[#DFA269]">Ver Academia →</Link></div>
         </div>
       </div>
     </div>

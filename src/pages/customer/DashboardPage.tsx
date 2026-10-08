@@ -69,12 +69,12 @@ export function DashboardPage(){
   const progress=nextThreshold?Math.min(100,Math.max(0,((loyalty?.lifetime_service_spend||0)-currentFloor)/(nextThreshold-currentFloor)*100)):100
 
   return <div>
-    <p className="text-[11px] uppercase tracking-[.18em] text-[#E30613] font-semibold">Minha Play Moments</p>
+    <p className="text-[11px] uppercase tracking-[.18em] text-[#A65A2A] font-semibold">Minha área Sagamente</p>
     <h1 className="text-2xl font-bold text-white mt-1">Olá, {user?.name}</h1>
     <p className="text-sm text-gray-500 mt-1 mb-6">Veja primeiro o que precisa da sua atenção.</p>
 
     {loading?<section role="status" aria-live="polite" className="mb-5 p-4 rounded-2xl bg-white/[.025] border border-white/10 text-sm text-gray-500">Organizando sua área…</section>:loadError?<section role="alert" className="mb-5 p-4 rounded-2xl bg-red-500/[.04] border border-red-500/15"><p className="text-sm font-semibold text-red-200">Algumas informações não puderam ser atualizadas.</p><p className="text-xs text-gray-500 mt-1">Você pode continuar navegando normalmente e tentar novamente ao recarregar.</p></section>:<section className="mb-5 p-4 rounded-2xl bg-white/[.025] border border-white/10">
-      <div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-[10px] uppercase tracking-[.16em] text-gray-600 font-semibold">Próxima ação</p><p className={"text-base font-semibold mt-1 "+nextAction.tone}>{nextAction.label}</p><p className="text-xs text-gray-500 mt-1">{nextAction.detail}</p></div><Link to={nextAction.href} className="min-h-11 px-4 rounded-xl bg-[#E30613] text-white text-xs font-bold inline-flex items-center justify-center">Continuar →</Link></div>
+      <div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-[10px] uppercase tracking-[.16em] text-gray-600 font-semibold">Próxima ação</p><p className={"text-base font-semibold mt-1 "+nextAction.tone}>{nextAction.label}</p><p className="text-xs text-gray-500 mt-1">{nextAction.detail}</p></div><Link to={nextAction.href} className="min-h-11 px-4 rounded-xl bg-[#A65A2A] text-white text-xs font-bold inline-flex items-center justify-center">Continuar →</Link></div>
     </section>}
 
     <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6">{cards.map(([label,value,href,tone])=><Link key={String(label)} to={String(href)} className="p-4 rounded-2xl bg-[#141416] border border-white/10 hover:border-white/20 transition-colors"><p className={'text-2xl font-bold '+tone}>{value}</p><p className="text-xs text-gray-500 mt-1">{label}</p></Link>)}</div>
@@ -88,18 +88,18 @@ export function DashboardPage(){
         </div>
         <div className="text-right">
           <p className="text-xs text-gray-500 uppercase tracking-wide">Play Cash disponível</p>
-          <p className="text-2xl font-bold text-[#E30613] mt-1">{money(available)}</p>
-          <p className="text-xs text-gray-500 mt-1">Crédito para descontos dentro da Play Moments</p>
+          <p className="text-2xl font-bold text-[#A65A2A] mt-1">{money(available)}</p>
+          <p className="text-xs text-gray-500 mt-1">Crédito para descontos dentro da Sagamente</p>
         </div>
       </div>
       {nextThreshold&&<div className="mt-5">
         <div className="flex justify-between text-xs text-gray-500"><span>Progresso para o próximo nível</span><span>{Math.round(progress)}%</span></div>
-        <div className="h-2 bg-white/10 rounded mt-2"><div className="h-2 bg-[#E30613] rounded" style={{width:progress+'%'}}/></div>
+        <div className="h-2 bg-white/10 rounded mt-2"><div className="h-2 bg-[#A65A2A] rounded" style={{width:progress+'%'}}/></div>
         <p className="text-xs text-gray-600 mt-2">Próximo nível em {money(nextThreshold)} de serviços pagos.</p>
       </div>}
     </section>
 
      <h2 className="font-bold mt-8 mb-3">Ações rápidas</h2>
-    <div className="flex flex-wrap gap-3"><Link className="px-4 py-3 rounded-xl bg-[#E30613]" to="/app/conversas">Falar com a Play Moments</Link><Link className="px-4 py-3 rounded-xl bg-white/5" to="/app/projetos">Meus projetos</Link><Link className="px-4 py-3 rounded-xl bg-white/5" to="/app/arquivos">Arquivos</Link></div>
+    <div className="flex flex-wrap gap-3"><Link className="px-4 py-3 rounded-xl bg-[#A65A2A]" to="/app/conversas">Falar com a Sagamente</Link><Link className="px-4 py-3 rounded-xl bg-white/5" to="/app/projetos">Meus projetos</Link><Link className="px-4 py-3 rounded-xl bg-white/5" to="/app/arquivos">Arquivos</Link></div>
   </div>
 }

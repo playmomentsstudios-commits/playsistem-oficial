@@ -23,7 +23,7 @@ const LAB_MODES: LabMode[] = [
     copy: 'Experiências web, plataformas, tecnologia e fluxos que conectam operação, conteúdo e negócio.',
     cta: 'Explorar Tech',
     href: '/tech',
-    accent: '#ff3947',
+    accent: '#2E5D46',
     symbol: '</>',
   },
   {
@@ -34,7 +34,7 @@ const LAB_MODES: LabMode[] = [
     copy: 'Identidade visual e design digital pensados para funcionar em cada ponto de contato.',
     cta: 'Explorar Design',
     href: '/design',
-    accent: '#ff7a45',
+    accent: '#A65A2A',
     symbol: '◆',
   },
   {
@@ -45,7 +45,7 @@ const LAB_MODES: LabMode[] = [
     copy: 'Produção audiovisual e conteúdo com direção visual, ritmo e acabamento profissional.',
     cta: 'Explorar Studio',
     href: '/studio',
-    accent: '#8c6cff',
+    accent: '#C48A3A',
     symbol: '●',
   },
   {
@@ -56,7 +56,7 @@ const LAB_MODES: LabMode[] = [
     copy: 'Prototipação, automações e experiências generativas aplicadas a projetos reais.',
     cta: 'Conhecer soluções',
     href: '/servicos',
-    accent: '#33c7d6',
+    accent: '#93704E',
     symbol: '✦',
   },
 ]
@@ -77,7 +77,7 @@ type Props={
 }
 
 export function PlayLabExperience({
- accent='#E30613',
+ accent='#A65A2A',
  clientHref='/login?next=%2Fapp%2Fdashboard',
  quoteHref='/servicos',
  academyHref='/academia',
@@ -145,8 +145,8 @@ export function PlayLabExperience({
         <div className="pm-lab-aurora pm-lab-aurora-b"/>
         <div className="pm-lab-grid"/>
         <div className="pm-lab-horizon"/>
-        <div className="pm-lab-word pm-lab-word-top">PLAY</div>
-        <div className="pm-lab-word pm-lab-word-bottom">MOMENTS</div>
+        <div className="pm-lab-word pm-lab-word-top">SAGA</div>
+        <div className="pm-lab-word pm-lab-word-bottom">MENTE</div>
         <div className="pm-lab-orbit pm-lab-orbit-a"/>
         <div className="pm-lab-orbit pm-lab-orbit-b"/>
         <div className={`pm-lab-particles ${burst?'is-bursting':''}`}>
@@ -172,7 +172,7 @@ export function PlayLabExperience({
           <span>MODE</span><b>{active.label.toUpperCase()}</b>
         </div>
         <div className="pm-lab-float-card pm-lab-float-card-b">
-          <span>PLAY LAB</span><b>0{LAB_MODES.findIndex(mode=>mode.key===active.key)+1} / 04</b>
+          <span>SAGA LAB</span><b>0{LAB_MODES.findIndex(mode=>mode.key===active.key)+1} / 04</b>
         </div>
       </div>
 
@@ -181,21 +181,20 @@ export function PlayLabExperience({
       <div className="pm-lab-content">
         <div className="pm-lab-topline">
           <span>PLAY MOMENTS / EXPERIENCE LAB</span>
-          <span>MOVE · TOUCH · EXPLORE</span>
+          <span>CRIAR · CONECTAR · TRANSFORMAR</span>
         </div>
 
         <div className="pm-lab-maincopy">
           <p className="pm-lab-kicker">CRIAÇÃO + TECNOLOGIA + CONHECIMENTO</p>
           <h1 id="play-lab-title">
-            Tiramos ideias
-            <span> do papel.</span>
+            Ideias inteligentes.
+            <span> Soluções que transformam.</span>
           </h1>
           <p className="pm-lab-lead">
-            Da identidade visual ao sistema, do audiovisual aos equipamentos:
-            uma plataforma para criar, contratar, aprender e acompanhar.
+            Design, tecnologia, comunicação e cultura. Da ideia à realização, com soluções para criar, contratar, aprender e acompanhar.
           </p>
 
-          <div className="pm-lab-tabs" role="tablist" aria-label="Explorar áreas da Play Moments">
+          <div className="pm-lab-tabs" role="tablist" aria-label="Explorar áreas da Sagamente">
             {LAB_MODES.map(mode=><button
               key={mode.key}
               type="button"
@@ -238,7 +237,7 @@ export function PlayLabExperience({
 
 const PLAY_LAB_STYLES = `
 .pm-lab-hero{
- --pm-lab-accent:#E30613;
+ --pm-lab-accent:#A65A2A;
  --pm-lab-tilt-x:0deg;
  --pm-lab-tilt-y:0deg;
  position:relative;
@@ -287,7 +286,7 @@ const PLAY_LAB_STYLES = `
 .pm-lab-content{position:relative;z-index:3;max-width:1200px;min-height:min(940px,calc(100svh - 64px));margin:0 auto;padding:1.25rem 1.4rem 10.5rem;display:flex;flex-direction:column}
 .pm-lab-topline{display:flex;justify-content:space-between;gap:1rem;padding-top:.4rem;color:#54545f;font-size:.56rem;font-weight:700;letter-spacing:.16em}
 .pm-lab-maincopy{margin-top:auto;margin-bottom:auto;max-width:650px;padding:4rem 0 2rem}
-.pm-lab-kicker{margin:0 0 1rem;color:#ff6570;font-size:.68rem;font-weight:800;letter-spacing:.18em}
+.pm-lab-kicker{margin:0 0 1rem;color:#C48A3A;font-size:.68rem;font-weight:800;letter-spacing:.18em}
 .pm-lab-maincopy h1{margin:0;max-width:670px;font-size:clamp(3.5rem,7.2vw,6.8rem);line-height:.85;letter-spacing:-.065em;font-weight:900;color:#f5f5f7}
 .pm-lab-maincopy h1 span{display:block;color:var(--pm-lab-accent);text-shadow:0 0 54px color-mix(in srgb,var(--pm-lab-accent) 20%,transparent)}
 .pm-lab-lead{max-width:560px;margin:1.5rem 0 0;color:#8c8c98;font-size:clamp(.95rem,1.45vw,1.08rem);line-height:1.6}

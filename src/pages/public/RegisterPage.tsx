@@ -5,7 +5,7 @@ import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { afterAuthPath, authLink, safeReturnPath } from '../../lib/navigation'
-import logoUrl from '../../assets/logo-play-moments.png'
+const logoUrl = '/sagamente-logo-dark.svg'
 
 export function RegisterPage() {
   const [form, setForm] = useState({ name: '', lastName: '', email: '', phone: '', documentNumber: '', postalCode: '', street: '', addressNumber: '', addressComplement: '', neighborhood: '', city: '', state: '', password: '', confirm: '' })
@@ -171,17 +171,17 @@ export function RegisterPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ background: '#0a0a0b' }}>
       <div className="w-full max-w-md">
-        <Link to="/"><img src={logoUrl} alt="Play Moments" style={{ height: 28, marginBottom: 32 }} /></Link>
+        <Link to="/"><img src={logoUrl} alt="Sagamente" style={{ height: 28, marginBottom: 32 }} /></Link>
 
         <h1 className="text-2xl font-bold mb-2" style={{ color: '#f0f0f2' }}>Criar conta</h1>
         <p className="text-sm mb-4" style={{ color: '#6b6b78' }}>
-          Já tem conta? <Link to={authLink('/login', next)} style={{ color: '#E30613' }}>Entrar</Link>
+          Já tem conta? <Link to={authLink('/login', next)} style={{ color: '#A65A2A' }}>Entrar</Link>
         </p>
-        {next==='/carrinho'&&<div className="mb-6 p-3 rounded-xl border border-[#E30613]/20 bg-[#E30613]/5"><p className="text-xs font-semibold" style={{color:'#f0f0f2'}}>🛒 Seu carrinho está esperando</p><p className="text-[11px] mt-1" style={{color:'#6b6b78'}}>Crie sua conta e você volta automaticamente para finalizar a compra.</p></div>}
+        {next==='/carrinho'&&<div className="mb-6 p-3 rounded-xl border border-[#A65A2A]/20 bg-[#A65A2A]/5"><p className="text-xs font-semibold" style={{color:'#f0f0f2'}}>🛒 Seu carrinho está esperando</p><p className="text-[11px] mt-1" style={{color:'#6b6b78'}}>Crie sua conta e você volta automaticamente para finalizar a compra.</p></div>}
 
         <div className="mb-6" aria-label={`Etapa ${step} de 3`}>
           <div className="flex items-center gap-2" role="progressbar" aria-valuemin={1} aria-valuemax={3} aria-valuenow={step}>
-            {[1,2,3].map(item => <div key={item} className="flex-1"><div className="h-1.5 rounded-full" style={{background:item<=step?'#E30613':'rgba(255,255,255,.10)'}} /></div>)}
+            {[1,2,3].map(item => <div key={item} className="flex-1"><div className="h-1.5 rounded-full" style={{background:item<=step?'#A65A2A':'rgba(255,255,255,.10)'}} /></div>)}
           </div>
           <div className="flex justify-between mt-2 text-[10px] uppercase tracking-wider" style={{color:'#6b6b78'}}>
             <span>Seus dados</span><span>Endereço</span><span>Acesso</span>

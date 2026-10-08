@@ -1,7 +1,7 @@
 import { useEffect,useState,type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { PublicHeader } from '../components/navigation/PublicHeader'
-import logoUrl from '../assets/logo-play-moments.png'
+const logoUrl = '/sagamente-logo-dark.svg'
 import { siteContentApi,type SiteSettings } from '../services/siteContent'
 
 export function PublicLayout({ children }: { children: ReactNode }) {
@@ -14,7 +14,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     return()=>{active=false}
   },[])
 
-  const primary=settings?.primary_color||'#E30613'
+  const primary=settings?.primary_color?.toLowerCase()==='#e30613'?'#A65A2A':(settings?.primary_color||'#A65A2A')
   const socials=[
     ['Instagram',settings?.instagram_url],
     ['YouTube',settings?.youtube_url],
@@ -31,9 +31,9 @@ export function PublicLayout({ children }: { children: ReactNode }) {
         <div className="mx-auto px-6 py-12" style={{ maxWidth: 1200 }}>
           <div className="grid gap-8 md:grid-cols-4 mb-10">
             <div>
-              <img src={logoUrl} alt={settings?.company_name||'Play Moments'} style={{ height: 28, width: 'auto', marginBottom: 16 }} />
+              <img src={logoUrl} alt={'Sagamente'} style={{ height: 28, width: 'auto', marginBottom: 16 }} />
               <p className="text-sm leading-relaxed" style={{ color: '#6b6b78' }}>
-                {settings?.footer_description||settings?.description||'Plataforma criativa para tecnologia, estúdio e design digital.'}
+                {(settings?.footer_description||settings?.description||'Soluções criativas e tecnológicas em design, comunicação e desenvolvimento digital.').replace(/Play Moments/g,'Sagamente')}
               </p>
             </div>
             <div>
@@ -61,7 +61,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
           <div className="flex flex-col md:flex-row items-center justify-between pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-            <p className="text-xs" style={{ color: '#3a3a42' }}>© {new Date().getFullYear()} {settings?.company_name||'Play Moments'} · Todos os direitos reservados</p>
+            <p className="text-xs" style={{ color: '#3a3a42' }}>© {new Date().getFullYear()} {'Sagamente'} · Todos os direitos reservados</p>
             {socials.length>0&&<div className="flex flex-wrap justify-center gap-4 mt-4 md:mt-0">
               {socials.map(([label,url])=><a key={label} href={url} target="_blank" rel="noreferrer" className="text-xs" style={{color:'#6b6b78'}}>{label}</a>)}
             </div>}

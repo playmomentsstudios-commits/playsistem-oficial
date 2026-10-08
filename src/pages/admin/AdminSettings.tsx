@@ -4,7 +4,7 @@ import { useToast } from '../../contexts/ToastContext'
 
 const DEFAULTS:AppSettings={
   id:true,
-  business_name:'Play Moments',
+  business_name:'Sagamente',
   currency:'BRL',
   timezone:'America/Sao_Paulo',
   default_project_priority:'medium',
@@ -18,7 +18,7 @@ const DEFAULTS:AppSettings={
   favicon_url:'/favicon.svg',
   staff_logo_url:'/staff-logo.svg',
   staff_platform_name:'Área do colaborador',
-  staff_primary_color:'#E30613',
+  staff_primary_color:'#A65A2A',
   staff_background_color:'#F4F6F8',
   staff_surface_color:'#FFFFFF',
   staff_text_color:'#17171A',
@@ -47,7 +47,7 @@ export function AdminSettings(){
     try{
       setSaving(true)
       const saved=await settingsApi.saveAppSettings({
-        business_name:settings.business_name.trim()||'Play Moments',
+        business_name:settings.business_name.trim()||'Sagamente',
         currency:settings.currency,
         timezone:settings.timezone,
         default_project_priority:settings.default_project_priority,
@@ -76,7 +76,7 @@ export function AdminSettings(){
 
   return <div className="max-w-5xl">
     <div className="mb-6">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-[#E30613] font-semibold">Sistema</p>
+      <p className="text-[11px] uppercase tracking-[0.18em] text-[#A65A2A] font-semibold">Sistema</p>
       <h1 className="text-2xl font-bold mt-1">Configurações Administrativas</h1>
       <p className="text-sm text-gray-500 mt-1">Defina padrões operacionais usados pelo painel.</p>
     </div>
@@ -127,7 +127,7 @@ export function AdminSettings(){
       <section className="p-5 rounded-2xl bg-[#141416] border border-white/10 lg:col-span-2">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div><h2 className="font-semibold">Plataforma dos colaboradores</h2><p className="text-xs text-gray-500 mt-1">Personalização exclusiva da área branca da equipe. O Admin Mestre continua com a identidade escura.</p></div>
-          <span className="text-[10px] uppercase tracking-[.12em] text-[#E30613]">Somente Admin Mestre</span>
+          <span className="text-[10px] uppercase tracking-[.12em] text-[#A65A2A]">Somente Admin Mestre</span>
         </div>
         <div className="grid lg:grid-cols-[260px_1fr] gap-5 mt-5">
           <div className="rounded-2xl p-5 border border-white/10" style={{background:settings.staff_surface_color}}>
@@ -193,7 +193,7 @@ export function AdminSettings(){
         <div className="space-y-4 mt-5">
           <label className="flex items-center justify-between gap-4 p-3 rounded-xl bg-white/[0.035] border border-white/8 cursor-pointer">
             <div><p className="text-sm font-medium">Novo arquivo visível ao cliente</p><p className="text-[10px] text-gray-500 mt-1">Usar visibilidade pública como padrão no upload administrativo.</p></div>
-            <input type="checkbox" checked={settings.default_client_file_visibility} onChange={e=>setSettings({...settings,default_client_file_visibility:e.target.checked})} className="accent-[#E30613]"/>
+            <input type="checkbox" checked={settings.default_client_file_visibility} onChange={e=>setSettings({...settings,default_client_file_visibility:e.target.checked})} className="accent-[#A65A2A]"/>
           </label>
           <label className="block text-xs text-gray-500">Limite operacional do Google Drive
             <div className="mt-1 flex items-center gap-2">
@@ -229,11 +229,11 @@ export function AdminSettings(){
         <div className="space-y-3 mt-5">
           <label className="flex items-center justify-between gap-4 p-3 rounded-xl bg-white/[0.035] border border-white/8 cursor-pointer">
             <div><p className="text-sm font-medium">Avisos de operação</p><p className="text-[10px] text-gray-500 mt-1">Habilitar avisos internos de projetos, arquivos e pedidos.</p></div>
-            <input type="checkbox" checked={settings.internal_operation_notifications} onChange={e=>setSettings({...settings,internal_operation_notifications:e.target.checked})} className="accent-[#E30613]"/>
+            <input type="checkbox" checked={settings.internal_operation_notifications} onChange={e=>setSettings({...settings,internal_operation_notifications:e.target.checked})} className="accent-[#A65A2A]"/>
           </label>
           <label className="flex items-center justify-between gap-4 p-3 rounded-xl bg-white/[0.035] border border-white/8 cursor-pointer">
             <div><p className="text-sm font-medium">Avisos comerciais</p><p className="text-[10px] text-gray-500 mt-1">Habilitar avisos internos ligados a CRM, orçamento e vendas.</p></div>
-            <input type="checkbox" checked={settings.commercial_notifications} onChange={e=>setSettings({...settings,commercial_notifications:e.target.checked})} className="accent-[#E30613]"/>
+            <input type="checkbox" checked={settings.commercial_notifications} onChange={e=>setSettings({...settings,commercial_notifications:e.target.checked})} className="accent-[#A65A2A]"/>
           </label>
         </div>
       </section>
@@ -259,7 +259,7 @@ export function AdminSettings(){
     </div>
 
     <div className="mt-5 flex items-center gap-3">
-      <button disabled={saving} onClick={()=>void save()} className="min-h-11 px-5 rounded-xl bg-[#E30613] text-white text-sm font-semibold disabled:opacity-40">{saving?'Salvando...':'Salvar configurações'}</button>
+      <button disabled={saving} onClick={()=>void save()} className="min-h-11 px-5 rounded-xl bg-[#A65A2A] text-white text-sm font-semibold disabled:opacity-40">{saving?'Salvando...':'Salvar configurações'}</button>
       {settings.updated_at&&<span className="text-[10px] text-gray-600">Última atualização: {new Date(settings.updated_at).toLocaleString('pt-BR')}</span>}
     </div>
   </div>
