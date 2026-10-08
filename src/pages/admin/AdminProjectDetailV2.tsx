@@ -550,8 +550,8 @@ export function AdminProjectDetailV2(){
         })
         if(stage.id==='sem-etapa'&&!stageTasks.length)return null
         const complete=stageTasks.filter((task:any)=>task.status==='completed').length
-        return <details key={stage.id} className="pm-surface rounded-xl border border-white/10" open={undefined}>
-          <summary className="cursor-pointer select-none p-4 hover:bg-white/[.035] rounded-xl">
+        return <details key={stage.id} className={'pm-surface rounded-xl border transition-colors '+(stage.status==='completed'?'border-emerald-500/45 bg-emerald-500/[.09]':stage.status==='in_progress'?'border-amber-400/45 bg-amber-400/[.08]':'border-white/10')} >
+          <summary className={"cursor-pointer select-none p-4 rounded-xl "+(stage.status==="completed"?"text-emerald-300 hover:bg-emerald-500/[.07]":stage.status==="in_progress"?"text-amber-300 hover:bg-amber-400/[.07]":"hover:bg-white/[.035]")}>
             <span className="font-bold text-base">{/^\d{4}-\d{2}$/.test(stage.name)?new Date(stage.name+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):stage.name}</span>
             <span className="ml-3 text-xs text-gray-400">{complete}/{stageTasks.length} tarefas concluídas</span>
           </summary>
