@@ -11,6 +11,7 @@ const PUBLIC_NAV_LINKS = [
   { label: 'Serviços', href: '/servicos' },
   { label: 'Academia', href: '/academia' },
   { label: 'Quem Somos', href: '/quem-somos' },
+  { label: 'Instalar app', href: '/instalar' },
 ]
 
 export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
