@@ -5,6 +5,7 @@ import { LoadingState } from '../../components/ui/AsyncState'
 import { useToast } from '../../contexts/ToastContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { FilePreviewModal } from '../../components/files/FilePreviewModal'
+import { ClientProjectFileCard } from '../../components/files/ClientProjectFileCard'
 
 function sizeLabel(value:number|null|undefined){
   if(!value)return '—'
@@ -297,15 +298,12 @@ export function FilesPage(){
               const file=group.latest
               const status=reviewLabel(file)
               return <div key={group.groupId} className="p-2.5 sm:p-3 min-h-[178px] rounded-xl bg-[#171719] border border-white/8">
-                <button type="button" onClick={()=>void open(file)} className="w-full text-left">
-                  <div className="h-24 rounded-lg bg-white/[0.035] flex items-center justify-center text-3xl">{fileIcon(file)}</div>
-                  <div className="mt-2 flex items-center justify-between gap-2">
-                    <span className="text-[9px] font-bold text-[#A65A2A]">{extension(file.name)} · v{file.version_number||1}</span>
-                    <span className="text-[9px] text-gray-600">{sizeLabel(file.file_size)}</span>
-                  </div>
-                  <p className="text-xs font-semibold truncate mt-1" title={file.name}>{file.name}</p>
-                  <p className="text-[9px] text-gray-500 mt-1">{new Date(file.created_at).toLocaleDateString('pt-BR')}</p>
-                </button>
+                <ClientProjectFileCard file={file} onOpen={open} compact/>
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <span className="text-[9px] font-bold text-[#A65A2A]">{extension(file.name)} · v{file.version_number||1}</span>
+                  <span className="text-[9px] text-gray-600">{sizeLabel(file.file_size)}</span>
+                </div>
+                <p className="text-[9px] text-gray-500 mt-1">{new Date(file.created_at).toLocaleDateString('pt-BR')}</p>
                 {status&&<div className={'mt-2 inline-flex px-2 py-1 rounded-full text-[9px] font-semibold '+status.className}>{status.text}</div>}
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {group.versions.length>1&&<button type="button" onClick={()=>setVersionGroup(group.groupId)} className="min-h-8 px-2 rounded-lg bg-white/[0.05] text-[10px] text-gray-300">{group.versions.length} versões</button>}

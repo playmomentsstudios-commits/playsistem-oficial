@@ -5,30 +5,12 @@ import { projectProgress } from '../../lib/projectProgress'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { LoadingState,ErrorState } from '../../components/ui/AsyncState'
 import { FilePreviewModal } from '../../components/files/FilePreviewModal'
+import { ClientProjectFileCard } from '../../components/files/ClientProjectFileCard'
 import { rotulo,statusEtapa,statusProjeto,statusTarefa } from '../../lib/labels.ptBR'
 
 const sortByPosition=(a:any,b:any)=>(a.position||0)-(b.position||0)
 const formatDate=(date?:string|null)=>date?new Date(date.slice(0,10)+'T12:00:00').toLocaleDateString('pt-BR'):'A definir'
 const isComplete=(task:any)=>task.status==='completed'
-const kindIcon=(file:any)=>{
-  const type=String(file.mime_type||file.file_type||'').toLowerCase()
-  if(type.startsWith('image/'))return '🖼'
-  if(type.includes('pdf'))return '▤'
-  if(type.startsWith('video/'))return '▶'
-  if(type.startsWith('audio/'))return '♫'
-  return '↗'
-}
-
-function FileAction({file,onOpen}:{file:any;onOpen:(file:any)=>void}){
-  return <button type="button" onClick={()=>onOpen(file)}
-    className="inline-flex max-w-full items-center gap-2 min-h-10 px-3 py-2 rounded-xl border border-white/10 bg-white/[.045] text-left text-xs text-[#E1B18B] hover:border-[#A65A2A]/50 hover:bg-[#A65A2A]/10 transition-colors"
-    aria-label={'Visualizar arquivo: '+file.name}>
-    <span aria-hidden="true">{kindIcon(file)}</span>
-    <span className="min-w-0 truncate">{file.name}</span>
-    <span aria-hidden="true">↗</span>
-  </button>
-}
-
 export function ProjectsPage(){
   const {id}=useParams()
   const [rows,setRows]=useState<any[]>([])
@@ -146,7 +128,7 @@ export function ProjectsPage(){
             <span className="text-emerald-400 font-bold" aria-hidden="true">✓</span>
             <div className="min-w-0 flex-1"><h3 className="text-sm font-semibold text-white">{task.title}</h3><p className="text-xs text-emerald-300 mt-1">Concluído</p></div>
           </div>
-          {projectFiles(task.id).length>0&&<div className="mt-3 flex flex-wrap gap-2">{projectFiles(task.id).map((file:any)=><FileAction key={file.id} file={file} onOpen={openFile}/>)}</div>}
+          {projectFiles(task.id).length>0&&<div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">{projectFiles(task.id).map((file:any)=><ClientProjectFileCard key={file.id} file={file} onOpen={openFile} compact/>)}</div>}
         </article>)}</div>
       </section>}
 
@@ -156,8 +138,8 @@ export function ProjectsPage(){
           <span className="text-xs text-gray-400">{published.length} arquivo(s)</span>
         </div>
         {published.length?<div className="rounded-2xl border border-white/10 bg-[#141416] p-4">
-          <p className="text-xs text-gray-400 mb-3">Clique em um arquivo para visualizar com acesso protegido ou baixar a versão disponível.</p>
-          <div className="flex flex-wrap gap-2">{published.map((file:any)=><FileAction key={file.id} file={file} onOpen={openFile}/>)}</div>
+          <p className="text-xs text-gray-400 mb-3">Prévia das artes liberadas. Selecione uma miniatura para ampliar ou baixar o original.</p>
+          <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">{published.map((file:any)=><ClientProjectFileCard key={file.id} file={file} onOpen={openFile}/>)}</div>
         </div>:<p className="rounded-xl border border-white/10 bg-white/[.02] p-4 text-xs text-gray-400">A equipe ainda não liberou arquivos para visualização. Assim que forem publicados, aparecerão aqui.</p>}
         <Link to="/app/arquivos" className="inline-flex min-h-11 items-center mt-2 text-xs text-[#DFA269] hover:underline">Abrir biblioteca de arquivos ↗</Link>
       </section>
@@ -193,7 +175,7 @@ export function ProjectsPage(){
                 </div>}
                 {projectFiles(task.id).length>0&&<div className="mt-3">
                   <p className="text-xs font-semibold text-gray-200 mb-2">Arquivos desta tarefa</p>
-                  <div className="flex flex-wrap gap-2">{projectFiles(task.id).map((file:any)=><FileAction key={file.id} file={file} onOpen={openFile}/>)}</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">{projectFiles(task.id).map((file:any)=><ClientProjectFileCard key={file.id} file={file} onOpen={openFile} compact/>)}</div>
                 </div>}
               </div>
             </details>)}</div>:<p className="text-xs text-gray-500 mt-3">A equipe ainda não liberou tarefas nesta etapa.</p>}
