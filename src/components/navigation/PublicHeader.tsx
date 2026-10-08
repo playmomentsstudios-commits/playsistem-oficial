@@ -1,8 +1,8 @@
+import { BrandImage } from '../BrandImage'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useCart } from '../../contexts/CartContext'
-const logoUrl = '/sagamente-logo-dark.svg'
 import type { SiteSettings } from '../../services/siteContent'
 
 const PUBLIC_NAV_LINKS = [
@@ -35,11 +35,11 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
       <div className="mx-auto px-3 sm:px-4 flex items-center justify-between relative h-[58px] lg:h-16" style={{ maxWidth: 1200 }}>
         {/* Logo */}
         <Link to="/" className="hidden lg:block">
-          <img src={logoUrl} alt="Sagamente" style={{ height: 30, width: 'auto' }} />
+          <BrandImage variant="dark" alt="Sagamente" style={{ height: 30, width: 'auto' }} />
         </Link>
 
         <Link to="/" className="lg:hidden absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
-          <img src={logoUrl} alt="Sagamente" style={{ height: 28, width: 'auto' }} />
+          <BrandImage variant="dark" alt="Sagamente" style={{ height: 28, width: 'auto' }} />
         </Link>
 
         <Link

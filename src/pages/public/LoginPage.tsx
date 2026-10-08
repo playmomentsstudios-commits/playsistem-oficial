@@ -1,3 +1,4 @@
+import { BrandImage } from '../../components/BrandImage'
 import { useState } from 'react'
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
@@ -6,7 +7,6 @@ import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { LoginExperiencePanel, LoginMobileExperience } from '../../components/auth/LoginExperiencePanel'
 import { afterAuthPath, authLink, safeReturnPath } from '../../lib/navigation'
-const logoUrl = '/sagamente-logo-dark.svg'
 
 export function LoginPage() {
   const [email, setEmail] = useState('')
@@ -49,7 +49,7 @@ export function LoginPage() {
         <div className="w-full max-w-sm">
           <LoginMobileExperience />
           <Link to="/" className="lg:hidden flex justify-center mb-6">
-            <img src={logoUrl} alt="Sagamente" style={{ height: 26 }} />
+            <BrandImage variant="dark" alt="Sagamente" style={{ height: 26 }} />
           </Link>
 
           <p className="text-[10px] sm:text-xs uppercase tracking-[.18em] font-bold mb-2 sm:mb-3" style={{color:'#A65A2A'}}>Área pessoal</p><h1 className="text-[1.85rem] sm:text-3xl font-extrabold mb-2" style={{ color: '#f0f0f2' }}>Acesse sua conta</h1>
