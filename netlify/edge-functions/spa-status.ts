@@ -2,7 +2,7 @@ import type { Context } from '@netlify/edge-functions'
 
 const exactPublicRoutes=new Set([
   '/','/academia','/curso/letramento-digital','/login','/cadastro','/email-confirmado',
-  '/esqueci-senha','/redefinir-senha','/produtos','/servicos','/quem-somos','/portfolio',
+  '/esqueci-senha','/redefinir-senha','/produtos','/servicos','/instalar','/quem-somos','/portfolio',
   '/studio','/design','/tech','/comunidade','/sobre','/contato','/carrinho',
 ])
 
