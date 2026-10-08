@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
+import { registerPwa } from './lib/pwa'
 import { siteContentApi } from './services/siteContent'
 import { brandAsset } from './components/BrandImage'
 
@@ -18,3 +19,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <App />
   </React.StrictMode>,
 )
+
+registerPwa()

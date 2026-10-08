@@ -4,10 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.mjs",
+    "test": "node scripts/generate-pwa-icons.mjs && node --test tests/*.test.mjs",
     "typecheck": "tsc --noEmit",
-    "dev": "vite",
-    "build": "vite build && node scripts/prerender-resumes.mjs",
+    "dev": "node scripts/generate-pwa-icons.mjs && vite",
+    "build": "node scripts/generate-pwa-icons.mjs && vite build && node scripts/prerender-resumes.mjs",
     "preview": "vite preview",
     "format": "oxfmt"
   },

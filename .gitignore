@@ -16,3 +16,6 @@ dist/
 *~
 .DS_Store
 Thumbs.db
+
+# Generated during dev, test and build from the official Sagamente SVG.
+/public/pwa/*.png

@@ -2,7 +2,7 @@ import type { Context } from '@netlify/edge-functions'
 
 const exactPublicRoutes=new Set([
   '/','/academia','/curso/letramento-digital','/login','/cadastro','/email-confirmado',
-  '/esqueci-senha','/redefinir-senha','/produtos','/servicos','/quem-somos','/portfolio',
+  '/esqueci-senha','/redefinir-senha','/produtos','/servicos','/instalar','/quem-somos','/portfolio',
   '/studio','/design','/tech','/comunidade','/sobre','/contato','/carrinho',
 ])
 
@@ -22,6 +22,7 @@ function isKnownAppPath(pathname:string){
   if(clean==='/app'||clean.startsWith('/app/'))return true
   if(clean==='/admin'||clean.startsWith('/admin/'))return true
   if(clean==='/sitemap.xml'||clean.startsWith('/.netlify/'))return true
+  if(clean==='/manifest.webmanifest')return true
   // Static assets and public files must keep their own origin status.
   if(/\/[^/]+\.[a-z0-9]{1,8}$/i.test(clean))return true
   return false
