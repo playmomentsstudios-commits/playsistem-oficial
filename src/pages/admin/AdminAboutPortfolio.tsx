@@ -29,7 +29,7 @@ export function AdminAboutPortfolio(){
   useEffect(()=>{void load()},[])
   useEffect(()=>{
     const source=searchParams.get('projeto')
-    if(source){setTab('portfolio');setItemForm(current=>({...current,source_project_id:source,active:false}))}
+    if(source){setTab('portfolio');setItemForm((current:any)=>({...current,source_project_id:source,active:false}))}
   },[searchParams])
   const eligibleProjects=useMemo(()=>projects.filter(projectEligibleForPortfolio),[projects])
   const linkedProject=projects.find(project=>project.id===itemForm.source_project_id)
