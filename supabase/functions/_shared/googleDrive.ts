@@ -330,9 +330,34 @@ export async function ensureProjectFolder(
     }
     projectParentId = internalRootId;
   } else {
-    if (!project.customer_id) throw new Error("External project has no customer");
+    if (!project.customer_id) {
+      // Institutional customers are managed without an auth profile.
+      const { data: association, error: associationError } = await db
+        .from("project_business_clients")
+        .select("client_id,client:business_clients(id,name)")
+        .eq("project_id", projectId)
+        .maybeSingle();
+      if (associationError) throw associationError;
+      const institution = Array.isArray(association?.client) ? association.client[0] : association?.client;
+      if (!institution?.id || !institution?.name) throw new Error("External project has no customer");
 
-    const client = await ensureClientFolder(db, userId, project.customer_id);
+      const { clientsFolderId } = await ensureDriveRoot(db, userId);
+      const existingInstitution = await findDriveFolder(clientsFolderId, "institutional-customer", institution.id);
+      const institutionFolder = existingInstitution || await createDriveFolder(
+        institution.name,
+        clientsFolderId,
+        { playMomentsKind: "institutional-customer", playMomentsEntityId: institution.id },
+      );
+      customerFolderId = institutionFolder.id;
+      let projectsRoot = await findDriveFolder(customerFolderId, "customer-projects-root", institution.id);
+      if (!projectsRoot) projectsRoot = await createDriveFolder(
+        "PROJETOS",
+        customerFolderId,
+        { playMomentsKind: "customer-projects-root", playMomentsEntityId: institution.id },
+      );
+      projectParentId = projectsRoot.id;
+    } else {
+      const client = await ensureClientFolder(db, userId, project.customer_id);
     customerFolderId = client.customerFolderId;
 
     let projectsRoot = await findDriveFolder(
@@ -351,6 +376,7 @@ export async function ensureProjectFolder(
       );
     }
     projectParentId = projectsRoot.id;
+    }
   }
 
   let projectFolderId = project.drive_folder_id || null;
