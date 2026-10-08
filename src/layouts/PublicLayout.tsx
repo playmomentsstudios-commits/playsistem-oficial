@@ -33,7 +33,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             <div>
               <img src={logoUrl} alt={'Sagamente'} style={{ height: 28, width: 'auto', marginBottom: 16 }} />
               <p className="text-sm leading-relaxed" style={{ color: '#6b6b78' }}>
-                {(settings?.footer_description||settings?.description||'Soluções criativas e tecnológicas em design, comunicação e desenvolvimento digital.').replaceAll('Play Moments','Sagamente')}
+                {(settings?.footer_description||settings?.description||'Soluções criativas e tecnológicas em design, comunicação e desenvolvimento digital.').replace(/Play Moments/g,'Sagamente')}
               </p>
             </div>
             <div>
@@ -61,7 +61,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
           <div className="flex flex-col md:flex-row items-center justify-between pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-            <p className="text-xs" style={{ color: '#3a3a42' }}>© {new Date().getFullYear()} {settings?.company_name||'Sagamente'} · Todos os direitos reservados</p>
+            <p className="text-xs" style={{ color: '#3a3a42' }}>© {new Date().getFullYear()} {'Sagamente'} · Todos os direitos reservados</p>
             {socials.length>0&&<div className="flex flex-wrap justify-center gap-4 mt-4 md:mt-0">
               {socials.map(([label,url])=><a key={label} href={url} target="_blank" rel="noreferrer" className="text-xs" style={{color:'#6b6b78'}}>{label}</a>)}
             </div>}
