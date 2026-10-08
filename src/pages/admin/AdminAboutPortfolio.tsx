@@ -211,7 +211,7 @@ export function AdminAboutPortfolio(){
             </label>
           </div>
           <label className="flex items-start gap-3 rounded-xl bg-white/[0.035] border border-white/10 p-3 cursor-pointer">
-            <input type="checkbox" checked={Boolean(itemForm.active)} disabled={!projectReady}
+            <input type="checkbox" checked={Boolean(itemForm.active)} disabled={!projectReady && !itemForm.active}
               onChange={e=>setItemForm({...itemForm,active:e.target.checked})} className="mt-1 accent-[#A65A2A]"/>
             <span className="text-xs text-gray-300 leading-5"><strong className="block text-sm text-white">Publicar no site</strong>
               Eu revisei capa, textos e nomes e autorizo a exibição desta ficha no portfólio da SAGAMENTE.
