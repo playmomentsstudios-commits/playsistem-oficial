@@ -253,7 +253,7 @@ const PLAY_LAB_STYLES = `
 .pm-lab-vignette{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(8,8,9,.98) 0%,rgba(8,8,9,.9) 34%,rgba(8,8,9,.3) 62%,rgba(8,8,9,.66) 100%),linear-gradient(0deg,#080809 0%,transparent 24%,transparent 78%,rgba(8,8,9,.72) 100%)}
 .pm-lab-aurora{position:absolute;border-radius:50%;filter:blur(85px);opacity:.24}
 .pm-lab-aurora-a{width:52vw;height:52vw;right:-5vw;top:-14vw;background:var(--pm-lab-accent);transition:background .45s ease}
-.pm-lab-aurora-b{width:34vw;height:34vw;right:20vw;bottom:-18vw;background:color-mix(in srgb,var(--pm-lab-accent) 55%,#7a3cff);opacity:.15}
+.pm-lab-aurora-b{width:34vw;height:34vw;right:20vw;bottom:-18vw;background:color-mix(in srgb,var(--pm-lab-accent) 55%,#C48A3A);opacity:.15}
 .pm-lab-grid{position:absolute;left:35%;right:-25%;top:43%;bottom:-42%;transform:rotateX(64deg) rotateZ(-7deg);transform-origin:center top;background-image:linear-gradient(rgba(255,255,255,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.055) 1px,transparent 1px);background-size:54px 54px;mask-image:linear-gradient(to bottom,black,transparent 78%);opacity:.58}
 .pm-lab-horizon{position:absolute;left:31%;right:0;top:63%;height:1px;background:linear-gradient(90deg,transparent,var(--pm-lab-accent),transparent);box-shadow:0 0 42px var(--pm-lab-accent);opacity:.58}
 .pm-lab-word{position:absolute;right:-.02em;font-size:clamp(7rem,18vw,17rem);font-weight:900;line-height:.78;letter-spacing:-.075em;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.045);white-space:nowrap}
@@ -288,12 +288,12 @@ const PLAY_LAB_STYLES = `
 .pm-lab-maincopy{margin-top:auto;margin-bottom:auto;max-width:650px;padding:4rem 0 2rem}
 .pm-lab-kicker{margin:0 0 1rem;color:#C48A3A;font-size:.68rem;font-weight:800;letter-spacing:.18em}
 .pm-lab-maincopy h1{margin:0;max-width:670px;font-size:clamp(3.5rem,7.2vw,6.8rem);line-height:.85;letter-spacing:-.065em;font-weight:900;color:#f5f5f7}
-.pm-lab-maincopy h1 span{display:block;color:var(--pm-lab-accent);text-shadow:0 0 54px color-mix(in srgb,var(--pm-lab-accent) 20%,transparent)}
+.pm-lab-maincopy h1 span{display:block;color:color-mix(in srgb,var(--pm-lab-accent) 55%,white);text-shadow:0 0 54px color-mix(in srgb,var(--pm-lab-accent) 20%,transparent)}
 .pm-lab-lead{max-width:560px;margin:1.5rem 0 0;color:#8c8c98;font-size:clamp(.95rem,1.45vw,1.08rem);line-height:1.6}
 .pm-lab-tabs{display:flex;gap:.45rem;margin-top:1.65rem;flex-wrap:wrap}
 .pm-lab-tabs button{display:flex;align-items:center;gap:.48rem;min-height:42px;padding:.6rem .82rem;border:1px solid rgba(255,255,255,.09);border-radius:999px;background:rgba(255,255,255,.025);color:#72727e;font:inherit;font-size:.75rem;font-weight:800}
 .pm-lab-tabs button:hover{color:white;border-color:rgba(255,255,255,.2)}.pm-lab-tabs button.is-active{color:white;background:color-mix(in srgb,var(--pm-lab-accent) 13%,transparent);border-color:color-mix(in srgb,var(--pm-lab-accent) 60%,transparent);box-shadow:0 0 28px color-mix(in srgb,var(--pm-lab-accent) 12%,transparent)}
-.pm-lab-tab-index{font-size:.56rem;color:#5e5e68}.pm-lab-tabs button.is-active .pm-lab-tab-index{color:var(--pm-lab-accent)}
+.pm-lab-tab-index{font-size:.56rem;color:#5e5e68}.pm-lab-tabs button.is-active .pm-lab-tab-index{color:color-mix(in srgb,var(--pm-lab-accent) 55%,white)}
 .pm-lab-active{max-width:520px;margin-top:1.4rem;padding-left:1rem;border-left:2px solid var(--pm-lab-accent)}
 .pm-lab-active>p{margin:0;color:#b1b1bb;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em}.pm-lab-active h2{margin:.45rem 0 0;color:#f4f4f6;font-size:clamp(1.35rem,2vw,1.75rem);line-height:1.08}.pm-lab-active>span{display:block;margin-top:.65rem;color:#7e7e8a;font-size:.88rem;line-height:1.5}
 .pm-lab-actions{display:flex;align-items:center;gap:1rem;margin-top:1rem;flex-wrap:wrap}.pm-lab-primary{display:inline-flex;align-items:center;gap:.55rem;min-height:44px;padding:.7rem 1rem;border-radius:999px;background:var(--pm-lab-accent);color:#fff;font-size:.78rem;font-weight:800;box-shadow:0 12px 34px color-mix(in srgb,var(--pm-lab-accent) 18%,transparent)}.pm-lab-primary:hover{transform:translateY(-2px)}.pm-lab-link{font-size:.78rem;font-weight:700;color:#a0a0aa;text-decoration:underline;text-underline-offset:4px}

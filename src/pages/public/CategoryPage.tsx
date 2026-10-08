@@ -18,9 +18,9 @@ const CATEGORIES: Record<string, {
  area:PublicCatalogArea
  productTitle:string
 }> = {
-  studio: { title:'Studio & Criação', subtitle:'Produção audiovisual, fotografia, edição, áudio e criação para transformar ideias em conteúdo.', icon:'🎬', color:'#ff6b35', area:'studio', productTitle:'Produtos e recursos para criação' },
-  design: { title:'Design & Digital', subtitle:'Identidade visual, UI/UX, sites e presença digital pensados para comunicar e converter.', icon:'✦', color:'#4cc9f0', area:'design', productTitle:'Produtos digitais da área' },
-  tech: { title:'Tech & Equipamentos', subtitle:'Tecnologia, equipamentos, web e suporte para colocar projetos em funcionamento com segurança.', icon:'⚡', color:'#06d6a0', area:'tech', productTitle:'Equipamentos e produtos de tecnologia' },
+  studio: { title:'Studio & Criação', subtitle:'Produção audiovisual, fotografia, edição, áudio e criação para transformar ideias em conteúdo.', icon:'🎬', color:'#DFA269', area:'studio', productTitle:'Produtos e recursos para criação' },
+  design: { title:'Design & Digital', subtitle:'Identidade visual, UI/UX, sites e presença digital pensados para comunicar e converter.', icon:'✦', color:'#C48A3A', area:'design', productTitle:'Produtos digitais da área' },
+  tech: { title:'Tech & Equipamentos', subtitle:'Tecnologia, equipamentos, web e suporte para colocar projetos em funcionamento com segurança.', icon:'⚡', color:'#72B596', area:'tech', productTitle:'Equipamentos e produtos de tecnologia' },
 }
 
 function money(value:number){

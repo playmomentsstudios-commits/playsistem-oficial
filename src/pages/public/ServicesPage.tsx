@@ -82,7 +82,7 @@ export function ServicesPage({
 
  const content=<div className="mx-auto px-3 sm:px-4 py-7 sm:py-14" style={{maxWidth:1100}}>
    <div className="max-w-2xl mb-6 sm:mb-8">
-    <p className="text-xs uppercase tracking-widest text-[#A65A2A] mb-2">Soluções Sagamente</p>
+    <p className="text-xs uppercase tracking-widest text-[#DFA269] mb-2">Soluções Sagamente</p>
     <h1 className="text-[1.9rem] sm:text-4xl font-bold leading-tight">{title}</h1>
     <p className="text-sm sm:text-base text-gray-400 mt-3 leading-relaxed">{subtitle}</p>
    </div>
@@ -104,7 +104,7 @@ export function ServicesPage({
     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">{visible.map(s=>
      <article key={s.source+'-'+s.id} className="p-4 sm:p-5 rounded-2xl bg-[#141416] border border-white/10 flex flex-col">
       <div className="flex items-start justify-between gap-3">
-       <p className="text-xs font-semibold text-[#ff6b7a]">{s.category||'Serviço'}</p>
+       <p className="text-xs font-semibold text-[#DFA269]">{s.category||'Serviço'}</p>
        {s.source==='catalog'&&<span className="text-[10px] px-2 py-1 rounded-full border border-white/10 text-gray-500">Catálogo</span>}
       </div>
       <h2 className="font-bold text-lg mt-1">{s.name}</h2>
@@ -121,7 +121,7 @@ export function ServicesPage({
 
    <section className="mt-8 sm:mt-10 rounded-2xl border border-white/10 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4" style={{background:'linear-gradient(135deg,rgba(227,6,19,.09),rgba(255,255,255,.02))'}}>
     <div className="flex-1"><p className="font-bold">Seu projeto não cabe em uma opção pronta?</p><p className="text-sm text-gray-400 mt-1">Conte somente o essencial. A equipe recebe a necessidade já contextualizada.</p></div>
-    <Link to={conversationLink(role,'orcamento')} className="w-full sm:w-auto min-h-12 inline-flex items-center justify-center px-5 py-3 rounded-xl border border-[#A65A2A] text-[#ff6b7a] font-semibold">Projeto personalizado</Link>
+    <Link to={conversationLink(role,'orcamento')} className="w-full sm:w-auto min-h-12 inline-flex items-center justify-center px-5 py-3 rounded-xl border border-[#A65A2A] text-[#DFA269] font-semibold">Projeto personalizado</Link>
    </section>
   </div>
  return embedded?content:<PublicLayout>{content}</PublicLayout>

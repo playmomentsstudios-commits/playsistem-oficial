@@ -107,7 +107,7 @@ export function AdminLayout() {
       </div>
 
       <nav className="flex-1 px-3 pt-4 overflow-y-auto pb-5">
-        <Link to="/admin" onClick={()=>setSidebarOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-3 text-sm font-semibold transition-all" style={{background:isActive('/admin',true)?'rgba(166,90,42,0.14)':'transparent',color:isActive('/admin',true)?(collaboratorMode?'#b4000c':'#DFA269'):(collaboratorMode?'#44444d':'#a0a0ad'),border:isActive('/admin',true)?'1px solid rgba(166,90,42,0.22)':'1px solid transparent'}}><span className="text-[#A65A2A]"><MenuIcon name="dashboard" /></span>Painel</Link>
+        <Link to="/admin" onClick={()=>setSidebarOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-3 text-sm font-semibold transition-all" style={{background:isActive('/admin',true)?'rgba(166,90,42,0.14)':'transparent',color:isActive('/admin',true)?(collaboratorMode?'#81431E':'#DFA269'):(collaboratorMode?'#44444d':'#a0a0ad'),border:isActive('/admin',true)?'1px solid rgba(166,90,42,0.22)':'1px solid transparent'}}><span className="text-[#A65A2A]"><MenuIcon name="dashboard" /></span>Painel</Link>
         {MENU_GROUPS.map(group=>{
           const visibleItems=group.items.filter((item:any)=>{
             if(user?.role==='admin')return true
@@ -118,12 +118,12 @@ export function AdminLayout() {
           const groupActive=visibleItems.some((item:any)=>isActive(item.href))
           const open=openGroups.includes(group.label)||groupActive
           return <div key={group.label} className="mb-1.5">
-            <button type="button" onClick={()=>setOpenGroups(current=>current.includes(group.label)?current.filter(value=>value!==group.label):[...current,group.label])} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all" style={{color:groupActive?(collaboratorMode?'#b4000c':'#DFA269'):(collaboratorMode?'#55555f':'#9090a0'),background:groupActive?'rgba(166,90,42,0.06)':'transparent'}}>
+            <button type="button" onClick={()=>setOpenGroups(current=>current.includes(group.label)?current.filter(value=>value!==group.label):[...current,group.label])} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all" style={{color:groupActive?(collaboratorMode?'#81431E':'#DFA269'):(collaboratorMode?'#55555f':'#9090a0'),background:groupActive?'rgba(166,90,42,0.06)':'transparent'}}>
               <span className="text-[#A65A2A]"><MenuIcon name={group.icon} size={16} /></span><span>{group.label}</span><span className="ml-auto text-[10px] text-gray-600">{open?'−':'+'}</span>
             </button>
             {open&&<div className="ml-[18px] pl-3 border-l border-white/[0.07] mt-1 mb-2">{visibleItems.map((item:any)=>{
               const active=isActive(item.href)
-              return <Link key={item.href} to={item.href} onClick={()=>setSidebarOpen(false)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all" style={{background:active?'rgba(166,90,42,0.12)':'transparent',color:active?(collaboratorMode?'#b4000c':'#DFA269'):(collaboratorMode?'#5f5f68':'#777784')}}>
+              return <Link key={item.href} to={item.href} onClick={()=>setSidebarOpen(false)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-medium transition-all" style={{background:active?'rgba(166,90,42,0.12)':'transparent',color:active?(collaboratorMode?'#81431E':'#DFA269'):(collaboratorMode?'#5f5f68':'#777784')}}>
                 <span className={active?'text-[#DFA269]':'text-gray-600'}><MenuIcon name={item.icon} size={15} /></span><span className="truncate">{item.label}</span>
                 {item.href==='/admin/conversas'&&counts.messages>0&&<span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#A65A2A] text-white text-[10px] flex items-center justify-center">{counts.messages}</span>}
                 {item.href==='/admin/notificacoes'&&counts.notifications>0&&<span className="ml-auto min-w-5 h-5 px-1 rounded-full bg-[#A65A2A] text-white text-[10px] flex items-center justify-center">{counts.notifications}</span>}
@@ -181,7 +181,7 @@ export function AdminLayout() {
                 <Link to="/app/perfil" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="about" size={15}/><span>Perfil</span></Link>
                 {user?.role==='admin'&&<Link to="/admin/configuracoes" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="settings" size={15}/><span>Configurações</span></Link>}
                 <div className="my-1 border-t border-white/[0.07]"/>
-                <button onClick={()=>{setAccountOpen(false);void handleLogout()}} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-[#ff6573] hover:bg-[#A65A2A]/10"><span>↩</span><span>Sair</span></button>
+                <button onClick={()=>{setAccountOpen(false);void handleLogout()}} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-[#DFA269] hover:bg-[#A65A2A]/10"><span>↩</span><span>Sair</span></button>
               </div></>}
             </div>
           </div>

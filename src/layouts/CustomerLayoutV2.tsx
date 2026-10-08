@@ -152,7 +152,7 @@ export function CustomerLayoutV2() {
               return <Link key={item.href} to={item.href} onClick={()=>setSidebarOpen(false)} title={!showLabels?item.label:undefined}
                 aria-current={active?'page':undefined}
                 className={'group relative flex items-center rounded-xl mb-0.5 transition-all duration-200 '+(showLabels?'gap-3 px-3 h-10':'justify-center h-10')+(active?' bg-white/[.065] text-white':' text-[#777783] hover:text-[#d8d8de] hover:bg-white/[.035]')}>
-                <span className={'shrink-0 '+(active?'text-[#ff3340]':'group-hover:text-[#b7b7c2]')}><MenuIcon name={item.icon} size={18}/></span>
+                <span className={'shrink-0 '+(active?'text-[#DFA269]':'group-hover:text-[#b7b7c2]')}><MenuIcon name={item.icon} size={18}/></span>
                 {showLabels&&<span className={'text-[13px] truncate '+(active?'font-semibold':'font-medium')}>{item.label}</span>}
                 {count>0&&<span className={(showLabels?'ml-auto ':'absolute top-0.5 right-0.5 ')+'min-w-[17px] h-[17px] px-1 rounded-full bg-[#A65A2A] text-white text-[8px] font-bold flex items-center justify-center'}>{count>99?'99+':count}</span>}
                 {active&&<span className="absolute -left-2 w-0.5 h-5 rounded-r bg-[#A65A2A]"/>}
@@ -203,7 +203,7 @@ export function CustomerLayoutV2() {
             <Link to="/app/perfil" onClick={()=>setAccountMenuOpen(false)} className="flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#aaaab4] hover:text-white hover:bg-white/[.05]"><MenuIcon name="user" size={16}/>Perfil</Link>
             <Link to="/app/configuracoes" onClick={()=>setAccountMenuOpen(false)} className="flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#aaaab4] hover:text-white hover:bg-white/[.05]"><MenuIcon name="settings" size={16}/>Configurações</Link>
             <div className="my-1 border-t border-white/[.06]"/>
-            <button onClick={handleLogout} className="w-full flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#ff4b55] hover:bg-[#A65A2A]/10"><MenuIcon name="logout" size={16}/>Sair</button>
+            <button onClick={handleLogout} className="w-full flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#DFA269] hover:bg-[#A65A2A]/10"><MenuIcon name="logout" size={16}/>Sair</button>
           </div></>}
         </div>
       </header>
