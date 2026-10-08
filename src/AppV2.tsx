@@ -12,6 +12,7 @@ import { PublicViewTracker } from './components/PublicViewTracker'
 const CustomerLayoutV2 = lazy(() => import('./layouts/CustomerLayoutV2').then(m => ({ default:m.CustomerLayoutV2 })))
 const AdminLayout = lazy(() => import('./layouts/AdminLayout').then(m => ({ default:m.AdminLayout })))
 const HomePage = lazy(() => import('./pages/public/HomePage').then(m => ({ default:m.HomePage })))
+const InstallPage = lazy(() => import('./pages/public/InstallPage').then(m => ({ default:m.InstallPage })))
 const PublicAcademyPage = lazy(() => import('./pages/public/PublicAcademyPage').then(m => ({ default:m.PublicAcademyPage })))
 const PublicDigitalLiteracyPage = lazy(() => import('./pages/public/PublicDigitalLiteracyPage').then(m => ({ default:m.PublicDigitalLiteracyPage })))
 const LoginPage = lazy(() => import('./pages/public/LoginPage').then(m => ({ default:m.LoginPage })))
@@ -111,6 +112,7 @@ export default function AppV2() {
             <Routes>
               {/* Public */}
               <Route path="/" element={<HomePage />} />
+              <Route path="/instalar" element={<InstallPage />} />
               <Route path="/academia" element={<PublicAcademyPage />} />
               <Route path="/curso/letramento-digital" element={<PublicDigitalLiteracyPage />} />
               <Route path="/login" element={<LoginPage />} />
