@@ -394,8 +394,8 @@ export function AdminProjectDetailV2(){
   }
 
   if(loading)return <p role="status" className="text-gray-400">Carregando projeto...</p>
-  if(loadError)return <div role="alert" className="pm-surface p-5 space-y-3"><p className="text-red-300">Não foi possível carregar este projeto: {loadError}</p><button type="button" onClick={()=>void load()} className="px-4 py-2 rounded-xl bg-[#E30613] text-white">Tentar novamente</button></div>
-  if(!project)return <div><p>Projeto não encontrado.</p><Link to="/admin/projetos" className="text-[#E30613]">Voltar</Link></div>
+  if(loadError)return <div role="alert" className="pm-surface p-5 space-y-3"><p className="text-red-300">Não foi possível carregar este projeto: {loadError}</p><button type="button" onClick={()=>void load()} className="px-4 py-2 rounded-xl bg-[#A65A2A] text-white">Tentar novamente</button></div>
+  if(!project)return <div><p>Projeto não encontrado.</p><Link to="/admin/projetos" className="text-[#A65A2A]">Voltar</Link></div>
 
   return <div>
     {loadWarning&&<div role="alert" className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">{loadWarning} <button type="button" className="ml-2 underline" onClick={()=>void load()}>Tentar novamente</button></div>}
@@ -427,20 +427,20 @@ export function AdminProjectDetailV2(){
           <b className="text-sm">{progress(project)}%</b>
         </div>
         <div className="h-1.5 bg-white/[.08] rounded-full overflow-hidden flex-1 min-w-[110px]" role="progressbar" aria-label="Progresso do projeto" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress(project)}>
-          <div className="h-full bg-[#E30613] rounded-full transition-[width] duration-300" style={{width:progress(project)+'%'}}/>
+          <div className="h-full bg-[#A65A2A] rounded-full transition-[width] duration-300" style={{width:progress(project)+'%'}}/>
         </div>
         <details className="text-xs text-gray-400">
           <summary className="cursor-pointer select-none hover:text-white">Detalhes do projeto</summary>
           <div className="mt-3 max-w-2xl space-y-2">
             <p className="whitespace-pre-wrap">{project.description||'Sem descrição.'}</p>
             <p>Início: {project.start_date?new Date(project.start_date+'T12:00').toLocaleDateString('pt-BR'):'—'} · Prazo: {project.due_date?new Date(project.due_date+'T12:00').toLocaleDateString('pt-BR'):'—'}</p>
-            {project.drive_folder_url&&<a href={project.drive_folder_url} target="_blank" rel="noreferrer" className="text-[#E30613]">Abrir pasta no Drive ↗</a>}
+            {project.drive_folder_url&&<a href={project.drive_folder_url} target="_blank" rel="noreferrer" className="text-[#A65A2A]">Abrir pasta no Drive ↗</a>}
           </div>
         </details>
       </div>
     </div>
 
-    <div className="mt-3 flex gap-2 overflow-x-auto pb-1"><button type="button" onClick={()=>setProjectTab('execucao')} className={'shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border '+(projectTab==='execucao'?'bg-[#E30613]/15 text-red-200 border-[#E30613]/30':'bg-white/[.03] text-gray-400 border-white/10')}>Execução</button><button type="button" onClick={()=>setProjectTab('arquivos')} className={'shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border '+(projectTab==='arquivos'?'bg-[#E30613]/15 text-red-200 border-[#E30613]/30':'bg-white/[.03] text-gray-400 border-white/10')}>Arquivos <span className="ml-1 text-[10px] opacity-70">({files.length})</span></button><Link to="/admin/arquivos" className="shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border border-white/10 text-gray-400 flex items-center">Central de Arquivos ↗</Link></div>
+    <div className="mt-3 flex gap-2 overflow-x-auto pb-1"><button type="button" onClick={()=>setProjectTab('execucao')} className={'shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border '+(projectTab==='execucao'?'bg-[#A65A2A]/15 text-red-200 border-[#A65A2A]/30':'bg-white/[.03] text-gray-400 border-white/10')}>Execução</button><button type="button" onClick={()=>setProjectTab('arquivos')} className={'shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border '+(projectTab==='arquivos'?'bg-[#A65A2A]/15 text-red-200 border-[#A65A2A]/30':'bg-white/[.03] text-gray-400 border-white/10')}>Arquivos <span className="ml-1 text-[10px] opacity-70">({files.length})</span></button><Link to="/admin/arquivos" className="shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border border-white/10 text-gray-400 flex items-center">Central de Arquivos ↗</Link></div>
 
     {projectTab==='arquivos'&&<div>
     <section className="mt-8">
@@ -449,7 +449,7 @@ export function AdminProjectDetailV2(){
           <h2 className="text-xl font-bold">Arquivos do projeto</h2>
           <p className="text-sm text-gray-500">Os mesmos arquivos da Central de Arquivos, vinculados diretamente a este projeto.</p>
         </div>
-        <Link to="/admin/arquivos" className="text-sm text-[#E30613]">Abrir Central de Arquivos →</Link>
+        <Link to="/admin/arquivos" className="text-sm text-[#A65A2A]">Abrir Central de Arquivos →</Link>
       </div>
 
       {driveRootItems.length>0&&<div className="pm-surface p-4 mt-4">
@@ -458,7 +458,7 @@ export function AdminProjectDetailV2(){
             <h3 className="font-semibold">Documentos operacionais na pasta do projeto</h3>
             <p className="text-xs text-gray-500 mt-1">Arquivos colocados diretamente na raiz do Google Drive deste projeto.</p>
           </div>
-          {project.drive_folder_url&&<a href={project.drive_folder_url} target="_blank" rel="noreferrer" className="text-xs text-[#E30613]">Abrir pasta no Drive ↗</a>}
+          {project.drive_folder_url&&<a href={project.drive_folder_url} target="_blank" rel="noreferrer" className="text-xs text-[#A65A2A]">Abrir pasta no Drive ↗</a>}
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-4">
           {driveRootItems.map((entry:any)=><a key={entry.id} href={entry.webViewLink} target="_blank" rel="noreferrer" className="p-3 rounded-xl bg-white/[.04] border border-white/10 hover:bg-white/[.07]">
@@ -493,7 +493,7 @@ export function AdminProjectDetailV2(){
               <option value="cliente">Cliente pode visualizar</option>
             </select>
           </label>}
-          <label className={'px-4 py-2.5 rounded-xl text-center '+(uploading?'bg-white/10 text-gray-500 cursor-not-allowed':'bg-[#E30613] text-white cursor-pointer')}>
+          <label className={'px-4 py-2.5 rounded-xl text-center '+(uploading?'bg-white/10 text-gray-500 cursor-not-allowed':'bg-[#A65A2A] text-white cursor-pointer')}>
             {uploading?'Enviando...':'Adicionar arquivos'}
             <input type="file" multiple disabled={uploading} onChange={uploadProjectFile} className="hidden"/>
           </label>
@@ -501,7 +501,7 @@ export function AdminProjectDetailV2(){
 
         {uploading&&fileProgress>0&&<div className="mt-4">
           <div className="flex justify-between gap-3 text-xs text-gray-500"><span className="truncate">{fileProgressName||'Upload para o Google Drive'}</span><span>{fileProgress}%</span></div>
-          <div className="h-2 rounded bg-white/10 mt-2"><div className="h-2 rounded bg-[#E30613]" style={{width:fileProgress+'%'}}/></div>
+          <div className="h-2 rounded bg-white/10 mt-2"><div className="h-2 rounded bg-[#A65A2A]" style={{width:fileProgress+'%'}}/></div>
         </div>}
 
         
@@ -513,7 +513,7 @@ export function AdminProjectDetailV2(){
               <div className="flex gap-3">
                 <div className="w-12 h-12 shrink-0 rounded-xl bg-black/30 flex items-center justify-center text-2xl">{projectFileIcon(file)}</div>
                 <button onClick={()=>openFile(file)} className="text-left min-w-0 flex-1">
-                  <div className="flex items-center gap-2 min-w-0"><p className="text-sm font-medium truncate" title={file.name}>{file.name}</p><span className="text-[9px] text-[#E30613] shrink-0">v{file.version_number||1}</span></div>
+                  <div className="flex items-center gap-2 min-w-0"><p className="text-sm font-medium truncate" title={file.name}>{file.name}</p><span className="text-[9px] text-[#A65A2A] shrink-0">v{file.version_number||1}</span></div>
                   <p className="text-xs text-gray-500 mt-1">{fileSize(file.file_size)} · {file.client_visible?'Cliente':'Equipe'}</p>
                   <p className="text-[10px] text-gray-600 mt-1">{file.stage?.name?('📁 '+file.stage.name):(tasks.find((task:any)=>task.id===file.task_id)?.title||'Arquivo geral do projeto')}</p>
                   {review&&<span className={'inline-flex mt-2 px-2 py-1 rounded-full text-[9px] font-semibold '+review.className}>{review.label}</span>}
@@ -532,7 +532,7 @@ export function AdminProjectDetailV2(){
                     <button type="button" onClick={()=>{setFileMenu(null);void deleteProjectFile(file)}} className="w-9 h-9 rounded-lg hover:bg-red-500/10 text-red-400" title="Excluir">⌫</button>
                   </div>
                   <div className="mb-2">
-                    {project.project_type!=='internal'&&!file.review_required&&<button type="button" onClick={()=>void requestReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-[#E30613]/10 text-[#ff5d68] text-xs text-left">Solicitar aprovação do cliente</button>}
+                    {project.project_type!=='internal'&&!file.review_required&&<button type="button" onClick={()=>void requestReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-[#A65A2A]/10 text-[#ff5d68] text-xs text-left">Solicitar aprovação do cliente</button>}
                     {project.project_type!=='internal'&&file.review_required&&file.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-white/[0.05] text-gray-300 text-xs text-left">Cancelar solicitação de aprovação</button>}
                     {project.project_type!=='internal'&&file.review_required&&['approved','changes_requested'].includes(file.review_status)&&<button type="button" onClick={()=>void requestReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-white/[0.05] text-gray-300 text-xs text-left">Solicitar nova avaliação</button>}
                     {project.project_type!=='internal'&&file.review_required&&<button type="button" onClick={()=>void showReviewHistory(file)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-gray-400 text-xs text-left">Ver histórico e comentários</button>}
@@ -565,7 +565,7 @@ export function AdminProjectDetailV2(){
         <div><h2 className="text-base font-bold">Etapas e tarefas</h2><p className="text-xs text-gray-500">Abra uma etapa para acompanhar suas tarefas e checklists.</p></div>
         <div className="flex gap-2">
           <button type="button" aria-expanded={showStageForm} onClick={()=>{setShowStageForm(value=>!value);setShowTaskForm(false)}} className="min-h-9 px-3 rounded-lg border border-white/15 text-gray-200 text-xs font-semibold hover:bg-white/[.06]">{showStageForm?'Fechar etapa':'+ Nova etapa'}</button>
-          <button type="button" aria-expanded={showTaskForm} onClick={()=>{setShowTaskForm(value=>!value);setShowStageForm(false)}} className="min-h-9 px-3 rounded-lg bg-[#E30613] text-white text-xs font-semibold hover:bg-red-700">{showTaskForm?'Fechar tarefa':'+ Nova tarefa'}</button>
+          <button type="button" aria-expanded={showTaskForm} onClick={()=>{setShowTaskForm(value=>!value);setShowStageForm(false)}} className="min-h-9 px-3 rounded-lg bg-[#A65A2A] text-white text-xs font-semibold hover:bg-red-700">{showTaskForm?'Fechar tarefa':'+ Nova tarefa'}</button>
         </div>
       </div>
       {showStageForm&&<form onSubmit={addStage} className="pm-surface p-4 mb-4 flex flex-col sm:flex-row gap-3"><input autoFocus required value={stageName} onChange={e=>setStageName(e.target.value)} placeholder="Nome da etapa (ex.: Produção Dezembro/Janeiro)" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 flex-1"/><div className="flex gap-2"><Button type="submit">Salvar etapa</Button><button type="button" onClick={()=>setShowStageForm(false)} className="px-3 py-2 text-sm text-gray-400">Cancelar</button></div></form>}
@@ -629,12 +629,12 @@ export function AdminProjectDetailV2(){
           </div>}
           <div className="grid lg:grid-cols-2 gap-4 mt-4">
             <div>
-              <div className="flex justify-between"><p className="text-sm font-semibold">Checklist</p><button onClick={()=>addChecklist(task.id)} className="text-xs text-[#E30613]">+ item</button></div>
+              <div className="flex justify-between"><p className="text-sm font-semibold">Checklist</p><button onClick={()=>addChecklist(task.id)} className="text-xs text-[#A65A2A]">+ item</button></div>
               <div className="space-y-1 mt-2">{(task.checklist||[]).sort((a:any,b:any)=>a.position-b.position).map((item:any)=><label key={item.id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={item.completed} onChange={e=>void toggleChecklist(task.id,item.id,e.target.checked)}/><span className={item.completed?'line-through text-gray-500':''}>{item.title}</span><button type="button" onClick={async()=>{await portalApi.deleteChecklistItem(item.id);await load()}} className="ml-auto text-xs text-red-400">×</button></label>)}</div>
             </div>
             <div>
-              <div className="flex justify-between"><p className="text-sm font-semibold">Links</p><button onClick={()=>addLink(task.id)} className="text-xs text-[#E30613]">+ link</button></div>
-              <div className="space-y-1 mt-2">{(task.links||[]).map((link:any)=><div key={link.id} className="flex items-center gap-2 text-sm"><a href={link.url} target="_blank" rel="noreferrer" className="text-[#E30613]">{link.label} ↗</a>{link.client_visible&&<span className="text-[10px] text-emerald-400">cliente</span>}<button onClick={async()=>{await portalApi.deleteTaskLink(link.id);await load()}} className="ml-auto text-xs text-red-400">×</button></div>)}</div>
+              <div className="flex justify-between"><p className="text-sm font-semibold">Links</p><button onClick={()=>addLink(task.id)} className="text-xs text-[#A65A2A]">+ link</button></div>
+              <div className="space-y-1 mt-2">{(task.links||[]).map((link:any)=><div key={link.id} className="flex items-center gap-2 text-sm"><a href={link.url} target="_blank" rel="noreferrer" className="text-[#A65A2A]">{link.label} ↗</a>{link.client_visible&&<span className="text-[10px] text-emerald-400">cliente</span>}<button onClick={async()=>{await portalApi.deleteTaskLink(link.id);await load()}} className="ml-auto text-xs text-red-400">×</button></div>)}</div>
             </div>
           </div>
           </div>

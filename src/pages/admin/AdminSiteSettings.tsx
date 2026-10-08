@@ -20,7 +20,7 @@ export function AdminSiteSettings() {
     heroHeadline: 'Criamos momentos que ficam.',
     heroCta: 'Explorar serviços',
     primaryColor: '#A65A2A',
-    instagram: 'https://instagram.com/playmoments',
+    instagram: '',
     youtube: '',
     tiktok: '',
     linkedin: '',

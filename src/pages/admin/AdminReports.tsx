@@ -93,7 +93,7 @@ export function AdminReports(){
   return <div>
     <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
       <div>
-        <p className="text-[11px] uppercase tracking-[0.18em] text-[#E30613] font-semibold">Gestão</p>
+        <p className="text-[11px] uppercase tracking-[0.18em] text-[#A65A2A] font-semibold">Gestão</p>
         <h1 className="text-2xl font-bold mt-1">Relatórios Operacionais</h1>
         <p className="text-sm text-gray-500 mt-1">Vendas, financeiro, projetos e produtividade em uma única visão.</p>
       </div>
@@ -108,7 +108,7 @@ export function AdminReports(){
         <label className="text-xs text-gray-500">Até
           <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)} className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
         </label>
-        <button onClick={()=>void load()} disabled={loading||!startDate||!endDate} className="min-h-11 px-4 rounded-xl bg-[#E30613] text-white text-sm font-semibold disabled:opacity-40">{loading?'Gerando...':'Atualizar relatório'}</button>
+        <button onClick={()=>void load()} disabled={loading||!startDate||!endDate} className="min-h-11 px-4 rounded-xl bg-[#A65A2A] text-white text-sm font-semibold disabled:opacity-40">{loading?'Gerando...':'Atualizar relatório'}</button>
       </div>
     </div>
 
@@ -133,7 +133,7 @@ export function AdminReports(){
                 <span>{item.month}</span>
                 <span className="font-semibold">{money(item.total)} · {item.orders} pedido(s)</span>
               </div>
-              <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden"><div className="h-full rounded-full bg-[#E30613]" style={{width:Math.max(3,Math.round((Number(item.total)||0)/maxSales*100))+'%'}}/></div>
+              <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden"><div className="h-full rounded-full bg-[#A65A2A]" style={{width:Math.max(3,Math.round((Number(item.total)||0)/maxSales*100))+'%'}}/></div>
             </div>)}
           </div>}
         </section>
