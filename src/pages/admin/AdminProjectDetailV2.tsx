@@ -102,10 +102,6 @@ export function AdminProjectDetailV2(){
 
   useEffect(()=>{
     if(projectTab!=='arquivos'||!project)return
-    if(project.project_type!=='internal'&&!project.customer_id){
-      setLoadWarning(null)
-      return
-    }
     let active=true
     // Drive folder provisioning is optional and should never block task management.
     void portalApi.ensureProjectDriveFolder(id).then(folder=>{
@@ -231,10 +227,6 @@ export function AdminProjectDetailV2(){
     const picked=Array.from(event.target.files||[])
     event.target.value=''
     if(!picked.length||!user)return
-    if(project?.project_type!=='internal'&&!project?.customer_id){
-      toast('Configure o vínculo de cliente com o Google Drive antes de enviar arquivos.','error')
-      return
-    }
     const invalid=picked.find(file=>file.size>50*1024*1024*1024)
     if(invalid){
       toast('Cada arquivo do Google Drive pode ter até 50 GB.','error')
@@ -471,9 +463,9 @@ export function AdminProjectDetailV2(){
               <option value="cliente">Cliente pode visualizar</option>
             </select>
           </label>}
-          <label className={'px-4 py-2.5 rounded-xl text-center '+(uploading||(project.project_type!=='internal'&&!project.customer_id)?'bg-white/10 text-gray-500 cursor-not-allowed':'bg-[#E30613] text-white cursor-pointer')}>
+          <label className={'px-4 py-2.5 rounded-xl text-center '+(uploading?'bg-white/10 text-gray-500 cursor-not-allowed':'bg-[#E30613] text-white cursor-pointer')}>
             {uploading?'Enviando...':'Adicionar arquivos'}
-            <input type="file" multiple disabled={uploading||(project.project_type!=='internal'&&!project.customer_id)} onChange={uploadProjectFile} className="hidden"/>
+            <input type="file" multiple disabled={uploading} onChange={uploadProjectFile} className="hidden"/>
           </label>
         </div>
 
@@ -482,7 +474,7 @@ export function AdminProjectDetailV2(){
           <div className="h-2 rounded bg-white/10 mt-2"><div className="h-2 rounded bg-[#E30613]" style={{width:fileProgress+'%'}}/></div>
         </div>}
 
-        {project.project_type!=='internal'&&!project.customer_id&&<p className="text-xs text-yellow-300 mt-3">Cliente institucional cadastrado, mas ainda sem vínculo de acesso ao Drive. Configure um cliente com login ou adapte a integração do Drive para clientes institucionais antes de enviar arquivos.</p>}
+        
 
         <div className="mt-5 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {files.length===0?<p className="text-sm text-gray-500">Nenhum arquivo vinculado a este projeto.</p>:files.map(file=>{
