@@ -602,7 +602,7 @@ export function AdminProducts() {
                     onClick={() => void handleArchive(product)}
                     className="text-xs px-2 py-1 rounded-lg"
                     style={{
-                      background: 'rgba(227,6,19,0.10)',
+                      background: 'rgba(166,90,42,0.10)',
                       color: '#ff6b7a',
                     }}
                   >
@@ -648,7 +648,7 @@ export function AdminProducts() {
                   className="text-sm mt-1"
                   style={{ color: '#6b6b78' }}
                 >
-                  Dados do catálogo Play Moments
+                  Dados do catálogo Sagamente
                 </p>
               </div>
 
@@ -950,7 +950,7 @@ export function AdminProducts() {
                 {editing?.product_images?.length ? (
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
                     {editing.product_images.map((image,index) => (
-                      <div key={image.id} className="rounded-xl overflow-hidden border" style={{ borderColor: image.is_cover ? 'rgba(227,6,19,0.7)' : 'rgba(255,255,255,0.08)', background: '#0f0f11' }}>
+                      <div key={image.id} className="rounded-xl overflow-hidden border" style={{ borderColor: image.is_cover ? 'rgba(166,90,42,0.7)' : 'rgba(255,255,255,0.08)', background: '#0f0f11' }}>
                         <div className="h-32 bg-black/20">
                           {image.public_url ? <img src={image.public_url} alt={image.alt_text || form.name} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">Sem prévia</div>}
                         </div>
@@ -1026,7 +1026,7 @@ export function AdminProducts() {
             }
 
             .catalog-input:focus {
-              border-color: rgba(227,6,19,0.7);
+              border-color: rgba(166,90,42,0.7);
             }
 
             .catalog-input option {

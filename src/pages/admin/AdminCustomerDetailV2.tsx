@@ -78,7 +78,7 @@ export function AdminCustomerDetailV2(){
 
   const timeline=useMemo(()=>{
     if(!customer)return []
-    const events:any[]=[{date:customer.created_at,title:'Cadastro criado',description:'Entrada na plataforma Play Moments'}]
+    const events:any[]=[{date:customer.created_at,title:'Cadastro criado',description:'Cadastro na plataforma'}]
     projects.forEach(project=>events.push({date:project.created_at||project.updated_at,title:'Projeto criado',description:project.title}))
     projects.filter(project=>project.status==='completed').forEach(project=>events.push({date:project.updated_at,title:'Projeto concluído',description:project.title}))
     payments.filter(payment=>payment.status==='paid'&&payment.paid_at).forEach(payment=>events.push({date:payment.paid_at,title:'Pagamento confirmado',description:money(payment.amount)}))
@@ -198,13 +198,13 @@ export function AdminCustomerDetailV2(){
       <div className="pm-surface p-4"><p className="text-[10px] uppercase tracking-[.1em] text-gray-500">Serviços pagos</p><b className="text-2xl">{servicesDone}</b></div>
       <div className="pm-surface p-4"><p className="text-[10px] uppercase tracking-[.1em] text-gray-500">Total pago</p><b className="text-lg">{money(totalPaid)}</b></div>
       <div className="pm-surface p-4"><p className="text-[10px] uppercase tracking-[.1em] text-gray-500">Nível</p><b className="text-lg">{rotulo(nivelCliente,loyalty?.level||'bronze')}</b></div>
-      <div className="pm-surface p-4"><p className="text-[10px] uppercase tracking-[.1em] text-gray-500">Play Cash disponível</p><b className="text-lg text-[#E30613]">{money(availableCash)}</b></div>
+      <div className="pm-surface p-4"><p className="text-[10px] uppercase tracking-[.1em] text-gray-500">Play Cash disponível</p><b className="text-lg text-[#A65A2A]">{money(availableCash)}</b></div>
     </div>
 
     {crm&&<section className="mt-6 pm-surface p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.16em] text-[#E30613] font-semibold">CRM</p>
+          <p className="text-[10px] uppercase tracking-[0.16em] text-[#A65A2A] font-semibold">CRM</p>
           <h2 className="font-bold text-lg mt-1">Relacionamento comercial</h2>
           <p className="text-sm text-gray-500 mt-1">Responsável, etapa, valor, próxima ação e observações internas.</p>
         </div>
@@ -248,7 +248,7 @@ export function AdminCustomerDetailV2(){
       </label>}
 
       <div className="flex flex-wrap items-center gap-3 mt-4">
-        <button disabled={saving} onClick={()=>void saveCrm()} className="min-h-11 px-4 rounded-xl bg-[#E30613] text-sm font-semibold disabled:opacity-50">Salvar CRM</button>
+        <button disabled={saving} onClick={()=>void saveCrm()} className="min-h-11 px-4 rounded-xl bg-[#A65A2A] text-sm font-semibold disabled:opacity-50">Salvar CRM</button>
         {crmHistory[0]&&<p className="text-[10px] text-gray-600">Última mudança: {new Date(crmHistory[0].created_at).toLocaleString('pt-BR')}</p>}
       </div>
     </section>}
@@ -277,7 +277,7 @@ export function AdminCustomerDetailV2(){
               <input type="number" step="0.01" value={settings.gold_threshold===null?'':settings.gold_threshold/100} onChange={e=>setSettings({...settings,gold_threshold:e.target.value===''?null:Math.round(Number(e.target.value)*100)})} className="mt-1 w-full px-3 py-2 rounded-lg bg-black border border-white/10"/>
             </label>
           </div>
-          <button disabled={saving} onClick={saveLoyalty} className="mt-3 px-4 py-2 rounded-xl bg-[#E30613] text-sm disabled:opacity-50">Salvar regras do Play Cash</button>
+          <button disabled={saving} onClick={saveLoyalty} className="mt-3 px-4 py-2 rounded-xl bg-[#A65A2A] text-sm disabled:opacity-50">Salvar regras do Play Cash</button>
           <p className="text-[11px] text-gray-600 mt-2">Enquanto os valores de Prata e Ouro estiverem vazios, todos permanecem no nível Bronze.</p>
         </div>}
       </section>
@@ -313,9 +313,9 @@ export function AdminCustomerDetailV2(){
 
     <section className="mt-6 pm-surface p-5">
       <h2 className="font-bold">Caminho do cliente</h2>
-      <p className="text-sm text-gray-500 mb-4">Linha do tempo do relacionamento com a Play Moments</p>
+      <p className="text-sm text-gray-500 mb-4">Linha do tempo do relacionamento com a Sagamente</p>
       <div className="relative pl-5 border-l border-white/10 space-y-5">{timeline.map((event,index)=><div key={event.date+event.title+index} className="relative">
-        <span className="absolute -left-[25px] top-1 w-2.5 h-2.5 rounded-full bg-[#E30613]"/>
+        <span className="absolute -left-[25px] top-1 w-2.5 h-2.5 rounded-full bg-[#A65A2A]"/>
         <p className="text-sm font-semibold">{event.title}</p>
         <p className="text-xs text-gray-400">{event.description}</p>
         <p className="text-[11px] text-gray-600 mt-1">{new Date(event.date).toLocaleString('pt-BR')}</p>
@@ -328,7 +328,7 @@ export function AdminCustomerDetailV2(){
       <div className="p-5 rounded-2xl bg-[#141416] border border-white/10"><h2 className="font-bold mb-3">Pagamentos</h2>{payments.length===0?<p className="text-sm text-gray-500">Nenhum pagamento.</p>:payments.slice(0,8).map(payment=><p key={payment.id} className="text-sm py-1">{money(payment.amount)} — {rotulo(statusPagamento,payment.status)}</p>)}</div>
     </div>
 
-    <Link to="/admin/conversas" className="inline-block mt-5 px-4 py-3 rounded-xl bg-[#E30613]">Abrir central de conversa</Link>
+    <Link to="/admin/conversas" className="inline-block mt-5 px-4 py-3 rounded-xl bg-[#A65A2A]">Abrir central de conversa</Link>
 
     {deleteOpen&&<div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onMouseDown={e=>{if(e.currentTarget===e.target&&!deleting)setDeleteOpen(false)}}>
       <div className="w-full max-w-lg max-h-[88vh] overflow-y-auto rounded-2xl bg-[#111113] border border-red-500/20 shadow-2xl p-5">

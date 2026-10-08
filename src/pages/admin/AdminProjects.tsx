@@ -88,7 +88,7 @@ export function AdminProjects(){
   return <div>
     <div className="flex flex-wrap justify-between gap-4 items-end mb-6">
       <div>
-        <p className="text-[11px] uppercase tracking-[.18em] text-[#E30613] font-semibold">Operação</p>
+        <p className="text-[11px] uppercase tracking-[.18em] text-[#A65A2A] font-semibold">Operação</p>
         <h1 className="text-2xl font-bold text-white mt-1">Projetos</h1>
         <p className="text-sm text-gray-500 mt-1">Trabalhos, prazos e andamento das entregas.</p>
       </div>
@@ -134,7 +134,7 @@ export function AdminProjects(){
         <span className={"pm-tag "+(project.status==="completed"?"pm-tag-success":project.status==="active"?"pm-tag-progress":project.status==="review"?"pm-tag-review":project.status==="paused"?"pm-tag-pending":project.status==="cancelled"?"pm-tag-danger":"pm-tag-neutral")}>{rotulo(statusProjeto,project.status)}</span>
       </div>
       <div className="flex justify-between mt-4 text-sm"><span className="text-gray-500">Progresso</span><b>{progress(project)}%</b></div>
-      <div className="h-2 bg-white/10 rounded mt-2"><div className="h-2 bg-[#E30613] rounded" style={{width:progress(project)+'%'}}/></div>
+      <div className="h-2 bg-white/10 rounded mt-2"><div className="h-2 bg-[#A65A2A] rounded" style={{width:progress(project)+'%'}}/></div>
       {project.due_date&&<p className={'text-xs mt-3 '+(project.due_date<today&&!['completed','cancelled'].includes(project.status)?'text-red-300':'text-gray-500')}>Prazo: {new Date(project.due_date+'T12:00').toLocaleDateString('pt-BR')}{project.due_date<today&&!['completed','cancelled'].includes(project.status)?' · atrasado':''}</p>}
     </Link>)}</div>}
   </div>

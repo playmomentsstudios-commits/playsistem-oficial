@@ -193,10 +193,10 @@ export function AdminProjectDetail(){
   }
 
   if(loading)return <p className="text-gray-400">Carregando projeto...</p>
-  if(!project)return <div><p>Projeto não encontrado.</p><Link to="/admin/projetos" className="text-[#E30613]">Voltar</Link></div>
+  if(!project)return <div><p>Projeto não encontrado.</p><Link to="/admin/projetos" className="text-[#A65A2A]">Voltar</Link></div>
 
   return <div>
-    <Link to="/admin/projetos" className="text-sm text-[#E30613]">← Projetos</Link>
+    <Link to="/admin/projetos" className="text-sm text-[#A65A2A]">← Projetos</Link>
 
     <div className="flex flex-wrap justify-between gap-4 mt-4">
       <div>
@@ -212,13 +212,13 @@ export function AdminProjectDetail(){
     <div className="grid lg:grid-cols-3 gap-4 mt-6">
       <div className="lg:col-span-2 p-5 rounded-2xl bg-[#141416] border border-white/10">
         <div className="flex justify-between"><span>Progresso geral</span><b>{progress(project)}%</b></div>
-        <div className="h-2 bg-white/10 rounded mt-2"><div className="h-2 bg-[#E30613] rounded" style={{width:progress(project)+'%'}}/></div>
+        <div className="h-2 bg-white/10 rounded mt-2"><div className="h-2 bg-[#A65A2A] rounded" style={{width:progress(project)+'%'}}/></div>
         <p className="text-sm text-gray-400 mt-4 whitespace-pre-wrap">{project.description||'Sem descrição.'}</p>
       </div>
       <div className="p-5 rounded-2xl bg-[#141416] border border-white/10 text-sm space-y-2">
         <p><span className="text-gray-500">Início:</span> {project.start_date?new Date(project.start_date+'T12:00').toLocaleDateString('pt-BR'):'—'}</p>
         <p><span className="text-gray-500">Prazo:</span> {project.due_date?new Date(project.due_date+'T12:00').toLocaleDateString('pt-BR'):'—'}</p>
-        {project.drive_folder_url&&<a href={project.drive_folder_url} target="_blank" rel="noreferrer" className="inline-block text-[#E30613]">Abrir pasta do projeto ↗</a>}
+        {project.drive_folder_url&&<a href={project.drive_folder_url} target="_blank" rel="noreferrer" className="inline-block text-[#A65A2A]">Abrir pasta do projeto ↗</a>}
       </div>
     </div>
 
@@ -228,7 +228,7 @@ export function AdminProjectDetail(){
           <h2 className="text-xl font-bold">Arquivos do projeto</h2>
           <p className="text-sm text-gray-500">Os mesmos arquivos da Central de Arquivos, vinculados diretamente a este projeto.</p>
         </div>
-        <Link to="/admin/arquivos" className="text-sm text-[#E30613]">Abrir Central de Arquivos →</Link>
+        <Link to="/admin/arquivos" className="text-sm text-[#A65A2A]">Abrir Central de Arquivos →</Link>
       </div>
 
       <div className="p-4 rounded-2xl bg-[#141416] border border-white/10 mt-4">
@@ -250,7 +250,7 @@ export function AdminProjectDetail(){
               <option value="cliente">Cliente pode visualizar</option>
             </select>
           </label>
-          <label className={'px-4 py-2.5 rounded-xl text-center cursor-pointer '+(uploading?'bg-white/10 text-gray-500':'bg-[#E30613] text-white')}>
+          <label className={'px-4 py-2.5 rounded-xl text-center cursor-pointer '+(uploading?'bg-white/10 text-gray-500':'bg-[#A65A2A] text-white')}>
             {uploading?'Enviando...':'Adicionar ao Drive'}
             <input type="file" disabled={uploading} onChange={uploadProjectFile} className="hidden"/>
           </label>
@@ -258,7 +258,7 @@ export function AdminProjectDetail(){
 
         {uploading&&fileProgress>0&&<div className="mt-4">
           <div className="flex justify-between text-xs text-gray-500"><span>Upload para o Google Drive</span><span>{fileProgress}%</span></div>
-          <div className="h-2 rounded bg-white/10 mt-2"><div className="h-2 rounded bg-[#E30613]" style={{width:fileProgress+'%'}}/></div>
+          <div className="h-2 rounded bg-white/10 mt-2"><div className="h-2 rounded bg-[#A65A2A]" style={{width:fileProgress+'%'}}/></div>
         </div>}
 
         {!project.customer_id&&<p className="text-xs text-yellow-300 mt-3">Projeto interno: vincule um cliente para utilizar a biblioteca de arquivos.</p>}
@@ -336,12 +336,12 @@ export function AdminProjectDetail(){
           </div>}
           <div className="grid lg:grid-cols-2 gap-4 mt-4">
             <div>
-              <div className="flex justify-between"><p className="text-sm font-semibold">Checklist</p><button onClick={()=>addChecklist(task.id)} className="text-xs text-[#E30613]">+ item</button></div>
+              <div className="flex justify-between"><p className="text-sm font-semibold">Checklist</p><button onClick={()=>addChecklist(task.id)} className="text-xs text-[#A65A2A]">+ item</button></div>
               <div className="space-y-1 mt-2">{(task.checklist||[]).sort((a:any,b:any)=>a.position-b.position).map((item:any)=><label key={item.id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={item.completed} onChange={async e=>{await portalApi.saveChecklistItem({completed:e.target.checked},item.id);await load()}}/><span className={item.completed?'line-through text-gray-500':''}>{item.title}</span><button type="button" onClick={async()=>{await portalApi.deleteChecklistItem(item.id);await load()}} className="ml-auto text-xs text-red-400">×</button></label>)}</div>
             </div>
             <div>
-              <div className="flex justify-between"><p className="text-sm font-semibold">Links</p><button onClick={()=>addLink(task.id)} className="text-xs text-[#E30613]">+ link</button></div>
-              <div className="space-y-1 mt-2">{(task.links||[]).map((link:any)=><div key={link.id} className="flex items-center gap-2 text-sm"><a href={link.url} target="_blank" rel="noreferrer" className="text-[#E30613]">{link.label} ↗</a>{link.client_visible&&<span className="text-[10px] text-emerald-400">cliente</span>}<button onClick={async()=>{await portalApi.deleteTaskLink(link.id);await load()}} className="ml-auto text-xs text-red-400">×</button></div>)}</div>
+              <div className="flex justify-between"><p className="text-sm font-semibold">Links</p><button onClick={()=>addLink(task.id)} className="text-xs text-[#A65A2A]">+ link</button></div>
+              <div className="space-y-1 mt-2">{(task.links||[]).map((link:any)=><div key={link.id} className="flex items-center gap-2 text-sm"><a href={link.url} target="_blank" rel="noreferrer" className="text-[#A65A2A]">{link.label} ↗</a>{link.client_visible&&<span className="text-[10px] text-emerald-400">cliente</span>}<button onClick={async()=>{await portalApi.deleteTaskLink(link.id);await load()}} className="ml-auto text-xs text-red-400">×</button></div>)}</div>
             </div>
           </div>
         </div>

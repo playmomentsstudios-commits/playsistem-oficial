@@ -14,8 +14,8 @@ function emptyResume():Partial<Resume>{
     website_url:'',whatsapp:'',skills:[],experience:[],portfolio:[],extra_sections:[],seo_title:'',seo_description:'',seo_image_url:'',seo_image_drive_file_id:null,
   }
 }
-const fieldClass='w-full min-h-11 px-3 rounded-xl bg-black/50 border border-white/10 outline-none focus:border-[#E30613]/60'
-const textareaClass='w-full p-3 rounded-xl bg-black/50 border border-white/10 outline-none focus:border-[#E30613]/60 resize-y'
+const fieldClass='w-full min-h-11 px-3 rounded-xl bg-black/50 border border-white/10 outline-none focus:border-[#A65A2A]/60'
+const textareaClass='w-full p-3 rounded-xl bg-black/50 border border-white/10 outline-none focus:border-[#A65A2A]/60 resize-y'
 
 export function AdminResumeEditor(){
   const {id}=useParams()
@@ -154,7 +154,7 @@ export function AdminResumeEditor(){
             <input disabled={uploading} type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" onChange={e=>void uploadPhoto(e.target.files?.[0])}/>
             {uploading?'Enviando '+uploadProgress+'%':form.photo_url?'Trocar foto':'Adicionar foto'}
           </label>
-          {uploading&&<div className="mt-2 h-1.5 rounded-full bg-white/[.06] overflow-hidden"><div className="h-full bg-[#E30613] transition-all" style={{width:uploadProgress+'%'}}/></div>}
+          {uploading&&<div className="mt-2 h-1.5 rounded-full bg-white/[.06] overflow-hidden"><div className="h-full bg-[#A65A2A] transition-all" style={{width:uploadProgress+'%'}}/></div>}
           <p className="text-[10px] leading-relaxed text-gray-600 mt-2">JPG, PNG, WebP ou AVIF. O arquivo é armazenado no Google Drive.</p>
         </div>
 

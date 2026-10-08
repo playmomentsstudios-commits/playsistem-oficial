@@ -115,14 +115,14 @@ export function AdminResumes(){
         <h1 className="text-2xl md:text-3xl font-bold mt-1">Currículos</h1>
         <p className="text-sm text-gray-500 mt-1 max-w-3xl">Gerencie suas versões de currículo sem deixar o formulário aberto o tempo todo. Abra uma versão para editar ou crie uma nova quando precisar.</p>
       </div>
-      <Link to="/admin/curriculos/novo" className="inline-flex min-h-11 px-4 items-center justify-center rounded-xl bg-[#E30613] hover:bg-[#b30010] text-white text-sm font-semibold transition-colors">+ Adicionar currículo</Link>
+      <Link to="/admin/curriculos/novo" className="inline-flex min-h-11 px-4 items-center justify-center rounded-xl bg-[#A65A2A] hover:bg-[#b30010] text-white text-sm font-semibold transition-colors">+ Adicionar currículo</Link>
     </div>
 
     <section className="pm-surface p-4 md:p-5">
       <div className="grid lg:grid-cols-[minmax(0,1fr)_180px_210px] gap-3">
         <label className="relative">
           <span className="sr-only">Pesquisar currículo</span>
-          <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Pesquisar por título, nome, área ou contato..." className="w-full min-h-11 pl-10 pr-3 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-[#E30613]/50 text-sm"/>
+          <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Pesquisar por título, nome, área ou contato..." className="w-full min-h-11 pl-10 pr-3 rounded-xl bg-black/40 border border-white/10 outline-none focus:border-[#A65A2A]/50 text-sm"/>
           <span aria-hidden="true" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-600">⌕</span>
         </label>
         <select value={status} onChange={e=>setStatus(e.target.value as typeof status)} className="min-h-11 px-3 rounded-xl bg-black/40 border border-white/10 text-sm outline-none">
@@ -167,7 +167,7 @@ export function AdminResumes(){
               <div className="flex flex-wrap gap-2 mt-3">
                 <span className="text-[10px] px-2 py-1 rounded-full bg-white/[.05] text-gray-500">{typeLabel[row.resume_type]}</span>
                 {row.location&&<span className="text-[10px] px-2 py-1 rounded-full bg-white/[.05] text-gray-500">{row.location}</span>}
-                {row.status==='published'&&<span className="text-[10px] px-2 py-1 rounded-full bg-[#E30613]/10 text-[#ff6b77]">👁 {viewCounts===null?'—':(viewCounts[row.slug]||0)} · 90 dias</span>}
+                {row.status==='published'&&<span className="text-[10px] px-2 py-1 rounded-full bg-[#A65A2A]/10 text-[#ff6b77]">👁 {viewCounts===null?'—':(viewCounts[row.slug]||0)} · 90 dias</span>}
               </div>
             </div>
           </div>
@@ -186,7 +186,7 @@ export function AdminResumes(){
       <div className="w-14 h-14 mx-auto rounded-2xl bg-white/[.04] border border-white/10 flex items-center justify-center text-2xl text-gray-700">CV</div>
       <h2 className="font-semibold mt-4">{rows.length?'Nenhum currículo encontrado':'Nenhum currículo criado'}</h2>
       <p className="text-sm text-gray-600 mt-2">{rows.length?'Tente alterar os filtros de pesquisa.':'Crie uma versão curta para uma seleção ou um currículo completo para outras oportunidades.'}</p>
-      {!rows.length&&<Link to="/admin/curriculos/novo" className="inline-flex mt-5 min-h-11 px-4 items-center rounded-xl bg-[#E30613] text-white text-sm font-semibold">Adicionar primeiro currículo</Link>}
+      {!rows.length&&<Link to="/admin/curriculos/novo" className="inline-flex mt-5 min-h-11 px-4 items-center rounded-xl bg-[#A65A2A] text-white text-sm font-semibold">Adicionar primeiro currículo</Link>}
     </div>}
   </div>
 }
