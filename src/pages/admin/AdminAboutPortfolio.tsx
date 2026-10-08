@@ -1,25 +1,39 @@
-import { useEffect,useState } from 'react'
+import { useEffect,useMemo,useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { portalApi } from '../../api/portal'
+import { projectEligibleForPortfolio } from '../../lib/portfolioEligibility'
+import { projectProgress } from '../../lib/projectProgress'
 import { Button } from '../../components/ui/Button'
 import { useToast } from '../../contexts/ToastContext'
 import { siteContentApi,type PortfolioCategory,type PortfolioItem,type SiteProfile } from '../../services/siteContent'
 
-const emptyItem:Partial<PortfolioItem>&{title:string}={title:'',client:'',short_description:'',description:'',cover_url:'',project_url:'',year:new Date().getFullYear(),featured:false,active:true,display_order:0,category_id:null}
+const emptyItem:Partial<PortfolioItem>&{title:string}={title:'',client:'',short_description:'',description:'',cover_url:'',project_url:'',year:new Date().getFullYear(),featured:false,active:false,display_order:0,category_id:null,source_project_id:null}
 
 export function AdminAboutPortfolio(){
   const toast=useToast()
   const [tab,setTab]=useState<'perfil'|'portfolio'|'categorias'>('perfil')
+  const [searchParams]=useSearchParams()
   const [profile,setProfile]=useState<SiteProfile|null>(null)
   const [categories,setCategories]=useState<PortfolioCategory[]>([])
   const [items,setItems]=useState<PortfolioItem[]>([])
+  const [projects,setProjects]=useState<any[]>([])
+  const [coverUploading,setCoverUploading]=useState(false)
   const [saving,setSaving]=useState(false)
   const [itemForm,setItemForm]=useState<any>(emptyItem)
   const [categoryName,setCategoryName]=useState('')
 
   async function load(){
-    const [p,c,i]=await Promise.all([siteContentApi.profile(),siteContentApi.portfolioCategories(true),siteContentApi.portfolioItems(true)])
-    setProfile(p);setCategories(c);setItems(i)
+    const [p,c,i,operational]=await Promise.all([siteContentApi.profile(),siteContentApi.portfolioCategories(true),siteContentApi.portfolioItems(true),portalApi.projects().catch(()=>[])])
+    setProfile(p);setCategories(c);setItems(i);setProjects(operational)
   }
   useEffect(()=>{void load()},[])
+  useEffect(()=>{
+    const source=searchParams.get('projeto')
+    if(source){setTab('portfolio');setItemForm((current:any)=>({...current,source_project_id:source,active:false}))}
+  },[searchParams])
+  const eligibleProjects=useMemo(()=>projects.filter(projectEligibleForPortfolio),[projects])
+  const linkedProject=projects.find(project=>project.id===itemForm.source_project_id)
+  const projectReady=projectEligibleForPortfolio(linkedProject)
 
   async function saveProfile(){
     if(!profile)return
@@ -43,10 +57,27 @@ export function AdminAboutPortfolio(){
   }
 
   async function saveItem(){
-    if(!itemForm.title?.trim())return
-    try{setSaving(true);await siteContentApi.savePortfolioItem(itemForm);setItemForm(emptyItem);await load();toast('Projeto salvo.','success')}
-    catch(error:any){toast(error.message||'Não foi possível salvar o projeto.','error')}
-    finally{setSaving(false)}
+    if(!itemForm.title?.trim()){toast('Informe o título do projeto.','error');return}
+    if(!itemForm.source_project_id){toast('Selecione um projeto concluído em 100% no painel operacional.','error');return}
+    if(!itemForm.id && !projectReady){toast('Esse projeto ainda não está concluído em 100%.','error');return}
+    if(items.some(row=>row.source_project_id===itemForm.source_project_id && row.id!==itemForm.id)){
+      toast('Este projeto já está vinculado a uma ficha de portfólio. Edite a ficha existente.','error');return
+    }
+    if(itemForm.active){
+      if(!projectReady){toast('Para publicar, o projeto precisa estar concluído em 100%.','error');return}
+      if(!itemForm.cover_url?.trim() || !itemForm.short_description?.trim() || !itemForm.category_id){
+        toast('Antes de publicar, inclua capa, resumo público e categoria.','error');return
+      }
+    }
+    try{
+      setSaving(true)
+      await siteContentApi.savePortfolioItem({...itemForm,active:Boolean(itemForm.active)})
+      setItemForm(emptyItem)
+      await load()
+      toast('Ficha de portfólio salva. A publicação depende da aprovação e do projeto em 100%.','success')
+    }catch(error:any){
+      toast(error?.message||'Não foi possível salvar o portfólio.','error')
+    }finally{setSaving(false)}
   }
 
   return <div>
@@ -114,19 +145,109 @@ export function AdminAboutPortfolio(){
       <Button onClick={saveProfile} loading={saving}>Salvar Quem Somos</Button>
     </div>}
 
-    {tab==='portfolio'&&<div className="grid xl:grid-cols-[380px_1fr] gap-5">
-      <div className="p-4 rounded-2xl bg-[#141416] border border-white/10 h-fit space-y-3">
-        <h2 className="font-bold">{itemForm.id?'Editar projeto':'Adicionar projeto'}</h2>
-        <input value={itemForm.title||''} onChange={e=>setItemForm({...itemForm,title:e.target.value})} placeholder="Título" className="w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
-        <input value={itemForm.client||''} onChange={e=>setItemForm({...itemForm,client:e.target.value})} placeholder="Cliente / organização" className="w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
-        <select value={itemForm.category_id||''} onChange={e=>setItemForm({...itemForm,category_id:e.target.value||null})} className="w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"><option value="">Sem categoria</option>{categories.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>
-        <textarea value={itemForm.short_description||''} onChange={e=>setItemForm({...itemForm,short_description:e.target.value})} rows={2} placeholder="Resumo" className="w-full p-3 rounded-xl bg-black border border-white/10"/>
-        <textarea value={itemForm.description||''} onChange={e=>setItemForm({...itemForm,description:e.target.value})} rows={4} placeholder="Descrição completa" className="w-full p-3 rounded-xl bg-black border border-white/10"/>
-        <input value={itemForm.project_url||''} onChange={e=>setItemForm({...itemForm,project_url:e.target.value})} placeholder="Link do projeto" className="w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
-        <label className="min-h-11 rounded-xl bg-white/[0.06] flex items-center justify-center text-xs cursor-pointer"><input type="file" accept="image/*" className="sr-only" onChange={async e=>{const f=e.target.files?.[0];if(f)setItemForm({...itemForm,cover_url:(await siteContentApi.uploadSiteAsset(f,'PORTFOLIO')).url})}}/>Enviar capa</label>
-        <div className="flex gap-2"><Button onClick={saveItem} loading={saving}>{itemForm.id?'Atualizar':'Adicionar'}</Button>{itemForm.id&&<Button variant="secondary" onClick={()=>setItemForm(emptyItem)}>Cancelar</Button>}</div>
+    {tab==='portfolio'&&<div className="space-y-5">
+      <div className="rounded-2xl border border-[#A65A2A]/30 bg-[#A65A2A]/[0.07] p-4 sm:p-5">
+        <p className="text-sm font-semibold text-[#DFA269]">Portfólio vinculado a projetos 100% concluídos</p>
+        <p className="text-sm text-gray-300 leading-6 mt-2">Somente projetos marcados como <b>Concluídos</b>, com todas as tarefas e checklists finalizados, podem entrar aqui. Prepare a apresentação com capa e resumo e marque <b>Publicar no site</b> quando estiver pronta. A publicação nunca é automática.</p>
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-400">
+          <span>{eligibleProjects.length} projetos elegíveis</span><span>·</span><span>{items.filter(item=>item.active && projectEligibleForPortfolio(projects.find(project=>project.id===item.source_project_id))).length} liberados</span>
+          <Link to="/admin/projetos" className="ml-auto text-[#DFA269] font-semibold hover:underline">Ver projetos e tarefas ↗</Link>
+        </div>
       </div>
-      <div className="grid md:grid-cols-2 gap-3">{items.map(item=><div key={item.id} className="p-3 rounded-2xl bg-[#141416] border border-white/10"><div className="aspect-[16/9] rounded-xl overflow-hidden bg-black/20">{item.cover_url&&<img src={item.cover_url} className="w-full h-full object-cover"/>}</div><p className="font-semibold mt-3">{item.title}</p><p className="text-xs text-gray-500">{item.client}</p><div className="flex gap-2 mt-3"><button onClick={()=>setItemForm(item)} className="px-3 min-h-10 rounded-lg bg-white/[0.06] text-xs">Editar</button><button onClick={async()=>{if(confirm('Excluir este projeto?')){await siteContentApi.deletePortfolioItem(item.id);await load()}}} className="px-3 min-h-10 rounded-lg bg-red-500/10 text-red-400 text-xs">Excluir</button></div></div>)}</div>
+
+      <div className="grid xl:grid-cols-[390px_1fr] gap-5">
+        <div className="p-4 sm:p-5 rounded-2xl bg-[#141416] border border-white/10 h-fit space-y-4">
+          <div>
+            <h2 className="font-bold text-lg">{itemForm.id?'Editar ficha de portfólio':'Preparar nova ficha'}</h2>
+            <p className="text-xs text-gray-400 mt-1">Os dados operacionais nunca são copiados automaticamente para o site.</p>
+          </div>
+          <label className="block text-xs font-semibold text-gray-300">Projeto operacional concluído
+            <select required value={itemForm.source_project_id||''}
+              onChange={e=>setItemForm({...itemForm,source_project_id:e.target.value||null,active:false})}
+              className="mt-2 block w-full min-h-11 px-3 rounded-xl bg-black border border-white/10">
+              <option value="">Selecione um projeto em 100%</option>
+              {linkedProject&&!projectReady&&<option value={linkedProject.id}>{linkedProject.title} — não elegível</option>}
+              {!linkedProject&&itemForm.source_project_id&&<option value={itemForm.source_project_id}>Projeto anterior indisponível</option>}
+              {eligibleProjects.map(project=><option key={project.id} value={project.id}>{project.title} · 100%</option>)}
+            </select>
+          </label>
+          {linkedProject&&<div className="flex flex-wrap justify-between gap-2 text-xs border border-white/10 bg-white/[0.04] rounded-xl p-3">
+            <span className={projectReady?'text-emerald-300':'text-amber-300'}>{projectReady?'Pronto para publicação':'Ainda não está 100% concluído'}</span>
+            <span className="text-gray-400">Progresso: {projectProgress(linkedProject)}%</span>
+            <Link className="text-[#DFA269] hover:underline" to={'/admin/projetos/'+linkedProject.id}>Abrir projeto ↗</Link>
+          </div>}
+          {eligibleProjects.length===0&&!itemForm.id&&<p className="text-xs text-amber-300 leading-5">Ainda não há projetos finalizados em 100% para selecionar. Quando concluir um pelo painel Projetos, ele aparecerá nesta lista.</p>}
+          <label className="block text-xs font-semibold text-gray-300">Título público
+            <input value={itemForm.title||''} onChange={e=>setItemForm({...itemForm,title:e.target.value})} placeholder="Nome da entrega" className="mt-2 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
+          </label>
+          <label className="block text-xs font-semibold text-gray-300">Cliente / organização (opcional)
+            <input value={itemForm.client||''} onChange={e=>setItemForm({...itemForm,client:e.target.value})} placeholder="Exibir apenas se autorizado" className="mt-2 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
+          </label>
+          <label className="block text-xs font-semibold text-gray-300">Categoria
+            <select value={itemForm.category_id||''} onChange={e=>setItemForm({...itemForm,category_id:e.target.value||null})} className="mt-2 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10">
+              <option value="">Selecionar categoria</option>
+              {categories.filter(cat=>cat.active).map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </label>
+          <label className="block text-xs font-semibold text-gray-300">Resumo público
+            <textarea value={itemForm.short_description||''} onChange={e=>setItemForm({...itemForm,short_description:e.target.value})} rows={3} placeholder="Descrição breve, sem dados internos ou confidenciais" className="mt-2 w-full p-3 rounded-xl bg-black border border-white/10"/>
+          </label>
+          <label className="block text-xs font-semibold text-gray-300">Descrição completa (opcional)
+            <textarea value={itemForm.description||''} onChange={e=>setItemForm({...itemForm,description:e.target.value})} rows={4} placeholder="Processo criativo e resultado" className="mt-2 w-full p-3 rounded-xl bg-black border border-white/10"/>
+          </label>
+          <label className="block text-xs font-semibold text-gray-300">Link público do trabalho (opcional)
+            <input value={itemForm.project_url||''} onChange={e=>setItemForm({...itemForm,project_url:e.target.value})} placeholder="https://..." className="mt-2 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
+          </label>
+          <div>
+            <p className="text-xs font-semibold text-gray-300">Capa pública</p>
+            {itemForm.cover_url&&<img src={itemForm.cover_url} alt="Prévia da capa do projeto" className="mt-2 rounded-xl w-full aspect-video object-cover border border-white/10"/>}
+            <label className="mt-2 min-h-11 rounded-xl bg-white/[0.06] border border-white/10 flex items-center justify-center text-xs cursor-pointer hover:bg-white/[0.1]">
+              <input type="file" accept="image/*" disabled={coverUploading} className="sr-only" onChange={async e=>{
+                const file=e.target.files?.[0];if(!file)return
+                try{setCoverUploading(true);const asset=await siteContentApi.uploadSiteAsset(file,'PORTFOLIO');setItemForm((current:any)=>({...current,cover_url:asset.url}));toast('Capa enviada.','success')}
+                catch(error:any){toast(error?.message||'Erro ao enviar a capa.','error')}finally{setCoverUploading(false);e.target.value=''}
+              }}/>
+              {coverUploading?'Enviando capa…':itemForm.cover_url?'Substituir capa':'Enviar capa'}
+            </label>
+          </div>
+          <label className="flex items-start gap-3 rounded-xl bg-white/[0.035] border border-white/10 p-3 cursor-pointer">
+            <input type="checkbox" checked={Boolean(itemForm.active)} disabled={!projectReady && !itemForm.active}
+              onChange={e=>setItemForm({...itemForm,active:e.target.checked})} className="mt-1 accent-[#A65A2A]"/>
+            <span className="text-xs text-gray-300 leading-5"><strong className="block text-sm text-white">Publicar no site</strong>
+              Eu revisei capa, textos e nomes e autorizo a exibição desta ficha no portfólio da SAGAMENTE.
+              {!projectReady&&<span className="block mt-1 text-amber-300">Disponível somente com projeto 100% concluído.</span>}
+            </span>
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={saveItem} loading={saving||coverUploading}>{itemForm.id?'Salvar alterações':'Salvar ficha'}</Button>
+            {itemForm.id&&<Button variant="secondary" onClick={()=>setItemForm(emptyItem)}>Nova ficha</Button>}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex flex-wrap justify-between gap-3 items-center">
+            <h3 className="font-bold">Fichas do portfólio</h3>
+            <p className="text-xs text-gray-500">{items.length} cadastradas</p>
+          </div>
+          {items.length===0&&<div className="p-7 bg-[#141416] border border-white/10 rounded-2xl text-center text-sm text-gray-400">Nenhum projeto foi preparado para o portfólio. Os trabalhos só serão publicados depois de concluídos e revisados.</div>}
+          <div className="grid md:grid-cols-2 gap-3">{items.map(item=>{
+            const completed=projectEligibleForPortfolio(projects.find(project=>project.id===item.source_project_id))
+            const visible=item.active&&completed&&Boolean(item.cover_url?.trim()&&item.short_description?.trim())
+            return <article key={item.id} className="p-3 rounded-2xl bg-[#141416] border border-white/10">
+              <div className="aspect-[16/9] rounded-xl overflow-hidden bg-black/20">{item.cover_url?<img src={item.cover_url} alt={item.title} className="w-full h-full object-cover"/>:<div className="h-full grid place-items-center text-xs text-gray-500">Capa não adicionada</div>}</div>
+              <div className="mt-3 flex flex-wrap items-start justify-between gap-2">
+                <p className="font-semibold text-sm">{item.title}</p>
+                <span className={'text-[10px] font-semibold px-2 py-1 rounded-full '+(visible?'bg-emerald-500/10 text-emerald-300':'bg-amber-500/10 text-amber-300')}>{visible?'Publicado':'Rascunho / não elegível'}</span>
+              </div>
+              {item.client&&<p className="text-xs text-gray-500 mt-1">{item.client}</p>}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" onClick={()=>{setItemForm(item);window.scrollTo({top:0,behavior:'smooth'})}} className="px-3 min-h-10 rounded-lg bg-white/[0.06] hover:bg-white/10 text-xs">Editar</button>
+                <button type="button" onClick={async()=>{if(confirm('Excluir esta ficha do portfólio? O projeto operacional permanece intacto.')){await siteContentApi.deletePortfolioItem(item.id);await load()}}} className="px-3 min-h-10 rounded-lg bg-red-500/10 text-red-400 text-xs">Excluir ficha</button>
+              </div>
+            </article>
+          })}</div>
+        </div>
+      </div>
     </div>}
 
     {tab==='categorias'&&<div className="max-w-2xl"><div className="flex gap-2 mb-4"><input value={categoryName} onChange={e=>setCategoryName(e.target.value)} placeholder="Nova categoria" className="flex-1 min-h-11 px-3 rounded-xl bg-black border border-white/10"/><Button onClick={async()=>{if(categoryName.trim()){await siteContentApi.saveCategory({name:categoryName.trim()});setCategoryName('');await load()}}}>Adicionar</Button></div><div className="space-y-2">{categories.map(cat=><div key={cat.id} className="p-3 rounded-xl bg-[#141416] border border-white/8 flex items-center justify-between gap-3"><span>{cat.name}</span><button onClick={async()=>{if(confirm('Excluir categoria? Os projetos permanecerão sem categoria.')){await siteContentApi.deleteCategory(cat.id);await load()}}} className="text-xs text-red-400">Excluir</button></div>)}</div></div>}
