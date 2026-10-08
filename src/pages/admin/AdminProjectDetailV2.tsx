@@ -144,6 +144,9 @@ export function AdminProjectDetailV2(){
     })).filter(group=>group.items.length)
   },[tasks,sortedStages])
   const selectedFileTask=tasks.find((task:any)=>task.id===fileTask)
+  useEffect(()=>{
+    if(fileTask&&(!selectedFileTask||['completed','cancelled'].includes(selectedFileTask.status)))setFileTask('')
+  },[fileTask,selectedFileTask?.id,selectedFileTask?.status])
   const effectiveFileStage=selectedFileTask?.stage_id||fileStage||sortedStages[0]?.id||null
 
   useEffect(()=>{
