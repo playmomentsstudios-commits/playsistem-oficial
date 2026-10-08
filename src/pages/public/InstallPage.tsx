@@ -1,25 +1,23 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { clearInstallPrompt, getInstallPrompt, INSTALL_PROMPT_CHANGED, type PwaPrompt } from '../../lib/pwa'
 
-interface PwaPrompt extends Event {
-  prompt: () => Promise<void>
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
-}
 function isStandalone(): boolean {
   return window.matchMedia('(display-mode: standalone)').matches
     || (navigator as Navigator & { standalone?: boolean }).standalone === true
 }
 export function InstallPage() {
-  const [promptEvent, setPromptEvent] = useState<PwaPrompt | null>(null)
+  const [promptEvent, setPromptEvent] = useState<PwaPrompt | null>(getInstallPrompt)
   const [installed, setInstalled] = useState(isStandalone)
   const ios = /iPad|iPhone|iPod/i.test(navigator.userAgent)
   useEffect(() => {
-    const ready = (event: Event) => { event.preventDefault(); setPromptEvent(event as PwaPrompt) }
+    const sync = () => setPromptEvent(getInstallPrompt())
     const done = () => { setInstalled(true); setPromptEvent(null) }
-    window.addEventListener('beforeinstallprompt', ready)
+    sync()
+    window.addEventListener(INSTALL_PROMPT_CHANGED, sync)
     window.addEventListener('appinstalled', done)
     return () => {
-      window.removeEventListener('beforeinstallprompt', ready)
+      window.removeEventListener(INSTALL_PROMPT_CHANGED, sync)
       window.removeEventListener('appinstalled', done)
     }
   }, [])
@@ -27,6 +25,7 @@ export function InstallPage() {
     if (!promptEvent) return
     const event = promptEvent
     setPromptEvent(null)
+    clearInstallPrompt()
     try {
       await event.prompt()
       const decision = await event.userChoice
