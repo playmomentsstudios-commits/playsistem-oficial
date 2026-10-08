@@ -629,7 +629,17 @@ export const portalApi = {
       await new Promise(resolve=>window.setTimeout(resolve,500*(attempt+1)))
     }
 
-    if(finalizeError) throw finalizeError
+    if(finalizeError){
+      let detail=''
+      try{
+        const context=finalizeError.context
+        if(context&&typeof context.json==='function'){
+          const payload=await context.json()
+          detail=String(payload?.error||payload?.message||'')
+        }
+      }catch{/* The response body may already have been consumed. */}
+      throw new Error(detail||finalizeError.message||'Falha ao registrar o arquivo enviado.')
+    }
     if(!finalized?.ok) throw new Error(finalized?.error||'O arquivo chegou ao Google Drive, mas não foi possível registrá-lo no painel.')
     return finalized.file
   },
