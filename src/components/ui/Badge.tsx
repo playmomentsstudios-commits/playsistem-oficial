@@ -8,7 +8,7 @@ const STYLES: Record<Variant, { bg: string; color: string; border: string }> = {
   warning: { bg: 'rgba(245,158,11,0.12)', color: '#fbbf24', border: 'rgba(245,158,11,0.3)' },
   danger: { bg: 'rgba(227,6,19,0.12)', color: '#ff6b7a', border: 'rgba(227,6,19,0.3)' },
   info: { bg: 'rgba(76,201,240,0.12)', color: '#67d7f0', border: 'rgba(76,201,240,0.3)' },
-  brand: { bg: 'rgba(227,6,19,0.15)', color: '#ff4d5e', border: 'rgba(227,6,19,0.4)' },
+  brand: { bg: 'rgba(166,90,42,0.15)', color: '#DFA269', border: 'rgba(166,90,42,0.4)' },
 }
 
 const ORDER_STATUS_MAP: Record<string, Variant> = {

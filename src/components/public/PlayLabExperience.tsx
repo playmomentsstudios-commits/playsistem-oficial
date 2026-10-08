@@ -180,7 +180,7 @@ export function PlayLabExperience({
 
       <div className="pm-lab-content">
         <div className="pm-lab-topline">
-          <span>PLAY MOMENTS / EXPERIENCE LAB</span>
+          <span>SAGAMENTE / EXPERIENCE LAB</span>
           <span>CRIAR · CONECTAR · TRANSFORMAR</span>
         </div>
 

@@ -44,7 +44,7 @@ export function Input({ label, error, hint, leftIcon, className = '', id, ...pro
             ...props.style,
           }}
           onFocus={e => {
-            e.target.style.border = `1px solid ${error ? 'rgba(227,6,19,0.6)' : 'rgba(227,6,19,0.5)'}`
+            e.target.style.border = `1px solid ${error ? 'rgba(227,6,19,0.6)' : 'rgba(166,90,42,0.5)'}`
             e.target.style.background = 'rgba(255,255,255,0.07)'
           }}
           onBlur={e => {
