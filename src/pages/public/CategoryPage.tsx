@@ -64,7 +64,7 @@ export function CategoryPage(){
         <div className="absolute inset-0 pointer-events-none" style={{background:`radial-gradient(circle at 50% 20%, ${cat.color}22, transparent 58%)`}}/>
         <div className="relative max-w-3xl mx-auto">
           <span aria-hidden="true" className="text-4xl block mb-4">{cat.icon}</span>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{color:cat.color}}>Área Play Moments</p>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{color:cat.color}}>Área Sagamente</p>
           <h1 className="text-3xl sm:text-5xl font-bold mb-4" style={{color:'#f0f0f2'}}>{cat.title}</h1>
           <p className="text-base sm:text-lg max-w-2xl mx-auto" style={{color:'#9090a0'}}>{cat.subtitle}</p>
           <div className="flex flex-wrap justify-center gap-3 mt-6">

@@ -63,7 +63,7 @@ export function ProductDetailPage() {
   const cover=product?getCover(product):null
   useSeo({
     title:product?.name||'Produto',
-    description:(product?.short_description||product?.description||'Produto disponível na Play Moments.').slice(0,160),
+    description:(product?.short_description||product?.description||'Produto disponível na Sagamente.').slice(0,160),
     image:cover,
     canonicalPath:'/produtos/'+slug,
     type:'product',
@@ -113,7 +113,7 @@ export function ProductDetailPage() {
 
             <Link
               to="/produtos"
-              style={{ color: '#E30613' }}
+              style={{ color: '#A65A2A' }}
             >
               ← Voltar para produtos
             </Link>
@@ -177,7 +177,7 @@ export function ProductDetailPage() {
                   </Badge>
                 </div>
 
-                {product.category?.name && <p className="text-xs uppercase tracking-wider mb-2" style={{color:'#E30613'}}>{product.category.name}</p>}
+                {product.category?.name && <p className="text-xs uppercase tracking-wider mb-2" style={{color:'#A65A2A'}}>{product.category.name}</p>}
 
                 <h1
                   className="text-2xl sm:text-4xl font-bold mb-3"
@@ -210,7 +210,7 @@ export function ProductDetailPage() {
 
                           <p
                             className="text-3xl font-bold"
-                            style={{ color: '#E30613' }}
+                            style={{ color: '#A65A2A' }}
                           >
                             {formatPrice(
                               product.promotional_price,
