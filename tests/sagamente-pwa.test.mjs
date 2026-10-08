@@ -36,5 +36,6 @@ test('installer is connected to the current website', () => {
   assert.match(read('src/lib/pwa.ts'), /import.meta.env.PROD/)
   assert.match(read('src/AppV2.tsx'), /path="\/instalar"/)
   assert.match(read('src/components/navigation/PublicHeader.tsx'), /Instalar app/)
-  assert.match(read('src/pages/public/InstallPage.tsx'), /beforeinstallprompt/)
+  assert.match(read('src/lib/pwa.ts'), /beforeinstallprompt/)
+  assert.match(read('src/pages/public/InstallPage.tsx'), /INSTALL_PROMPT_CHANGED/)
 })
