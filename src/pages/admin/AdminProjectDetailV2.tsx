@@ -420,20 +420,27 @@ export function AdminProjectDetailV2(){
       </div>
     </div>
 
-    <div className="grid lg:grid-cols-3 gap-4 mt-6">
-      <div className="lg:col-span-2 pm-surface p-5">
-        <div className="flex justify-between"><span>Progresso geral</span><b>{progress(project)}%</b></div>
-        <div className="h-2 bg-white/[0.07] rounded-full mt-3 overflow-hidden" role="progressbar" aria-label="Progresso do projeto" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress(project)}><div className="h-full bg-[#E30613] rounded-full transition-[width] duration-300" style={{width:progress(project)+'%'}}/></div>
-        <p className="text-sm text-gray-400 mt-4 whitespace-pre-wrap">{project.description||'Sem descrição.'}</p>
-      </div>
-      <div className="pm-surface p-5 text-sm space-y-3">
-        <p><span className="text-gray-500">Início:</span> {project.start_date?new Date(project.start_date+'T12:00').toLocaleDateString('pt-BR'):'—'}</p>
-        <p><span className="text-gray-500">Prazo:</span> {project.due_date?new Date(project.due_date+'T12:00').toLocaleDateString('pt-BR'):'—'}</p>
-        {project.drive_folder_url&&<a href={project.drive_folder_url} target="_blank" rel="noreferrer" className="inline-block text-[#E30613]">Abrir pasta do projeto ↗</a>}
+    <div className="mt-3 pm-surface px-4 py-3">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="flex items-center gap-3 min-w-[150px]">
+          <span className="text-xs text-gray-400">Progresso</span>
+          <b className="text-sm">{progress(project)}%</b>
+        </div>
+        <div className="h-1.5 bg-white/[.08] rounded-full overflow-hidden flex-1 min-w-[110px]" role="progressbar" aria-label="Progresso do projeto" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress(project)}>
+          <div className="h-full bg-[#E30613] rounded-full transition-[width] duration-300" style={{width:progress(project)+'%'}}/>
+        </div>
+        <details className="text-xs text-gray-400">
+          <summary className="cursor-pointer select-none hover:text-white">Detalhes do projeto</summary>
+          <div className="mt-3 max-w-2xl space-y-2">
+            <p className="whitespace-pre-wrap">{project.description||'Sem descrição.'}</p>
+            <p>Início: {project.start_date?new Date(project.start_date+'T12:00').toLocaleDateString('pt-BR'):'—'} · Prazo: {project.due_date?new Date(project.due_date+'T12:00').toLocaleDateString('pt-BR'):'—'}</p>
+            {project.drive_folder_url&&<a href={project.drive_folder_url} target="_blank" rel="noreferrer" className="text-[#E30613]">Abrir pasta no Drive ↗</a>}
+          </div>
+        </details>
       </div>
     </div>
 
-    <div className="mt-6 flex gap-2 overflow-x-auto pb-1"><button type="button" onClick={()=>setProjectTab('execucao')} className={'shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border '+(projectTab==='execucao'?'bg-[#E30613]/15 text-red-200 border-[#E30613]/30':'bg-white/[.03] text-gray-400 border-white/10')}>Execução</button><button type="button" onClick={()=>setProjectTab('arquivos')} className={'shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border '+(projectTab==='arquivos'?'bg-[#E30613]/15 text-red-200 border-[#E30613]/30':'bg-white/[.03] text-gray-400 border-white/10')}>Arquivos <span className="ml-1 text-[10px] opacity-70">({files.length})</span></button><Link to="/admin/arquivos" className="shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border border-white/10 text-gray-400 flex items-center">Central de Arquivos ↗</Link></div>
+    <div className="mt-3 flex gap-2 overflow-x-auto pb-1"><button type="button" onClick={()=>setProjectTab('execucao')} className={'shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border '+(projectTab==='execucao'?'bg-[#E30613]/15 text-red-200 border-[#E30613]/30':'bg-white/[.03] text-gray-400 border-white/10')}>Execução</button><button type="button" onClick={()=>setProjectTab('arquivos')} className={'shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border '+(projectTab==='arquivos'?'bg-[#E30613]/15 text-red-200 border-[#E30613]/30':'bg-white/[.03] text-gray-400 border-white/10')}>Arquivos <span className="ml-1 text-[10px] opacity-70">({files.length})</span></button><Link to="/admin/arquivos" className="shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border border-white/10 text-gray-400 flex items-center">Central de Arquivos ↗</Link></div>
 
     {projectTab==='arquivos'&&<div>
     <section className="mt-8">
