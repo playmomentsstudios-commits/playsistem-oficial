@@ -46,7 +46,7 @@ export function PaymentsPage(){
     <section className="mb-6 p-5 rounded-2xl bg-[#141416] border border-white/10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <p className="text-[11px] uppercase tracking-[0.18em] text-[#E30613] font-semibold">Carteira</p>
+          <p className="text-[11px] uppercase tracking-[0.18em] text-[#A65A2A] font-semibold">Carteira</p>
           <h2 className="font-semibold text-white mt-1">Formas de pagamento</h2>
           <p className="text-xs text-gray-500 mt-1">Seus cartões poderão ser usados nas próximas compras sem preencher tudo novamente.</p>
         </div>
@@ -58,7 +58,7 @@ export function PaymentsPage(){
         <span aria-hidden="true">🔒</span>
         <div>
           <p className="text-sm text-white font-medium">Cartão protegido pelo provedor de pagamento</p>
-          <p className="text-xs text-gray-500 mt-1">A Play Moments não armazenará número completo do cartão nem código de segurança. O cartão será salvo por tokenização.</p>
+          <p className="text-xs text-gray-500 mt-1">A Sagamente não armazenará número completo do cartão nem código de segurança. O cartão será salvo por tokenização.</p>
         </div>
       </div>
     </section>
@@ -76,7 +76,7 @@ export function PaymentsPage(){
           return <div key={payment.id} className="p-5 rounded-2xl bg-[#141416] border border-white/10">
             <div className="flex flex-wrap justify-between gap-4">
               <div>
-                <p className="font-semibold text-white">{payment.order?.order_number||'Pagamento Play Moments'}</p>
+                <p className="font-semibold text-white">{payment.order?.order_number||'Pagamento Sagamente'}</p>
                 <p className="text-sm text-gray-400">{money(payment.amount)} · {rotulo(metodoPagamento,payment.method)}</p>
                 <p className="text-xs text-gray-600 mt-1">{new Date(payment.created_at).toLocaleString('pt-BR')}</p>
               </div>
@@ -92,14 +92,14 @@ export function PaymentsPage(){
 : hostedCard?<div className="mt-4 p-4 rounded-xl bg-white/5 text-sm space-y-3">
                 <p className="font-semibold text-white">Cartão · checkout seguro Asaas</p>
                 <p className="text-xs text-gray-400">Continue o pagamento no ambiente seguro do Asaas. Se a sessão tiver expirado, volte ao carrinho para gerar uma nova sessão.</p>
-                <a href={hostedCard} className="inline-flex px-3 py-2 rounded-lg bg-[#E30613] text-white font-semibold">Continuar pagamento</a>
+                <a href={hostedCard} className="inline-flex px-3 py-2 rounded-lg bg-[#A65A2A] text-white font-semibold">Continuar pagamento</a>
               </div>
               : asaasPix?.payload?<div className="mt-4 p-4 rounded-xl bg-white/5 text-sm space-y-3">
                 <p className="font-semibold text-white">PIX Asaas</p>
                 {asaasPix.encodedImage&&<img src={'data:image/png;base64,'+asaasPix.encodedImage} alt="QR Code PIX" className="w-48 h-48 bg-white rounded-xl p-2"/>}
                 <p className="text-xs text-gray-400">Escaneie o QR Code ou copie o código PIX abaixo.</p>
                 <div className="p-3 rounded-lg bg-black/30 break-all text-xs">{asaasPix.payload}</div>
-                <button onClick={()=>navigator.clipboard.writeText(asaasPix.payload)} className="px-3 py-2 rounded-lg bg-[#E30613] text-white">Copiar PIX</button>
+                <button onClick={()=>navigator.clipboard.writeText(asaasPix.payload)} className="px-3 py-2 rounded-lg bg-[#A65A2A] text-white">Copiar PIX</button>
                 {asaasPix.expirationDate&&<p className="text-xs text-gray-500">Expira em {new Date(asaasPix.expirationDate).toLocaleString('pt-BR')}</p>}
               </div>
               : null}

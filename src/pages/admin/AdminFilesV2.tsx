@@ -173,7 +173,7 @@ export function AdminFilesV2(){
       if(!map.has(key)){
         map.set(key,{
           customer:null,
-          label:internal?'Projetos internos Play Moments':'Arquivos sem vínculo',
+          label:internal?'Projetos internos Sagamente':'Arquivos sem vínculo',
           internal,
           projects:new Map(),
         })
@@ -188,7 +188,7 @@ export function AdminFilesV2(){
       if(!map.has(key)){
         map.set(key,{
           customer:row.customer||null,
-          label:internal?'Projetos internos Play Moments':'Arquivos sem vínculo',
+          label:internal?'Projetos internos Sagamente':'Arquivos sem vínculo',
           internal,
           projects:new Map(),
         })
@@ -479,11 +479,11 @@ export function AdminFilesV2(){
   return <div>
     <div className="flex flex-wrap justify-between gap-4 items-end mb-6">
       <div>
-        <p className="text-[11px] uppercase tracking-[.18em] text-[#E30613] font-semibold">Operação</p>
+        <p className="text-[11px] uppercase tracking-[.18em] text-[#A65A2A] font-semibold">Operação</p>
         <h1 className="text-2xl font-bold mt-1">Central de Arquivos</h1>
         <p className="text-sm text-gray-500 mt-1">Clientes e produção interna → Projeto → Tarefa/Etapa → arquivo.</p>
       </div>
-      <div className="flex items-center gap-2"><Button type="button" variant="secondary" loading={testing} onClick={testDrive}>Testar Drive</Button><button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='__unassigned__')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-10 px-3.5 rounded-xl bg-[#E30613] hover:bg-[#f01826] text-white text-sm font-bold flex items-center gap-1.5"><span className="text-lg leading-none">＋</span>Novo</button></div>
+      <div className="flex items-center gap-2"><Button type="button" variant="secondary" loading={testing} onClick={testDrive}>Testar Drive</Button><button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='__unassigned__')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-10 px-3.5 rounded-xl bg-[#A65A2A] hover:bg-[#f01826] text-white text-sm font-bold flex items-center gap-1.5"><span className="text-lg leading-none">＋</span>Novo</button></div>
     </div>
 
     {uploadResult&&<div className="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 flex items-start gap-3">
@@ -511,7 +511,7 @@ export function AdminFilesV2(){
               <div className="w-9 h-9 rounded-lg bg-white/[0.05] flex items-center justify-center">📁</div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold truncate">{group.label}</p>
-                <p className="text-[10px] text-gray-500 truncate">{group.internal?'Produção interna da Play Moments':(group.customer?.email||'Arquivos sem projeto')}</p>
+                <p className="text-[10px] text-gray-500 truncate">{group.internal?'Produção interna da Sagamente':(group.customer?.email||'Arquivos sem projeto')}</p>
               </div>
               <div className="text-right">
                 <p className="text-xs font-semibold">{totalFiles}</p>
@@ -550,10 +550,10 @@ export function AdminFilesV2(){
           <span className="text-sm font-semibold">{versionFile?versionFile.name:'Selecionar arquivo da nova versão'}</span>
           <span className="block text-xs text-gray-500 mt-1">A nova versão será vinculada ao mesmo histórico do arquivo.</span>
         </label>
-        {saving&&<div className="mt-3"><div className="h-2 rounded-full bg-white/10 overflow-hidden"><div className="h-full bg-[#E30613]" style={{width:versionProgress+'%'}}/></div><p className="text-[10px] text-gray-500 mt-1">{versionProgress}% enviado</p></div>}
+        {saving&&<div className="mt-3"><div className="h-2 rounded-full bg-white/10 overflow-hidden"><div className="h-full bg-[#A65A2A]" style={{width:versionProgress+'%'}}/></div><p className="text-[10px] text-gray-500 mt-1">{versionProgress}% enviado</p></div>}
         <div className="flex gap-2 mt-4">
           <button type="button" onClick={()=>{setVersioningFile(null);setVersionFile(null)}} className="min-h-10 px-4 rounded-xl border border-white/10 text-xs">Cancelar</button>
-          <button type="button" disabled={!versionFile||saving} onClick={()=>void uploadNewVersion()} className="min-h-10 flex-1 px-4 rounded-xl bg-[#E30613] disabled:opacity-40 text-xs font-bold">Enviar nova versão</button>
+          <button type="button" disabled={!versionFile||saving} onClick={()=>void uploadNewVersion()} className="min-h-10 flex-1 px-4 rounded-xl bg-[#A65A2A] disabled:opacity-40 text-xs font-bold">Enviar nova versão</button>
         </div>
       </div>
     </div>}
@@ -567,10 +567,10 @@ export function AdminFilesV2(){
               {selectedLibraryGroup.label}
             </p>
             <p className="text-[10px] text-gray-500 truncate">
-              {libraryProject&&selectedLibraryProject?.project?.title?selectedLibraryProject.project.title:(selectedLibraryGroup.internal?'Produção interna da Play Moments':selectedLibraryGroup.customer?.email||'Biblioteca de arquivos')}
+              {libraryProject&&selectedLibraryProject?.project?.title?selectedLibraryProject.project.title:(selectedLibraryGroup.internal?'Produção interna da Sagamente':selectedLibraryGroup.customer?.email||'Biblioteca de arquivos')}
             </p>
           </div>
-          <button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='__unassigned__')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-8 px-3 rounded-lg bg-[#E30613] hover:bg-[#f01826] text-white text-[10px] font-bold">＋ Novo</button>
+          <button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='__unassigned__')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-8 px-3 rounded-lg bg-[#A65A2A] hover:bg-[#f01826] text-white text-[10px] font-bold">＋ Novo</button>
           <button type="button" onClick={()=>{setLibraryCustomer(null);setLibraryProject(null);setMenuFile(null)}} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-400 text-lg" title="Fechar" aria-label="Fechar">×</button>
         </div>
 
@@ -636,7 +636,7 @@ export function AdminFilesV2(){
                   <button type="button" onClick={()=>open(row)} className="w-full text-left">
                     <div className="h-14 rounded-lg bg-white/[0.035] flex items-center justify-center text-2xl">{fileIcon(row)}</div>
                     <div className="mt-2 flex items-center justify-between gap-2">
-                      <span className="text-[9px] font-bold text-[#E30613]">{extension(row.name)} · v{row.version_number||1}</span>
+                      <span className="text-[9px] font-bold text-[#A65A2A]">{extension(row.name)} · v{row.version_number||1}</span>
                       <span className="text-[9px] text-gray-600">{sizeLabel(row.file_size)}</span>
                     </div>
                     <p className="text-xs font-semibold truncate mt-1" title={row.name}>{row.name}</p>
@@ -645,11 +645,11 @@ export function AdminFilesV2(){
                   </button>
 
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {!internalRow&&!row.review_required&&<button type="button" disabled={reviewingFile===row.id} onClick={()=>void requestReview(row)} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] disabled:opacity-50 text-[10px] font-bold text-white">{reviewingFile===row.id?'Solicitando...':'Solicitar aprovação'}</button>}
+                    {!internalRow&&!row.review_required&&<button type="button" disabled={reviewingFile===row.id} onClick={()=>void requestReview(row)} className="min-h-9 flex-1 px-3 rounded-lg bg-[#A65A2A] hover:bg-[#c90510] disabled:opacity-50 text-[10px] font-bold text-white">{reviewingFile===row.id?'Solicitando...':'Solicitar aprovação'}</button>}
                     {!internalRow&&row.review_required&&row.review_status==='pending'&&<button type="button" onClick={()=>void cancelReview(row)} className="min-h-9 flex-1 px-3 rounded-lg border border-white/10 hover:bg-white/[0.05] text-[10px] font-semibold">Cancelar aprovação</button>}
                     {!internalRow&&row.review_required&&row.review_status==='changes_requested'&&<>
                       <button type="button" onClick={()=>void showReviewDetails(row)} className="min-h-9 flex-1 px-3 rounded-lg border border-orange-500/20 bg-orange-500/[0.08] text-orange-300 text-[10px] font-bold">Ver ajustes</button>
-                      <button type="button" onClick={()=>{setVersioningFile(row);setVersionFile(null);setVersionProgress(0)}} className="min-h-9 flex-1 px-3 rounded-lg bg-[#E30613] hover:bg-[#c90510] text-[10px] font-bold text-white">Enviar nova versão</button>
+                      <button type="button" onClick={()=>{setVersioningFile(row);setVersionFile(null);setVersionProgress(0)}} className="min-h-9 flex-1 px-3 rounded-lg bg-[#A65A2A] hover:bg-[#c90510] text-[10px] font-bold text-white">Enviar nova versão</button>
                     </>}
                     {!internalRow&&row.review_required&&row.review_status==='approved'&&!isDelivered(row)&&<button type="button" onClick={()=>void move(row,'delivery')} className="min-h-9 flex-1 px-3 rounded-lg bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/20 text-[10px] font-bold">Finalizar entrega</button>}
                   </div>
@@ -696,7 +696,7 @@ export function AdminFilesV2(){
       </div>
     </div>}
 
-    {uploadOpen&&<div className="fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4" onMouseDown={e=>{if(e.currentTarget===e.target&&!saving)setUploadOpen(false)}}><div className="w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-[#111113] border border-white/10 shadow-2xl"><div className="sticky top-0 z-10 h-14 px-4 sm:px-5 bg-[#111113]/95 backdrop-blur border-b border-white/8 flex items-center justify-between gap-3"><div><p className="text-[9px] uppercase tracking-[.16em] text-[#E30613] font-bold">Central de arquivos</p><h2 className="text-base font-bold">Novo arquivo</h2></div><button type="button" disabled={saving} onClick={()=>setUploadOpen(false)} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-40 text-gray-400">×</button></div><div className="p-4 sm:p-5">    <form onSubmit={save} className="space-y-4">
+    {uploadOpen&&<div className="fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4" onMouseDown={e=>{if(e.currentTarget===e.target&&!saving)setUploadOpen(false)}}><div className="w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-[#111113] border border-white/10 shadow-2xl"><div className="sticky top-0 z-10 h-14 px-4 sm:px-5 bg-[#111113]/95 backdrop-blur border-b border-white/8 flex items-center justify-between gap-3"><div><p className="text-[9px] uppercase tracking-[.16em] text-[#A65A2A] font-bold">Central de arquivos</p><h2 className="text-base font-bold">Novo arquivo</h2></div><button type="button" disabled={saving} onClick={()=>setUploadOpen(false)} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-40 text-gray-400">×</button></div><div className="p-4 sm:p-5">    <form onSubmit={save} className="space-y-4">
       <div className="grid md:grid-cols-3 gap-3">
         <label className="text-xs text-gray-500">Armazenamento
           <select value={provider} onChange={e=>setProvider(e.target.value as typeof provider)} className="pm-control mt-1 w-full px-3 bg-black">
@@ -708,7 +708,7 @@ export function AdminFilesV2(){
         <label className="text-xs text-gray-500">Origem
           <select value={customer} onChange={e=>{const next=e.target.value;setCustomer(next);if(next===INTERNAL_LIBRARY_KEY)setProvider('google_drive');setProject('');setTask('');setStage('');setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
             <option value="">Selecione a origem</option>
-            <option value={INTERNAL_LIBRARY_KEY}>Play Moments — projetos internos</option>
+            <option value={INTERNAL_LIBRARY_KEY}>Sagamente — projetos internos</option>
             {customers.map(c=><option key={c.id} value={c.id}>{c.first_name} {c.last_name} — {c.email}</option>)}
             {institutions.map((item:any)=><option key={item.id} value={'institution:'+item.id}>{item.name} (institucional)</option>)}
           </select>
@@ -762,7 +762,7 @@ export function AdminFilesV2(){
         <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://..." className="pm-control px-3 bg-white/[0.03]"/>
       </div>:<div className="space-y-3">
         {provider==='supabase'&&<input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome personalizado (opcional quando selecionar 1 arquivo)" className="w-full min-h-11 px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>}
-        <label className="block rounded-2xl border border-dashed border-white/15 bg-white/[0.025] p-5 sm:p-6 hover:border-[#E30613]/50 hover:bg-[#E30613]/[0.025] transition-colors cursor-pointer">
+        <label className="block rounded-2xl border border-dashed border-white/15 bg-white/[0.025] p-5 sm:p-6 hover:border-[#A65A2A]/50 hover:bg-[#A65A2A]/[0.025] transition-colors cursor-pointer">
           <input type="file" multiple onChange={e=>{
             const picked=Array.from(e.target.files||[])
             const invalid=provider==='google_drive'?picked.find(item=>item.size>driveLimitGb*1024*1024*1024):null
@@ -776,7 +776,7 @@ export function AdminFilesV2(){
             e.currentTarget.value=''
           }} className="sr-only"/>
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-[#E30613]/10 text-[#E30613] flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-[#A65A2A]/10 text-[#A65A2A] flex items-center justify-center shrink-0">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 16V4m0 0-4 4m4-4 4 4M5 14v5h14v-5"/></svg>
             </div>
             <div className="min-w-0">
@@ -795,7 +795,7 @@ export function AdminFilesV2(){
       </div>}
 
       {provider==='google_drive'&&<p className="text-xs text-gray-500">Até {driveLimitGb} GB por arquivo no Google Drive. Os arquivos são enviados em fila, diretamente do navegador para o Drive, em partes de 16 MB.</p>}
-      {saving&&<div className="rounded-xl bg-black/30 border border-[#E30613]/20 p-3"><div className="flex justify-between gap-3 text-xs"><span className="truncate text-gray-300">{currentFileName||'Preparando upload...'}</span><span className="shrink-0 text-[#ff6b7a] font-bold">{progress}%</span></div><div className="h-2 rounded bg-white/10 mt-2 overflow-hidden"><div className="h-2 rounded bg-[#E30613] transition-[width] duration-200" style={{width:progress+'%'}}/></div><p className="text-[10px] text-gray-600 mt-2">{completedFiles} de {selectedFiles.length} finalizados · não feche esta página durante o envio.</p></div>}
+      {saving&&<div className="rounded-xl bg-black/30 border border-[#A65A2A]/20 p-3"><div className="flex justify-between gap-3 text-xs"><span className="truncate text-gray-300">{currentFileName||'Preparando upload...'}</span><span className="shrink-0 text-[#DFA269] font-bold">{progress}%</span></div><div className="h-2 rounded bg-white/10 mt-2 overflow-hidden"><div className="h-2 rounded bg-[#A65A2A] transition-[width] duration-200" style={{width:progress+'%'}}/></div><p className="text-[10px] text-gray-600 mt-2">{completedFiles} de {selectedFiles.length} finalizados · não feche esta página durante o envio.</p></div>}
       <Button type="submit" loading={saving} className="w-full sm:w-auto min-h-12">{provider==='google_drive'?(selectedFiles.length>1?'Enviar '+selectedFiles.length+' arquivos':'Enviar para o Google Drive'):'Salvar arquivo'}</Button>
     </form>
 
