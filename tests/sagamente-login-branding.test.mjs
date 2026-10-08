@@ -10,8 +10,8 @@ test('Login and mobile use only Sagamente in visible labels',()=>{
   assert.doesNotMatch(panel,/PLAY MOMENTS|PLAY LAB|>PM</)
 })
 test('Login animation uses the registered Sagamente symbol and earth palette',()=>{
-  assert.match(panel,/pm-login-object-screen">\s*<img src="\/sagamente-mark.svg"/)
-  assert.match(panel,/pm-login-mobile-object-screen"><img src="\/sagamente-mark.svg"/)
+  assert.match(panel,/pm-login-object-screen">\s*<BrandImage variant="symbol"/)
+  assert.match(panel,/pm-login-mobile-object-screen"><BrandImage variant="symbol"/)
   assert.match(panel,/background:#2E5D46/)
   assert.match(panel,/color:#DFA269/)
   assert.doesNotMatch(panel,/#6539ff|#ff5967|#55131a|#53131a/i)

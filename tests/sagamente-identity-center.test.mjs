@@ -29,6 +29,6 @@ test('Global brand assets are used by customer, admin, public pages, login, and 
     'src/layouts/AdminLayout.tsx','src/layouts/CustomerLayoutV2.tsx',
     'src/components/auth/LoginExperiencePanel.tsx','src/pages/public/AboutPage.tsx'
   ])assert.match(read(p),/BrandImage/)
-  assert.match(read('src/main.tsx'),/useBrandAsset|brand_favicon_url/)
+  assert.match(read('src/main.tsx'),/brandAsset\(settings,'favicon'\)/)
   assert.match(read('src/lib/seo.ts'),/useBrandAsset/)
 })
