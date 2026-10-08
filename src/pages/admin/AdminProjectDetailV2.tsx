@@ -48,6 +48,9 @@ export function AdminProjectDetailV2(){
   const toast=useToast()
   const [project,setProject]=useState<any>(null)
   const [team,setTeam]=useState<any[]>([])
+  const [customers,setCustomers]=useState<any[]>([])
+  const [customerDraft,setCustomerDraft]=useState('')
+  const [savingCustomer,setSavingCustomer]=useState(false)
   const [files,setFiles]=useState<any[]>([])
   const [driveRootItems,setDriveRootItems]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
@@ -79,16 +82,20 @@ export function AdminProjectDetailV2(){
       // Only the project is essential. A Drive/API failure must not block the project screen.
       const item=await portalApi.project(id)
       setProject(item)
+      setCustomerDraft(item?.customer_id||'')
       const results=await Promise.allSettled([
         portalApi.teamMembers(),
         portalApi.projectFiles(id),
+        portalApi.customers(),
       ])
-      const [members,projectFiles]=results
+      const [members,projectFiles,clientRows]=results
       setTeam(members.status==='fulfilled'?members.value:[])
       setFiles(projectFiles.status==='fulfilled'?projectFiles.value:[])
+      setCustomers(clientRows.status==='fulfilled'?clientRows.value:[])
       const warnings=[]
       if(members.status==='rejected')warnings.push('equipe')
       if(projectFiles.status==='rejected')warnings.push('arquivos')
+      if(clientRows.status==='rejected')warnings.push('clientes')
       if(warnings.length)setLoadWarning('Alguns recursos não puderam ser carregados: '+warnings.join(', ')+'. O projeto continua disponível.')
     }catch(error:any){
       setLoadError(error?.message||'Falha ao carregar o projeto.')
@@ -110,6 +117,27 @@ export function AdminProjectDetailV2(){
     })
     return ()=>{active=false}
   },[projectTab,id,project?.id])
+
+  async function saveCustomerLink(){
+    if(!project||project.project_type==='internal'||savingCustomer)return
+    if((project.customer_id||'')===customerDraft)return
+    const nextCustomer=customers.find((item:any)=>item.id===customerDraft)
+    if(customerDraft&&(!nextCustomer||nextCustomer.status!=='active')){
+      toast('Selecione um cliente ativo.','error')
+      return
+    }
+    const previousCustomer=customers.find((item:any)=>item.id===project.customer_id)
+    const nextName=nextCustomer?[nextCustomer.first_name,nextCustomer.last_name].filter(Boolean).join(' '):'nenhum cliente'
+    const previousName=previousCustomer?[previousCustomer.first_name,previousCustomer.last_name].filter(Boolean).join(' '):'nenhum cliente'
+    if(!window.confirm('Alterar acesso ao projeto de '+previousName+' para '+nextName+'? O novo cliente poderá visualizar as etapas, tarefas e arquivos marcados como visíveis para o cliente. O anterior perderá o acesso.'))return
+    setSavingCustomer(true)
+    try{
+      await portalApi.assignProjectCustomer(id,customerDraft||null)
+      toast(customerDraft?'Cliente vinculado ao projeto.':'Cliente desvinculado do projeto.','success')
+      await load()
+    }catch(error:any){toast(error?.message||'Não foi possível atualizar o vínculo.','error')}
+    finally{setSavingCustomer(false)}
+  }
 
   async function changeStageStatus(stageId:string,status:string){
     const previous=project?.stages?.find((stage:any)=>stage.id===stageId)?.status
@@ -417,6 +445,34 @@ export function AdminProjectDetailV2(){
         {user?.role==='admin'&&<button type="button" onClick={()=>void deleteProject()} className="min-h-10 px-3 rounded-xl border border-red-500/25 bg-red-500/10 text-red-300 text-xs font-semibold hover:bg-red-500/15">Excluir projeto</button>}
       </div>
     </div>
+
+    <section className="mt-3 pm-surface p-4" aria-label="Cliente vinculado ao projeto">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold">Cliente com acesso ao projeto</h2>
+          <p className="text-xs text-gray-500 mt-1">
+            {project.project_type==='internal'
+              ? 'Projeto interno: não pode ser compartilhado com clientes. Para um trabalho contratado, crie um projeto de serviço ou site.'
+              : 'Vincule um cliente mesmo depois de criar o projeto. Somente etapas, tarefas e arquivos liberados ficam visíveis.'}
+          </p>
+        </div>
+        {project.customer_id&&project.project_type!=='internal'&&<Link to={'/admin/clientes/'+project.customer_id} className="text-xs text-[#F1C19D] hover:underline">Abrir cadastro do cliente ↗</Link>}
+      </div>
+      {project.project_type!=='internal'&&<div className="flex flex-col sm:flex-row gap-2 mt-3">
+        <select aria-label="Cliente com acesso ao projeto" value={customerDraft} onChange={e=>setCustomerDraft(e.target.value)} disabled={savingCustomer}
+          className="min-h-11 flex-1 px-3 rounded-xl bg-black border border-white/10 disabled:opacity-50">
+          <option value="">Sem cliente vinculado</option>
+          {customers.map((client:any)=><option key={client.id} value={client.id} disabled={client.status!=='active'}>
+            {[client.first_name,client.last_name].filter(Boolean).join(' ')} — {client.email}{client.status!=='active'?' (conta inativa)':''}
+          </option>)}
+        </select>
+        <Button type="button" disabled={savingCustomer||(project.customer_id||'')===customerDraft} onClick={()=>void saveCustomerLink()}>
+          {savingCustomer?'Salvando...':project.customer_id?'Atualizar vínculo':'Vincular cliente'}
+        </Button>
+      </div>}
+      {project.project_type!=='internal'&&customers.length===0&&<p className="text-xs text-amber-300 mt-2">Não há clientes disponíveis ou não foi possível carregar a lista. Cadastre/ative o cliente na área de Clientes e tente novamente.</p>}
+      {project.customer_id&&project.project_type!=='internal'&&<p className="text-xs text-emerald-300 mt-2">O cliente vinculado pode acompanhar este projeto em Minha Conta → Projetos.</p>}
+    </section>
 
     <div className="mt-3 pm-surface px-4 py-3">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
