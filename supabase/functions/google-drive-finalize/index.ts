@@ -142,6 +142,7 @@ Deno.serve(async (req) => {
 
     return json({ ok: true, file: data });
   } catch (error) {
+    console.error("Drive finalize failed:", error instanceof Error ? error.message : "Unknown error");
     return json({ ok: false, error: error instanceof Error ? error.message : "Unknown error" }, 400);
   }
 });
