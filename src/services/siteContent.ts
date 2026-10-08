@@ -74,6 +74,7 @@ export type PortfolioCategory={
 
 export type PortfolioItem={
   id:string
+  source_project_id?:string|null
   category_id:string|null
   title:string
   slug:string
@@ -209,11 +210,15 @@ export const siteContentApi={
   },
 
   portfolioItems:async(admin=false)=>{
-    let query=supabase.from('portfolio_items')
+    // The public API never returns operational project IDs, tasks or draft cards.
+    if(!admin){
+      const {data,error}=await supabase.rpc('published_portfolio_items')
+      if(error)throw error
+      return (data||[]) as PortfolioItem[]
+    }
+    const {data,error}=await supabase.from('portfolio_items')
       .select('*,category:portfolio_categories(id,name,slug,display_order,active)')
       .order('display_order').order('created_at',{ascending:false})
-    if(!admin)query=query.eq('active',true)
-    const {data,error}=await query
     if(error)throw error
     return (data||[]) as PortfolioItem[]
   },
