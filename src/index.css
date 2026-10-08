@@ -3,7 +3,7 @@
 
 @theme {
   --font-sans: 'Outfit', system-ui, sans-serif;
-  --color-brand: #E30613;
+  --color-brand: #A65A2A;
   --color-brand-dim: #b30010;
   --color-surface: #141416;
   --color-surface-2: #1e1e22;
@@ -75,8 +75,8 @@ body {
 }
 
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(227,6,19,0.4); }
-  50%       { box-shadow: 0 0 0 8px rgba(227,6,19,0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(166,90,42,0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(166,90,42,0); }
 }
 
 .picker-appear { animation: picker-in 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
@@ -104,7 +104,7 @@ body {
 ::placeholder { color: rgba(255,255,255,0.2); }
 
 /* Focus ring */
-:focus-visible { outline: 2px solid rgba(227,6,19,0.5); outline-offset: 2px; }
+:focus-visible { outline: 2px solid rgba(166,90,42,0.5); outline-offset: 2px; }
 
 
 
@@ -113,8 +113,8 @@ body {
 html { scroll-behavior: smooth; }
 body { min-width: 320px; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
 button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
-:where(a,button,input,select,textarea,[tabindex]):focus-visible { outline: 2px solid rgba(255,77,88,.9); outline-offset: 2px; }
-::selection { background: rgba(227,6,19,.35); color: white; }
+:where(a,button,input,select,textarea,[tabindex]):focus-visible { outline: 2px solid rgba(196,138,58,.9); outline-offset: 2px; }
+::selection { background: rgba(166,90,42,.35); color: white; }
 button:not(:disabled), select:not(:disabled), input[type="checkbox"]:not(:disabled), input[type="radio"]:not(:disabled) { cursor: pointer; }
 button:disabled, input:disabled, select:disabled, textarea:disabled { cursor: not-allowed; opacity: .58; }
 input, select, textarea { font: inherit; }
@@ -122,7 +122,7 @@ input, select, textarea {
   transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease;
 }
 input:hover:not(:disabled), select:hover:not(:disabled), textarea:hover:not(:disabled) { border-color: rgba(255,255,255,.18); }
-input:focus, select:focus, textarea:focus { border-color: rgba(227,6,19,.48); box-shadow: 0 0 0 3px rgba(227,6,19,.08); outline: none; }
+input:focus, select:focus, textarea:focus { border-color: rgba(166,90,42,.48); box-shadow: 0 0 0 3px rgba(166,90,42,.08); outline: none; }
 button, a { transition: color .16s ease, background-color .16s ease, border-color .16s ease, opacity .16s ease, transform .16s ease; }
 button:active:not(:disabled), a:active { transform: translateY(1px); }
 
@@ -184,8 +184,8 @@ select:hover:not(:disabled) {
   background-color: #17171b !important;
 }
 select:focus {
-  border-color: rgba(227,6,19,.65) !important;
-  box-shadow: 0 0 0 3px rgba(227,6,19,.12) !important;
+  border-color: rgba(166,90,42,.65) !important;
+  box-shadow: 0 0 0 3px rgba(166,90,42,.12) !important;
 }
 select option { background: #111114; color: #f2f2f4; }
 
@@ -264,7 +264,7 @@ select option { background: #111114; color: #f2f2f4; }
 .staff-workspace textarea::placeholder { color: #92969e; }
 .staff-workspace select option { background: #fff; color: #1e1e22; }
 .staff-workspace .pm-skeleton { background: #e8ebef; }
-.staff-workspace ::selection { background: rgba(227,6,19,.16); color: #17171a; }
+.staff-workspace ::selection { background: rgba(166,90,42,.16); color: #17171a; }
 
 
 /* ── Staff UX hardening: accessible light operational workspace ── */
@@ -280,7 +280,7 @@ select option { background: #111114; color: #f2f2f4; }
 .staff-workspace :is(h1,h2,h3,h4,h5,h6) { color: var(--staff-text, #17171a); }
 .staff-workspace a, .staff-workspace button { -webkit-tap-highlight-color: transparent; }
 .staff-workspace :is(button,a,input,select,textarea):focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--staff-primary, #E30613) 26%, transparent);
+  outline: 3px solid color-mix(in srgb, var(--staff-primary, #A65A2A) 26%, transparent);
   outline-offset: 2px;
 }
 .staff-workspace button:disabled,
@@ -295,16 +295,16 @@ select option { background: #111114; color: #f2f2f4; }
 .staff-workspace :is(table,thead,tbody,tr,th,td) { border-color: var(--staff-border); }
 .staff-workspace thead { background: color-mix(in srgb, var(--staff-bg, #f4f6f8) 72%, #fff); }
 .staff-workspace th { color: #475467; }
-.staff-workspace tbody tr:hover { background: color-mix(in srgb, var(--staff-primary, #E30613) 3.5%, #fff); }
+.staff-workspace tbody tr:hover { background: color-mix(in srgb, var(--staff-primary, #A65A2A) 3.5%, #fff); }
 .staff-workspace :is(input,textarea,select):focus {
-  border-color: color-mix(in srgb, var(--staff-primary, #E30613) 58%, #fff) !important;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--staff-primary, #E30613) 10%, transparent);
+  border-color: color-mix(in srgb, var(--staff-primary, #A65A2A) 58%, #fff) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--staff-primary, #A65A2A) 10%, transparent);
 }
 .staff-workspace :is(.text-red-300,.text-red-400,.text-red-500) { color: var(--staff-danger) !important; }
 .staff-workspace :is(.text-emerald-300,.text-emerald-400,.text-green-300,.text-green-400) { color: var(--staff-success) !important; }
 .staff-workspace :is(.text-amber-300,.text-amber-400,.text-yellow-300,.text-yellow-400) { color: var(--staff-warning) !important; }
 .staff-workspace :is(.text-sky-300,.text-sky-400,.text-blue-300,.text-blue-400) { color: var(--staff-info) !important; }
-.staff-workspace :is(.bg-red-500\/10,.bg-red-500\/15,.bg-\[\#E30613\]\/10) { background: #fff1f2 !important; }
+.staff-workspace :is(.bg-red-500\/10,.bg-red-500\/15,.bg-\[\#A65A2A\]\/10) { background: #fff1f2 !important; }
 .staff-workspace :is(.bg-emerald-500\/10,.bg-green-500\/10) { background: #ecfdf3 !important; }
 .staff-workspace :is(.bg-amber-500\/10,.bg-yellow-500\/10) { background: #fffaeb !important; }
 .staff-workspace :is(.bg-sky-500\/10,.bg-blue-500\/10) { background: #eff8ff !important; }

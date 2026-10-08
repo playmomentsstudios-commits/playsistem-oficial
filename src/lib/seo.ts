@@ -25,7 +25,7 @@ function absolute(value:string){try{return new URL(value,window.location.origin)
 
 export function useSeo({title,description,image,canonicalPath,canonicalUrl,type='website',noindex=false,jsonLd}:SeoProps){
  useEffect(()=>{
-  const fullTitle=title.includes('Play Moments')?title:`${title} | Play Moments`
+  const fullTitle=title.includes('Sagamente')?title:`${title} | Sagamente`
   const canonical=canonicalUrl?absolute(canonicalUrl):absolute(canonicalPath||window.location.pathname)
   document.title=fullTitle
   upsertMeta('meta[name="description"]',{name:'description',content:description.slice(0,160)})
@@ -34,7 +34,7 @@ export function useSeo({title,description,image,canonicalPath,canonicalUrl,type=
   upsertMeta('meta[property="og:description"]',{property:'og:description',content:description})
   upsertMeta('meta[property="og:type"]',{property:'og:type',content:type})
   upsertMeta('meta[property="og:url"]',{property:'og:url',content:canonical})
-  upsertMeta('meta[property="og:site_name"]',{property:'og:site_name',content:'Play Moments'})
+  upsertMeta('meta[property="og:site_name"]',{property:'og:site_name',content:'Sagamente'})
   upsertMeta('meta[property="og:locale"]',{property:'og:locale',content:'pt_BR'})
   upsertMeta('meta[name="twitter:card"]',{name:'twitter:card',content:image?'summary_large_image':'summary'})
   upsertMeta('meta[name="twitter:title"]',{name:'twitter:title',content:fullTitle})

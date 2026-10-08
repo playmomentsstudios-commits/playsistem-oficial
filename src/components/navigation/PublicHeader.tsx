@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useCart } from '../../contexts/CartContext'
-import logoUrl from '../../assets/logo-play-moments.png'
+const logoUrl = '/sagamente-logo-dark.svg'
 import type { SiteSettings } from '../../services/siteContent'
 
 const PUBLIC_NAV_LINKS = [
@@ -24,7 +24,7 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
     : PUBLIC_NAV_LINKS
 
   const handleLogout = async () => { await logout(); navigate('/') }
-  const primaryColor=settings?.primary_color||'#E30613'
+  const primaryColor=settings?.primary_color?.toLowerCase()==='#e30613'?'#A65A2A':(settings?.primary_color||'#A65A2A')
 
   return (
     <header className="sticky top-0 z-40" style={{
@@ -35,11 +35,11 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
       <div className="mx-auto px-3 sm:px-4 flex items-center justify-between relative h-[58px] lg:h-16" style={{ maxWidth: 1200 }}>
         {/* Logo */}
         <Link to="/" className="hidden lg:block">
-          <img src={logoUrl} alt="Play Moments" style={{ height: 30, width: 'auto' }} />
+          <img src={logoUrl} alt="Sagamente" style={{ height: 30, width: 'auto' }} />
         </Link>
 
         <Link to="/" className="lg:hidden absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
-          <img src={logoUrl} alt="Play Moments" style={{ height: 28, width: 'auto' }} />
+          <img src={logoUrl} alt="Sagamente" style={{ height: 28, width: 'auto' }} />
         </Link>
 
         <Link
@@ -51,7 +51,7 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
           <svg width="19" height="19" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
           </svg>
-          {itemCount>0&&<span className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-[#E30613] text-white text-[9px] font-bold flex items-center justify-center">{itemCount}</span>}
+          {itemCount>0&&<span className="absolute top-1 right-1 min-w-4 h-4 px-1 rounded-full bg-[#A65A2A] text-white text-[9px] font-bold flex items-center justify-center">{itemCount}</span>}
         </Link>
 
         {/* Desktop Nav */}
@@ -78,7 +78,7 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
             </svg>
             {itemCount > 0 && (
               <span className="absolute top-0 right-0 w-4 h-4 rounded-full text-xs font-bold flex items-center justify-center"
-                style={{ background: '#E30613', color: '#fff', fontSize: 10 }}>
+                style={{ background: '#A65A2A', color: '#fff', fontSize: 10 }}>
                 {itemCount}
               </span>
             )}
@@ -88,7 +88,7 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
             <>
               {user?.role === 'admin' || user?.role === 'staff' ? (
                 <Link to="/admin" className="px-3 py-2 rounded-xl text-sm font-semibold transition-colors"
-                  style={{ background: 'rgba(227,6,19,0.15)', color: '#ff6b7a', border: '1px solid rgba(227,6,19,0.3)' }}>
+                  style={{ background: 'rgba(166,90,42,0.15)', color: '#DFA269', border: '1px solid rgba(166,90,42,0.3)' }}>
                   Admin
                 </Link>
               ) : (
@@ -135,7 +135,7 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
               {link.label}
             </Link>
           ))}
-          <Link to="/carrinho" onClick={() => setMobileOpen(false)} className="min-h-12 flex items-center justify-between px-3 rounded-xl text-sm font-medium" style={{color:'#c0c0cc'}}><span>Carrinho</span>{itemCount>0&&<span className="min-w-6 h-6 px-1 rounded-full bg-[#E30613] text-white text-xs font-bold flex items-center justify-center">{itemCount}</span>}</Link>
+          <Link to="/carrinho" onClick={() => setMobileOpen(false)} className="min-h-12 flex items-center justify-between px-3 rounded-xl text-sm font-medium" style={{color:'#c0c0cc'}}><span>Carrinho</span>{itemCount>0&&<span className="min-w-6 h-6 px-1 rounded-full bg-[#A65A2A] text-white text-xs font-bold flex items-center justify-center">{itemCount}</span>}</Link>
           <div className="flex flex-col gap-2 pt-3 mt-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             {isAuthenticated ? (
               <>
