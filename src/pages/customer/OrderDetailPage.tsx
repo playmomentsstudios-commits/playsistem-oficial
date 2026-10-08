@@ -47,13 +47,13 @@ export function OrderDetailPage(){
   }
 
   if(loading)return <p className="text-gray-400">Carregando pedido...</p>
-  if(error||!row)return <div><p className="text-red-300">{error||'Pedido não encontrado.'}</p><Link to="/app/pedidos" className="text-[#E30613]">Voltar</Link></div>
+  if(error||!row)return <div><p className="text-red-300">{error||'Pedido não encontrado.'}</p><Link to="/app/pedidos" className="text-[#A65A2A]">Voltar</Link></div>
 
   return <div>
     {isNew&&<div className="mb-6 p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
-      <div className="flex gap-3 items-start"><span className="text-2xl">✓</span><div><p className="text-xs uppercase tracking-widest text-emerald-400 font-semibold">Pedido recebido</p><h2 className="text-xl font-bold mt-1">Sua compra foi registrada</h2><p className="text-sm text-gray-400 mt-2">{row.payment_status==='paid'?'Pagamento confirmado. Você pode acompanhar o andamento abaixo.':'O pedido já está na sua conta. Acompanhe aqui a confirmação do pagamento e as próximas atualizações.'}</p><div className="flex flex-wrap gap-2 mt-4"><Link to="/app/pedidos" className="px-3 py-2 rounded-lg bg-white/5 text-xs font-semibold">Meus pedidos</Link><Link to="/app/pagamentos" className="px-3 py-2 rounded-lg bg-[#E30613] text-white text-xs font-semibold">Ver pagamento</Link></div></div></div>
+      <div className="flex gap-3 items-start"><span className="text-2xl">✓</span><div><p className="text-xs uppercase tracking-widest text-emerald-400 font-semibold">Pedido recebido</p><h2 className="text-xl font-bold mt-1">Sua compra foi registrada</h2><p className="text-sm text-gray-400 mt-2">{row.payment_status==='paid'?'Pagamento confirmado. Você pode acompanhar o andamento abaixo.':'O pedido já está na sua conta. Acompanhe aqui a confirmação do pagamento e as próximas atualizações.'}</p><div className="flex flex-wrap gap-2 mt-4"><Link to="/app/pedidos" className="px-3 py-2 rounded-lg bg-white/5 text-xs font-semibold">Meus pedidos</Link><Link to="/app/pagamentos" className="px-3 py-2 rounded-lg bg-[#A65A2A] text-white text-xs font-semibold">Ver pagamento</Link></div></div></div>
     </div>}
-    <Link to="/app/pedidos" className="text-sm text-[#E30613]">← Pedidos</Link>
+    <Link to="/app/pedidos" className="text-sm text-[#A65A2A]">← Pedidos</Link>
     <div className="flex flex-wrap justify-between gap-4 mt-4">
       <div><h1 className="text-2xl font-bold">{row.order_number}</h1><p className="text-sm text-gray-500">{new Date(row.created_at).toLocaleString('pt-BR')}</p></div>
       <OrderStatusBadge status={row.status}/>
@@ -74,11 +74,11 @@ export function OrderDetailPage(){
 
           {canUsePlayCash&&<div className="mt-4 p-3 rounded-xl bg-white/5">
             <p className="text-xs text-gray-500">Play Cash disponível</p>
-            <p className="font-bold text-[#E30613] mt-1">{money(availableCash)}</p>
-            <button disabled={applying} onClick={usePlayCash} className="mt-3 w-full px-3 py-2 rounded-lg bg-[#E30613] text-sm disabled:opacity-50">{applying?'Aplicando...':'Usar Play Cash neste pedido'}</button>
+            <p className="font-bold text-[#A65A2A] mt-1">{money(availableCash)}</p>
+            <button disabled={applying} onClick={usePlayCash} className="mt-3 w-full px-3 py-2 rounded-lg bg-[#A65A2A] text-sm disabled:opacity-50">{applying?'Aplicando...':'Usar Play Cash neste pedido'}</button>
           </div>}
 
-          {row.payment_status!=='paid'&&<Link to="/app/pagamentos" className="inline-block mt-4 text-[#E30613]">Efetuar pagamento →</Link>}
+          {row.payment_status!=='paid'&&<Link to="/app/pagamentos" className="inline-block mt-4 text-[#A65A2A]">Efetuar pagamento →</Link>}
         </div>
 
         {row.projects?.[0]&&<div className="p-5 rounded-2xl bg-[#141416] border border-white/10"><p className="text-xs text-gray-500">Projeto relacionado</p><Link to={'/app/projetos/'+row.projects[0].id} className="font-semibold">{row.projects[0].title}</Link></div>}
