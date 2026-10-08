@@ -1,4 +1,5 @@
 import { useEffect,useState } from 'react'
+import { Link } from 'react-router-dom'
 import { settingsApi,type AppSettings } from '../../api/settings'
 import { useToast } from '../../contexts/ToastContext'
 
@@ -31,8 +32,6 @@ export function AdminSettings(){
   const [settings,setSettings]=useState<AppSettings>(DEFAULTS)
   const [loading,setLoading]=useState(true)
   const [saving,setSaving]=useState(false)
-  const [uploadingFavicon,setUploadingFavicon]=useState(false)
-  const [uploadingStaffLogo,setUploadingStaffLogo]=useState(false)
 
   useEffect(()=>{
     let active=true
@@ -58,8 +57,6 @@ export function AdminSettings(){
         orders_default_filter:settings.orders_default_filter,
         internal_operation_notifications:settings.internal_operation_notifications,
         commercial_notifications:settings.commercial_notifications,
-        favicon_url:settings.favicon_url,
-        staff_logo_url:settings.staff_logo_url,
         staff_platform_name:settings.staff_platform_name.trim()||'Área do colaborador',
         staff_primary_color:settings.staff_primary_color,
         staff_background_color:settings.staff_background_color,
@@ -104,50 +101,16 @@ export function AdminSettings(){
         </div>
       </section>
 
-      <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
-        <h2 className="font-semibold">Identidade do site</h2>
-        <p className="text-xs text-gray-500 mt-1">Ícone usado na aba do navegador e como base visual do futuro aplicativo.</p>
-        <div className="mt-5 flex items-center gap-4">
-          <div className="w-20 h-20 rounded-2xl border border-white/10 bg-white/[0.03] grid place-items-center overflow-hidden">
-            <img src={settings.favicon_url||'/favicon.svg'} alt="Favicon atual" className="w-14 h-14 object-contain"/>
-          </div>
-          <div className="flex-1">
-            <label className="inline-flex min-h-11 items-center px-4 rounded-xl border border-white/10 hover:border-white/20 cursor-pointer text-sm">
-              {uploadingFavicon?'Enviando...':'Trocar favicon'}
-              <input type="file" accept="image/png,image/svg+xml,image/x-icon,image/webp" className="hidden" disabled={uploadingFavicon} onChange={async e=>{
-                const file=e.target.files?.[0];if(!file)return
-                try{setUploadingFavicon(true);const url=await settingsApi.uploadFavicon(file);setSettings({...settings,favicon_url:url});toast('Novo favicon enviado. Salve as configurações para publicar.','success')}catch(error:any){toast(error.message||'Não foi possível enviar o favicon.','error')}finally{setUploadingFavicon(false);e.target.value=''}
-              }}/>
-            </label>
-            <p className="text-[10px] text-gray-600 mt-2">PNG, SVG, ICO ou WebP · até 2 MB. Prefira arquivo quadrado e sem fundo.</p>
-          </div>
-        </div>
-      </section>
-
       <section className="p-5 rounded-2xl bg-[#141416] border border-white/10 lg:col-span-2">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <div><h2 className="font-semibold">Plataforma dos colaboradores</h2><p className="text-xs text-gray-500 mt-1">Personalização exclusiva da área branca da equipe. O Admin Mestre continua com a identidade escura.</p></div>
+          <div><h2 className="font-semibold">Plataforma dos colaboradores</h2><p className="text-xs text-gray-500 mt-1">Cores e nome exibido na área branca da equipe. A logo fica em Gestão do Site → Identidade da Marca.</p></div>
           <span className="text-[10px] uppercase tracking-[.12em] text-[#A65A2A]">Somente Admin Mestre</span>
         </div>
-        <div className="grid lg:grid-cols-[260px_1fr] gap-5 mt-5">
-          <div className="rounded-2xl p-5 border border-white/10" style={{background:settings.staff_surface_color}}>
-            <img src={settings.staff_logo_url||'/staff-logo.svg'} alt="Logo da área dos colaboradores" className="w-full h-20 object-contain"/>
-            <p className="text-center text-xs mt-3" style={{color:settings.staff_text_color}}>{settings.staff_platform_name}</p>
-          </div>
-          <div className="space-y-4">
+        <div className="space-y-4 mt-5">
             <label className="block text-xs text-gray-500">Nome exibido no painel
               <input value={settings.staff_platform_name} onChange={e=>setSettings({...settings,staff_platform_name:e.target.value})} className="mt-1 w-full min-h-11 px-3 rounded-xl bg-black border border-white/10"/>
             </label>
-            <div>
-              <label className="inline-flex min-h-11 items-center px-4 rounded-xl border border-white/10 hover:border-white/20 cursor-pointer text-sm">
-                {uploadingStaffLogo?'Enviando...':'Trocar logo dos colaboradores'}
-                <input type="file" accept="image/png,image/svg+xml,image/webp" className="hidden" disabled={uploadingStaffLogo} onChange={async e=>{
-                  const file=e.target.files?.[0];if(!file)return
-                  try{setUploadingStaffLogo(true);const url=await settingsApi.uploadStaffLogo(file);setSettings({...settings,staff_logo_url:url});toast('Logo enviada. Salve as configurações para publicar.','success')}catch(error:any){toast(error.message||'Não foi possível enviar a logo.','error')}finally{setUploadingStaffLogo(false);e.target.value=''}
-                }}/>
-              </label>
-              <p className="text-[10px] text-gray-600 mt-2">SVG, PNG ou WebP · até 3 MB. A logo enviada por você já fica como padrão inicial.</p>
-            </div>
+            <Link to="/admin/site?tab=identidade" className="inline-flex items-center min-h-10 text-xs text-[#DFA269] hover:underline">Editar logo e favicon em Identidade da Marca ↗</Link>
             <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
               {([
                 ['staff_primary_color','Cor principal'],
@@ -162,7 +125,6 @@ export function AdminSettings(){
               </label>)}
             </div>
             <p className="text-[10px] text-gray-600">Essas opções controlam identidade, fundo, superfícies, texto e destaque. Permissões de cada colaborador continuam sendo configuradas em Colaboradores.</p>
-          </div>
         </div>
       </section>
 
