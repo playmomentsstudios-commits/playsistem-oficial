@@ -46,5 +46,8 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Validate Cloudflare Worker bundle
+        run: pnpm dlx wrangler@4 deploy --dry-run --outdir /tmp/sagamente-pwa-worker
+
       - name: Diff check
         run: git diff --check

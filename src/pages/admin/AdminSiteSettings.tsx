@@ -5,11 +5,12 @@ import { Input } from '../../components/ui/Input'
 import { useToast } from '../../contexts/ToastContext'
 import { siteContentApi,type HomeServiceArea } from '../../services/siteContent'
 import { BrandIdentitySettings } from '../../components/admin/BrandIdentitySettings'
+import { PwaSettings } from '../../components/admin/PwaSettings'
 
-const TABS = ['Geral', 'Identidade da Marca', 'Home', 'Rodapé', 'Quem Somos', 'Redes Sociais', 'Contato', 'SEO']
+const TABS = ['Geral', 'Identidade da Marca', 'Aplicativo (PWA)', 'Home', 'Rodapé', 'Quem Somos', 'Redes Sociais', 'Contato', 'SEO']
 
 export function AdminSiteSettings() {
-  const [tab, setTab] = useState(()=>new URLSearchParams(window.location.search).get('tab')==='identidade'?'Identidade da Marca':'Geral')
+  const [tab, setTab] = useState(()=>{const selected=new URLSearchParams(window.location.search).get('tab');return selected==='identidade'?'Identidade da Marca':selected==='aplicativo'?'Aplicativo (PWA)':'Geral'})
   const [loading, setLoading] = useState(false)
   const [initialLoading,setInitialLoading]=useState(true)
   const toast = useToast()
@@ -120,8 +121,9 @@ export function AdminSiteSettings() {
         ))}
       </div>
 
-      <div className={tab==='Home'||tab==='Identidade da Marca'?'max-w-5xl':'max-w-2xl'}>
+      <div className={tab==='Home'||tab==='Identidade da Marca'||tab==='Aplicativo (PWA)'?'max-w-5xl':'max-w-2xl'}>
         {tab === 'Identidade da Marca' && <BrandIdentitySettings/>}
+        {tab === 'Aplicativo (PWA)' && <PwaSettings/>}
 
         {tab === 'Geral' && (
           <div className="flex flex-col gap-4">
@@ -201,7 +203,7 @@ export function AdminSiteSettings() {
           </div>
         )}
 
-        {tab!=='Identidade da Marca'&&<div className="mt-6">
+        {tab!=='Identidade da Marca'&&tab!=='Aplicativo (PWA)'&&<div className="mt-6">
           <Button onClick={save} loading={loading}>Salvar configurações</Button>
         </div>}
       </div>
