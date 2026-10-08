@@ -1,6 +1,7 @@
 import { useEffect,useMemo,useState } from 'react'
 import { Link } from 'react-router-dom'
 import { portalApi } from '../../api/portal'
+import { projectProgress as progress } from '../../lib/projectProgress'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
@@ -11,11 +12,6 @@ const tipos=['internal','product','service','website','design','audiovisual','ot
 const prioridades=['low','medium','high','urgent']
 const statuses=['planning','active','paused','review','completed','cancelled']
 
-function progress(project:any){
-  const tasks=(project.tasks||[]).filter((task:any)=>task.status!=='cancelled')
-  if(!tasks.length)return 0
-  return Math.round(tasks.filter((task:any)=>task.status==='completed').length/tasks.length*100)
-}
 
 export function AdminProjects(){
   const {user}=useAuth()
