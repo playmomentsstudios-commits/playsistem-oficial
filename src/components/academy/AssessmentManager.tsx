@@ -380,7 +380,7 @@ export function AssessmentManager({
             </button>
             <button
               disabled={busy}
-              className="min-h-11 px-4 rounded-lg bg-[#E30613] disabled:opacity-40"
+              className="min-h-11 px-4 rounded-lg bg-[#A65A2A] disabled:opacity-40"
             >
               {busy ? "Salvando…" : "Salvar"}
             </button>
