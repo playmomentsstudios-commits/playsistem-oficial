@@ -53,7 +53,7 @@ export function AdminAboutPortfolio(){
     <div className="mb-6"><h1 className="text-2xl font-bold">Quem Somos & Portfólio</h1><p className="text-sm text-gray-500">Edite sua apresentação, números, ferramentas, métodos, soluções e trabalhos exibidos no site público.</p></div>
 
     <div className="flex gap-2 mb-6 overflow-x-auto">
-      {([['perfil','Perfil e números'],['portfolio','Portfólio'],['categorias','Categorias']] as const).map(([id,label])=><button key={id} onClick={()=>setTab(id)} className={'px-4 min-h-11 rounded-xl text-sm whitespace-nowrap '+(tab===id?'bg-[#E30613] text-white':'bg-white/[0.05] text-gray-400')}>{label}</button>)}
+      {([['perfil','Perfil e números'],['portfolio','Portfólio'],['categorias','Categorias']] as const).map(([id,label])=><button key={id} onClick={()=>setTab(id)} className={'px-4 min-h-11 rounded-xl text-sm whitespace-nowrap '+(tab===id?'bg-[#A65A2A] text-white':'bg-white/[0.05] text-gray-400')}>{label}</button>)}
     </div>
 
     {tab==='perfil'&&profile&&<div className="max-w-4xl space-y-5">

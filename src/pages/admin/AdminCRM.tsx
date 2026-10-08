@@ -85,7 +85,7 @@ export function AdminCRM(){
   return <div>
     <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
       <div>
-        <p className="text-[11px] uppercase tracking-[0.18em] text-[#E30613] font-semibold">Comercial</p>
+        <p className="text-[11px] uppercase tracking-[0.18em] text-[#A65A2A] font-semibold">Comercial</p>
         <h1 className="text-2xl font-bold mt-1">CRM Comercial</h1>
         <p className="text-sm text-gray-500 mt-1">Do primeiro contato ao pós-venda, com responsável e próxima ação.</p><p className="text-[10px] text-gray-600 mt-1">Prazo padrão para acompanhamento: {followUpDays} dia(s).</p>
       </div>
@@ -93,7 +93,7 @@ export function AdminCRM(){
 
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
       <div className="pm-surface p-4"><p className="text-[10px] uppercase text-gray-500">Oportunidades ativas</p><b className="text-2xl">{totals.active}</b></div>
-      <div className="pm-surface p-4"><p className="text-[10px] uppercase text-gray-500">Valor em negociação</p><b className="text-lg text-[#E30613]">{money(totals.value)}</b></div>
+      <div className="pm-surface p-4"><p className="text-[10px] uppercase text-gray-500">Valor em negociação</p><b className="text-lg text-[#A65A2A]">{money(totals.value)}</b></div>
       <div className="pm-surface p-4"><p className="text-[10px] uppercase text-gray-500">Ações atrasadas</p><b className={'text-2xl '+(totals.due?'text-orange-400':'')}>{totals.due}</b></div>
       <div className="pm-surface p-4"><p className="text-[10px] uppercase text-gray-500">Fechados</p><b className="text-2xl text-emerald-400">{totals.won}</b></div>
     </div>
@@ -132,7 +132,7 @@ export function AdminCRM(){
                 onDragEnd={()=>setDragging(null)}
                 key={row.customer_id}
                 to={'/admin/clientes/'+row.customer_id}
-                className={'block p-3 rounded-xl bg-[#171719] border hover:border-white/20 hover:bg-[#1b1b1e] transition-colors '+(dragging===row.customer_id?'opacity-50 border-[#E30613]/30':'border-white/8')}
+                className={'block p-3 rounded-xl bg-[#171719] border hover:border-white/20 hover:bg-[#1b1b1e] transition-colors '+(dragging===row.customer_id?'opacity-50 border-[#A65A2A]/30':'border-white/8')}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -141,7 +141,7 @@ export function AdminCRM(){
                   </div>
                   <span className={'w-2 h-2 rounded-full mt-1.5 shrink-0 '+(row.next_action_at&&new Date(row.next_action_at).getTime()<Date.now()?'bg-orange-400':'bg-gray-600')}/>
                 </div>
-                {row.estimated_value>0&&<p className="text-xs text-[#E30613] font-semibold mt-3">{money(row.estimated_value)}</p>}
+                {row.estimated_value>0&&<p className="text-xs text-[#A65A2A] font-semibold mt-3">{money(row.estimated_value)}</p>}
                 <div className="mt-3 pt-3 border-t border-white/6">
                   <p className="text-[10px] text-gray-500 truncate">{row.next_action||'Sem próxima ação'}</p>
                   <div className="flex items-center justify-between gap-2 mt-1">

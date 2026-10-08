@@ -86,7 +86,7 @@ export function AdminConversion(){
   return <div>
     <div className="flex flex-wrap items-end justify-between gap-3 mb-6">
       <div>
-        <p className="text-[11px] uppercase tracking-[.18em] text-[#E30613] font-semibold">Conversão & audiência</p>
+        <p className="text-[11px] uppercase tracking-[.18em] text-[#A65A2A] font-semibold">Conversão & audiência</p>
         <h1 className="text-2xl md:text-3xl font-bold mt-1">Desempenho do site</h1>
         <p className="text-sm text-gray-500 mt-1">Visualizações únicas diárias por conteúdo e jornada pública até o pagamento.</p>
       </div>
@@ -116,7 +116,7 @@ export function AdminConversion(){
             </div>
             <div className="pm-surface p-4">
               <p className="text-[10px] uppercase tracking-wide text-gray-500">Hoje</p>
-              <p className="text-3xl font-bold mt-2 text-[#E30613]">{views.today_views||0}</p>
+              <p className="text-3xl font-bold mt-2 text-[#A65A2A]">{views.today_views||0}</p>
               <p className="text-xs text-gray-600 mt-1">visualizações únicas</p>
             </div>
             {views.by_type.slice(0,2).map(item=><div key={item.content_type} className="pm-surface p-4">
@@ -178,7 +178,7 @@ export function AdminConversion(){
           <div className="grid lg:grid-cols-2 gap-4 mt-5">
             <section className="pm-surface p-5">
               <h3 className="font-semibold">Checkout → pagamento</h3>
-              <p className="text-3xl font-bold text-[#E30613] mt-3">{data.checkout_to_payment_percent||0}%</p>
+              <p className="text-3xl font-bold text-[#A65A2A] mt-3">{data.checkout_to_payment_percent||0}%</p>
               <p className="text-xs text-gray-500 mt-2">{data.payment_created||0} pagamentos criados para {data.checkout_started||0} checkouts iniciados. Indicador operacional por eventos, não por usuários únicos.</p>
             </section>
             <section className="pm-surface p-5">

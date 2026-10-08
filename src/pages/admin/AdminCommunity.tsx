@@ -86,7 +86,7 @@ export function AdminCommunity() {
             </div>
             <div className="flex gap-2">
               <button className="text-xs px-3 py-1.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.06)', color: '#9090a0' }}>Editar</button>
-              <button className="text-xs px-3 py-1.5 rounded-lg" style={{ background: 'rgba(227,6,19,0.1)', color: '#ff6b7a', border: '1px solid rgba(227,6,19,0.2)' }}>Ocultar</button>
+              <button className="text-xs px-3 py-1.5 rounded-lg" style={{ background: 'rgba(166,90,42,0.1)', color: '#ff6b7a', border: '1px solid rgba(166,90,42,0.2)' }}>Ocultar</button>
             </div>
           </div>
         ))}

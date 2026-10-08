@@ -79,7 +79,7 @@ export function AdminAudit(){
 
   return <div>
     <div className="mb-6">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-[#E30613] font-semibold">Segurança</p>
+      <p className="text-[11px] uppercase tracking-[0.18em] text-[#A65A2A] font-semibold">Segurança</p>
       <h1 className="text-2xl font-bold mt-1">Auditoria</h1>
       <p className="text-sm text-gray-500 mt-1">Histórico de alterações administrativas e operacionais importantes.</p>
     </div>
@@ -101,7 +101,7 @@ export function AdminAudit(){
           <option value="">Todos os usuários</option>
           {team.map(member=><option key={member.id} value={member.id}>{member.first_name} {member.last_name||''}</option>)}
         </select>
-        <button onClick={()=>void load()} disabled={loading} className="min-h-11 px-4 rounded-xl bg-[#E30613] text-white text-sm font-semibold disabled:opacity-40">{loading?'Atualizando...':'Aplicar filtros'}</button>
+        <button onClick={()=>void load()} disabled={loading} className="min-h-11 px-4 rounded-xl bg-[#A65A2A] text-white text-sm font-semibold disabled:opacity-40">{loading?'Atualizando...':'Aplicar filtros'}</button>
       </div>
     </div>
 
