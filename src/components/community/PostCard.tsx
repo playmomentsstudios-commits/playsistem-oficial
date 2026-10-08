@@ -35,7 +35,7 @@ export function PostCard({ post, onReact, style }: PostCardProps) {
       <div className="p-5">
         <div className="flex items-center gap-3 mb-4">
           <div className="flex items-center justify-center rounded-xl font-bold flex-shrink-0"
-            style={{ width: 42, height: 42, background: 'linear-gradient(135deg, #E30613, #ff4d6d)', color: '#fff', fontSize: 18 }}>
+            style={{ width: 42, height: 42, background: 'linear-gradient(135deg, #A65A2A, #ff4d6d)', color: '#fff', fontSize: 18 }}>
             {post.authorAvatar ?? post.authorName.charAt(0)}
           </div>
           <div className="min-w-0">
