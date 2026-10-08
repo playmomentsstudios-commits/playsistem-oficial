@@ -211,7 +211,7 @@ export function CustomerLayoutV2() {
         <button onClick={()=>setSidebarOpen(true)} className="text-[#A65A2A]">
           <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
         </button>
-        <BrandImage variant="dark" alt="Sagamente" className="h-6"/>
+        <BrandImage variant="compact" alt="Sagamente" className="h-6"/>
         <div className="w-[22px]"/>
       </div>
 

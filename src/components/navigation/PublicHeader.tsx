@@ -39,7 +39,7 @@ export function PublicHeader({settings}:{settings?:SiteSettings|null}) {
         </Link>
 
         <Link to="/" className="lg:hidden absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
-          <BrandImage variant="dark" alt="Sagamente" style={{ height: 28, width: 'auto' }} />
+          <BrandImage variant="compact" alt="Sagamente" style={{ height: 28, width: 'auto' }} />
         </Link>
 
         <Link
