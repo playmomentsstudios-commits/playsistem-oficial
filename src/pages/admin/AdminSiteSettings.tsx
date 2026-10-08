@@ -15,17 +15,17 @@ export function AdminSiteSettings() {
   const [areas,setAreas]=useState<HomeServiceArea[]>([])
   const [areaSaving,setAreaSaving]=useState<string|null>(null)
   const [settings, setSettings] = useState({
-    companyName: 'Play Moments',
+    companyName: 'Sagamente',
     description: 'Studio de criação, design digital e tecnologia em equipamentos.',
     heroHeadline: 'Criamos momentos que ficam.',
     heroCta: 'Explorar serviços',
-    primaryColor: '#E30613',
+    primaryColor: '#A65A2A',
     instagram: 'https://instagram.com/playmoments',
     youtube: '',
     tiktok: '',
     linkedin: '',
     whatsapp: '',
-    email: 'contato@playmoments.com.br',
+    email: '',
     phone: '',
     address: '',
     city: '',
@@ -33,7 +33,7 @@ export function AdminSiteSettings() {
     footerDescription: '',
     homeAreasEyebrow: 'Nossas áreas',
     homeAreasTitle: 'Tudo em um só lugar',
-    metaDescription: 'Play Moments — Studio criativo de vídeo, design e tecnologia.',
+    metaDescription: 'Sagamente — Soluções em design, tecnologia, comunicação e audiovisual.',
   })
 
   useEffect(()=>{
@@ -95,7 +95,7 @@ export function AdminSiteSettings() {
 
   const patchArea=(id:string,patch:Partial<HomeServiceArea>)=>setAreas(prev=>prev.map(a=>a.id===id?{...a,...patch}:a))
   const saveArea=async(area:HomeServiceArea)=>{setAreaSaving(area.id);try{const saved=await siteContentApi.saveHomeServiceArea(area);setAreas(prev=>prev.map(a=>a.id===area.id?saved:a));toast('Card da Home salvo.','success')}catch(error:any){toast(error.message||'Não foi possível salvar o card.','error')}finally{setAreaSaving(null)}}
-  const addArea=async()=>{try{const saved=await siteContentApi.saveHomeServiceArea({title:'Nova área',icon:'◆',accent_color:'#E30613',href:'/servicos',topics:[],display_order:(areas.at(-1)?.display_order||0)+10,active:true});setAreas(prev=>[...prev,saved]);toast('Novo card criado.','success')}catch(error:any){toast(error.message||'Não foi possível criar o card.','error')}}
+  const addArea=async()=>{try{const saved=await siteContentApi.saveHomeServiceArea({title:'Nova área',icon:'◆',accent_color:'#A65A2A',href:'/servicos',topics:[],display_order:(areas.at(-1)?.display_order||0)+10,active:true});setAreas(prev=>[...prev,saved]);toast('Novo card criado.','success')}catch(error:any){toast(error.message||'Não foi possível criar o card.','error')}}
   const removeArea=async(area:HomeServiceArea)=>{if(!confirm('Excluir o card "'+area.title+'"?'))return;try{await siteContentApi.deleteHomeServiceArea(area.id);setAreas(prev=>prev.filter(a=>a.id!==area.id));toast('Card excluído.','success')}catch(error:any){toast(error.message||'Não foi possível excluir o card.','error')}}
   const uploadAreaImage=async(area:HomeServiceArea,file?:File)=>{if(!file)return;setAreaSaving(area.id);try{const asset=await siteContentApi.uploadSiteAsset(file,'HOME');patchArea(area.id,{image_url:asset.url,image_drive_file_id:asset.driveFileId,image_mime_type:asset.mimeType,image_file_size:asset.fileSize});const saved=await siteContentApi.saveHomeServiceArea({...area,image_url:asset.url,image_drive_file_id:asset.driveFileId,image_mime_type:asset.mimeType,image_file_size:asset.fileSize});setAreas(prev=>prev.map(a=>a.id===area.id?saved:a));toast('Imagem atualizada.','success')}catch(error:any){toast(error.message||'Não foi possível enviar a imagem.','error')}finally{setAreaSaving(null)}}
 
@@ -114,7 +114,7 @@ export function AdminSiteSettings() {
           <button key={t} onClick={() => setTab(t)}
             className="px-4 py-1.5 rounded-lg text-sm font-medium transition-all"
             style={{
-              background: tab === t ? '#E30613' : 'transparent',
+              background: tab === t ? '#A65A2A' : 'transparent',
               color: tab === t ? '#fff' : '#9090a0',
             }}>
             {t}
@@ -149,7 +149,7 @@ export function AdminSiteSettings() {
               <div className="grid sm:grid-cols-2 gap-3"><Input label="Título" value={area.title} onChange={e=>patchArea(area.id,{title:e.target.value})}/><Input label="Link" value={area.href} onChange={e=>patchArea(area.id,{href:e.target.value})}/><Input label="Ícone" value={area.icon||''} onChange={e=>patchArea(area.id,{icon:e.target.value})}/><Input label="Ordem" type="number" value={String(area.display_order)} onChange={e=>patchArea(area.id,{display_order:Number(e.target.value)})}/></div>
               <div className="flex items-center gap-3"><input type="color" value={area.accent_color} onChange={e=>patchArea(area.id,{accent_color:e.target.value})}/><span className="text-xs text-gray-400">Cor de destaque</span><label className="ml-auto px-3 py-2 rounded-xl bg-white/[0.06] border border-white/10 text-xs cursor-pointer">Trocar imagem<input type="file" accept="image/*" className="hidden" onChange={e=>uploadAreaImage(area,e.target.files?.[0])}/></label></div>
               <div><label className="text-xs font-semibold uppercase tracking-wider text-gray-400">Tópicos — um por linha</label><textarea rows={5} value={area.topics.join('\n')} onChange={e=>patchArea(area.id,{topics:e.target.value.split('\n').map(v=>v.trim()).filter(Boolean)})} className="mt-1.5 w-full px-4 py-2.5 text-sm rounded-xl outline-none resize-y bg-white/[0.05] border border-white/10"/></div>
-              <div className="flex flex-wrap items-center gap-2"><label className="flex items-center gap-2 text-sm text-gray-300"><input type="checkbox" checked={area.active} onChange={e=>patchArea(area.id,{active:e.target.checked})}/> Ativo</label><button disabled={areaSaving===area.id} onClick={()=>saveArea(area)} className="ml-auto px-4 py-2 rounded-xl bg-[#E30613] text-white text-sm font-semibold disabled:opacity-50">{areaSaving===area.id?'Salvando...':'Salvar card'}</button><button onClick={()=>removeArea(area)} className="px-3 py-2 rounded-xl border border-red-500/20 text-red-300 text-sm">Excluir</button></div>
+              <div className="flex flex-wrap items-center gap-2"><label className="flex items-center gap-2 text-sm text-gray-300"><input type="checkbox" checked={area.active} onChange={e=>patchArea(area.id,{active:e.target.checked})}/> Ativo</label><button disabled={areaSaving===area.id} onClick={()=>saveArea(area)} className="ml-auto px-4 py-2 rounded-xl bg-[#A65A2A] text-white text-sm font-semibold disabled:opacity-50">{areaSaving===area.id?'Salvando...':'Salvar card'}</button><button onClick={()=>removeArea(area)} className="px-3 py-2 rounded-xl border border-red-500/20 text-red-300 text-sm">Excluir</button></div>
             </div>)}
           </div>
         )}
@@ -167,7 +167,7 @@ export function AdminSiteSettings() {
           <div className="p-5 rounded-2xl bg-[#141416] border border-white/10">
             <h2 className="font-bold text-lg">Quem Somos & Portfólio</h2>
             <p className="text-sm text-gray-500 mt-2">Edite sua bio, história, objetivo, currículo, foto, números da Home, categorias e projetos do portfólio.</p>
-            <Link to="/admin/portfolio" className="inline-flex mt-4 min-h-11 px-4 items-center rounded-xl bg-[#E30613] text-white text-sm font-semibold">Abrir editor de Quem Somos</Link>
+            <Link to="/admin/portfolio" className="inline-flex mt-4 min-h-11 px-4 items-center rounded-xl bg-[#A65A2A] text-white text-sm font-semibold">Abrir editor de Quem Somos</Link>
           </div>
         )}
 
@@ -182,7 +182,7 @@ export function AdminSiteSettings() {
               </div>
             </div>
             <div className="p-4 rounded-xl" style={{ background: 'rgba(76,201,240,0.08)', border: '1px solid rgba(76,201,240,0.2)', color: '#67d7f0' }}>
-              <p className="text-xs">As imagens dos cards da Home podem ser trocadas diretamente na aba Home. Os arquivos são armazenados no Google Drive e entregues ao site pela camada de mídia da Play Moments.</p>
+              <p className="text-xs">As imagens dos cards da Home podem ser trocadas diretamente na aba Home. Os arquivos são armazenados no Google Drive e entregues ao site pela camada de mídia da Sagamente.</p>
             </div>
           </div>
         )}

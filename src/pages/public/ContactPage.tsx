@@ -11,7 +11,7 @@ export function ContactPage() {
     siteContentApi.settings().then(setSettings).finally(() => setLoading(false))
   }, [])
 
-  const primary = settings?.primary_color || '#E30613'
+  const primary = settings?.primary_color?.toLowerCase()==='#e30613'?'#A65A2A':(settings?.primary_color||'#A65A2A')
   const whatsapp = settings?.whatsapp?.replace(/\D/g, '')
 
   return (
@@ -20,14 +20,14 @@ export function ContactPage() {
         <p className="text-xs uppercase tracking-widest mb-2" style={{ color: primary }}>Contato</p>
         <h1 className="text-4xl font-bold">Vamos conversar sobre seu projeto?</h1>
         <p className="mt-4 text-gray-400 max-w-2xl">
-          Fale com a Play Moments pelo canal que preferir. Para usar o chat da plataforma, basta entrar ou criar sua conta gratuita.
+          Fale com a Sagamente pelo canal que preferir. Para usar o chat da plataforma, basta entrar ou criar sua conta gratuita.
         </p>
-        <div className="mt-8 p-5 md:p-6 rounded-2xl border border-[#E30613]/25 bg-[#E30613]/[.055] flex flex-col md:flex-row md:items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-[#E30613] text-white flex items-center justify-center shrink-0">
+        <div className="mt-8 p-5 md:p-6 rounded-2xl border border-[#A65A2A]/25 bg-[#A65A2A]/[.055] flex flex-col md:flex-row md:items-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-[#A65A2A] text-white flex items-center justify-center shrink-0">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h8M8 13h5"/></svg>
           </div>
-          <div className="flex-1"><p className="font-semibold">Chat Play Moments</p><p className="text-sm text-gray-400 mt-1">Tire dúvidas, conheça nossos serviços ou converse com a equipe. Você não precisa já ser cliente.</p></div>
-          <Link to="/login?next=%2Fapp%2Fconversas" className="min-h-11 px-5 rounded-xl bg-[#E30613] text-white text-sm font-semibold flex items-center justify-center">Iniciar conversa</Link>
+          <div className="flex-1"><p className="font-semibold">Chat Sagamente</p><p className="text-sm text-gray-400 mt-1">Tire dúvidas, conheça nossos serviços ou converse com a equipe. Você não precisa já ser cliente.</p></div>
+          <Link to="/login?next=%2Fapp%2Fconversas" className="min-h-11 px-5 rounded-xl bg-[#A65A2A] text-white text-sm font-semibold flex items-center justify-center">Iniciar conversa</Link>
         </div>
 
         {loading ? (

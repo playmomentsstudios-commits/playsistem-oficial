@@ -42,7 +42,7 @@ const CATEGORY_COLORS:Record<string,string>={
 }
 
 function categoryColor(slug?:string|null){
-  return (slug&&CATEGORY_COLORS[slug])||'#E30613'
+  return (slug&&CATEGORY_COLORS[slug])||'#A65A2A'
 }
 
 type CatalogView='todos'|'produtos'|'equipamentos'|'locacao'
@@ -149,7 +149,7 @@ export function ProductsPage() {
       <div className="mx-auto px-3 sm:px-4 py-7 sm:py-14" style={{ maxWidth: 1160 }}>
         <div className="grid lg:grid-cols-[1fr_auto] gap-4 sm:gap-6 items-end mb-7 sm:mb-9">
           <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#E30613' }}>{dedicatedEquipment?'Tech & Equipamentos':'Loja Play Moments'}</p>
+            <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#A65A2A' }}>{dedicatedEquipment?'Tech & Equipamentos':'Loja Sagamente'}</p>
             <h1 className="text-3xl sm:text-5xl font-bold mb-3 sm:mb-4 leading-tight" style={{ color: '#f0f0f2' }}>{dedicatedEquipment?'Equipamentos':'Produtos & Equipamentos'}</h1>
             <p className="text-sm sm:text-base" style={{ color: '#8b8b98' }}>
               {dedicatedEquipment
@@ -186,7 +186,7 @@ export function ProductsPage() {
               style={{background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.09)',color:'#f0f0f2'}}
             />
             <div className="flex gap-2 overflow-x-auto lg:flex-1 pb-1 -mx-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              <button type="button" onClick={()=>setCategory('todos')} className="shrink-0 min-h-10 px-3 py-2 rounded-full text-xs" style={{background:category==='todos'?'#E30613':'rgba(255,255,255,0.04)',color:category==='todos'?'#fff':'#9090a0',border:'1px solid rgba(255,255,255,0.08)'}}>Todas as categorias</button>
+              <button type="button" onClick={()=>setCategory('todos')} className="shrink-0 min-h-10 px-3 py-2 rounded-full text-xs" style={{background:category==='todos'?'#A65A2A':'rgba(255,255,255,0.04)',color:category==='todos'?'#fff':'#9090a0',border:'1px solid rgba(255,255,255,0.08)'}}>Todas as categorias</button>
               {categories.map(([slug,name])=>{
                 const color=categoryColor(slug)
                 return <button key={slug} type="button" onClick={()=>setCategory(slug)} className="shrink-0 min-h-10 px-3 py-2 rounded-full text-xs" style={{background:category===slug?color:'rgba(255,255,255,0.04)',color:category===slug?'#fff':color,border:'1px solid '+(category===slug?color:'rgba(255,255,255,0.08)')}}>{name}</button>
@@ -208,7 +208,7 @@ export function ProductsPage() {
         {!loading && error && (
           <CatalogEmpty
             title="Catálogo temporariamente indisponível"
-            text={error+' Você ainda pode acessar os serviços ou falar com a Play Moments.'}
+            text={error+' Você ainda pode acessar os serviços ou falar com a Sagamente.'}
           />
         )}
 
@@ -249,7 +249,7 @@ export function ProductsPage() {
                       {product.short_description&&<p className="text-xs mb-3 flex-1 line-clamp-3" style={{color:'#9090a0'}}>{product.short_description}</p>}
 
                       {(product.commercial_mode==='sale'||product.commercial_mode==='sale_and_rental')&&product.sale_price!==null&&
-                        <div className="flex items-center gap-2"><span className="font-bold" style={{color:product.promotional_price?'#E30613':'#f0f0f2'}}>{formatPrice(product.promotional_price??product.sale_price)}</span>{product.promotional_price!==null&&<span className="text-xs line-through" style={{color:'#6b6b78'}}>{formatPrice(product.sale_price)}</span>}</div>}
+                        <div className="flex items-center gap-2"><span className="font-bold" style={{color:product.promotional_price?'#A65A2A':'#f0f0f2'}}>{formatPrice(product.promotional_price??product.sale_price)}</span>{product.promotional_price!==null&&<span className="text-xs line-through" style={{color:'#6b6b78'}}>{formatPrice(product.sale_price)}</span>}</div>}
 
                       {(product.commercial_mode==='rental'||product.commercial_mode==='sale_and_rental')&&product.rental_daily_price!==null&&
                         <p className="text-xs mt-2" style={{color:'#8dcfe0'}}>Locação: {formatPrice(product.rental_daily_price)}/dia</p>}
@@ -282,7 +282,7 @@ function CatalogEmpty({title,text,onReset}:{title:string;text:string;onReset?:()
   <p className="text-sm text-gray-400 max-w-xl mx-auto mt-2">{text}</p>
   <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center gap-3 mt-6">
    {onReset&&<button type="button" onClick={onReset} className="w-full sm:w-auto min-h-12 px-5 py-3 rounded-xl border border-white/10 bg-white/5 text-sm font-semibold">Limpar filtros</button>}
-   <Link to="/servicos" className="w-full sm:w-auto min-h-12 inline-flex items-center justify-center px-5 py-3 rounded-xl bg-[#E30613] text-sm font-semibold">Explorar serviços</Link>
+   <Link to="/servicos" className="w-full sm:w-auto min-h-12 inline-flex items-center justify-center px-5 py-3 rounded-xl bg-[#A65A2A] text-sm font-semibold">Explorar serviços</Link>
    <Link to="/tech" className="w-full sm:w-auto min-h-12 inline-flex items-center justify-center px-5 py-3 rounded-xl border border-white/10 text-sm font-semibold">Tech & Equipamentos</Link>
   </div>
  </div>

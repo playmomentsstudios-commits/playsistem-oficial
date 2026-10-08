@@ -27,7 +27,7 @@ export function PortfolioPage() {
     <PublicLayout>
       <div className="mx-auto px-4 py-12" style={{ maxWidth: 1100 }}>
         <div className="text-center mb-10">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#E30613' }}>Nosso trabalho</p>
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#A65A2A' }}>Nosso trabalho</p>
           <h1 className="text-4xl font-bold mb-4" style={{ color: '#f0f0f2' }}>Portfólio</h1>
           <p className="text-sm" style={{ color: '#6b6b78' }}>Projetos que transformaram marcas</p>
         </div>
@@ -38,9 +38,9 @@ export function PortfolioPage() {
             <button key={f.id} onClick={() => setFilter(f.id)}
               className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200"
               style={{
-                background: filter === f.id ? '#E30613' : 'rgba(255,255,255,0.06)',
+                background: filter === f.id ? '#A65A2A' : 'rgba(255,255,255,0.06)',
                 color: filter === f.id ? '#fff' : '#9090a0',
-                border: `1px solid ${filter === f.id ? '#E30613' : 'rgba(255,255,255,0.1)'}`,
+                border: `1px solid ${filter === f.id ? '#A65A2A' : 'rgba(255,255,255,0.1)'}`,
               }}>
               {f.label}
             </button>
@@ -63,7 +63,7 @@ export function PortfolioPage() {
                 </div>
               </div>
               <div className="p-4">
-                <p className="text-xs mb-1" style={{ color: '#E30613' }}>{project.client}</p>
+                <p className="text-xs mb-1" style={{ color: '#A65A2A' }}>{project.client}</p>
                 <p className="font-semibold" style={{ color: '#f0f0f2' }}>{project.title}</p>
                 <p className="text-xs mt-1" style={{ color: '#6b6b78' }}>{project.shortDescription}</p>
               </div>
