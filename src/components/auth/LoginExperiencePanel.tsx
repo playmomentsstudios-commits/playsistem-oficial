@@ -1,6 +1,6 @@
+import { BrandImage } from '../BrandImage'
 import { useEffect,useState,type CSSProperties,type PointerEvent } from 'react'
 import { Link } from 'react-router-dom'
-const logoUrl = '/sagamente-logo-dark.svg'
 
 const PARTICLES=Array.from({length:24},(_,i)=>({
  id:i,
@@ -55,7 +55,7 @@ export function LoginExperiencePanel(){
     <div className="pm-login-object">
      <div className="pm-login-object-face"/>
      <div className="pm-login-object-screen">
-      <img src="/sagamente-mark.svg" alt="" aria-hidden="true"/>
+      <BrandImage variant="symbol" alt="" aria-hidden="true"/>
       <small>SEU ESPAÇO</small>
      </div>
     </div>
@@ -74,7 +74,7 @@ export function LoginExperiencePanel(){
 
   <div className="pm-login-content">
    <Link to="/" className="relative z-10 w-fit">
-    <img src={logoUrl} alt="Sagamente" style={{height:32}}/>
+    <BrandImage variant="dark" alt="Sagamente" style={{height:32}}/>
    </Link>
 
    <div className="pm-login-copy">
@@ -120,7 +120,7 @@ export function LoginMobileExperience(){
   <div className="pm-login-mobile-orbit"/>
   <div className="pm-login-mobile-object">
    <div className="pm-login-mobile-object-face"/>
-   <div className="pm-login-mobile-object-screen"><img src="/sagamente-mark.svg" alt=""/></div>
+   <div className="pm-login-mobile-object-screen"><BrandImage variant="symbol" alt=""/></div>
   </div>
   <div className="pm-login-mobile-copy">
    <p>SAGAMENTE / ÁREA PESSOAL</p>

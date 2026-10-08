@@ -1,8 +1,9 @@
+import { BrandImage } from '../../components/BrandImage'
 import { useEffect,useState } from 'react'
 import { Link,useParams } from 'react-router-dom'
 import { siteContentApi,type SiteLandingPage,type LandingSection } from '../../services/siteContent'
 import { useSeo } from '../../lib/seo'
-const logoUrl = '/sagamente-logo-dark.svg'
+
 
 function Section({section,ctaHref,ctaLabel}:{section:LandingSection;ctaHref:string;ctaLabel:string}){
  if(section.type==='cta')return <section className="px-5 py-16 sm:py-24"><div className="max-w-4xl mx-auto rounded-3xl border border-[#A65A2A]/25 bg-gradient-to-br from-[#A65A2A]/15 to-[#141416] p-7 sm:p-12 text-center"><h2 className="text-3xl sm:text-4xl font-extrabold">{section.title}</h2>{section.text&&<p className="text-gray-300 mt-4 max-w-2xl mx-auto">{section.text}</p>}<a href={ctaHref} className="mt-7 min-h-12 px-7 rounded-xl bg-[#A65A2A] text-white font-bold inline-flex items-center justify-center">{ctaLabel}</a></div></section>
@@ -17,7 +18,7 @@ export function LandingPage(){
  if(loading)return <main className="min-h-screen bg-[#0a0a0b] text-white flex items-center justify-center text-gray-400">Carregando...</main>
  if(!page)return <main className="min-h-screen bg-[#0a0a0b] text-white flex flex-col items-center justify-center px-5 text-center"><h1 className="text-3xl font-bold">Página não encontrada</h1><p className="text-gray-400 mt-3">Esta campanha pode ter sido encerrada ou o endereço está incorreto.</p><Link to="/" className="mt-6 px-5 py-3 rounded-xl bg-[#A65A2A] font-semibold">Voltar para a Sagamente</Link></main>
  return <main className="min-h-screen bg-[#0a0a0b] text-[#f0f0f2]">
-  <header className="h-16 px-5 border-b border-white/[.06] flex items-center"><div className="max-w-6xl mx-auto w-full flex items-center justify-between gap-4"><img src={logoUrl} alt="Sagamente" className="h-9 w-auto"/><a href={page.cta_href} className="min-h-10 px-4 rounded-xl bg-[#A65A2A] text-white text-xs font-bold inline-flex items-center">{page.cta_label}</a></div></header>
+  <header className="h-16 px-5 border-b border-white/[.06] flex items-center"><div className="max-w-6xl mx-auto w-full flex items-center justify-between gap-4"><BrandImage variant="dark" alt="Sagamente" className="h-9 w-auto"/><a href={page.cta_href} className="min-h-10 px-4 rounded-xl bg-[#A65A2A] text-white text-xs font-bold inline-flex items-center">{page.cta_label}</a></div></header>
   <article>
    <section className="px-5 py-14 sm:py-24"><div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
     <div><p className="text-xs uppercase tracking-[.2em] font-bold text-[#A65A2A]">{page.eyebrow||'Sagamente'}</p><h1 className="text-4xl sm:text-6xl font-extrabold leading-[1.03] mt-4">{page.headline}</h1>{page.subheadline&&<p className="text-lg text-gray-400 mt-5 leading-8">{page.subheadline}</p>}<div className="flex flex-wrap gap-3 mt-7"><a href={page.cta_href} className="min-h-12 px-6 rounded-xl bg-[#A65A2A] text-white font-bold inline-flex items-center justify-center shadow-lg shadow-red-950/20">{page.cta_label}</a>{page.secondary_cta_label&&page.secondary_cta_href&&<a href={page.secondary_cta_href} className="min-h-12 px-6 rounded-xl border border-white/15 text-gray-200 font-semibold inline-flex items-center justify-center">{page.secondary_cta_label}</a>}</div><p className="text-[11px] text-gray-600 mt-4">Atendimento Sagamente · informações claras antes da contratação.</p></div>

@@ -1,8 +1,8 @@
+import { BrandImage } from '../components/BrandImage'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { afterAuthPath } from '../lib/navigation'
-const logoUrl = '/sagamente-logo-dark.svg'
 import { portalApi } from '../api/portal'
 
 const MENU = [
@@ -60,7 +60,7 @@ export function CustomerLayout() {
     }}>
       <div className="flex items-center justify-between p-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
         <Link to="/">
-          <img src={logoUrl} alt="Sagamente" style={{ height: 26, width: 'auto' }} />
+          <BrandImage variant="dark" alt="Sagamente" style={{ height: 26, width: 'auto' }} />
         </Link>
         {mobile && (
           <button onClick={() => setSidebarOpen(false)} style={{ color: '#6b6b78' }}>✕</button>
@@ -136,7 +136,7 @@ export function CustomerLayout() {
               <path d="M3 12h18M3 6h18M3 18h18" />
             </svg>
           </button>
-          <img src={logoUrl} alt="Sagamente" style={{ height: 24 }} />
+          <BrandImage variant="dark" alt="Sagamente" style={{ height: 24 }} />
           <div style={{ width: 22 }} />
         </div>
 

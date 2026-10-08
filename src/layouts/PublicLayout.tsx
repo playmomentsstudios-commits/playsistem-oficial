@@ -1,7 +1,7 @@
+import { BrandImage } from '../components/BrandImage'
 import { useEffect,useState,type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { PublicHeader } from '../components/navigation/PublicHeader'
-const logoUrl = '/sagamente-logo-dark.svg'
 import { siteContentApi,type SiteSettings } from '../services/siteContent'
 
 export function PublicLayout({ children }: { children: ReactNode }) {
@@ -31,7 +31,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
         <div className="mx-auto px-6 py-12" style={{ maxWidth: 1200 }}>
           <div className="grid gap-8 md:grid-cols-4 mb-10">
             <div>
-              <img src={logoUrl} alt={'Sagamente'} style={{ height: 28, width: 'auto', marginBottom: 16 }} />
+              <BrandImage variant="dark" alt={'Sagamente'} style={{ height: 28, width: 'auto', marginBottom: 16 }} />
               <p className="text-sm leading-relaxed" style={{ color: '#6b6b78' }}>
                 {(settings?.footer_description||settings?.description||'Soluções criativas e tecnológicas em design, comunicação e desenvolvimento digital.').replace(/Play Moments/g,'Sagamente')}
               </p>

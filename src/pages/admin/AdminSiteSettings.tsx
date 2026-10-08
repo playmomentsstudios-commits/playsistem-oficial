@@ -4,11 +4,12 @@ import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { useToast } from '../../contexts/ToastContext'
 import { siteContentApi,type HomeServiceArea } from '../../services/siteContent'
+import { BrandIdentitySettings } from '../../components/admin/BrandIdentitySettings'
 
-const TABS = ['Geral', 'Home', 'Rodapé', 'Quem Somos', 'Aparência', 'Redes Sociais', 'Contato', 'SEO']
+const TABS = ['Geral', 'Identidade da Marca', 'Home', 'Rodapé', 'Quem Somos', 'Redes Sociais', 'Contato', 'SEO']
 
 export function AdminSiteSettings() {
-  const [tab, setTab] = useState('Geral')
+  const [tab, setTab] = useState(()=>new URLSearchParams(window.location.search).get('tab')==='identidade'?'Identidade da Marca':'Geral')
   const [loading, setLoading] = useState(false)
   const [initialLoading,setInitialLoading]=useState(true)
   const toast = useToast()
@@ -19,7 +20,6 @@ export function AdminSiteSettings() {
     description: 'Studio de criação, design digital e tecnologia em equipamentos.',
     heroHeadline: 'Criamos momentos que ficam.',
     heroCta: 'Explorar serviços',
-    primaryColor: '#A65A2A',
     instagram: '',
     youtube: '',
     tiktok: '',
@@ -43,7 +43,6 @@ export function AdminSiteSettings() {
       description:row.description,
       heroHeadline:row.hero_headline,
       heroCta:row.hero_cta,
-      primaryColor:row.primary_color,
       instagram:row.instagram_url||'',
       youtube:row.youtube_url||'',
       tiktok:row.tiktok_url||'',
@@ -72,7 +71,6 @@ export function AdminSiteSettings() {
         description:settings.description.trim(),
         hero_headline:settings.heroHeadline.trim(),
         hero_cta:settings.heroCta.trim(),
-        primary_color:settings.primaryColor,
         instagram_url:settings.instagram.trim()||null,
         youtube_url:settings.youtube.trim()||null,
         tiktok_url:settings.tiktok.trim()||null,
@@ -109,10 +107,10 @@ export function AdminSiteSettings() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 p-1 rounded-xl w-fit" style={{ background: 'rgba(255,255,255,0.04)' }}>
+      <div className="flex gap-1 mb-6 p-1 rounded-xl w-full max-w-full overflow-x-auto" style={{ background: 'rgba(255,255,255,0.04)' }}>
         {TABS.map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className="px-4 py-1.5 rounded-lg text-sm font-medium transition-all"
+            className="shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-all"
             style={{
               background: tab === t ? '#A65A2A' : 'transparent',
               color: tab === t ? '#fff' : '#9090a0',
@@ -122,7 +120,9 @@ export function AdminSiteSettings() {
         ))}
       </div>
 
-      <div className={tab==='Home'?'max-w-4xl':'max-w-2xl'}>
+      <div className={tab==='Home'||tab==='Identidade da Marca'?'max-w-5xl':'max-w-2xl'}>
+        {tab === 'Identidade da Marca' && <BrandIdentitySettings/>}
+
         {tab === 'Geral' && (
           <div className="flex flex-col gap-4">
             <Input label="Nome da empresa" value={settings.companyName} onChange={set('companyName')} />
@@ -171,22 +171,6 @@ export function AdminSiteSettings() {
           </div>
         )}
 
-        {tab === 'Aparência' && (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9090a0' }}>Cor principal da marca</label>
-              <div className="flex items-center gap-3">
-                <input type="color" value={settings.primaryColor} onChange={set('primaryColor')}
-                  className="w-12 h-10 rounded-lg cursor-pointer border-0" />
-                <span className="text-sm font-mono" style={{ color: '#f0f0f2' }}>{settings.primaryColor}</span>
-              </div>
-            </div>
-            <div className="p-4 rounded-xl" style={{ background: 'rgba(76,201,240,0.08)', border: '1px solid rgba(76,201,240,0.2)', color: '#67d7f0' }}>
-              <p className="text-xs">As imagens dos cards da Home podem ser trocadas diretamente na aba Home. Os arquivos são armazenados no Google Drive e entregues ao site pela camada de mídia da Sagamente.</p>
-            </div>
-          </div>
-        )}
-
         {tab === 'Redes Sociais' && (
           <div className="flex flex-col gap-4">
             <Input label="Instagram" placeholder="https://instagram.com/..." value={settings.instagram} onChange={set('instagram')} />
@@ -217,9 +201,9 @@ export function AdminSiteSettings() {
           </div>
         )}
 
-        <div className="mt-6">
+        {tab!=='Identidade da Marca'&&<div className="mt-6">
           <Button onClick={save} loading={loading}>Salvar configurações</Button>
-        </div>
+        </div>}
       </div>
     </div>
   )

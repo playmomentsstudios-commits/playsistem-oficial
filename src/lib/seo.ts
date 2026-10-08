@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useBrandAsset } from '../components/BrandImage'
 
 export type SeoProps={
  title:string
@@ -24,6 +25,8 @@ function upsertLink(rel:string,href:string){
 function absolute(value:string){try{return new URL(value,window.location.origin).toString()}catch{return value}}
 
 export function useSeo({title,description,image,canonicalPath,canonicalUrl,type='website',noindex=false,jsonLd}:SeoProps){
+ const fallbackSocialImage=useBrandAsset('social')
+ const effectiveImage=image||fallbackSocialImage
  useEffect(()=>{
   const fullTitle=title.includes('Sagamente')?title:`${title} | Sagamente`
   const canonical=canonicalUrl?absolute(canonicalUrl):absolute(canonicalPath||window.location.pathname)
@@ -36,13 +39,13 @@ export function useSeo({title,description,image,canonicalPath,canonicalUrl,type=
   upsertMeta('meta[property="og:url"]',{property:'og:url',content:canonical})
   upsertMeta('meta[property="og:site_name"]',{property:'og:site_name',content:'Sagamente'})
   upsertMeta('meta[property="og:locale"]',{property:'og:locale',content:'pt_BR'})
-  upsertMeta('meta[name="twitter:card"]',{name:'twitter:card',content:image?'summary_large_image':'summary'})
+  upsertMeta('meta[name="twitter:card"]',{name:'twitter:card',content:effectiveImage?'summary_large_image':'summary'})
   upsertMeta('meta[name="twitter:title"]',{name:'twitter:title',content:fullTitle})
   upsertMeta('meta[name="twitter:description"]',{name:'twitter:description',content:description})
-  if(image){const src=absolute(image);upsertMeta('meta[property="og:image"]',{property:'og:image',content:src});upsertMeta('meta[name="twitter:image"]',{name:'twitter:image',content:src})}
+  if(effectiveImage){const src=absolute(effectiveImage);upsertMeta('meta[property="og:image"]',{property:'og:image',content:src});upsertMeta('meta[name="twitter:image"]',{name:'twitter:image',content:src})}
   else{document.head.querySelector('meta[property="og:image"]')?.remove();document.head.querySelector('meta[name="twitter:image"]')?.remove()}
   upsertLink('canonical',canonical)
   document.querySelectorAll('script[data-play-seo-jsonld]').forEach(el=>el.remove())
   if(jsonLd){const script=document.createElement('script');script.type='application/ld+json';script.dataset.playSeoJsonld='true';script.text=JSON.stringify(jsonLd);document.head.appendChild(script)}
- },[title,description,image,canonicalPath,canonicalUrl,type,noindex,jsonLd])
+ },[title,description,effectiveImage,canonicalPath,canonicalUrl,type,noindex,jsonLd])
 }

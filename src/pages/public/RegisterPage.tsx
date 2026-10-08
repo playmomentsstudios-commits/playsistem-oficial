@@ -1,3 +1,4 @@
+import { BrandImage } from '../../components/BrandImage'
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
@@ -5,7 +6,6 @@ import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { afterAuthPath, authLink, safeReturnPath } from '../../lib/navigation'
-const logoUrl = '/sagamente-logo-dark.svg'
 
 export function RegisterPage() {
   const [form, setForm] = useState({ name: '', lastName: '', email: '', phone: '', documentNumber: '', postalCode: '', street: '', addressNumber: '', addressComplement: '', neighborhood: '', city: '', state: '', password: '', confirm: '' })
@@ -171,7 +171,7 @@ export function RegisterPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ background: '#0a0a0b' }}>
       <div className="w-full max-w-md">
-        <Link to="/"><img src={logoUrl} alt="Sagamente" style={{ height: 28, marginBottom: 32 }} /></Link>
+        <Link to="/"><BrandImage variant="dark" alt="Sagamente" style={{ height: 28, marginBottom: 32 }} /></Link>
 
         <h1 className="text-2xl font-bold mb-2" style={{ color: '#f0f0f2' }}>Criar conta</h1>
         <p className="text-sm mb-4" style={{ color: '#6b6b78' }}>

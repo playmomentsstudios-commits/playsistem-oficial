@@ -1,7 +1,7 @@
+import { BrandImage } from '../components/BrandImage'
 import { useEffect, useState, type CSSProperties } from 'react'
 import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-const logoUrl = '/sagamente-logo-dark.svg'
 import { portalApi } from '../api/portal'
 import { hasStaffPermission } from '../lib/staffPermissions'
 import { settingsApi,type AppSettings } from '../api/settings'
@@ -42,8 +42,8 @@ export function AdminLayout() {
   const [staffPermissions,setStaffPermissions]=useState<string[]>([])
   const [openGroups,setOpenGroups]=useState<string[]>([])
   const [accountOpen,setAccountOpen]=useState(false)
-  const [staffBrand,setStaffBrand]=useState<Pick<AppSettings,'staff_logo_url'|'staff_platform_name'|'staff_primary_color'|'staff_background_color'|'staff_surface_color'|'staff_text_color'>>({
-    staff_logo_url:'/staff-logo.svg',staff_platform_name:'Área do colaborador',staff_primary_color:'#A65A2A',
+  const [staffBrand,setStaffBrand]=useState<Pick<AppSettings,'staff_platform_name'|'staff_primary_color'|'staff_background_color'|'staff_surface_color'|'staff_text_color'>>({
+    staff_platform_name:'Área do colaborador',staff_primary_color:'#A65A2A',
     staff_background_color:'#F4F6F8',staff_surface_color:'#FFFFFF',staff_text_color:'#17171A',
   })
   useEffect(() => {
@@ -63,7 +63,6 @@ export function AdminLayout() {
   useEffect(()=>{
     if(!collaboratorMode)return
     settingsApi.appSettings().then(row=>{if(row)setStaffBrand({
-      staff_logo_url:row.staff_logo_url||'/staff-logo.svg',
       staff_platform_name:row.staff_platform_name||'Área do colaborador',
       staff_primary_color:row.staff_primary_color?.toLowerCase()==='#e30613'?'#A65A2A':(row.staff_primary_color||'#A65A2A'),
       staff_background_color:row.staff_background_color||'#F4F6F8',
@@ -100,7 +99,7 @@ export function AdminLayout() {
       <div className="px-5 py-5 border-b" style={{ borderColor: collaboratorMode?'#e1e4e8':'rgba(255,255,255,0.05)' }}>
         <div className="flex items-center justify-between gap-3">
           <Link to="/admin" className="block">
-            <div className={collaboratorMode?'px-1 py-1':'contents'}><img src={collaboratorMode?(staffBrand.staff_logo_url||'/staff-logo.svg'):logoUrl} alt="Sagamente" className="h-12 w-auto max-w-full object-contain" /></div>
+            <div className={collaboratorMode?'px-1 py-1':'contents'}><BrandImage variant={collaboratorMode?'staff':'dark'} alt="Sagamente" className="h-12 w-auto max-w-full object-contain" /></div>
           </Link>
           {mobile && <button aria-label="Fechar menu administrativo" onClick={() => setSidebarOpen(false)} className="w-11 h-11 flex items-center justify-center text-gray-600 hover:text-gray-300">✕</button>}
         </div>

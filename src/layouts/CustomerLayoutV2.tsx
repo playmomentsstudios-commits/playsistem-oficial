@@ -1,8 +1,8 @@
+import { BrandImage } from '../components/BrandImage'
 import { Component, type ErrorInfo, type ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { afterAuthPath } from '../lib/navigation'
-const logoUrl = '/sagamente-logo-dark.svg'
 import { portalApi } from '../api/portal'
 import { FloatingCustomerChat } from '../components/chat/FloatingCustomerChat'
 import { settingsApi } from '../api/settings'
@@ -123,7 +123,7 @@ export function CustomerLayoutV2() {
     >
       <div className={'h-20 flex items-center border-b border-white/5 relative '+(showLabels?'px-4 justify-start':'justify-center')}>
         <Link to="/" className="flex items-center justify-center">
-          <img src={logoUrl} alt="Sagamente" className={showLabels?'h-8 w-auto':'h-8 w-auto max-w-[58px] object-contain'} />
+          <BrandImage variant={showLabels?'dark':'symbol'} alt="Sagamente" className={showLabels?'h-8 w-auto':'h-9 w-9 object-contain'} />
         </Link>
         {mobile&&<button aria-label="Fechar menu" onClick={()=>setSidebarOpen(false)} className="absolute right-3 w-11 h-11 flex items-center justify-center text-gray-500 hover:text-white">✕</button>}
       </div>
@@ -211,7 +211,7 @@ export function CustomerLayoutV2() {
         <button onClick={()=>setSidebarOpen(true)} className="text-[#A65A2A]">
           <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
         </button>
-        <img src={logoUrl} alt="Sagamente" className="h-6"/>
+        <BrandImage variant="compact" alt="Sagamente" className="h-6"/>
         <div className="w-[22px]"/>
       </div>
 

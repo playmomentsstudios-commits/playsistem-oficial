@@ -2,10 +2,11 @@ import { corsHeaders, ensureSiteAssetFolder, getDriveAccessToken, json, requireU
 
 function validateAsset(fileName:string,mimeType:string,fileSize:number,section:string){
   const normalizedSection=section.trim().toUpperCase();
-  const imageSection=["HOME","PROFILE","PORTFOLIO","COURSES","LANDINGS"].includes(normalizedSection);
+  const imageSection=["HOME","PROFILE","PORTFOLIO","COURSES","LANDINGS","BRAND"].includes(normalizedSection);
   const resumeSection=normalizedSection==="RESUME";
   if(!fileName||!Number.isFinite(fileSize)||fileSize<=0)throw new Error("Invalid file metadata");
   if(imageSection&&!mimeType.startsWith("image/"))throw new Error("This section only accepts images");
+  if(normalizedSection==="BRAND"&&!["image/png","image/jpeg","image/webp","image/svg+xml","image/x-icon","image/vnd.microsoft.icon"].includes(mimeType))throw new Error("Unsupported brand image format");
   if(resumeSection&&mimeType!=="application/pdf")throw new Error("Resume must be a PDF");
   if(!imageSection&&!resumeSection)throw new Error("Unsupported site asset section");
   if(fileSize>25*1024*1024)throw new Error("File exceeds the 25 MB limit");
@@ -25,6 +26,11 @@ Deno.serve(async(req)=>{
       const section=String(form.get("section")||"HOME");
       if(!(file instanceof File))throw new Error("File not provided");
       const normalizedSection=validateAsset(file.name,file.type||"application/octet-stream",file.size,section);
+      if(normalizedSection==="BRAND" && file.type==="image/svg+xml"){
+        const xml=await file.text();
+        // SVG is public media: disallow executable markup and external subresources.
+        if(/<\s*(?:script|foreignObject|iframe|object|embed|animate|set)\b|\bon[a-z]+\s*=|(?:href|xlink:href)\s*=\s*["'](?:\s*(?:https?:|javascript:|data:))/i.test(xml))throw new Error("O SVG contém conteúdo ativo ou referências externas.");
+      }
       const target=await ensureSiteAssetFolder(ctx.db,ctx.userId,normalizedSection);
       const token=await getDriveAccessToken();
       const boundary="pm_site_"+crypto.randomUUID();
