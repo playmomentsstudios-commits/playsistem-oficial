@@ -3,6 +3,7 @@ import { portalApi } from '../../api/portal'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { LoadingState } from '../../components/ui/AsyncState'
 import { useToast } from '../../contexts/ToastContext'
+import { FilePreviewModal } from '../../components/files/FilePreviewModal'
 
 function sizeLabel(value:number|null|undefined){
   if(!value)return '—'
@@ -40,6 +41,7 @@ function fileKind(file:any){
 export function FilesPage(){
   const toast=useToast()
   const [rows,setRows]=useState<any[]>([])
+  const [previewFile,setPreviewFile]=useState<any|null>(null)
   const [projects,setProjects]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
   const [projectId,setProjectId]=useState<string|null>(null)
@@ -150,15 +152,8 @@ export function FilesPage(){
     }finally{setUploading(false)}
   }
 
-  async function open(file:any){
-    if(file.storage_provider==='google_drive'&&file.drive_file_id){
-      const blobUrl=await portalApi.driveFileBlobUrl(file.id)
-      window.open(blobUrl,'_blank','noopener')
-      window.setTimeout(()=>URL.revokeObjectURL(blobUrl),60000)
-      return
-    }
-    if(file.external_url){window.open(file.external_url,'_blank','noopener');return}
-    if(file.storage_path){window.open(await portalApi.fileUrl(file.storage_path),'_blank','noopener');return}
+  function open(file:any){
+    setPreviewFile(file)
   }
 
   async function review(file:any,action:'approved'|'changes_requested'){
@@ -205,6 +200,7 @@ export function FilesPage(){
   }
 
   return <div>
+    <FilePreviewModal file={previewFile} onClose={()=>setPreviewFile(null)}/>
     <div className="mb-6">
       <h1 className="text-2xl font-bold text-white">Meus Arquivos</h1>
       <p className="text-sm text-gray-500">Organizados por projeto, como uma biblioteca de pastas.</p>

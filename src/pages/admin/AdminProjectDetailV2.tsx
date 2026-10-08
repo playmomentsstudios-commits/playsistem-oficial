@@ -6,6 +6,7 @@ import { fileManagementApi } from '../../api/fileManagement'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
+import { FilePreviewModal } from '../../components/files/FilePreviewModal'
 import { exportProjectReportSpreadsheet,printProjectReportPdf } from '../../lib/projectReport'
 import { prioridade,rotulo,statusEtapa,statusProjeto,statusTarefa,tipoProjeto } from '../../lib/labels.ptBR'
 
@@ -63,6 +64,7 @@ export function AdminProjectDetailV2(){
   const [fileProgress,setFileProgress]=useState(0)
   const [fileProgressName,setFileProgressName]=useState('')
   const [fileMenu,setFileMenu]=useState<string|null>(null)
+  const [previewFile,setPreviewFile]=useState<any|null>(null)
   const [reviewHistoryFile,setReviewHistoryFile]=useState<any>(null)
   const [reviewHistory,setReviewHistory]=useState<any[]>([])
   const [loadingReviews,setLoadingReviews]=useState(false)
@@ -383,14 +385,9 @@ export function AdminProjectDetailV2(){
     }catch(error:any){toast(error.message||'Não foi possível renomear o arquivo.','error')}
   }
 
-  async function openFile(file:any){
-    try{
-      if(file.external_url){window.open(file.external_url,'_blank','noopener,noreferrer');return}
-      if(file.storage_path){
-        const url=await portalApi.fileUrl(file.storage_path)
-        window.open(url,'_blank','noopener,noreferrer')
-      }
-    }catch(error:any){toast(error.message,'error')}
+  function openFile(file:any){
+    setFileMenu(null)
+    setPreviewFile(file)
   }
 
   if(loading)return <p role="status" className="text-gray-400">Carregando projeto...</p>
@@ -398,6 +395,7 @@ export function AdminProjectDetailV2(){
   if(!project)return <div><p>Projeto não encontrado.</p><Link to="/admin/projetos" className="text-[#A65A2A]">Voltar</Link></div>
 
   return <div>
+    <FilePreviewModal file={previewFile} onClose={()=>setPreviewFile(null)}/>
     {loadWarning&&<div role="alert" className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">{loadWarning} <button type="button" className="ml-2 underline" onClick={()=>void load()}>Tentar novamente</button></div>}
     <Link to="/admin/projetos" className="inline-flex items-center min-h-10 text-sm text-gray-400 hover:text-white">← Voltar para projetos</Link>
 

@@ -4,6 +4,7 @@ import { fileManagementApi } from '../../api/fileManagement'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
+import { FilePreviewModal } from '../../components/files/FilePreviewModal'
 import { settingsApi } from '../../api/settings'
 import { supabase } from '../../lib/supabase'
 
@@ -92,6 +93,7 @@ export function AdminFilesV2(){
   const [libraryFolder,setLibraryFolder]=useState('all')
   const [customerSearch,setCustomerSearch]=useState('')
   const [menuFile,setMenuFile]=useState<string|null>(null)
+  const [previewFile,setPreviewFile]=useState<any|null>(null)
   const [reviewingFile,setReviewingFile]=useState<string|null>(null)
   const [versioningFile,setVersioningFile]=useState<any|null>(null)
   const [versionFile,setVersionFile]=useState<File|null>(null)
@@ -338,15 +340,9 @@ export function AdminFilesV2(){
     }catch(error:any){toast(error.message||'Não foi possível salvar o arquivo.','error')}
     finally{setSaving(false)}
   }
-  async function open(row:any){
-    if(row.storage_provider==='google_drive'&&row.drive_file_id){
-      const blobUrl=await portalApi.driveFileBlobUrl(row.id)
-      window.open(blobUrl,'_blank','noopener')
-      window.setTimeout(()=>URL.revokeObjectURL(blobUrl),60000)
-      return
-    }
-    if(row.external_url){window.open(row.external_url,'_blank','noopener');return}
-    if(row.storage_path){window.open(await portalApi.fileUrl(row.storage_path),'_blank','noopener')}
+  function open(row:any){
+    setMenuFile(null)
+    setPreviewFile(row)
   }
 
   async function remove(row:any){
@@ -477,6 +473,7 @@ export function AdminFilesV2(){
   }
 
   return <div>
+    <FilePreviewModal file={previewFile} onClose={()=>setPreviewFile(null)}/>
     <div className="flex flex-wrap justify-between gap-4 items-end mb-6">
       <div>
         <p className="text-[11px] uppercase tracking-[.18em] text-[#A65A2A] font-semibold">Operação</p>
