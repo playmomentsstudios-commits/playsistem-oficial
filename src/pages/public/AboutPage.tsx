@@ -1,3 +1,4 @@
+import { BrandImage } from '../../components/BrandImage'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PublicLayout } from '../../layouts/PublicLayout'
@@ -106,7 +107,7 @@ export function AboutPage(){
                   <span className="text-[10px] tracking-[.13em] text-[#7C827E]">SAGAMENTE / BR</span>
                 </div>
                 <div className="relative mx-auto py-7">
-                  <img src="/sagamente-mark.svg" alt="" className="h-36 sm:h-40 w-auto mx-auto opacity-95 drop-shadow-[0_16px_35px_rgba(0,0,0,.35)]"/>
+                  <BrandImage variant="symbol" alt="" className="h-36 sm:h-40 w-auto mx-auto opacity-95 drop-shadow-[0_16px_35px_rgba(0,0,0,.35)]"/>
                 </div>
                 <div className="grid grid-cols-2 gap-0 border-t border-white/[0.13] relative">
                   <div className="pt-5 pr-4 border-r border-white/[0.12]">
@@ -248,7 +249,7 @@ export function AboutPage(){
         <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map(item=><article key={item.id} className="overflow-hidden rounded-2xl border border-white/[0.09] bg-[#151517]">
             <div className="aspect-[16/10] overflow-hidden bg-[#202120]">
-              {item.cover_url?<img src={item.cover_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" decoding="async"/>:<div className="h-full w-full flex items-center justify-center"><img src="/sagamente-mark.svg" alt="" className="w-16 opacity-30"/></div>}
+              {item.cover_url?<img src={item.cover_url} alt={item.title} className="h-full w-full object-cover" loading="lazy" decoding="async"/>:<div className="h-full w-full flex items-center justify-center"><BrandImage variant="symbol" alt="" className="w-16 opacity-30"/></div>}
             </div>
             <div className="p-5">
               <p className="text-[11px] uppercase tracking-[.14em] font-semibold text-[#DFA269]">{item.category?.name||'Projeto'}</p>
