@@ -89,15 +89,20 @@ export function PwaSettings() {
 
   useEffect(() => {
     let active = true
-    void supabase.from('pwa_settings').select('*').eq('id', true).single().then(({ data, error: loadError }) => {
-      if (loadError) throw loadError
-      if (!data || !active) return
-      const row = data as SavedIdentity
-      setSaved(row)
-      setDraft(Object.fromEntries(Object.keys(DEFAULT).map(key => [key, row[key as keyof AppIdentity]])) as AppIdentity)
-    }).catch((cause: unknown) => {
-      if (active) setError(cause instanceof Error ? cause.message : 'Não foi possível carregar as configurações do aplicativo.')
-    }).finally(() => { if (active) setLoading(false) })
+    void (async () => {
+      try {
+        const { data, error: loadError } = await supabase.from('pwa_settings').select('*').eq('id', true).single()
+        if (loadError) throw loadError
+        if (!data || !active) return
+        const row = data as SavedIdentity
+        setSaved(row)
+        setDraft(Object.fromEntries(Object.keys(DEFAULT).map(key => [key, row[key as keyof AppIdentity]])) as AppIdentity)
+      } catch (cause: unknown) {
+        if (active) setError(cause instanceof Error ? cause.message : 'Não foi possível carregar as configurações do aplicativo.')
+      } finally {
+        if (active) setLoading(false)
+      }
+    })()
     return () => {
       active = false
       if (previewRef.current) URL.revokeObjectURL(previewRef.current)
