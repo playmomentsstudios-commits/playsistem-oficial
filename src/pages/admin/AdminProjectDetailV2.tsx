@@ -102,6 +102,10 @@ export function AdminProjectDetailV2(){
 
   useEffect(()=>{
     if(projectTab!=='arquivos'||!project)return
+    if(project.project_type!=='internal'&&!project.customer_id){
+      setLoadWarning(null)
+      return
+    }
     let active=true
     // Drive folder provisioning is optional and should never block task management.
     void portalApi.ensureProjectDriveFolder(id).then(folder=>{
@@ -128,6 +132,21 @@ export function AdminProjectDetailV2(){
 
   const sortedStages=useMemo(()=>[...(project?.stages||[])].sort((a:any,b:any)=>a.position-b.position),[project])
   const tasks=project?.tasks||[]
+  const pendingFileTasks=useMemo(()=>{
+    const rank=(task:any)=>{
+      const title=String(task.title||'').trim()
+      const card=title.match(/^card\s*0*(\d+)/i)
+      if(card)return [0,Number(card[1])]
+      if(/^cartaz\b/i.test(title))return [1,0]
+      if(/^banner\b/i.test(title))return [2,0]
+      return [3,Number(task.position)||0]
+    }
+    return sortedStages.map((stage:any)=>({
+      stage,
+      items:tasks.filter((task:any)=>task.stage_id===stage.id&&task.status!=='completed'&&task.status!=='cancelled')
+        .sort((a:any,b:any)=>{const x=rank(a),y=rank(b);return x[0]-y[0]||x[1]-y[1]||String(a.title).localeCompare(String(b.title),'pt-BR')})
+    })).filter(group=>group.items.length)
+  },[tasks,sortedStages])
   const selectedFileTask=tasks.find((task:any)=>task.id===fileTask)
   const effectiveFileStage=selectedFileTask?.stage_id||fileStage||sortedStages[0]?.id||null
 
@@ -428,7 +447,7 @@ export function AdminProjectDetailV2(){
           <label className="text-sm text-gray-400">Direcionar para
             <select value={fileTask} onChange={e=>{const next=e.target.value;setFileTask(next);const linked=tasks.find((task:any)=>task.id===next);if(linked?.stage_id)setFileStage(linked.stage_id)}} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
               <option value="">Arquivo geral do projeto</option>
-              {tasks.map((task:any)=><option key={task.id} value={task.id}>{task.title}</option>)}
+              {pendingFileTasks.map(({stage,items}:any)=><optgroup key={stage.id} label={/^\d{4}-\d{2}$/.test(stage.name)?new Date(stage.name+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).toUpperCase():stage.name}>{items.map((task:any)=><option key={task.id} value={task.id}>{task.title}</option>)}</optgroup>)}
             </select>
           </label>
           {project.project_type==='internal'?<label className="text-sm text-gray-400">Etapa / pasta no Drive
@@ -459,7 +478,7 @@ export function AdminProjectDetailV2(){
           <div className="h-2 rounded bg-white/10 mt-2"><div className="h-2 rounded bg-[#E30613]" style={{width:fileProgress+'%'}}/></div>
         </div>}
 
-        {project.project_type!=='internal'&&!project.customer_id&&<p className="text-xs text-yellow-300 mt-3">Projeto externo sem cliente: vincule o cliente antes de utilizar a biblioteca de arquivos.</p>}
+        {project.project_type!=='internal'&&!project.customer_id&&<p className="text-xs text-yellow-300 mt-3">Cliente institucional cadastrado, mas ainda sem vínculo de acesso ao Drive. Configure um cliente com login ou adapte a integração do Drive para clientes institucionais antes de enviar arquivos.</p>}
 
         <div className="mt-5 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {files.length===0?<p className="text-sm text-gray-500">Nenhum arquivo vinculado a este projeto.</p>:files.map(file=>{
