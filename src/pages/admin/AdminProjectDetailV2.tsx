@@ -112,6 +112,27 @@ export function AdminProjectDetailV2(){
     return ()=>{active=false}
   },[projectTab,id,project?.id])
 
+  async function changeStageStatus(stageId:string,status:string){
+    const previous=project?.stages?.find((stage:any)=>stage.id===stageId)?.status
+    setProject((current:any)=>current?{...current,stages:(current.stages||[]).map((stage:any)=>stage.id===stageId?{...stage,status}:stage)}:current)
+    try{await portalApi.saveStage({status},stageId)}
+    catch(error:any){
+      setProject((current:any)=>current?{...current,stages:(current.stages||[]).map((stage:any)=>stage.id===stageId?{...stage,status:previous}:stage)}:current)
+      toast(error?.message||'Não foi possível atualizar a etapa.','error')
+    }
+  }
+
+  async function changeTaskStatus(taskId:string,status:string){
+    const previous=project?.tasks?.find((task:any)=>task.id===taskId)
+    const completed_at=status==='completed'?(previous?.completed_at||new Date().toISOString()):null
+    setProject((current:any)=>current?{...current,tasks:(current.tasks||[]).map((task:any)=>task.id===taskId?{...task,status,completed_at}:task)}:current)
+    try{await portalApi.saveTask({status,completed_at},taskId)}
+    catch(error:any){
+      setProject((current:any)=>current?{...current,tasks:(current.tasks||[]).map((task:any)=>task.id===taskId?{...task,status:previous?.status,completed_at:previous?.completed_at}:task)}:current)
+      toast(error?.message||'Não foi possível atualizar a tarefa.','error')
+    }
+  }
+
   async function toggleChecklist(taskId:string,itemId:string,completed:boolean){
     setProject((current:any)=>current?{...current,tasks:(current.tasks||[]).map((task:any)=>
       task.id!==taskId?task:{...task,checklist:(task.checklist||[]).map((item:any)=>item.id===itemId?{...item,completed}:item)}
@@ -575,7 +596,7 @@ export function AdminProjectDetailV2(){
           </summary>
           <div className="px-4 pb-4 space-y-3">
             {stage.id!=='sem-etapa'&&<div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 border-b border-white/10 pb-3">
-              <label>Etapa <select value={stage.status} onChange={async e=>{await portalApi.saveStage({status:e.target.value},stage.id);await load()}} className="ml-2 pm-control rounded-lg p-2">{stageStatuses.map(value=><option key={value} value={value}>{rotulo(statusEtapa,value)}</option>)}</select></label>
+              <label>Etapa <select value={stage.status} onChange={e=>void changeStageStatus(stage.id,e.target.value)} className="ml-2 pm-control rounded-lg p-2">{stageStatuses.map(value=><option key={value} value={value}>{rotulo(statusEtapa,value)}</option>)}</select></label>
               <label className="flex items-center gap-2"><input type="checkbox" checked={stage.client_visible} onChange={async e=>{await portalApi.saveStage({client_visible:e.target.checked},stage.id);await load()}}/> Visível ao cliente</label>
               <button type="button" className="text-red-400 ml-auto" onClick={async()=>{if(window.confirm('Excluir esta etapa? As tarefas permanecem sem etapa.')){await portalApi.deleteStage(stage.id);await load()}}}>Excluir etapa</button>
             </div>}
@@ -593,7 +614,7 @@ export function AdminProjectDetailV2(){
               {task.due_date&&<p className="text-xs text-gray-500 mt-1">Prazo: {new Date(task.due_date+'T12:00').toLocaleDateString('pt-BR')}</p>}
             </div>
             <div className="flex gap-2 items-start">
-              <select value={task.status} onChange={async e=>{await portalApi.saveTask({status:e.target.value,completed_at:e.target.value==='completed'?new Date().toISOString():null},task.id);await load()}} className={"pm-select-status px-3 py-2 rounded-lg text-sm "+(task.status==="pending"?"pm-state-pending":task.status==="in_progress"?"pm-state-progress":task.status==="review"?"pm-state-review":task.status==="completed"?"pm-state-success":"pm-state-danger")}>{taskStatuses.map(value=><option key={value} value={value}>{rotulo(statusTarefa,value)}</option>)}</select>
+              <select value={task.status} onChange={e=>void changeTaskStatus(task.id,e.target.value)} className={"pm-select-status px-3 py-2 rounded-lg text-sm "+(task.status==="pending"?"pm-state-pending":task.status==="in_progress"?"pm-state-progress":task.status==="review"?"pm-state-review":task.status==="completed"?"pm-state-success":"pm-state-danger")}>{taskStatuses.map(value=><option key={value} value={value}>{rotulo(statusTarefa,value)}</option>)}</select>
               <button onClick={async()=>{if(window.confirm('Excluir esta tarefa?')){await portalApi.deleteTask(task.id);await load()}}} className="px-3 py-2 text-xs text-red-400">Excluir</button>
             </div>
           </div>
