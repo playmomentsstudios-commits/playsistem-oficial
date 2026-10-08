@@ -8,6 +8,13 @@ export type SiteSettings={
   hero_headline:string
   hero_cta:string
   primary_color:string
+  brand_logo_dark_url:string
+  brand_logo_light_url:string
+  brand_logo_compact_url:string
+  brand_symbol_url:string
+  brand_staff_logo_url:string
+  brand_favicon_url:string
+  brand_social_image_url:string|null
   instagram_url:string|null
   youtube_url:string|null
   tiktok_url:string|null
