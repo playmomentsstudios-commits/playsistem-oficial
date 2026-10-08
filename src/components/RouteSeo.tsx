@@ -7,6 +7,7 @@ const pages:Record<string,{title:string;description:string;noindex?:boolean}>={
  '/servicos':{title:'Serviços Criativos e Digitais',description:'Design, audiovisual, tecnologia e soluções digitais com acompanhamento centralizado pela Sagamente.'},
  '/academia':{title:'Academia Sagamente',description:'Cursos e formações práticas em tecnologia, comunicação e criação. Comece pelos conteúdos gratuitos.'},
  '/curso/letramento-digital':{title:'Curso Gratuito de Letramento Digital',description:'Aprenda tecnologia, autonomia e cidadania digital gratuitamente com a Academia Sagamente.'},
+ '/instalar':{title:'Instalar Sagamente',description:'Instale gratuitamente o Sagamente no Android, iPhone ou Windows.'},
  '/quem-somos':{title:'Quem Somos',description:'Conheça a Sagamente, nossa trajetória, soluções, métodos e projetos.'},
  '/studio':{title:'Studio & Criação',description:'Produção audiovisual, fotografia, edição, áudio e criação na Sagamente.'},
  '/design':{title:'Design & Digital',description:'Identidade visual, UI/UX, sites e presença digital na Sagamente.'},
