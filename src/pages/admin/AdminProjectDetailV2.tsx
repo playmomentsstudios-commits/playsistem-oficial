@@ -1,6 +1,7 @@
 import { useEffect,useMemo,useState } from 'react'
 import { Link,useNavigate,useParams } from 'react-router-dom'
 import { portalApi } from '../../api/portal'
+import { projectProgress as progress } from '../../lib/projectProgress'
 import { fileManagementApi } from '../../api/fileManagement'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
@@ -38,12 +39,6 @@ function projectFileIcon(file:any){
   return '📎'
 }
 
-function progress(project:any){
-  const tasks=(project?.tasks||[]).filter((task:any)=>task.status!=='cancelled')
-  const checklist=tasks.flatMap((task:any)=>task.checklist||[])
-  if(checklist.length)return Math.round(checklist.filter((item:any)=>item.completed).length/checklist.length*100)
-  return tasks.length?Math.round(tasks.filter((task:any)=>task.status==='completed').length/tasks.length*100):0
-}
 
 export function AdminProjectDetailV2(){
   const {id=''}=useParams()
