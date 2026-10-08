@@ -717,6 +717,16 @@ export const portalApi = {
     if(error) throw error
     return data.signedUrl
   },
+  driveFileThumbnailBlobUrl: async (fileId:string) => {
+    const { data,error }=await supabase.functions.invoke('google-drive-file-thumbnail',{
+      body:{file_id:fileId},
+    })
+    if(error)throw error
+    if(!(data instanceof Blob)||!data.type.startsWith('image/')){
+      throw new Error('Miniatura indisponível.')
+    }
+    return URL.createObjectURL(data)
+  },
   driveFileBlobUrl: async (fileId:string) => {
     const { data,error }=await supabase.functions.invoke('google-drive-file-download',{
       body:{file_id:fileId},
