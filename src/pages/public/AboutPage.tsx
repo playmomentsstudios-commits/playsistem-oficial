@@ -223,7 +223,7 @@ export function AboutPage(){
               <p className="mt-4 text-[15px] sm:text-base leading-[1.85] text-[#AFAEB8]">
                 Essa origem orienta nosso olhar, sem limitar nossa atuação: criamos para empresas, organizações, iniciativas culturais e pessoas com desafios de diferentes escalas.
               </p>
-              {profile?.market_since>1900&&<div className="mt-8 inline-flex items-center gap-4 border-l-2 border-[#A65A2A] pl-5">
+              {profile && profile.market_since>1900 && <div className="mt-8 inline-flex items-center gap-4 border-l-2 border-[#A65A2A] pl-5">
                 <span className="text-3xl sm:text-4xl font-extrabold text-[#DFA269]">{profile.market_since}</span>
                 <span className="text-xs sm:text-sm leading-relaxed text-[#9F9EA7]">Início da trajetória<br/>profissional do fundador</span>
               </div>}
