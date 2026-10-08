@@ -250,6 +250,33 @@ export const portalApi = {
     }
     return data
   },
+  assignProjectCustomer: async (projectId:string,customerId:string|null) => {
+    // The project owner is managed separately from stage/task/file visibility.
+    // Match the previous value to prevent silent overwrites from another admin session.
+    const {data:project,error:projectError}=await supabase.from('projects')
+      .select('id,project_type,customer_id').eq('id',projectId).single()
+    if(projectError)throw projectError
+    if(project.project_type==='internal')throw new Error('Projetos internos não podem ser vinculados a clientes. Crie um projeto de serviço, design ou site para o cliente.')
+    if(customerId){
+      const {data:customer,error:customerError}=await supabase.from('profiles')
+        .select('id,role,status').eq('id',customerId).single()
+      if(customerError)throw customerError
+      if(customer.role!=='customer'||customer.status!=='active')throw new Error('Selecione um cliente cadastrado e ativo.')
+    }
+    if(project.customer_id===customerId)return project
+    let mutation=supabase.from('projects').update({customer_id:customerId}).eq('id',projectId)
+    mutation=project.customer_id?mutation.eq('customer_id',project.customer_id):mutation.is('customer_id',null)
+    const {data:updated,error:updateError}=await mutation.select('id,customer_id,project_type').maybeSingle()
+    if(updateError)throw updateError
+    if(!updated)throw new Error('O vínculo deste projeto foi alterado por outra sessão. Recarregue a página.')
+    if(updated.customer_id!==customerId)throw new Error('O banco não confirmou o vínculo com o cliente.')
+    if(customerId){
+      void supabase.functions.invoke('google-drive-project-folder',{
+        body:{project_id:projectId},
+      }).catch(()=>undefined)
+    }
+    return updated
+  },
   deleteProject: async (id:string) => {
     const {error}=await supabase.rpc('admin_delete_project',{p_project_id:id})
     if(error) throw error
