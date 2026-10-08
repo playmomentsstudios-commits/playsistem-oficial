@@ -195,6 +195,33 @@ export function AdminProjectDetailV2(){
     }
   }
 
+  async function changeTaskVisibility(taskId:string,visible:boolean){
+    if(visible&&!window.confirm('Liberar esta tarefa e seu checklist para todos os clientes vinculados a este projeto?'))return
+    try{
+      await portalApi.saveTask({client_visible:visible},taskId)
+      toast(visible?'Tarefa liberada para clientes.':'Tarefa ocultada do portal do cliente.','success')
+      await load()
+    }catch(error:any){toast(error?.message||'Não foi possível atualizar a visibilidade da tarefa.','error')}
+  }
+
+  async function changeFileVisibility(file:any,visible:boolean){
+    if(project?.project_type==='internal'&&visible){
+      toast('Projetos internos não permitem arquivos compartilhados com clientes.','error')
+      return
+    }
+    if(visible&&!window.confirm('Liberar "'+file.name+'" para todos os clientes com acesso ao projeto? Verifique se o material pode ser compartilhado.'))return
+    try{
+      if(visible&&file.storage_provider==='google_drive'){
+        await fileManagementApi.publish(file.id)
+      }else{
+        await portalApi.setProjectFileVisibility(file.id,visible)
+      }
+      toast(visible?'Arquivo liberado para os clientes.':'Arquivo ocultado do portal do cliente.','success')
+      setFileMenu(null)
+      await load()
+    }catch(error:any){toast(error?.message||'Não foi possível alterar o compartilhamento do arquivo.','error')}
+  }
+
   async function changeTaskStatus(taskId:string,status:string){
     const previous=project?.tasks?.find((task:any)=>task.id===taskId)
     const completed_at=status==='completed'?(previous?.completed_at||new Date().toISOString()):null
@@ -669,7 +696,11 @@ export function AdminProjectDetailV2(){
                     {project.project_type!=='internal'&&file.review_required&&['approved','changes_requested'].includes(file.review_status)&&<button type="button" onClick={()=>void requestReview(file)} className="w-full min-h-9 px-2 rounded-lg bg-white/[0.05] text-gray-300 text-xs text-left">Solicitar nova avaliação</button>}
                     {project.project_type!=='internal'&&file.review_required&&<button type="button" onClick={()=>void showReviewHistory(file)} className="w-full min-h-9 px-2 rounded-lg hover:bg-white/[0.05] text-gray-400 text-xs text-left">Ver histórico e comentários</button>}
                   </div>
-                  <label className="block text-[10px] text-gray-500">Tarefa
+                  <label className="flex items-center gap-2 text-[11px] text-gray-300 mb-2">
+                     <input type="checkbox" checked={Boolean(file.client_visible)} onChange={e=>void changeFileVisibility(file,e.target.checked)}/>
+                     Liberado para o cliente
+                   </label>
+                   <label className="block text-[10px] text-gray-500">Tarefa
                     <select value={file.task_id||''} onChange={async e=>{await portalApi.assignClientFileTask(file.id,e.target.value||null);setFileMenu(null);await load()}} className="mt-1 w-full px-2 py-1.5 rounded-lg bg-black border border-white/10 text-xs">
                       <option value="">Arquivo geral</option>
                       {tasks.map((task:any)=><option key={task.id} value={task.id}>{task.title}</option>)}
@@ -750,6 +781,10 @@ export function AdminProjectDetailV2(){
               {task.due_date&&<p className="text-xs text-gray-500 mt-1">Prazo: {new Date(task.due_date+'T12:00').toLocaleDateString('pt-BR')}</p>}
             </div>
             <div className="flex gap-2 items-start">
+              <label className="flex items-center gap-2 text-xs text-gray-400 min-h-10">
+                <input type="checkbox" checked={Boolean(task.client_visible)} onChange={e=>void changeTaskVisibility(task.id,e.target.checked)}/>
+                Visível ao cliente
+              </label>
               <select value={task.status} onChange={e=>void changeTaskStatus(task.id,e.target.value)} className={"pm-select-status px-3 py-2 rounded-lg text-sm "+(task.status==="pending"?"pm-state-pending":task.status==="in_progress"?"pm-state-progress":task.status==="review"?"pm-state-review":task.status==="completed"?"pm-state-success":"pm-state-danger")}>{taskStatuses.map(value=><option key={value} value={value}>{rotulo(statusTarefa,value)}</option>)}</select>
               <button onClick={async()=>{if(window.confirm('Excluir esta tarefa?')){await portalApi.deleteTask(task.id);await load()}}} className="px-3 py-2 text-xs text-red-400">Excluir</button>
             </div>
