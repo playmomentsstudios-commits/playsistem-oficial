@@ -51,6 +51,10 @@ export function AdminProjectDetailV2(){
   const [customers,setCustomers]=useState<any[]>([])
   const [customerDraft,setCustomerDraft]=useState('')
   const [savingCustomer,setSavingCustomer]=useState(false)
+  const [projectViewers,setProjectViewers]=useState<any[]>([])
+  const [viewerDraft,setViewerDraft]=useState('')
+  const [savingViewer,setSavingViewer]=useState(false)
+  const [removingViewer,setRemovingViewer]=useState<string|null>(null)
   const [files,setFiles]=useState<any[]>([])
   const [driveRootItems,setDriveRootItems]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
@@ -87,15 +91,18 @@ export function AdminProjectDetailV2(){
         portalApi.teamMembers(),
         portalApi.projectFiles(id),
         portalApi.customers(),
+        portalApi.projectViewers(id),
       ])
-      const [members,projectFiles,clientRows]=results
+      const [members,projectFiles,clientRows,viewerRows]=results
       setTeam(members.status==='fulfilled'?members.value:[])
       setFiles(projectFiles.status==='fulfilled'?projectFiles.value:[])
       setCustomers(clientRows.status==='fulfilled'?clientRows.value:[])
+      setProjectViewers(viewerRows.status==='fulfilled'?viewerRows.value:[])
       const warnings=[]
       if(members.status==='rejected')warnings.push('equipe')
       if(projectFiles.status==='rejected')warnings.push('arquivos')
       if(clientRows.status==='rejected')warnings.push('clientes')
+      if(viewerRows.status==='rejected')warnings.push('acessos adicionais')
       if(warnings.length)setLoadWarning('Alguns recursos não puderam ser carregados: '+warnings.join(', ')+'. O projeto continua disponível.')
     }catch(error:any){
       setLoadError(error?.message||'Falha ao carregar o projeto.')
@@ -137,6 +144,45 @@ export function AdminProjectDetailV2(){
       await load()
     }catch(error:any){toast(error?.message||'Não foi possível atualizar o vínculo.','error')}
     finally{setSavingCustomer(false)}
+  }
+
+  async function addViewer(){
+    if(!project||!viewerDraft||savingViewer||project.project_type==='internal')return
+    const client=customers.find((row:any)=>row.id===viewerDraft)
+    if(!client||client.status!=='active'){
+      toast('Escolha um cliente ativo.','error')
+      return
+    }
+    if(!project.customer_id){
+      toast('Vincule primeiro o cliente principal do projeto.','error')
+      return
+    }
+    if(project.customer_id===viewerDraft||projectViewers.some((row:any)=>row.customer_id===viewerDraft)){
+      toast('Este cliente já possui acesso ao projeto.','error')
+      return
+    }
+    setSavingViewer(true)
+    try{
+      await portalApi.addProjectViewer(id,viewerDraft,user?.id)
+      toast('Novo cliente adicionado ao projeto sem substituir os anteriores.','success')
+      setViewerDraft('')
+      await load()
+    }catch(error:any){toast(error?.message||'Não foi possível adicionar o cliente.','error')}
+    finally{setSavingViewer(false)}
+  }
+
+  async function removeViewer(customerId:string){
+    if(removingViewer||project?.project_type==='internal')return
+    const client=customers.find((row:any)=>row.id===customerId)
+    const name=[client?.first_name,client?.last_name].filter(Boolean).join(' ')||'este cliente'
+    if(!window.confirm('Remover o acesso de '+name+' a este projeto? Os demais clientes continuarão vinculados.'))return
+    setRemovingViewer(customerId)
+    try{
+      await portalApi.removeProjectViewer(id,customerId)
+      toast('Acesso adicional removido.','success')
+      await load()
+    }catch(error:any){toast(error?.message||'Não foi possível remover este acesso.','error')}
+    finally{setRemovingViewer(null)}
   }
 
   async function changeStageStatus(stageId:string,status:string){
@@ -449,17 +495,17 @@ export function AdminProjectDetailV2(){
     <section className="mt-3 pm-surface p-4" aria-label="Cliente vinculado ao projeto">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold">Cliente com acesso ao projeto</h2>
+          <h2 className="text-sm font-semibold">Clientes com acesso ao projeto</h2>
           <p className="text-xs text-gray-500 mt-1">
             {project.project_type==='internal'
               ? 'Projeto interno: não pode ser compartilhado com clientes. Para um trabalho contratado, crie um projeto de serviço ou site.'
-              : 'Vincule um cliente mesmo depois de criar o projeto. Somente etapas, tarefas e arquivos liberados ficam visíveis.'}
+              : 'Defina um cliente principal e adicione outros visualizadores. Todos acompanham somente conteúdo liberado para clientes.'}
           </p>
         </div>
         {project.customer_id&&project.project_type!=='internal'&&<Link to={'/admin/clientes/'+project.customer_id} className="text-xs text-[#F1C19D] hover:underline">Abrir cadastro do cliente ↗</Link>}
       </div>
       {project.project_type!=='internal'&&<div className="flex flex-col sm:flex-row gap-2 mt-3">
-        <select aria-label="Cliente com acesso ao projeto" value={customerDraft} onChange={e=>setCustomerDraft(e.target.value)} disabled={savingCustomer}
+        <select aria-label="Cliente principal do projeto" value={customerDraft} onChange={e=>setCustomerDraft(e.target.value)} disabled={savingCustomer}
           className="min-h-11 flex-1 px-3 rounded-xl bg-black border border-white/10 disabled:opacity-50">
           <option value="">Sem cliente vinculado</option>
           {customers.map((client:any)=><option key={client.id} value={client.id} disabled={client.status!=='active'}>
@@ -467,11 +513,43 @@ export function AdminProjectDetailV2(){
           </option>)}
         </select>
         <Button type="button" disabled={savingCustomer||(project.customer_id||'')===customerDraft} onClick={()=>void saveCustomerLink()}>
-          {savingCustomer?'Salvando...':project.customer_id?'Atualizar vínculo':'Vincular cliente'}
+          {savingCustomer?'Salvando...':project.customer_id?'Trocar cliente principal':'Vincular cliente principal'}
         </Button>
       </div>}
       {project.project_type!=='internal'&&customers.length===0&&<p className="text-xs text-amber-300 mt-2">Não há clientes disponíveis ou não foi possível carregar a lista. Cadastre/ative o cliente na área de Clientes e tente novamente.</p>}
-      {project.customer_id&&project.project_type!=='internal'&&<p className="text-xs text-emerald-300 mt-2">O cliente vinculado pode acompanhar este projeto em Minha Conta → Projetos.</p>}
+      {project.project_type!=='internal'&&<div className="mt-4 pt-4 border-t border-white/10">
+        <h3 className="text-sm font-semibold">Visualizadores adicionais ({projectViewers.length})</h3>
+        <p className="text-xs text-gray-500 mt-1">Clientes extras podem visualizar o projeto e arquivos liberados. Apenas o cliente principal pode enviar arquivos e aprovar entregas.</p>
+        {projectViewers.length>0&&<div className="flex flex-col gap-2 mt-3">
+          {projectViewers.map((access:any)=>{
+            const client=customers.find((row:any)=>row.id===access.customer_id)
+            return <div key={access.customer_id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-white/[.035] border border-white/10">
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{[client?.first_name,client?.last_name].filter(Boolean).join(' ')||'Cliente cadastrado'}</p>
+                <p className="text-xs text-gray-500 truncate">{client?.email||'Conta vinculada'}{client?.status!=='active'?' · Acesso suspenso':''}</p>
+              </div>
+              <button type="button" disabled={removingViewer===access.customer_id} onClick={()=>void removeViewer(access.customer_id)}
+                className="min-h-9 px-3 rounded-lg border border-red-500/20 text-red-300 text-xs disabled:opacity-50">Remover</button>
+            </div>
+          })}
+        </div>}
+        <div className="flex flex-col sm:flex-row gap-2 mt-3">
+          <select aria-label="Adicionar outro cliente ao projeto" value={viewerDraft} onChange={e=>setViewerDraft(e.target.value)}
+            disabled={savingViewer||!project.customer_id}
+            className="min-h-11 flex-1 px-3 rounded-xl bg-black border border-white/10 disabled:opacity-50">
+            <option value="">Selecione outro cliente</option>
+            {customers.filter((client:any)=>client.status==='active'&&client.id!==project.customer_id&&!projectViewers.some((a:any)=>a.customer_id===client.id))
+              .map((client:any)=><option key={client.id} value={client.id}>
+                {[client.first_name,client.last_name].filter(Boolean).join(' ')} — {client.email}
+              </option>)}
+          </select>
+          <Button type="button" disabled={!viewerDraft||savingViewer||!project.customer_id} onClick={()=>void addViewer()}>
+            {savingViewer?'Adicionando...':'+ Adicionar cliente'}
+          </Button>
+        </div>
+        {!project.customer_id&&<p className="text-xs text-amber-300 mt-2">Vincule primeiro o cliente principal para poder adicionar mais pessoas.</p>}
+      </div>}
+      {project.customer_id&&project.project_type!=='internal'&&<p className="text-xs text-emerald-300 mt-3">O cliente principal e os visualizadores ativos podem acessar este projeto em Minha Conta → Projetos.</p>}
     </section>
 
     <div className="mt-3 pm-surface px-4 py-3">

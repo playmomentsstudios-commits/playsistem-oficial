@@ -55,15 +55,16 @@ export function AdminCustomerDetailV2(){
   const [analyzingDelete,setAnalyzingDelete]=useState(false)
 
   const load=async()=>{
-    const [customersList,allOrders,allProjects,allPayments,loyaltyRow,loyaltySettings,statusHistory,crmRow,crmEvents,teamRows]=await Promise.all([
+    const [customersList,allOrders,allProjects,allPayments,loyaltyRow,loyaltySettings,statusHistory,crmRow,crmEvents,teamRows,extraProjectRows]=await Promise.all([
       portalApi.customers(),portalApi.orders(),portalApi.projects(),portalApi.payments(),
       portalApi.customerLoyalty(id),portalApi.loyaltySettings(),portalApi.customerStatusHistory(id),
-      crmApi.one(id),crmApi.history(id),portalApi.teamMembers(),
+      crmApi.one(id),crmApi.history(id),portalApi.teamMembers(),portalApi.customerProjectViewers(id),
     ])
     setCustomer(customersList.find((item:any)=>item.id===id)||null)
     setOrders(allOrders.filter((item:any)=>item.customer_id===id))
-    setProjects(allProjects.filter((item:any)=>item.customer_id===id))
-    setUnassignedProjects(allProjects.filter((item:any)=>!item.customer_id&&item.project_type!=='internal'))
+    const accessibleIds=new Set(extraProjectRows.map((row:any)=>row.project_id))
+    setProjects(allProjects.filter((item:any)=>item.customer_id===id||accessibleIds.has(item.id)))
+    setUnassignedProjects(allProjects.filter((item:any)=>item.project_type!=='internal'&&item.customer_id!==id&&!accessibleIds.has(item.id)))
     setPayments(allPayments.filter((item:any)=>item.customer_id===id))
     setLoyalty(loyaltyRow)
     setSettings(loyaltySettings)
@@ -77,16 +78,20 @@ export function AdminCustomerDetailV2(){
 
   const myMember=team.find((member:any)=>member.id===user?.id)
   const staffInfo=Array.isArray(myMember?.staff)?myMember.staff[0]:myMember?.staff
-  const canManageProjects=user?.role==='admin'||Boolean(staffInfo?.active&&staffInfo?.permissions?.includes('projects.manage'))
+  const canManageProjects=user?.role==='admin'||Boolean(staffInfo?.active&&(staffInfo?.permissions?.includes('projects.manage')||staffInfo?.permissions?.includes('*')))
 
   async function linkExistingProject(){
     const selected=unassignedProjects.find((item:any)=>item.id===projectToLink)
     if(!selected||!customer||customer.status!=='active'||linkingProject||!canManageProjects)return
-    if(!window.confirm('Vincular "'+selected.title+'" a '+[customer.first_name,customer.last_name].filter(Boolean).join(' ')+'? O cliente poderá visualizar o projeto e apenas as informações marcadas como visíveis.'))return
+    if(!window.confirm('Adicionar '+[customer.first_name,customer.last_name].filter(Boolean).join(' ')+' ao projeto "'+selected.title+'"? Outros clientes continuarão com acesso. O novo cliente verá apenas conteúdo liberado.'))return
     setLinkingProject(true)
     try{
-      await portalApi.assignProjectCustomer(selected.id,customer.id)
-      toast('Projeto vinculado ao cliente. Ele já pode acessá-lo em Minha Conta → Projetos.','success')
+      if(selected.customer_id){
+        await portalApi.addProjectViewer(selected.id,customer.id,user?.id)
+      }else{
+        await portalApi.assignProjectCustomer(selected.id,customer.id)
+      }
+      toast('Cliente adicionado ao projeto sem substituir os demais.','success')
       setProjectToLink('')
       await load()
     }catch(error:any){toast(error?.message||'Não foi possível vincular o projeto.','error')}
@@ -350,16 +355,16 @@ export function AdminCustomerDetailV2(){
         <p className="text-xs text-gray-500 mb-3">Projetos vinculados a este cadastro.</p>
         {projects.length===0?<p className="text-sm text-gray-500">Nenhum projeto vinculado.</p>:projects.map(project=><Link key={project.id} to={'/admin/projetos/'+project.id} className="block text-sm py-2 hover:text-[#F1C19D]">{project.title} — {rotulo(statusProjeto,project.status)}</Link>)}
         {canManageProjects&&<div className="border-t border-white/10 mt-4 pt-4 space-y-2">
-          <label htmlFor="link-customer-project" className="block text-xs font-semibold text-gray-300">Vincular projeto já criado</label>
+          <label htmlFor="link-customer-project" className="block text-xs font-semibold text-gray-300">Adicionar este cliente a outro projeto</label>
           <select id="link-customer-project" value={projectToLink} onChange={e=>setProjectToLink(e.target.value)} disabled={linkingProject||customer.status!=='active'} className="w-full min-h-11 px-3 rounded-xl bg-black border border-white/10 disabled:opacity-50">
-            <option value="">Selecione um projeto sem cliente</option>
-            {unassignedProjects.map((item:any)=><option key={item.id} value={item.id}>{item.title}</option>)}
+            <option value="">Selecione um projeto disponível</option>
+            {unassignedProjects.map((item:any)=><option key={item.id} value={item.id}>{item.title}{item.customer_id?' · já tem cliente principal':''}</option>)}
           </select>
           <button type="button" onClick={()=>void linkExistingProject()} disabled={!projectToLink||linkingProject||customer.status!=='active'} className="w-full min-h-10 px-3 rounded-xl bg-[#A65A2A] text-sm font-semibold text-white disabled:opacity-40">
             {linkingProject?'Vinculando...':'Adicionar projeto a este cliente'}
           </button>
-          {customer.status!=='active'?<p className="text-xs text-amber-300">Ative a conta do cliente antes de conceder acesso.</p>:unassignedProjects.length===0?<p className="text-xs text-gray-500">Nenhum projeto externo sem cliente disponível.</p>:null}
-          <p className="text-xs text-gray-500">Projetos internos não são compartilháveis. Para transferir um projeto já vinculado a outra pessoa, use a tela de detalhes desse projeto.</p>
+          {customer.status!=='active'?<p className="text-xs text-amber-300">Ative a conta do cliente antes de conceder acesso.</p>:unassignedProjects.length===0?<p className="text-xs text-gray-500">Não há outros projetos externos disponíveis.</p>:null}
+          <p className="text-xs text-gray-500">Projetos internos não podem ser compartilhados. Se o projeto já possui um cliente principal, este cadastro será adicionado como visualizador adicional, sem substituí-lo.</p>
         </div>}
       </div>
       <div className="p-5 rounded-2xl bg-[#141416] border border-white/10"><h2 className="font-bold mb-3">Pedidos ({orders.length})</h2>{orders.length===0?<p className="text-sm text-gray-500">Nenhum pedido.</p>:orders.slice(0,8).map(order=><Link key={order.id} to={'/admin/pedidos/'+order.id} className="block text-sm py-1">{order.order_number}</Link>)}</div>

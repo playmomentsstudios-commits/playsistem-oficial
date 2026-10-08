@@ -36,6 +36,9 @@ test('Images PDF audio and video have native preview with safe unsupported fallb
 })
 test('Existing permissions remain implemented in the private Drive Edge Function',()=>{
   const edge=read('supabase/functions/google-drive-file-download/index.ts')
-  assert.match(edge,/customerAllowed = file\.customer_id === ctx\.userId && file\.client_visible/)
-  assert.match(edge,/if \(!staffAllowed && !customerAllowed\) throw new Error\("Forbidden"\)/)
+  assert.match(edge,/isPrimaryCustomer = ctx\.role === "customer"/)
+  assert.match(edge,/file\.customer_id === ctx\.userId && file\.client_visible/)
+  assert.match(edge,/project_customer_access/)
+  assert.match(edge,/file\.client_visible && file\.project_id/)
+  assert.match(edge,/if \(!staffAllowed && !isPrimaryCustomer && !isAdditionalViewer\) throw new Error\("Forbidden"\)/)
 })

@@ -277,6 +277,31 @@ export const portalApi = {
     }
     return updated
   },
+  projectViewers: async (projectId:string) => {
+    const {data,error}=await supabase.from('project_customer_access')
+      .select('project_id,customer_id,created_at').eq('project_id',projectId).order('created_at',{ascending:true})
+    if(error)throw error
+    return data??[]
+  },
+  customerProjectViewers: async (customerId:string) => {
+    const {data,error}=await supabase.from('project_customer_access')
+      .select('project_id,customer_id').eq('customer_id',customerId)
+    if(error)throw error
+    return data??[]
+  },
+  addProjectViewer: async (projectId:string,customerId:string,addedBy?:string) => {
+    const {data,error}=await supabase.from('project_customer_access')
+      .insert({project_id:projectId,customer_id:customerId,added_by:addedBy||null})
+      .select('project_id,customer_id').single()
+    if(error)throw error
+    return data
+  },
+  removeProjectViewer: async (projectId:string,customerId:string) => {
+    const {data,error}=await supabase.from('project_customer_access')
+      .delete().eq('project_id',projectId).eq('customer_id',customerId).select('customer_id').maybeSingle()
+    if(error)throw error
+    if(!data)throw new Error('Este cliente não possui acesso adicional ou ele já foi removido.')
+  },
   deleteProject: async (id:string) => {
     const {error}=await supabase.rpc('admin_delete_project',{p_project_id:id})
     if(error) throw error
