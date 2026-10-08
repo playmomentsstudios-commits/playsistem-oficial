@@ -368,6 +368,13 @@ export const portalApi = {
     if(error) throw error
     return data ?? []
   },
+  setProjectFileVisibility: async (fileId:string,visible:boolean) => {
+    const {data,error}=await supabase.from('client_files')
+      .update({client_visible:visible}).eq('id',fileId).select('id,client_visible').maybeSingle()
+    if(error)throw error
+    if(!data||data.client_visible!==visible)throw new Error('A alteração de visibilidade não foi confirmada pelo banco.')
+    return data
+  },
   assignClientFileTask: async (fileId:string,taskId:string|null) => {
     const { error }=await supabase.from('client_files').update({task_id:taskId}).eq('id',fileId)
     if(error) throw error
