@@ -109,7 +109,7 @@ export function AdminDashboard(){
       </div>
       <div className="flex flex-wrap gap-2">
         <Link to="/admin/projetos" className="min-h-11 px-4 rounded-xl border border-white/[0.08] bg-white/[0.025] hover:bg-white/[0.05] text-gray-300 text-sm font-semibold flex items-center justify-center">Ver operação</Link>
-        <Link to="/admin/crm" className="min-h-11 px-4 rounded-xl bg-[#A65A2A] hover:bg-[#f01826] shadow-[0_8px_24px_rgba(166,90,42,.16)] text-white text-sm font-semibold flex items-center justify-center">Abrir CRM</Link>
+        <Link to="/admin/crm" className="min-h-11 px-4 rounded-xl bg-[#A65A2A] hover:bg-[#87441f] shadow-[0_8px_24px_rgba(166,90,42,.16)] text-white text-sm font-semibold flex items-center justify-center">Abrir CRM</Link>
       </div>
     </div>
 

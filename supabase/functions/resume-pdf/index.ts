@@ -500,7 +500,7 @@ async function buildResumePdf(resume:any,onlineUrl:string){
   pdf.setTitle(safeText(resume.seo_title||resume.display_name||"Currículo"));
   pdf.setAuthor(safeText(resume.display_name||""));
   pdf.setSubject(safeText(resume.seo_description||resume.headline||"Currículo profissional"));
-  pdf.setCreator("Play Moments");
+  pdf.setCreator("Sagamente");
 
   return await pdf.save();
 }
