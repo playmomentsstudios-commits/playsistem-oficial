@@ -34,6 +34,9 @@ export function AdminCustomerDetailV2(){
   const [customer,setCustomer]=useState<any>(null)
   const [orders,setOrders]=useState<any[]>([])
   const [projects,setProjects]=useState<any[]>([])
+  const [unassignedProjects,setUnassignedProjects]=useState<any[]>([])
+  const [projectToLink,setProjectToLink]=useState('')
+  const [linkingProject,setLinkingProject]=useState(false)
   const [payments,setPayments]=useState<any[]>([])
   const [loyalty,setLoyalty]=useState<any>(null)
   const [settings,setSettings]=useState<any>(null)
@@ -60,6 +63,7 @@ export function AdminCustomerDetailV2(){
     setCustomer(customersList.find((item:any)=>item.id===id)||null)
     setOrders(allOrders.filter((item:any)=>item.customer_id===id))
     setProjects(allProjects.filter((item:any)=>item.customer_id===id))
+    setUnassignedProjects(allProjects.filter((item:any)=>!item.customer_id&&item.project_type!=='internal'))
     setPayments(allPayments.filter((item:any)=>item.customer_id===id))
     setLoyalty(loyaltyRow)
     setSettings(loyaltySettings)
@@ -70,6 +74,24 @@ export function AdminCustomerDetailV2(){
   }
 
   useEffect(()=>{void load()},[id])
+
+  const myMember=team.find((member:any)=>member.id===user?.id)
+  const staffInfo=Array.isArray(myMember?.staff)?myMember.staff[0]:myMember?.staff
+  const canManageProjects=user?.role==='admin'||Boolean(staffInfo?.active&&staffInfo?.permissions?.includes('projects.manage'))
+
+  async function linkExistingProject(){
+    const selected=unassignedProjects.find((item:any)=>item.id===projectToLink)
+    if(!selected||!customer||customer.status!=='active'||linkingProject||!canManageProjects)return
+    if(!window.confirm('Vincular "'+selected.title+'" a '+[customer.first_name,customer.last_name].filter(Boolean).join(' ')+'? O cliente poderá visualizar o projeto e apenas as informações marcadas como visíveis.'))return
+    setLinkingProject(true)
+    try{
+      await portalApi.assignProjectCustomer(selected.id,customer.id)
+      toast('Projeto vinculado ao cliente. Ele já pode acessá-lo em Minha Conta → Projetos.','success')
+      setProjectToLink('')
+      await load()
+    }catch(error:any){toast(error?.message||'Não foi possível vincular o projeto.','error')}
+    finally{setLinkingProject(false)}
+  }
 
   const totalPaid=payments.filter(item=>item.status==='paid').reduce((sum,item)=>sum+(item.amount||0),0)
   const servicesDone=orders.filter(order=>order.payment_status==='paid').flatMap(order=>order.items||[]).filter((item:any)=>item.item_type==='service').reduce((sum:number,item:any)=>sum+(item.quantity||1),0)
@@ -323,7 +345,23 @@ export function AdminCustomerDetailV2(){
     </section>
 
     <div className="grid lg:grid-cols-3 gap-4 mt-6">
-      <div className="p-5 rounded-2xl bg-[#141416] border border-white/10"><h2 className="font-bold mb-3">Projetos ({projects.length})</h2>{projects.length===0?<p className="text-sm text-gray-500">Nenhum projeto.</p>:projects.map(project=><Link key={project.id} to={'/admin/projetos/'+project.id} className="block text-sm py-1">{project.title} — {rotulo(statusProjeto,project.status)}</Link>)}</div>
+      <div className="p-5 rounded-2xl bg-[#141416] border border-white/10">
+        <h2 className="font-bold mb-1">Projetos ({projects.length})</h2>
+        <p className="text-xs text-gray-500 mb-3">Projetos vinculados a este cadastro.</p>
+        {projects.length===0?<p className="text-sm text-gray-500">Nenhum projeto vinculado.</p>:projects.map(project=><Link key={project.id} to={'/admin/projetos/'+project.id} className="block text-sm py-2 hover:text-[#F1C19D]">{project.title} — {rotulo(statusProjeto,project.status)}</Link>)}
+        {canManageProjects&&<div className="border-t border-white/10 mt-4 pt-4 space-y-2">
+          <label htmlFor="link-customer-project" className="block text-xs font-semibold text-gray-300">Vincular projeto já criado</label>
+          <select id="link-customer-project" value={projectToLink} onChange={e=>setProjectToLink(e.target.value)} disabled={linkingProject||customer.status!=='active'} className="w-full min-h-11 px-3 rounded-xl bg-black border border-white/10 disabled:opacity-50">
+            <option value="">Selecione um projeto sem cliente</option>
+            {unassignedProjects.map((item:any)=><option key={item.id} value={item.id}>{item.title}</option>)}
+          </select>
+          <button type="button" onClick={()=>void linkExistingProject()} disabled={!projectToLink||linkingProject||customer.status!=='active'} className="w-full min-h-10 px-3 rounded-xl bg-[#A65A2A] text-sm font-semibold text-white disabled:opacity-40">
+            {linkingProject?'Vinculando...':'Adicionar projeto a este cliente'}
+          </button>
+          {customer.status!=='active'?<p className="text-xs text-amber-300">Ative a conta do cliente antes de conceder acesso.</p>:unassignedProjects.length===0?<p className="text-xs text-gray-500">Nenhum projeto externo sem cliente disponível.</p>:null}
+          <p className="text-xs text-gray-500">Projetos internos não são compartilháveis. Para transferir um projeto já vinculado a outra pessoa, use a tela de detalhes desse projeto.</p>
+        </div>}
+      </div>
       <div className="p-5 rounded-2xl bg-[#141416] border border-white/10"><h2 className="font-bold mb-3">Pedidos ({orders.length})</h2>{orders.length===0?<p className="text-sm text-gray-500">Nenhum pedido.</p>:orders.slice(0,8).map(order=><Link key={order.id} to={'/admin/pedidos/'+order.id} className="block text-sm py-1">{order.order_number}</Link>)}</div>
       <div className="p-5 rounded-2xl bg-[#141416] border border-white/10"><h2 className="font-bold mb-3">Pagamentos</h2>{payments.length===0?<p className="text-sm text-gray-500">Nenhum pagamento.</p>:payments.slice(0,8).map(payment=><p key={payment.id} className="text-sm py-1">{money(payment.amount)} — {rotulo(statusPagamento,payment.status)}</p>)}</div>
     </div>
