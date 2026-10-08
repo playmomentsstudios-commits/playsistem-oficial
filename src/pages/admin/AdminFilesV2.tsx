@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
 import { settingsApi } from '../../api/settings'
+import { supabase } from '../../lib/supabase'
 
 const INTERNAL_LIBRARY_KEY='__internal__'
 
@@ -58,6 +59,8 @@ export function AdminFilesV2(){
   const [files,setFiles]=useState<any[]>([])
   const [uploadOpen,setUploadOpen]=useState(false)
   const [customers,setCustomers]=useState<any[]>([])
+  const [institutions,setInstitutions]=useState<any[]>([])
+  const [institutionLinks,setInstitutionLinks]=useState<any[]>([])
   const [projects,setProjects]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
   const [saving,setSaving]=useState(false)
@@ -102,6 +105,11 @@ export function AdminFilesV2(){
       setLoading(true)
       const [f,c,p]=await Promise.all([portalApi.files(),portalApi.customers(),portalApi.projects()])
       setFiles(f);setCustomers(c);setProjects(p)
+      const [organizations,links]=await Promise.all([supabase.from('business_clients').select('id,name'),supabase.from('project_business_clients').select('project_id,client_id')])
+      if(organizations.error)throw organizations.error
+      if(links.error)throw links.error
+      setInstitutions(organizations.data||[])
+      setInstitutionLinks(links.data||[])
     }finally{setLoading(false)}
   }
 
@@ -116,7 +124,7 @@ export function AdminFilesV2(){
 
   const customerProjects=useMemo(()=>customer===INTERNAL_LIBRARY_KEY
     ? projects.filter((p:any)=>p.project_type==='internal')
-    : projects.filter((p:any)=>p.customer_id===customer&&p.project_type!=='internal'),[projects,customer])
+    : projects.filter((p:any)=>p.project_type!=='internal'&&(p.customer_id===customer||institutionLinks.some((link:any)=>link.project_id===p.id&&('institution:'+link.client_id)===customer))),[projects,customer,institutionLinks])
   const selectedProject=customerProjects.find((p:any)=>p.id===project)
   const selectedProjectIsInternal=selectedProject?.project_type==='internal'
   const tasks=selectedProject?.tasks||[]
@@ -148,11 +156,20 @@ export function AdminFilesV2(){
       })
     }
 
-    const projectById=new Map(projects.map((item:any)=>[item.id,item]))
+    for(const institution of institutions){
+      map.set('institution:'+institution.id,{
+        customer:institution,
+        label:institution.name,
+        internal:false,
+        projects:new Map(),
+      })
+    }
+    const institutionByProject=new Map(institutionLinks.map((item:any)=>[item.project_id,'institution:'+item.client_id]))
+        const projectById=new Map(projects.map((item:any)=>[item.id,item]))
 
     for(const projectRow of projects){
       const internal=projectRow.project_type==='internal'
-      const key=internal?INTERNAL_LIBRARY_KEY:(projectRow.customer_id||'__unassigned__')
+      const key=internal?INTERNAL_LIBRARY_KEY:(projectRow.customer_id||institutionByProject.get(projectRow.id)||'__unassigned__')
       if(!map.has(key)){
         map.set(key,{
           customer:null,
@@ -167,7 +184,7 @@ export function AdminFilesV2(){
     for(const row of files){
       const projectRow=projectById.get(row.project_id)||row.project||null
       const internal=projectRow?.project_type==='internal'
-      const key=internal?INTERNAL_LIBRARY_KEY:(row.customer_id||projectRow?.customer_id||'__unassigned__')
+      const key=internal?INTERNAL_LIBRARY_KEY:(row.customer_id||projectRow?.customer_id||institutionByProject.get(row.project_id)||'__unassigned__')
       if(!map.has(key)){
         map.set(key,{
           customer:row.customer||null,
@@ -183,7 +200,7 @@ export function AdminFilesV2(){
     }
 
     return Array.from(map.entries()).filter(([,group])=>group.projects.size>0)
-  },[files,customers,projects])
+  },[files,customers,projects,institutions,institutionLinks])
 
   const selectedLibraryGroup=libraryCustomer
     ? grouped.find(([customerId])=>customerId===libraryCustomer)?.[1]||null
@@ -272,6 +289,7 @@ export function AdminFilesV2(){
     try{
       setSaving(true);setProgress(0);setCompletedFiles(0);setCurrentFileName('');setUploadResult(null)
       if(selectedProjectIsInternal&&provider!=='google_drive')throw new Error('Projetos internos usam o Google Drive para manter a estrutura operacional do projeto.')
+      if(customer.startsWith('institution:')&&provider!=='google_drive')throw new Error('Clientes institucionais utilizam Google Drive, não o armazenamento Supabase.')
       if(provider==='google_drive'){
         if(!project||!selectedFiles.length)throw new Error('Selecione um projeto e um ou mais arquivos para enviar ao Google Drive.')
         if(selectedProjectIsInternal&&!effectiveStage)throw new Error('O projeto interno precisa ter pelo menos uma etapa para receber arquivos.')
@@ -692,6 +710,7 @@ export function AdminFilesV2(){
             <option value="">Selecione a origem</option>
             <option value={INTERNAL_LIBRARY_KEY}>Play Moments — projetos internos</option>
             {customers.map(c=><option key={c.id} value={c.id}>{c.first_name} {c.last_name} — {c.email}</option>)}
+            {institutions.map((item:any)=><option key={item.id} value={'institution:'+item.id}>{item.name} (institucional)</option>)}
           </select>
         </label>
         <label className="text-xs text-gray-500">Projeto
