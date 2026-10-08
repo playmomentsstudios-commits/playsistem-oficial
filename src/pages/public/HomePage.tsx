@@ -60,7 +60,7 @@ export function HomePage() {
                   Curso gratuito · sem cadastro para assistir
                 </span>
                 <h2 id="free-course-title" className="text-[2rem] sm:text-3xl md:text-5xl font-extrabold mt-4 leading-[.98]" style={{color:'#f0f0f2'}}>
-                  Letramento Digital <span style={{color:'#A65A2A'}}>gratuito e aberto</span>
+                  Letramento Digital <span style={{color:'#DFA269'}}>gratuito e aberto</span>
                 </h2>
                 <p className="mt-4 max-w-2xl leading-relaxed" style={{color:'#9090a0'}}>
                   Comece agora, sem criar conta. Aprenda fundamentos de tecnologia, comunicação, informação e inteligência artificial no seu ritmo.
@@ -110,7 +110,7 @@ export function HomePage() {
           ].filter((s):s is {value:string;label:string}=>Boolean(s)).map(s => (
             <div key={s.label} className="text-center py-4 sm:py-5 px-3 sm:px-4 rounded-2xl"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="font-extrabold text-3xl mb-1" style={{ color: '#A65A2A' }}>{s.value}</p>
+              <p className="font-extrabold text-3xl mb-1" style={{ color: '#DFA269' }}>{s.value}</p>
               <p className="text-xs" style={{ color: '#6b6b78' }}>{s.label}</p>
             </div>
           ))}
@@ -121,7 +121,7 @@ export function HomePage() {
         <div className="mx-auto text-center max-w-2xl" style={{ maxWidth: 700 }}>
           <h2 className="text-3xl sm:text-4xl font-extrabold mb-5 leading-tight" style={{ color: '#f0f0f2' }}>
             Acompanhe seus projetos<br />
-            <span style={{ color: '#A65A2A' }}>direto na plataforma</span>
+            <span style={{ color: '#DFA269' }}>direto na plataforma</span>
           </h2>
           <p className="mb-8" style={{ color: '#6b6b78', lineHeight: 1.7 }}>
             Crie sua conta gratuita e tenha acesso ao portal do cliente. Pedidos, orçamentos, conversas,

@@ -565,7 +565,7 @@ export function AdminProjectDetailV2(){
         <div><h2 className="text-base font-bold">Etapas e tarefas</h2><p className="text-xs text-gray-500">Abra uma etapa para acompanhar suas tarefas e checklists.</p></div>
         <div className="flex gap-2">
           <button type="button" aria-expanded={showStageForm} onClick={()=>{setShowStageForm(value=>!value);setShowTaskForm(false)}} className="min-h-9 px-3 rounded-lg border border-white/15 text-gray-200 text-xs font-semibold hover:bg-white/[.06]">{showStageForm?'Fechar etapa':'+ Nova etapa'}</button>
-          <button type="button" aria-expanded={showTaskForm} onClick={()=>{setShowTaskForm(value=>!value);setShowStageForm(false)}} className="min-h-9 px-3 rounded-lg bg-[#A65A2A] text-white text-xs font-semibold hover:bg-red-700">{showTaskForm?'Fechar tarefa':'+ Nova tarefa'}</button>
+          <button type="button" aria-expanded={showTaskForm} onClick={()=>{setShowTaskForm(value=>!value);setShowStageForm(false)}} className="min-h-9 px-3 rounded-lg bg-[#A65A2A] text-white text-xs font-semibold hover:bg-[#81431E]">{showTaskForm?'Fechar tarefa':'+ Nova tarefa'}</button>
         </div>
       </div>
       {showStageForm&&<form onSubmit={addStage} className="pm-surface p-4 mb-4 flex flex-col sm:flex-row gap-3"><input autoFocus required value={stageName} onChange={e=>setStageName(e.target.value)} placeholder="Nome da etapa (ex.: Produção Dezembro/Janeiro)" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10 flex-1"/><div className="flex gap-2"><Button type="submit">Salvar etapa</Button><button type="button" onClick={()=>setShowStageForm(false)} className="px-3 py-2 text-sm text-gray-400">Cancelar</button></div></form>}
