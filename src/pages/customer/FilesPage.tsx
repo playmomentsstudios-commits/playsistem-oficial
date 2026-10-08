@@ -3,6 +3,7 @@ import { portalApi } from '../../api/portal'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { LoadingState } from '../../components/ui/AsyncState'
 import { useToast } from '../../contexts/ToastContext'
+import { useAuth } from '../../contexts/AuthContext'
 import { FilePreviewModal } from '../../components/files/FilePreviewModal'
 
 function sizeLabel(value:number|null|undefined){
@@ -40,6 +41,7 @@ function fileKind(file:any){
 
 export function FilesPage(){
   const toast=useToast()
+  const {user}=useAuth()
   const [rows,setRows]=useState<any[]>([])
   const [previewFile,setPreviewFile]=useState<any|null>(null)
   const [projects,setProjects]=useState<any[]>([])
@@ -95,6 +97,7 @@ export function FilesPage(){
   },[groups,projectSearch])
 
   const selected=projectId?groups.find(([id])=>id===projectId)?.[1]||null:null
+  const selectedIsPrimary=Boolean(user?.id&&selected?.project?.customer_id===user.id)
 
   const selectedVersionGroups=useMemo(()=>{
     if(!selected)return []
@@ -131,6 +134,7 @@ export function FilesPage(){
   },[selectedVersionGroups,fileSearch,fileType,fileReview])
 
   async function uploadToProject(){
+    if(!selectedIsPrimary)return toast('Somente o cliente principal pode enviar arquivos ao projeto.','error')
     if(!projectId||projectId==='general'||!uploadFiles.length)return
     try{
       setUploading(true);setUploadProgress(0);setUploadName('')
@@ -157,6 +161,7 @@ export function FilesPage(){
   }
 
   async function review(file:any,action:'approved'|'changes_requested'){
+    if(file.customer_id!==user?.id)return toast('Aprovações são reservadas ao cliente principal.','error')
     if(action==='changes_requested'){
       setAdjustFile(file);setAdjustSubject('');setAdjustDescription('');setAdjustItems(['']);setAdjustAttachments([])
       return
@@ -173,6 +178,7 @@ export function FilesPage(){
 
   async function submitAdjustments(){
     if(!adjustFile)return
+    if(adjustFile.customer_id!==user?.id)return toast('Somente o cliente principal pode solicitar ajustes.','error')
     const items=adjustItems.map(item=>item.trim()).filter(Boolean)
     if(!adjustSubject.trim()&&!adjustDescription.trim()&&!items.length)return toast('Descreva pelo menos um ajuste.','error')
     try{
@@ -193,7 +199,7 @@ export function FilesPage(){
 
   function reviewLabel(file:any){
     if(!file.review_required)return null
-    if(file.review_status==='pending')return {text:'Aguardando sua aprovação',className:'text-yellow-300 bg-yellow-500/10'}
+    if(file.review_status==='pending')return {text:file.customer_id===user?.id?'Aguardando sua aprovação':'Aguardando aprovação do cliente principal',className:'text-yellow-300 bg-yellow-500/10'}
     if(file.review_status==='approved')return {text:'Aprovado',className:'text-emerald-400 bg-emerald-500/10'}
     if(file.review_status==='changes_requested')return {text:'Ajustes solicitados',className:'text-orange-400 bg-orange-500/10'}
     return null
@@ -240,7 +246,7 @@ export function FilesPage(){
             <p className="text-sm font-semibold truncate">{selected.project?.title||'Arquivos gerais'}</p>
             <p className="text-[10px] text-gray-500">{selected.files.length} arquivo(s) disponíveis</p>
           </div>
-          {projectId!=='general'&&<label className="min-h-10 px-3 rounded-xl bg-[#A65A2A] text-white text-xs font-semibold flex items-center justify-center cursor-pointer">
+          {projectId!=='general'&&selectedIsPrimary&&<label className="min-h-10 px-3 rounded-xl bg-[#A65A2A] text-white text-xs font-semibold flex items-center justify-center cursor-pointer">
             <input type="file" multiple className="sr-only" disabled={uploading} onChange={event=>{
               const picked=Array.from(event.target.files||[])
               const invalid=picked.find(file=>file.size>50*1024*1024*1024)
@@ -257,7 +263,7 @@ export function FilesPage(){
         </div>
 
         <div className="p-3 sm:p-5 overflow-y-auto">
-          {uploadFiles.length>0&&projectId!=='general'&&<div className="mb-4 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
+          {uploadFiles.length>0&&projectId!=='general'&&selectedIsPrimary&&<div className="mb-4 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm font-semibold">{uploadFiles.length} arquivo(s) na fila</p>
@@ -303,7 +309,7 @@ export function FilesPage(){
                 {status&&<div className={'mt-2 inline-flex px-2 py-1 rounded-full text-[9px] font-semibold '+status.className}>{status.text}</div>}
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {group.versions.length>1&&<button type="button" onClick={()=>setVersionGroup(group.groupId)} className="min-h-8 px-2 rounded-lg bg-white/[0.05] text-[10px] text-gray-300">{group.versions.length} versões</button>}
-                  {file.review_required&&file.review_status==='pending'&&<>
+                  {file.customer_id===user?.id&&file.review_required&&file.review_status==='pending'&&<>
                     <button disabled={reviewing===file.id} type="button" onClick={()=>void review(file,'approved')} className="min-h-8 px-2 rounded-lg bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold disabled:opacity-50">Aprovar</button>
                     <button disabled={reviewing===file.id} type="button" onClick={()=>void review(file,'changes_requested')} className="min-h-8 px-2 rounded-lg bg-orange-500/10 text-orange-400 text-[10px] font-semibold disabled:opacity-50">Pedir ajuste</button>
                   </>}
