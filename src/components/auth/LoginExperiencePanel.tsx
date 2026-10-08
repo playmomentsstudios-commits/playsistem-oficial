@@ -49,14 +49,14 @@ export function LoginExperiencePanel(){
    <div className="pm-login-glow pm-login-glow-b"/>
    <div className="pm-login-orbit pm-login-orbit-a"/>
    <div className="pm-login-orbit pm-login-orbit-b"/>
-   <div className="pm-login-word">PLAY</div>
+   <div className="pm-login-word">SAGA</div>
 
    <div className="pm-login-object-zone">
     <div className="pm-login-object">
      <div className="pm-login-object-face"/>
      <div className="pm-login-object-screen">
-      <span>PM</span>
-      <small>AREA</small>
+      <img src="/sagamente-mark.svg" alt="" aria-hidden="true"/>
+      <small>SEU ESPAÇO</small>
      </div>
     </div>
     <div className="pm-login-object-shadow"/>
@@ -67,7 +67,7 @@ export function LoginExperiencePanel(){
    </div>
 
    <div className="pm-login-float pm-login-float-a"><span>ACADEMIA</span><b>ATIVA</b></div>
-   <div className="pm-login-float pm-login-float-b"><span>PLAY LAB</span><b>LOGIN</b></div>
+   <div className="pm-login-float pm-login-float-b"><span>SAGAMENTE</span><b>ACESSO</b></div>
   </div>
 
   <div className="pm-login-vignette" aria-hidden="true"/>
@@ -78,7 +78,7 @@ export function LoginExperiencePanel(){
    </Link>
 
    <div className="pm-login-copy">
-    <p>SUA EXPERIÊNCIA PLAY MOMENTS</p>
+    <p>SEU ESPAÇO NA SAGAMENTE</p>
     <h2>
      Tudo o que você cria,
      <span> aprende e acompanha.</span>
@@ -120,10 +120,10 @@ export function LoginMobileExperience(){
   <div className="pm-login-mobile-orbit"/>
   <div className="pm-login-mobile-object">
    <div className="pm-login-mobile-object-face"/>
-   <div className="pm-login-mobile-object-screen"><span>PM</span></div>
+   <div className="pm-login-mobile-object-screen"><img src="/sagamente-mark.svg" alt=""/></div>
   </div>
   <div className="pm-login-mobile-copy">
-   <p>PLAY MOMENTS / ÁREA PESSOAL</p>
+   <p>SAGAMENTE / ÁREA PESSOAL</p>
    <h2>Crie. Aprenda.<br/><b>Acompanhe.</b></h2>
   </div>
  </div>
@@ -157,8 +157,8 @@ const LOGIN_LAB_STYLES=`
 }
 .pm-login-glow{position:absolute;border-radius:50%;filter:blur(75px);opacity:.3}
 .pm-login-glow-a{width:440px;height:440px;right:-130px;top:4%;background:#A65A2A}
-.pm-login-glow-b{width:340px;height:340px;right:18%;bottom:-170px;background:#6539ff;opacity:.16}
-.pm-login-orbit{position:absolute;border:1px solid rgba(255,55,70,.34);border-radius:50%;right:4%;top:49%}
+.pm-login-glow-b{width:340px;height:340px;right:18%;bottom:-170px;background:#2E5D46;opacity:.16}
+.pm-login-orbit{position:absolute;border:1px solid rgba(196,138,58,.3);border-radius:50%;right:4%;top:49%}
 .pm-login-orbit-a{width:430px;height:430px;transform:translateY(-50%) rotateX(72deg) rotateZ(12deg);animation:pm-login-orbit-a 15s linear infinite}
 .pm-login-orbit-b{width:290px;height:290px;right:14%;transform:translateY(-50%) rotateY(72deg) rotateZ(35deg);opacity:.48;animation:pm-login-orbit-b 10s linear infinite reverse}
 .pm-login-word{position:absolute;right:-.08em;bottom:10%;font-size:clamp(8rem,16vw,15rem);font-weight:900;line-height:.75;letter-spacing:-.08em;color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.04)}
@@ -172,7 +172,7 @@ const LOGIN_LAB_STYLES=`
 .pm-login-object{position:relative;width:225px;height:280px;transform-style:preserve-3d;animation:pm-login-float 5s ease-in-out infinite}
 .pm-login-object-face,.pm-login-object-screen{position:absolute;inset:0;border-radius:42px}
 .pm-login-object-face{
- background:linear-gradient(145deg,rgba(255,255,255,.2),transparent 20%),linear-gradient(145deg,#55131a,#15151a 48%,#08080b);
+ background:linear-gradient(145deg,rgba(255,255,255,.2),transparent 20%),linear-gradient(145deg,#38271e,#151818 48%,#08080b);
  border:1px solid rgba(255,255,255,.18);
  box-shadow:inset -20px -20px 55px rgba(0,0,0,.45),28px 35px 90px rgba(0,0,0,.48);
  transform:rotateX(-7deg) rotateY(-24deg);
@@ -184,9 +184,10 @@ const LOGIN_LAB_STYLES=`
  border:1px solid rgba(255,255,255,.1);
  transform:translateZ(28px) rotateX(-7deg) rotateY(-24deg);
 }
-.pm-login-object-screen span{display:grid;place-items:center;width:82px;height:82px;border-radius:26px;border:1px solid rgba(255,70,82,.45);background:rgba(166,90,42,.1);color:#fff;font-size:1.6rem;font-weight:900;box-shadow:0 0 50px rgba(166,90,42,.18)}
+.pm-login-object-screen span{display:grid;place-items:center;width:82px;height:82px;border-radius:26px;border:1px solid rgba(196,138,58,.45);background:rgba(166,90,42,.1);color:#fff;font-size:1.6rem;font-weight:900;box-shadow:0 0 50px rgba(166,90,42,.18)}
+.pm-login-object-screen img{height:67px;width:56px;object-fit:contain;filter:drop-shadow(0 8px 14px rgba(0,0,0,.35))}
 .pm-login-object-screen small{font-size:.55rem;letter-spacing:.22em;font-weight:800;color:#73737d}
-.pm-login-object-shadow{position:absolute;left:50%;bottom:11%;width:220px;height:44px;transform:translateX(-50%) rotateX(76deg);border-radius:50%;background:#5b0910;filter:blur(24px);opacity:.55}
+.pm-login-object-shadow{position:absolute;left:50%;bottom:11%;width:220px;height:44px;transform:translateX(-50%) rotateX(76deg);border-radius:50%;background:#62452c;filter:blur(24px);opacity:.55}
 .pm-login-particles{position:absolute;inset:0}
 .pm-login-particles i{position:absolute;display:block;border-radius:50%;background:#A65A2A;box-shadow:0 0 12px #A65A2A;opacity:.12;animation:pm-login-particle 3.6s ease-in-out infinite}
 .pm-login-float{position:absolute;right:3%;z-index:2;min-width:145px;padding:.7rem .85rem;border:1px solid rgba(255,255,255,.08);background:rgba(8,8,10,.42);backdrop-filter:blur(14px);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:1rem}
@@ -195,7 +196,7 @@ const LOGIN_LAB_STYLES=`
 
 .pm-login-content{position:relative;z-index:3;width:100%;min-height:100vh;padding:3rem;display:flex;flex-direction:column;justify-content:space-between}
 .pm-login-copy{max-width:520px}
-.pm-login-copy>p:first-child{margin:0 0 1rem;color:#ff5967;font-size:.66rem;font-weight:800;letter-spacing:.18em}
+.pm-login-copy>p:first-child{margin:0 0 1rem;color:#DFA269;font-size:.66rem;font-weight:800;letter-spacing:.18em}
 .pm-login-copy h2{margin:0;color:#f3f3f5;font-size:clamp(2.5rem,4vw,4.4rem);line-height:.9;letter-spacing:-.05em;font-weight:900}
 .pm-login-copy h2 span{display:block;color:#A65A2A;text-shadow:0 0 45px rgba(166,90,42,.13)}
 .pm-login-copyline{display:flex;align-items:center;gap:.7rem;margin-top:1.15rem}.pm-login-copyline i{width:36px;height:1px;background:#A65A2A;box-shadow:0 0 14px rgba(166,90,42,.6)}.pm-login-copyline b{font-size:.52rem;letter-spacing:.12em;color:#60606b}
@@ -212,7 +213,7 @@ const LOGIN_LAB_STYLES=`
  overflow:hidden;
  isolation:isolate;
  border-bottom:1px solid rgba(255,255,255,.06);
- background:linear-gradient(145deg,#111114 0%,#0a0a0c 60%,#180708 100%);
+ background:linear-gradient(145deg,#111514 0%,#0a0a0c 60%,#201910 100%);
 }
 .pm-login-mobile-grid{
  position:absolute;left:-22%;right:-30%;top:38%;bottom:-65%;
@@ -224,14 +225,14 @@ const LOGIN_LAB_STYLES=`
  opacity:.55;
 }
 .pm-login-mobile-glow{position:absolute;width:230px;height:230px;right:-72px;top:-70px;border-radius:50%;background:#A65A2A;filter:blur(55px);opacity:.24}
-.pm-login-mobile-orbit{position:absolute;width:230px;height:230px;right:-60px;top:-4px;border:1px solid rgba(255,65,78,.3);border-radius:50%;transform:rotateX(72deg) rotateZ(10deg);animation:pm-login-mobile-orbit 12s linear infinite}
+.pm-login-mobile-orbit{position:absolute;width:230px;height:230px;right:-60px;top:-4px;border:1px solid rgba(196,138,58,.3);border-radius:50%;transform:rotateX(72deg) rotateZ(10deg);animation:pm-login-mobile-orbit 12s linear infinite}
 .pm-login-mobile-object{position:absolute;right:28px;top:24px;width:105px;height:130px;animation:pm-login-float 5s ease-in-out infinite}
 .pm-login-mobile-object-face,.pm-login-mobile-object-screen{position:absolute;inset:0;border-radius:24px}
-.pm-login-mobile-object-face{background:linear-gradient(145deg,rgba(255,255,255,.17),transparent 20%),linear-gradient(145deg,#53131a,#141419 53%,#08080b);border:1px solid rgba(255,255,255,.16);box-shadow:inset -12px -12px 30px rgba(0,0,0,.42),18px 22px 50px rgba(0,0,0,.4);transform:rotateX(-6deg) rotateY(-22deg)}
+.pm-login-mobile-object-face{background:linear-gradient(145deg,rgba(255,255,255,.17),transparent 20%),linear-gradient(145deg,#38271e,#141818 53%,#08080b);border:1px solid rgba(255,255,255,.16);box-shadow:inset -12px -12px 30px rgba(0,0,0,.42),18px 22px 50px rgba(0,0,0,.4);transform:rotateX(-6deg) rotateY(-22deg)}
 .pm-login-mobile-object-screen{inset:12px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.08);background:radial-gradient(circle,rgba(166,90,42,.18),transparent 58%);transform:translateZ(16px) rotateX(-6deg) rotateY(-22deg)}
-.pm-login-mobile-object-screen span{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;border:1px solid rgba(255,70,82,.38);background:rgba(166,90,42,.08);font-size:.85rem;font-weight:900;color:#fff}
+.pm-login-mobile-object-screen img{height:44px;width:40px;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
 .pm-login-mobile-copy{position:absolute;z-index:2;left:1.25rem;right:138px;top:50%;transform:translateY(-50%)}
-.pm-login-mobile-copy p{margin:0 0 .55rem;color:#ff5967;font-size:.48rem;font-weight:800;letter-spacing:.13em}
+.pm-login-mobile-copy p{margin:0 0 .55rem;color:#DFA269;font-size:.48rem;font-weight:800;letter-spacing:.13em}
 .pm-login-mobile-copy h2{margin:0;color:#f2f2f4;font-size:1.75rem;line-height:.9;letter-spacing:-.045em;font-weight:900}
 .pm-login-mobile-copy h2 b{color:#A65A2A}
 @keyframes pm-login-mobile-orbit{to{transform:rotateX(72deg) rotateZ(370deg)}}
