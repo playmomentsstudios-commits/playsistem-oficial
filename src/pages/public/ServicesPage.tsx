@@ -1,6 +1,7 @@
 import { useEffect,useMemo,useState } from 'react'
 import { Link,useNavigate } from 'react-router-dom'
 import { PublicLayout } from '../../layouts/PublicLayout'
+import { CommercialSeoEntryCards } from '../../components/public/CommercialSeoEntryCards'
 import { portalApi } from '../../api/portal'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
@@ -124,7 +125,7 @@ export function ServicesPage({
     <Link to={conversationLink(role,'orcamento')} className="w-full sm:w-auto min-h-12 inline-flex items-center justify-center px-5 py-3 rounded-xl border border-[#A65A2A] text-[#DFA269] font-semibold">Projeto personalizado</Link>
    </section>
   </div>
- return embedded?content:<PublicLayout>{content}</PublicLayout>
+ return embedded?content:<PublicLayout><CommercialSeoEntryCards/>{content}</PublicLayout>
 }
 
 function CatalogSkeleton(){
