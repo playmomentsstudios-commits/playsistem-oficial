@@ -1,11 +1,13 @@
 import { projectId, publicAnonKey } from '../utils/supabase/info.tsx'
+import commercialLandings from '../src/data/seoCommercialLandings.json'
 
 // Only actual public routes are mapped here. A database entry alone must never
 // turn a private or nonexistent application route into a search result.
 export const PUBLIC_SEO_ROUTES = new Set([
  '/', '/produtos', '/equipamentos', '/servicos', '/academia',
  '/curso/letramento-digital', '/quem-somos', '/studio', '/design', '/tech',
- '/contato', '/instalar'
+ '/contato', '/instalar',
+ ...Object.keys(commercialLandings)
 ])
 
 const API_BASE = 'https://' + projectId + '.supabase.co/rest/v1'
@@ -16,6 +18,37 @@ const safeAbsolute = raw => {
  try {const url=new URL(raw);return url.protocol==='https:'?url.href:null} catch{return null}
 }
 const coreHeaders = {'Content-Type':'application/xml; charset=utf-8','Cache-Control':'public, max-age=180, s-maxage=180','X-Content-Type-Options':'nosniff'}
+
+const renderLandingContent=(page)=>{
+  const h=toSafeText
+  const offers=page.offers.map(offer=>'<li><a href="/servicos/'+encodeURIComponent(offer.slug)+'">'+h(offer.name)+'</a> — '+h(offer.text)+'</li>').join('')
+  const benefits=page.benefits.map(item=>'<li>'+h(item)+'</li>').join('')
+  const questions=page.faq.map(item=>'<dt>'+h(item.question)+'</dt><dd>'+h(item.answer)+'</dd>').join('')
+  return '<main style="background:#0b0b0d;color:#f0f0f2;padding:2rem;min-height:70vh;font-family:system-ui,sans-serif">'
+    +'<div style="max-width:900px;margin:auto">'
+    +'<nav aria-label="Navegação"><a href="/" style="color:#dca777">Sagamente</a> / <a href="/servicos" style="color:#dca777">Serviços</a></nav>'
+    +'<p>'+h(page.area)+'</p>'
+    +'<h1>'+h(page.heading)+'</h1>'
+    +'<p>'+h(page.intro)+'</p>'
+    +'<p><a href="#opcoes" style="color:#eeb889">Conhecer serviços disponíveis</a> · <a href="/contato" style="color:#eeb889">Solicitar orçamento</a></p>'
+    +'<h2>O que considerar antes de contratar</h2><ul>'+benefits+'</ul>'
+    +'<h2>'+h(page.fitTitle)+'</h2><p>'+h(page.fitText)+'</p>'
+    +'<section id="opcoes"><h2>Escolha uma oferta do catálogo</h2><ul>'+offers+'</ul></section>'
+    +'<h2>Como começar seu projeto</h2><ol>'+page.steps.map(item=>'<li>'+h(item)+'</li>').join('')+'</ol>'
+    +'<h2>Dúvidas frequentes</h2><dl>'+questions+'</dl>'
+    +'<p><a href="/contato" style="color:#eeb889">Conversar sobre meu projeto</a></p>'
+    +'</div></main>'
+}
+const landingSchema=(page,origin)=>JSON.stringify({
+  '@context':'https://schema.org','@graph':[
+    {'@type':'Service',name:page.heading,description:page.intro,url:origin+page.path,provider:{'@type':'Organization',name:'Sagamente',url:origin}},
+    {'@type':'BreadcrumbList',itemListElement:[
+      {'@type':'ListItem',position:1,name:'Início',item:origin+'/'},
+      {'@type':'ListItem',position:2,name:'Serviços',item:origin+'/servicos'},
+      {'@type':'ListItem',position:3,name:page.area,item:origin+page.path}
+    ]}
+  ]
+}).replace(/</g,'\\u003c')
 
 async function querySeo(query){
  const result=await fetch(API_BASE+'/seo_pages?'+query,{
@@ -111,8 +144,15 @@ export function rewriteSeoHtml(response,row,request){
   const ld=JSON.stringify({'@context':'https://schema.org','@type':'Organization',name:'Sagamente',url:origin})
   metas.push('<script type="application/ld+json">'+ld.replace(/</g,'\\u003c')+'</script>')
  }
+ const landing=commercialLandings[row.path]
+ if(landing)metas.push('<script type="application/ld+json">'+landingSchema(landing,origin)+'</script>')
  const rewriter=new HTMLRewriter().on('head',{element(e){e.append(metas.join('\n'),{html:true})}})
  for(const selector of SEO_REWRITE_TAGS)rewriter.on(selector,{element(e){e.remove()}})
+ if(landing){
+  // Visible, real page copy in initial HTML (also rendered in the React page).
+  // This is not hidden keyword stuffing or bot-only content.
+  rewriter.on('div#root',{element(e){e.prepend(renderLandingContent(landing),{html:true})}})
+ }
  return rewriter.transform(response)
 }
 
