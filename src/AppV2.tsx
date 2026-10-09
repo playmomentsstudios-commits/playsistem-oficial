@@ -53,6 +53,7 @@ const AdminProducts = lazy(() => import('./pages/admin/AdminProducts').then(m =>
 const AdminOrders = lazy(() => import('./pages/admin/AdminOrders').then(m => ({ default:m.AdminOrders })))
 const AdminRentals = lazy(() => import('./pages/admin/AdminRentals').then(m => ({ default:m.AdminRentals })))
 const AdminConversations = lazy(() => import('./pages/admin/AdminConversations').then(m => ({ default:m.AdminConversations })))
+const AdminSeo = lazy(() => import('./pages/admin/AdminSeo').then(m => ({ default:m.AdminSeo })))
 const AdminSiteSettings = lazy(() => import('./pages/admin/AdminSiteSettings').then(m => ({ default:m.AdminSiteSettings })))
 const AdminCommunity = lazy(() => import('./pages/admin/AdminCommunity').then(m => ({ default:m.AdminCommunity })))
 const AdminPayments = lazy(() => import('./pages/admin/AdminPayments').then(m => ({ default:m.AdminPayments })))
@@ -189,6 +190,7 @@ export default function AppV2() {
                 <Route path="comunicados" element={<AdminPermissionGate permission="community.manage"><AdminAnnouncements /></AdminPermissionGate>} />
                 <Route path="equipe" element={<AdminPermissionGate adminOnly><AdminTeam /></AdminPermissionGate>} />
                 <Route path="site" element={<AdminPermissionGate permission="site.manage"><AdminSiteSettings /></AdminPermissionGate>} />
+                <Route path="seo" element={<AdminPermissionGate permission="site.manage"><AdminSeo /></AdminPermissionGate>} />
                 <Route path="landings" element={<AdminPermissionGate adminOnly><AdminLandingPages /></AdminPermissionGate>} />
                 <Route path="curriculos" element={<AdminPermissionGate permission="site.manage"><AdminResumes /></AdminPermissionGate>} />
                 <Route path="curriculos/novo" element={<AdminPermissionGate permission="site.manage"><AdminResumeEditor /></AdminPermissionGate>} />
