@@ -35,7 +35,10 @@
       "/email-confirmado",
       "/esqueci-senha",
       "/redefinir-senha",
-      "/carrinho"
+      "/carrinho",
+      "/solucoes/identidade-visual",
+      "/solucoes/criacao-de-sites",
+      "/solucoes/edicao-de-videos"
     ]
   }
 }

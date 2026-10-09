@@ -2,6 +2,7 @@ import { useEffect,useMemo,useState } from 'react'
 import { Link,useLocation } from 'react-router-dom'
 import { PublicLayout } from '../../layouts/PublicLayout'
 import { ServicesPage } from './ServicesPage'
+import { CommercialSeoEntryCards } from '../../components/public/CommercialSeoEntryCards'
 import {
   isEquipmentProduct,
   listPublicStoreItems,
@@ -74,6 +75,7 @@ export function CategoryPage(){
         </div>
       </section>
 
+      <CommercialSeoEntryCards area={cat.area}/>
       <section id="solucoes">
        <ServicesPage
         embedded
