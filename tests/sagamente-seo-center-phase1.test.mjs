@@ -32,7 +32,9 @@ test('the editable SEO panel is reachable and discoverable under site management
 })
 test('Cloudflare generates sitemap and robots from published indexable known routes',()=>{
  assert.match(wrangler,/"run_worker_first": \[/)
- assert.match(wrangler,/"\/\*"/)
+ assert.match(wrangler,/"\\/sitemap\\.xml"/)
+ assert.match(wrangler,/"\\/robots\\.txt"/)
+ assert.match(wrangler,/"\\/admin\\/\\*"/)
  assert.match(worker,/serveSeoSitemap\(request\)/)
  assert.match(worker,/serveSeoRobots\(request\)/)
  assert.match(seoWorker,/published=eq\.true&noindex=eq\.false/)
