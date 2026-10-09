@@ -7,13 +7,7 @@
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
     "run_worker_first": [
-      "/",
-      "/instalar",
-      "/manifest.webmanifest",
-      "/pwa/icon-180.png",
-      "/pwa/icon-192.png",
-      "/pwa/icon-512.png",
-      "/pwa/maskable-512.png"
+      "/*"
     ]
   }
 }
