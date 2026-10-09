@@ -18,6 +18,8 @@ function quality(row:SeoPage){
  return findings
 }
 const pageHost=()=>typeof window==='undefined'?'':window.location.origin
+const intentLabels:Record<string,string>={transactional:'Pronto para contratar',commercial:'Comparando serviços',informational:'Buscando informação',navigational:'Buscando marca'}
+const priorityOrder:Record<string,number>={high:0,medium:1,low:2}
 
 export function AdminSeo(){
  const toast=useToast()
@@ -31,6 +33,9 @@ export function AdminSeo(){
  const [filter,setFilter]=useState('')
  const [intent,setIntent]=useState('commercial')
  const [priority,setPriority]=useState('medium')
+ const [keywordFilter,setKeywordFilter]=useState('')
+ const [focusOnlyHigh,setFocusOnlyHigh]=useState(false)
+ const [updatingKeyword,setUpdatingKeyword]=useState<string|null>(null)
 
  const load=async()=>{
   const [p,k]=await Promise.all([
@@ -102,7 +107,23 @@ export function AdminSeo(){
    await load()
   }catch(e:any){toast(e?.message||'Não foi possível excluir.','error')}
  }
+ async function updateKeyword(id:string,patch:Partial<Pick<Keyword,'intent'|'priority'>>){
+  setUpdatingKeyword(id)
+  try{
+   const {data,error}=await supabase.from('seo_keywords').update({...patch,updated_at:new Date().toISOString()}).eq('id',id).select('id').single()
+   if(error)throw error
+   if(!data)throw new Error('O banco não confirmou a alteração.')
+   setKeywords(current=>current.map(k=>k.id===id?{...k,...patch}:k))
+   toast('Palavra-chave atualizada.','success')
+  }catch(e:any){toast(e?.message||'Não foi possível atualizar a palavra-chave.','error')}
+  finally{setUpdatingKeyword(null)}
+ }
  const rowKeywords=keywords.filter(k=>k.page_path===selected)
+ const displayedKeywords=rowKeywords.filter(k=>
+  (!keywordFilter.trim()||(k.phrase+' '+(k.notes||'')).toLowerCase().includes(keywordFilter.trim().toLowerCase()))
+  &&(!focusOnlyHigh||k.priority==='high')
+ ).sort((a,b)=>(priorityOrder[a.priority]??9)-(priorityOrder[b.priority]??9)||a.phrase.localeCompare(b.phrase,'pt-BR'))
+ const highIntent=keywords.filter(k=>k.priority==='high'&&(k.intent==='transactional'||k.intent==='commercial')).length
 
  if(loading)return <div className="p-6 text-sm text-gray-400">Carregando Central de SEO...</div>
  return <div className="max-w-7xl space-y-6 pb-10">
@@ -179,11 +200,32 @@ export function AdminSeo(){
   <div className="grid lg:grid-cols-2 gap-4">
    <section className="rounded-2xl bg-[#151518] border border-white/10 p-5">
     <h2 className="font-semibold text-white">Palavras-chave da página selecionada</h2>
-    <p className="text-xs text-gray-500 mt-1">Planejamento editorial, não volume ou ranking medido.</p>
-    <div className="space-y-2 mt-4">{rowKeywords.length?rowKeywords.map(k=><div key={k.id} className="rounded-lg border border-white/10 p-3 flex justify-between gap-2">
-     <div><p className="text-sm text-gray-200">{k.phrase}</p><p className="text-[10px] text-gray-500 mt-1">{k.intent} · {k.priority}</p></div>
-     <button type="button" aria-label={'Excluir '+k.phrase} onClick={()=>void deleteKeyword(k.id)} className="text-red-300 px-2">×</button>
-    </div>):<p className="text-xs text-gray-500">Nenhuma palavra-chave associada.</p>}</div>
+    <p className="text-xs text-gray-500 mt-1">Prioridade comercial estimada, não volume ou ranking medido.</p>
+    <p className="text-xs text-[#DFA269] mt-2">{rowKeywords.length} termos · {rowKeywords.filter(k=>k.priority==='high').length} prioridade alta</p>
+    <div className="flex gap-3 flex-wrap items-center mt-4">
+     <input type="search" aria-label="Pesquisar palavras-chave" placeholder="Pesquisar palavra..." value={keywordFilter} onChange={e=>setKeywordFilter(e.target.value)} className="flex-1 min-w-40 min-h-11 bg-black border border-white/10 rounded-lg px-3 text-xs"/>
+     <label className="inline-flex items-center gap-2 text-xs text-gray-300 min-h-11"><input type="checkbox" checked={focusOnlyHigh} onChange={e=>setFocusOnlyHigh(e.target.checked)}/>Alta prioridade</label>
+    </div>
+    <div className="space-y-2 mt-3 max-h-[420px] overflow-y-auto">
+     {displayedKeywords.length?displayedKeywords.map(k=><div key={k.id} className="rounded-xl border border-white/10 p-3 bg-white/[.015]">
+      <div className="flex items-start justify-between gap-2">
+       <div className="min-w-0"><p className="text-sm font-semibold text-gray-100 break-words">{k.phrase}</p><p className="text-[10px] text-gray-500 mt-1">{intentLabels[k.intent]||k.intent}</p></div>
+       <button type="button" aria-label={'Excluir '+k.phrase} disabled={updatingKeyword!==null} onClick={()=>void deleteKeyword(k.id)} className="text-red-300 min-w-9 min-h-9 disabled:opacity-50">×</button>
+      </div>
+      <div className="grid grid-cols-2 gap-2 mt-3">
+       <label className="text-[10px] text-gray-400">Intenção
+        <select aria-label={'Intenção de '+k.phrase} value={k.intent} disabled={updatingKeyword!==null} onChange={e=>void updateKeyword(k.id,{intent:e.target.value})} className="mt-1 w-full min-h-10 bg-black border border-white/10 rounded-lg px-2 text-xs text-white disabled:opacity-50">
+         <option value="transactional">Contratação</option><option value="commercial">Comparação</option><option value="informational">Informação</option><option value="navigational">Marca</option>
+        </select>
+       </label>
+       <label className="text-[10px] text-gray-400">Prioridade
+        <select aria-label={'Prioridade de '+k.phrase} value={k.priority} disabled={updatingKeyword!==null} onChange={e=>void updateKeyword(k.id,{priority:e.target.value})} className="mt-1 w-full min-h-10 bg-black border border-white/10 rounded-lg px-2 text-xs text-white disabled:opacity-50">
+         <option value="high">Alta</option><option value="medium">Média</option><option value="low">Baixa</option>
+        </select>
+       </label>
+      </div>
+     </div>):<p className="text-xs text-gray-500 p-3">Nenhuma palavra-chave encontrada neste filtro.</p>}
+    </div>
     <div className="grid sm:grid-cols-2 gap-2 mt-4">
      <input value={newKeyword} onChange={e=>setNewKeyword(e.target.value)} placeholder="Nova palavra-chave" className="bg-black border border-white/10 rounded-lg px-3 min-h-10 text-sm sm:col-span-2"/>
      <select aria-label="Intenção" value={intent} onChange={e=>setIntent(e.target.value)} className="min-h-10 bg-black border border-white/10 rounded-lg px-3 text-xs"><option value="commercial">Comercial</option><option value="informational">Informativa</option><option value="navigational">Navegação</option><option value="transactional">Transacional</option></select>
@@ -193,6 +235,8 @@ export function AdminSeo(){
    </section>
    <section className="rounded-2xl bg-[#151518] border border-white/10 p-5">
     <h2 className="font-semibold text-white">Auditoria e conexões</h2>
+     <p className="text-sm text-[#DFA269] mt-2">{highIntent} termos prioritários com intenção comercial ou de contratação.</p>
+     <p className="text-xs text-gray-500 mt-1">A prioridade não equivale ao volume real no Google.</p>
     <div className="mt-4 space-y-3 text-sm">
      <div><span className="text-emerald-300">●</span> Metadados da Home e páginas públicas: configuração disponível</div>
      <div><span className="text-emerald-300">●</span> Sitemap: <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" className="text-[#DFA269] underline">Abrir /sitemap.xml</a></div>
