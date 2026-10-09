@@ -1,3 +1,4 @@
+import { PUBLIC_SEO_ROUTES, seoPage, serveSeoSitemap, serveSeoRobots, rewriteSeoHtml, isPrivateSeoRoute, preventIndexing } from './seo.js'
 import { projectId, publicAnonKey } from '../utils/supabase/info.tsx'
 
 // This is the PUBLIC Supabase anon key already used by the website.
@@ -83,7 +84,17 @@ export default {
   async fetch(request, env) {
     if (request.method !== 'GET' && request.method !== 'HEAD') return env.ASSETS.fetch(request)
     const path = new URL(request.url).pathname
-    const settings = await getSettings()
+    if (path === '/sitemap.xml') return serveSeoSitemap(request)
+    if (path === '/robots.txt') return serveSeoRobots(request)
+
+    // Only request live app-identity settings when needed. Avoid an extra
+    // Supabase request for every page, JS module, image and customer route.
+    const needsPwa = path === '/' || path === '/instalar'
+      || path === '/manifest.webmanifest' || Object.prototype.hasOwnProperty.call(iconColumn, path)
+    const [settings, seo] = await Promise.all([
+      needsPwa ? getSettings() : Promise.resolve(null),
+      PUBLIC_SEO_ROUTES.has(path) ? seoPage(path) : Promise.resolve(null)
+    ])
 
     if (path === '/manifest.webmanifest') {
       if (!settings) return env.ASSETS.fetch(request)
@@ -100,17 +111,24 @@ export default {
     if (Object.prototype.hasOwnProperty.call(iconColumn, path)) {
       return serveIcon(request, env, settings, iconColumn[path])
     }
+
+    let response = await env.ASSETS.fetch(request)
+    if (!response.ok || request.method === 'HEAD') return response
+
     if ((path === '/' || path === '/instalar') && settings) {
-      const html = await env.ASSETS.fetch(request)
-      if (!html.ok || !(html.headers.get('Content-Type') || '').includes('text/html')
-          || request.method === 'HEAD') return html
-      const iosUrl = '/pwa/icon-180.png' + (validDriveId(settings.icon_180_drive_file_id) ? '?v=' + revision(settings) : '')
-      return new HTMLRewriter()
-        .on('link[rel="apple-touch-icon"]', { element(node) { node.setAttribute('href', iosUrl) } })
-        .on('meta[name="apple-mobile-web-app-title"]', { element(node) { node.setAttribute('content', name(settings.short_name, 'Sagamente', 24)) } })
-        .on('meta[name="theme-color"]', { element(node) { node.setAttribute('content', color(settings.theme_color, '#0a0a0b')) } })
-        .transform(html)
+      const iosUrl = '/pwa/icon-180.png'
+        + (validDriveId(settings.icon_180_drive_file_id) ? '?v=' + revision(settings) : '')
+      if ((response.headers.get('Content-Type') || '').includes('text/html')) {
+        response = new HTMLRewriter()
+          .on('link[rel="apple-touch-icon"]', { element(node) { node.setAttribute('href', iosUrl) } })
+          .on('meta[name="apple-mobile-web-app-title"]', { element(node) { node.setAttribute('content', name(settings.short_name, 'Sagamente', 24)) } })
+          .on('meta[name="theme-color"]', { element(node) { node.setAttribute('content', color(settings.theme_color, '#0a0a0b')) } })
+          .transform(response)
+      }
     }
-    return env.ASSETS.fetch(request)
+
+    if (seo) return rewriteSeoHtml(response, seo, request)
+    if (isPrivateSeoRoute(path))return preventIndexing(response)
+    return response
   }
 }
