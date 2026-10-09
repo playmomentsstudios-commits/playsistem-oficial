@@ -1,3 +1,5 @@
+import { useEffect,useState } from 'react'
+import { supabase } from '../lib/supabase'
 import { useLocation } from 'react-router-dom'
 import { useSeo } from '../lib/seo'
 
@@ -14,11 +16,32 @@ const pages:Record<string,{title:string;description:string;noindex?:boolean}>={
  '/tech':{title:'Tech & Equipamentos',description:'Tecnologia, equipamentos e suporte para projetos na Sagamente.'},
  '/contato':{title:'Contato',description:'Entre em contato com a Sagamente e encontre o canal certo para sua necessidade.'},
 }
+type SeoRow={path:string;title:string;description:string;canonical_url:string|null;og_image_url:string|null;noindex:boolean;published:boolean}
 export function RouteSeo(){
  const {pathname}=useLocation()
+ const [remote,setRemote]=useState<SeoRow|null>(null)
+ useEffect(()=>{
+  let live=true
+  setRemote(null)
+  if(!pages[pathname])return
+  void supabase.from('seo_pages')
+   .select('path,title,description,canonical_url,og_image_url,noindex,published')
+   .eq('path',pathname).eq('published',true).maybeSingle()
+   .then(({data})=>{if(live)setRemote(data as SeoRow|null)})
+  return ()=>{live=false}
+ },[pathname])
  const privateRoute=/^\/(admin|app)(\/|$)/.test(pathname)
  const utilityRoute=['/login','/cadastro','/email-confirmado','/esqueci-senha','/redefinir-senha','/carrinho','/comunidade'].includes(pathname)||pathname.startsWith('/certificados/')
  const page=pages[pathname]
- useSeo({title:page?.title||'Sagamente',description:page?.description||'Plataforma integrada de tecnologia, criação, serviços, produtos e conhecimento.',canonicalPath:pathname,noindex:privateRoute||utilityRoute||Boolean(page?.noindex),jsonLd:pathname==='/'?{'@context':'https://schema.org','@type':'Organization',name:'Sagamente',url:window.location.origin}:null})
+ const info=remote?.path===pathname?remote:null
+ useSeo({
+  title:info?.title||page?.title||'Sagamente',
+  description:info?.description||page?.description||'Plataforma integrada de tecnologia, criação, serviços, produtos e conhecimento.',
+  canonicalPath:pathname,
+  canonicalUrl:info?.canonical_url||null,
+  image:info?.og_image_url||null,
+  noindex:privateRoute||utilityRoute||Boolean(page?.noindex)||Boolean(info?.noindex),
+  jsonLd:pathname==='/'?{'@context':'https://schema.org','@type':'Organization',name:'Sagamente',url:window.location.origin}:null,
+ })
  return null
 }
