@@ -13,7 +13,29 @@
       "/pwa/icon-180.png",
       "/pwa/icon-192.png",
       "/pwa/icon-512.png",
-      "/pwa/maskable-512.png"
+      "/pwa/maskable-512.png",
+      "/sitemap.xml",
+      "/robots.txt",
+      "/produtos",
+      "/equipamentos",
+      "/servicos",
+      "/academia",
+      "/curso/letramento-digital",
+      "/quem-somos",
+      "/studio",
+      "/design",
+      "/tech",
+      "/contato",
+      "/admin",
+      "/admin/*",
+      "/app",
+      "/app/*",
+      "/login",
+      "/cadastro",
+      "/email-confirmado",
+      "/esqueci-senha",
+      "/redefinir-senha",
+      "/carrinho"
     ]
   }
 }

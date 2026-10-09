@@ -192,18 +192,14 @@ export function AdminSiteSettings() {
         )}
 
         {tab === 'SEO' && (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#9090a0' }}>Meta Description</label>
-              <textarea value={settings.metaDescription} onChange={set('metaDescription')} rows={3}
-                className="w-full px-4 py-2.5 text-sm rounded-xl outline-none resize-none"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#f0f0f2' }} />
-              <p className="text-xs" style={{ color: '#6b6b78' }}>{settings.metaDescription.length}/160 caracteres</p>
-            </div>
+          <div className="rounded-2xl bg-[#141416] border border-white/10 p-5">
+            <h2 className="font-bold text-base">Central de SEO</h2>
+            <p className="text-sm text-gray-400 mt-2">As configurações de SEO agora ficam centralizadas em uma única ferramenta: títulos e descrições por página, palavras-chave, indexação e auditoria.</p>
+            <Link to="/admin/seo" className="inline-flex mt-4 min-h-11 px-4 items-center rounded-xl bg-[#A65A2A] text-white text-sm font-semibold">Abrir Central de SEO ↗</Link>
           </div>
         )}
 
-        {tab!=='Identidade da Marca'&&tab!=='Aplicativo (PWA)'&&<div className="mt-6">
+        {tab!=='Identidade da Marca'&&tab!=='Aplicativo (PWA)'&&tab!=='SEO'&&<div className="mt-6">
           <Button onClick={save} loading={loading}>Salvar configurações</Button>
         </div>}
       </div>
