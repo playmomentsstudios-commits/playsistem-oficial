@@ -26,6 +26,7 @@ const ProductsPage = lazy(() => import('./pages/public/ProductsPage').then(m => 
 const ProductDetailPage = lazy(() => import('./pages/public/ProductDetailPage').then(m => ({ default:m.ProductDetailPage })))
 const ServicesPage = lazy(() => import('./pages/public/ServicesPage').then(m => ({ default:m.ServicesPage })))
 const ServiceDetailPage = lazy(() => import('./pages/public/ServiceDetailPage').then(m => ({ default:m.ServiceDetailPage })))
+const SeoCommercialLandingPage = lazy(() => import('./pages/public/SeoCommercialLandingPage').then(m => ({ default:m.SeoCommercialLandingPage })))
 const CertificateVerifyPage = lazy(() => import('./pages/public/CertificateVerifyPage').then(m => ({ default:m.CertificateVerifyPage })))
 const ContactPage = lazy(() => import('./pages/public/ContactPage').then(m => ({ default:m.ContactPage })))
 const AboutPage = lazy(() => import('./pages/public/AboutPage').then(m => ({ default:m.AboutPage })))
@@ -125,6 +126,9 @@ export default function AppV2() {
               <Route path="/equipamentos" element={<ProductsPage />} />
               <Route path="/produtos/:slug" element={<ProductDetailPage />} />
               <Route path="/servicos" element={<ServicesPage />} />
+              <Route path="/solucoes/identidade-visual" element={<SeoCommercialLandingPage />} />
+              <Route path="/solucoes/criacao-de-sites" element={<SeoCommercialLandingPage />} />
+              <Route path="/solucoes/edicao-de-videos" element={<SeoCommercialLandingPage />} />
               <Route path="/servicos/:slug" element={<ServiceDetailPage />} />
               <Route path="/quem-somos" element={<AboutPage />} />
               <Route path="/portfolio" element={<Navigate to="/quem-somos#portfolio" replace />} />
