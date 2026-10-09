@@ -15,6 +15,9 @@ const pages:Record<string,{title:string;description:string;noindex?:boolean}>={
  '/design':{title:'Design & Digital',description:'Identidade visual, UI/UX, sites e presença digital na Sagamente.'},
  '/tech':{title:'Tech & Equipamentos',description:'Tecnologia, equipamentos e suporte para projetos na Sagamente.'},
  '/contato':{title:'Contato',description:'Entre em contato com a Sagamente e encontre o canal certo para sua necessidade.'},
+ '/solucoes/identidade-visual':{title:'Criação de Identidade Visual para Empresas',description:'Conheça opções de logotipo e identidade visual para seu negócio e solicite uma proposta.'},
+ '/solucoes/criacao-de-sites':{title:'Criação de Sites Profissionais e Landing Pages',description:'Confira sites institucionais e landing pages para sua empresa e escolha uma solução.'},
+ '/solucoes/edicao-de-videos':{title:'Edição de Vídeos e Reels para Empresas',description:'Conheça as opções de edição audiovisual, reels e vídeo institucional na Sagamente.'},
 }
 type SeoRow={path:string;title:string;description:string;canonical_url:string|null;og_image_url:string|null;noindex:boolean;published:boolean}
 export function RouteSeo(){
