@@ -1,0 +1,168 @@
+{
+  "/solucoes/identidade-visual": {
+    "path": "/solucoes/identidade-visual",
+    "area": "Design & Digital",
+    "title": "Criação de Identidade Visual para Empresas | Sagamente",
+    "description": "Precisa de logotipo e identidade visual para sua empresa ou projeto? Conheça as soluções da Sagamente, compare opções e solicite uma proposta.",
+    "primaryKeyword": "criação de identidade visual para empresas",
+    "heading": "Criação de identidade visual para dar unidade à sua marca",
+    "intro": "Uma marca precisa funcionar além do logotipo. Planejamos soluções visuais adequadas à comunicação de empresas, profissionais e projetos culturais, conforme o escopo contratado.",
+    "benefits": [
+      "Logotipo e elementos visuais coerentes com o seu projeto",
+      "Aplicações pensadas para canais digitais e materiais de divulgação",
+      "Escopo, entregáveis e revisões apresentados antes da contratação"
+    ],
+    "fitTitle": "Para quem este serviço faz sentido?",
+    "fitText": "Empresas em início de operação, profissionais que precisam organizar a apresentação da marca e projetos que querem renovar a identidade visual.",
+    "offers": [
+      {
+        "slug": "identidade-visual-basica",
+        "name": "Identidade Visual Básica",
+        "text": "Uma alternativa para quem quer estruturar a presença visual inicial."
+      },
+      {
+        "slug": "identidade-visual-completa",
+        "name": "Identidade Visual Completa",
+        "text": "Uma solução de identidade para projetos que precisam de um conjunto mais amplo de aplicações."
+      },
+      {
+        "slug": "logo-profissional",
+        "name": "Logo Profissional",
+        "text": "Opção de criação de logotipo para necessidades mais objetivas."
+      }
+    ],
+    "steps": [
+      "Conte o que a marca oferece e para quem fala",
+      "Compare o escopo e escolha a solução adequada",
+      "Contrate ou solicite uma proposta e acompanhe as entregas"
+    ],
+    "faq": [
+      {
+        "question": "Qual é a diferença entre logotipo e identidade visual?",
+        "answer": "O logotipo é uma parte da marca. Identidade visual inclui decisões de cor, tipografia e elementos que ajudam a manter consistência nas aplicações, de acordo com o pacote escolhido."
+      },
+      {
+        "question": "É possível começar apenas com um logotipo?",
+        "answer": "Sim. Confira as opções de logotipo e de identidade no catálogo para comparar o que cada entrega inclui."
+      },
+      {
+        "question": "Como pedir orçamento para identidade visual?",
+        "answer": "Selecione uma oferta para conferir entregáveis e preço, quando publicado, ou envie sua necessidade pelo canal de contato."
+      }
+    ]
+  },
+  "/solucoes/criacao-de-sites": {
+    "path": "/solucoes/criacao-de-sites",
+    "area": "Tecnologia & Digital",
+    "title": "Criação de Sites Profissionais e Landing Pages | Sagamente",
+    "description": "Criação de sites institucionais, páginas de vendas e soluções web. Compare os serviços da Sagamente e encontre a opção adequada para seu negócio.",
+    "primaryKeyword": "criação de sites profissionais",
+    "heading": "Criação de sites profissionais para apresentar e vender melhor",
+    "intro": "Seu site precisa explicar o que você faz, funcionar no celular e facilitar o contato. A Sagamente oferece páginas de apresentação, landing pages e sites institucionais com escopos distintos.",
+    "benefits": [
+      "Estrutura orientada à clareza da oferta e ao acesso por celular",
+      "Caminhos de contato e apresentação dos seus serviços",
+      "Opções de página única, site institucional e conteúdo com blog"
+    ],
+    "fitTitle": "Qual tipo de site você precisa?",
+    "fitText": "Uma landing page concentra uma oferta; um site institucional apresenta a empresa e os serviços; um site com blog permite publicar conteúdo recorrente.",
+    "offers": [
+      {
+        "slug": "landing-page",
+        "name": "Landing Page",
+        "text": "Uma página concentrada em uma oferta e um objetivo de conversão."
+      },
+      {
+        "slug": "site-institucional-simples",
+        "name": "Site Institucional Simples",
+        "text": "Apresentação objetiva da empresa e dos principais canais de contato."
+      },
+      {
+        "slug": "site-institucional-completo",
+        "name": "Site Institucional Completo",
+        "text": "Estrutura mais ampla para apresentar serviços e informações institucionais."
+      },
+      {
+        "slug": "site-com-blog",
+        "name": "Site com Blog",
+        "text": "Para organizações que também precisam de uma área editorial."
+      }
+    ],
+    "steps": [
+      "Descreva seu negócio, público e objetivo da página",
+      "Compare as opções e os entregáveis previstos",
+      "Escolha a solução ou solicite proposta para necessidades específicas"
+    ],
+    "faq": [
+      {
+        "question": "Qual a diferença entre site e landing page?",
+        "answer": "A landing page geralmente apresenta uma oferta e uma ação principal. Um site institucional pode ter diversas páginas para explicar empresa, serviços, equipe e contato."
+      },
+      {
+        "question": "Meu site vai funcionar no celular?",
+        "answer": "A experiência móvel é considerada no planejamento; confira o escopo e os requisitos do serviço escolhido antes de contratar."
+      },
+      {
+        "question": "Posso solicitar um orçamento de site personalizado?",
+        "answer": "Sim. Caso as ofertas do catálogo não cubram sua necessidade, descreva o projeto pelo canal de contato."
+      }
+    ]
+  },
+  "/solucoes/edicao-de-videos": {
+    "path": "/solucoes/edicao-de-videos",
+    "area": "Studio & Criação",
+    "title": "Edição de Vídeos e Reels para Empresas | Sagamente",
+    "description": "Edição de reels, vídeos para redes sociais e vídeos institucionais. Conheça opções do Studio Sagamente e solicite orçamento de edição audiovisual.",
+    "primaryKeyword": "edição de vídeos para empresas",
+    "heading": "Edição de vídeos e reels para comunicar com mais clareza",
+    "intro": "Transforme materiais gravados em conteúdos organizados para redes sociais, apresentações ou comunicação institucional. O formato, a duração e os ajustes dependem da opção contratada.",
+    "benefits": [
+      "Opções voltadas a reels, vídeos curtos e institucionais",
+      "Entrega organizada por objetivo e formato de publicação",
+      "Descrição de escopo e revisões antes de contratar"
+    ],
+    "fitTitle": "O formato certo para cada necessidade",
+    "fitText": "Vídeos curtos funcionam para apresentar uma ideia, um evento ou um produto. Reels e conteúdos recorrentes atendem à comunicação cotidiana. Vídeos institucionais permitem contar uma história mais ampla.",
+    "offers": [
+      {
+        "slug": "edicao-reel-simples",
+        "name": "Edição de Reel Simples",
+        "text": "Opção de edição para publicação breve em redes sociais."
+      },
+      {
+        "slug": "edicao-reel-avancado",
+        "name": "Edição de Reel Avançado",
+        "text": "Opção com tratamento mais elaborado, conforme o escopo publicado."
+      },
+      {
+        "slug": "video-institucional-curto",
+        "name": "Vídeo Institucional Curto",
+        "text": "Uma apresentação audiovisual institucional em formato reduzido."
+      },
+      {
+        "slug": "video-corporativo-completo",
+        "name": "Vídeo Corporativo Completo",
+        "text": "Alternativa para projetos com necessidade audiovisual mais abrangente."
+      }
+    ],
+    "steps": [
+      "Explique o objetivo e informe os materiais de vídeo disponíveis",
+      "Compare formato, duração, escopo e revisões da oferta",
+      "Contrate uma solução ou solicite um projeto audiovisual personalizado"
+    ],
+    "faq": [
+      {
+        "question": "Vocês editam vídeos para Instagram e outras redes?",
+        "answer": "O catálogo inclui opções específicas de edição de reels. Consulte cada oferta para verificar duração, materiais necessários e formato de entrega."
+      },
+      {
+        "question": "Posso pedir vídeo institucional para uma organização?",
+        "answer": "Sim. Há ofertas de vídeos institucionais e corporativos no catálogo, sujeitas ao escopo indicado em cada página."
+      },
+      {
+        "question": "Como solicitar orçamento de edição de vídeo?",
+        "answer": "Escolha uma opção publicada para conhecer a contratação ou entre em contato para descrever um pedido personalizado."
+      }
+    ]
+  }
+}
