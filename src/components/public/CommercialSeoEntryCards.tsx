@@ -28,7 +28,7 @@ export function CommercialSeoEntryCards({area}:{area?:Area}){
    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-6">
     {names.map(key=>{
      const path=paths[key]
-     const item=landingData[path]
+     const item=(landingData as Record<string,{intro:string}>)[path]
      return <Link key={path} to={path} onClick={()=>trackConversion('service_interest',{source:'seo_internal_link',landing_path:path})}
       className="group rounded-2xl bg-[#151518] border border-white/10 p-5 hover:border-[#A65A2A]/60 hover:bg-[#1c1918] transition-colors">
       <h3 className="font-bold text-white">{areaNames[key]}</h3>
