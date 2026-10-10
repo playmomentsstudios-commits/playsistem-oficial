@@ -1,14 +1,7 @@
 import { BrandImage } from '../BrandImage'
+import { SagamenteMotion } from '../ui/SagamenteMotion'
 import { useEffect,useState,type CSSProperties,type PointerEvent } from 'react'
 import { Link } from 'react-router-dom'
-
-const PARTICLES=Array.from({length:24},(_,i)=>({
- id:i,
- x:6+((i*31)%88),
- y:8+((i*43)%82),
- size:2+(i%4),
- delay:(i%7)*120,
-}))
 
 export function LoginExperiencePanel(){
  const [tilt,setTilt]=useState({x:0,y:0})
@@ -48,26 +41,18 @@ export function LoginExperiencePanel(){
    <div className="pm-login-glow pm-login-glow-a"/>
    <div className="pm-login-glow pm-login-glow-b"/>
    <div className="pm-login-orbit pm-login-orbit-a"/>
-   <div className="pm-login-orbit pm-login-orbit-b"/>
-   <div className="pm-login-word">SAGA</div>
 
    <div className="pm-login-object-zone">
     <div className="pm-login-object">
      <div className="pm-login-object-face"/>
      <div className="pm-login-object-screen">
-      <BrandImage variant="symbol" alt="" aria-hidden="true"/>
-      <small>SEU ESPAÇO</small>
+      <SagamenteMotion size={76} label="S animado Sagamente"/>
      </div>
     </div>
     <div className="pm-login-object-shadow"/>
    </div>
 
-   <div className="pm-login-particles">
-    {PARTICLES.map(p=><i key={p.id} style={{left:p.x+'%',top:p.y+'%',width:p.size,height:p.size,animationDelay:p.delay+'ms'}}/>)}
-   </div>
 
-   <div className="pm-login-float pm-login-float-a"><span>ACADEMIA</span><b>ATIVA</b></div>
-   <div className="pm-login-float pm-login-float-b"><span>SAGAMENTE</span><b>ACESSO</b></div>
   </div>
 
   <div className="pm-login-vignette" aria-hidden="true"/>
@@ -78,31 +63,12 @@ export function LoginExperiencePanel(){
    </Link>
 
    <div className="pm-login-copy">
-    <p>SEU ESPAÇO NA SAGAMENTE</p>
-    <h2>
-     Tudo o que você cria,
-     <span> aprende e acompanha.</span>
-    </h2>
-    <div className="pm-login-copyline">
-     <i/>
-     <b>TECNOLOGIA · CRIAÇÃO · CONHECIMENTO</b>
-    </div>
-    <p className="pm-login-lead">
-     Entre para continuar seus cursos na Academia, acompanhar projetos e pedidos, acessar arquivos e manter suas conversas organizadas.
-    </p>
 
-    <div className="pm-login-features">
-     {[
-      ['▶','Academia e cursos'],
-      ['◇','Projetos e pedidos'],
-      ['↗','Arquivos organizados'],
-      ['◌','Conversas em um só lugar'],
-     ].map(([icon,label],index)=><div key={label}>
-      <span>{icon}</span>
-      <b>{label}</b>
-      <small>0{index+1}</small>
-     </div>)}
-    </div>
+    <h2>
+     Seu espaço para
+     <span> criar e evoluir.</span>
+    </h2>
+    <p className="pm-login-lead">Seus projetos, cursos e conversas em um só lugar.</p>
    </div>
 
    <div className="pm-login-footer">
@@ -120,11 +86,11 @@ export function LoginMobileExperience(){
   <div className="pm-login-mobile-orbit"/>
   <div className="pm-login-mobile-object">
    <div className="pm-login-mobile-object-face"/>
-   <div className="pm-login-mobile-object-screen"><BrandImage variant="symbol" alt=""/></div>
+   <div className="pm-login-mobile-object-screen"><SagamenteMotion size={45} label="S animado Sagamente"/></div>
   </div>
   <div className="pm-login-mobile-copy">
    <p>SAGAMENTE / ÁREA PESSOAL</p>
-   <h2>Crie. Aprenda.<br/><b>Acompanhe.</b></h2>
+   <h2>Seu espaço.<br/><b>Seu próximo passo.</b></h2>
   </div>
  </div>
 }
@@ -208,7 +174,7 @@ const LOGIN_LAB_STYLES=`
 
 .pm-login-mobile{
  position:relative;
- height:210px;
+ height:156px;
  margin:-1.5rem -1.5rem 1.5rem;
  overflow:hidden;
  isolation:isolate;
@@ -226,7 +192,7 @@ const LOGIN_LAB_STYLES=`
 }
 .pm-login-mobile-glow{position:absolute;width:230px;height:230px;right:-72px;top:-70px;border-radius:50%;background:#A65A2A;filter:blur(55px);opacity:.24}
 .pm-login-mobile-orbit{position:absolute;width:230px;height:230px;right:-60px;top:-4px;border:1px solid rgba(196,138,58,.3);border-radius:50%;transform:rotateX(72deg) rotateZ(10deg);animation:pm-login-mobile-orbit 12s linear infinite}
-.pm-login-mobile-object{position:absolute;right:28px;top:24px;width:105px;height:130px;animation:pm-login-float 5s ease-in-out infinite}
+.pm-login-mobile-object{position:absolute;right:30px;top:15px;width:94px;height:118px;animation:pm-login-float 5s ease-in-out infinite}
 .pm-login-mobile-object-face,.pm-login-mobile-object-screen{position:absolute;inset:0;border-radius:24px}
 .pm-login-mobile-object-face{background:linear-gradient(145deg,rgba(255,255,255,.17),transparent 20%),linear-gradient(145deg,#38271e,#141818 53%,#08080b);border:1px solid rgba(255,255,255,.16);box-shadow:inset -12px -12px 30px rgba(0,0,0,.42),18px 22px 50px rgba(0,0,0,.4);transform:rotateX(-6deg) rotateY(-22deg)}
 .pm-login-mobile-object-screen{inset:12px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.08);background:radial-gradient(circle,rgba(166,90,42,.18),transparent 58%);transform:translateZ(16px) rotateX(-6deg) rotateY(-22deg)}
@@ -237,7 +203,7 @@ const LOGIN_LAB_STYLES=`
 .pm-login-mobile-copy h2 b{color:#A65A2A}
 @keyframes pm-login-mobile-orbit{to{transform:rotateX(72deg) rotateZ(370deg)}}
 @media(max-width:390px){
- .pm-login-mobile{height:188px}
+ .pm-login-mobile{height:148px}
  .pm-login-mobile-object{right:14px;top:20px;transform:scale(.9)}
  .pm-login-mobile-copy{right:116px;left:1rem}
  .pm-login-mobile-copy h2{font-size:1.48rem}
