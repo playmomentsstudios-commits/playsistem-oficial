@@ -157,7 +157,8 @@ export function AdminWhatsappCenter(){
       return
     }
     const prepared=item.message_body+(safeUrl(item.target_link)?'\n\nAcompanhar: '+safeUrl(item.target_link):'')
-    const popup=window.open('https://wa.me/'+destination+'?text='+encodeURIComponent(prepared),'_blank','noopener,noreferrer')
+    const popup=window.open('https://wa.me/'+destination+'?text='+encodeURIComponent(prepared),'_blank')
+    if(popup)popup.opener=null
     // "opened_manual" identifica apenas a ação de abrir. Não comprova envio.
     if(popup===null){
       toast('O navegador pode ter bloqueado a janela. Permita pop-ups para abrir o WhatsApp.','error')
