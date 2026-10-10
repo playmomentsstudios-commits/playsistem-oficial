@@ -48,10 +48,22 @@ export interface SupportMessage extends Partial<MessageAttachment> {
   deleted_at?: string | null
 }
 async function invokeChat(body:Record<string,unknown>) {
-  const {data,error}=await supabase.functions.invoke('chat-drive-upload',{body,timeout:60000})
-  if(error) {
+  const invoke=()=>supabase.functions.invoke('chat-drive-upload',{body,timeout:60000})
+  let {data,error}=await invoke()
+  if(error){
+    const status=(error.context as Response|undefined)?.status
+    if(status===401){
+      const refreshed=await supabase.auth.refreshSession()
+      if(refreshed.error||!refreshed.data.session)throw new Error('Sessão expirada. Entre novamente.')
+      ;({data,error}=await invoke())
+    }
+  }
+  if(error){
     let detail=''
-    try{detail=(await error.context?.json())?.error||''}catch{/* response already read */}
+    try{
+      const response=error.context as Response|undefined
+      detail=(await response?.clone().json())?.error||''
+    }catch{/* Non-JSON function response */}
     throw new Error(detail||error.message||'Falha no envio do anexo.')
   }
   return data
