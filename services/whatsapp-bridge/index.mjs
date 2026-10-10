@@ -24,6 +24,7 @@ let connectionStatus='offline'
 let connecting=false
 let busy=false
 let lastReport=0
+let lastQrData=null
 let retryAt=0
 let stopping=false
 let authorizedInstance=false
@@ -59,6 +60,7 @@ async function closeSession(logout=false){
   socket=null
   socketOpen=false
   currentPhone=null
+  lastQrData=null
   retryAt=Date.now()+10000
   if(old){
     try{
@@ -95,6 +97,7 @@ async function connect(){
       try{
         if(qr){
           const data=await QRCode.toDataURL(qr,{type:'image/png',margin:3,width:320,errorCorrectionLevel:'M'})
+          lastQrData=data
           if(await report('qr_ready',data)){
             console.log('[bridge] QR Code disponível na Central WhatsApp. Leia com o celular.')
           }
@@ -108,12 +111,13 @@ async function connect(){
             return
           }
           currentPhone=phone
+          lastQrData=null
           socketOpen=true
           if(await report('connected',null,phone))console.log('[bridge] Número esperado conectado; envios permanecem sujeitos à ativação no painel.')
         }
         if(connection==='close'){
           const reason=lastDisconnect?.error?.output?.statusCode
-          socket=null;socketOpen=false;currentPhone=null
+          socket=null;socketOpen=false;currentPhone=null;lastQrData=null
           if(reason===DisconnectReason.loggedOut){
             await report('logged_out')
             await rm(authDir,{recursive:true,force:true}).catch(()=>{})
@@ -183,10 +187,14 @@ async function tick(){
     const mode=stateResult.data.requested_mode
     if(mode!=='connect'){
       if(socket||socketOpen)await closeSession(mode==='disconnect')
+      if(mode==='disconnect'&&!socket)await rm(authDir,{recursive:true,force:true}).catch(()=>{})
       if(connectionStatus!=='offline'||Date.now()-lastReport>30000)await report('offline')
       return
     }
     if(!socket&&!connecting&&Date.now()>=retryAt)await connect()
+    if(socket&&!socketOpen&&connectionStatus==='qr_ready'&&lastQrData&&Date.now()-lastReport>12000){
+      if(!await report('qr_ready',lastQrData))await closeSession()
+    }
     if(socketOpen&&Date.now()-lastReport>12000){
       if(!await report('connected',null,currentPhone))await closeSession()
     }
