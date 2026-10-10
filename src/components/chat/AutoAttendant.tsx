@@ -5,15 +5,15 @@ import { autoattendantApi, AutoSolution } from '../../api/autoattendant'
 import { portalApi } from '../../api/portal'
 import { listPublicProducts, PublicCatalogProduct } from '../../services/catalog'
 
-type Props={onHuman:(summary:string)=>Promise<void>;busy?:boolean}
+type Props={onHuman:(summary:string)=>Promise<void>;busy?:boolean;initialFlow?:'home'|'faq'}
 type Flow='home'|'faq'|'custom'|'support'|'finder'
 type ProductIntent='any'|'sale'|'rental'
 const FAQ=[{q:'Como acompanho meu projeto?',a:'Na Área do Cliente, abra Projetos. Ali ficam status e acompanhamento do trabalho.',href:'/app/projetos',cta:'Ver projetos'},{q:'Onde vejo pagamentos?',a:'Pagamentos e situação financeira ficam centralizados no seu portal.',href:'/app/pagamentos',cta:'Ver pagamentos'},{q:'Onde encontro meus arquivos?',a:'Use a Central de Arquivos para acessar materiais disponibilizados no seu atendimento ou projeto.',href:'/app/arquivos',cta:'Ver arquivos'},{q:'Como acesso a Academia?',a:'Seus cursos e conteúdos ficam na Academia Sagamente.',href:'/app/academia',cta:'Abrir Academia'}]
 const normalize=(value:unknown)=>String(value||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
 const money=(value:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(value/100)
 
-export function AutoAttendant({onHuman,busy=false}:Props){
- const navigate=useNavigate(),[flow,setFlow]=useState<Flow>('home'),[faq,setFaq]=useState<number|null>(null),[custom,setCustom]=useState({type:'',goal:'',deadline:'',budget:''}),[support,setSupport]=useState({topic:'',detail:''}),[sent,setSent]=useState(false),[query,setQuery]=useState(''),[solutions,setSolutions]=useState<AutoSolution[]>([]),[services,setServices]=useState<any[]>([]),[products,setProducts]=useState<PublicCatalogProduct[]>([]),[productIntent,setProductIntent]=useState<ProductIntent>('any')
+export function AutoAttendant({onHuman,busy=false,initialFlow='home'}:Props){
+ const navigate=useNavigate(),[flow,setFlow]=useState<Flow>(initialFlow),[faq,setFaq]=useState<number|null>(null),[custom,setCustom]=useState({type:'',goal:'',deadline:'',budget:''}),[support,setSupport]=useState({topic:'',detail:''}),[sent,setSent]=useState(false),[query,setQuery]=useState(''),[solutions,setSolutions]=useState<AutoSolution[]>([]),[services,setServices]=useState<any[]>([]),[products,setProducts]=useState<PublicCatalogProduct[]>([]),[productIntent,setProductIntent]=useState<ProductIntent>('any')
  useEffect(()=>{autoattendantApi.list().then(data=>setSolutions(data.filter(item=>item.active))).catch(()=>setSolutions([]));portalApi.services().then(setServices).catch(()=>setServices([]));listPublicProducts().then(setProducts).catch(()=>setProducts([]))},[])
  const words=useMemo(()=>normalize(query).split(/\s+/).filter(w=>w.length>2),[query])
  const serviceMatches=useMemo(()=>words.length?services.map(service=>{const haystack=normalize([service.name,service.category,service.short_description,service.description,...(service.deliverables||[]),...(service.included_items||[])].filter(Boolean).join(' '));return {service,score:words.reduce((n,w)=>n+(haystack.includes(w)?1:0),0)}}).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,3):[],[words,services])
