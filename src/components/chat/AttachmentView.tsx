@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { conversationsApi, type SupportMessage } from '../../api/conversations'
 import { formatFileSize, previewKind } from '../../lib/attachments'
 
@@ -7,6 +7,10 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
   const [downloading, setDownloading] = useState(false)
+  const [playing,setPlaying] = useState(false)
+  const [duration,setDuration] = useState(0)
+  const [current,setCurrent] = useState(0)
+  const audioRef=useRef<HTMLAudioElement>(null)
   const path = message.attachment_path
   const kind = previewKind(message.attachment_type || '')
   useEffect(() => {
@@ -14,11 +18,19 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
     let active = true
     setUrl('')
     setError('')
-    conversationsApi.attachmentUrl(path).then(value => { if (active) setUrl(value) })
+    conversationsApi.attachmentUrl(path).then(async value => {
+      if (kind !== 'audio') { if(active)setUrl(value); return }
+      const response=await fetch(value)
+      if(!response.ok)throw new Error('Falha ao carregar áudio')
+      const blob=await response.blob()
+      if(active)setUrl(URL.createObjectURL(blob))
+    })
       .catch(() => { if (active) setError('Não foi possível abrir a prévia.') })
     return () => { active = false }
   }, [path, kind, retry])
 
+  useEffect(()=>()=>{if(kind==='audio'&&url.startsWith('blob:'))URL.revokeObjectURL(url)},[kind,url])
+  const clock=(value:number)=>`${Math.floor(value/60)}:${String(Math.floor(value%60)).padStart(2,'0')}`
   async function download() {
     if (!path || downloading) return
     setDownloading(true)
@@ -37,7 +49,18 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
     finally { setDownloading(false) }
   }
   if (!path) return null
-  if (kind === 'audio') return <div className="min-w-[190px] max-w-[280px] py-1" aria-label="Mensagem de voz">{url ? <audio aria-label="Reproduzir mensagem de voz" controls preload="metadata" src={url} className="w-full h-10" onError={() => setError('Áudio indisponível. Tente novamente.')} /> : <span className="text-xs opacity-70">Carregando áudio…</span>}{error&&<button type="button" onClick={()=>setRetry(value=>value+1)} className="block mt-1 text-xs underline">Tentar novamente</button>}</div>
+  if (kind === 'audio') return <div className="min-w-[210px] max-w-[280px] py-1" aria-label="Mensagem de voz">
+    <div className="flex items-center gap-2.5">
+      <button type="button" disabled={!url||!!error} aria-label={playing?'Pausar áudio':'Reproduzir áudio'} onClick={()=>{const el=audioRef.current;if(!el)return;if(el.paused){void el.play().catch(()=>setError('Não foi possível reproduzir este áudio.'))}else el.pause()}} className="w-10 h-10 shrink-0 rounded-full bg-white/20 flex items-center justify-center disabled:opacity-40">{playing?'❚❚':'▶'}</button>
+      <div className="min-w-0 flex-1">
+        <input aria-label="Posição do áudio" type="range" min="0" max={duration||1} step="0.1" value={Math.min(current,duration||1)} disabled={!url} onChange={event=>{if(audioRef.current)audioRef.current.currentTime=Number(event.target.value)}} className="w-full accent-orange-200"/>
+        <span className="text-[10px] opacity-80">{clock(current)} / {clock(duration)}</span>
+      </div>
+    </div>
+    {url&&<audio ref={audioRef} src={url} preload="metadata" onLoadedMetadata={event=>setDuration(Number.isFinite(event.currentTarget.duration)?event.currentTarget.duration:0)} onTimeUpdate={event=>setCurrent(event.currentTarget.currentTime)} onPlay={()=>setPlaying(true)} onPause={()=>setPlaying(false)} onEnded={()=>setPlaying(false)} onError={()=>setError('Formato de áudio indisponível neste navegador.')} />}
+    {!url&&!error&&<span className="text-xs opacity-70">Carregando áudio…</span>}
+    {error&&<button type="button" onClick={()=>{setError('');setRetry(value=>value+1)}} className="block mt-1 text-xs underline">Tentar novamente</button>}
+  </div>
   return <div className="space-y-2 mb-2 min-w-0">
     <p className="font-semibold break-words" style={{ overflowWrap: 'anywhere' }}>{message.attachment_name}</p>
     <p className="text-xs opacity-75">{formatFileSize(message.attachment_size || 0)} · Arquivo original</p>
