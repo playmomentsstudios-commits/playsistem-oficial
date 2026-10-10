@@ -8,7 +8,7 @@ const diag=read('supabase/functions/google-drive-test/index.ts')
 
 test('Drive test displays the specific JSON error even with non-2xx status',()=>{
   assert.match(api,/functions\.invoke\('google-drive-test'\)/)
-  assert.match(api,/context\?\.clone\?\.json\?\.\(\)/)
+  assert.match(api,/context\?\.clone\?\.\(\)\.json\?\.\(\)/)
   assert.match(api,/details\.error/)
   assert.match(admin,/setDriveTestNotice\(\{ok:false,message\}\)/)
   assert.match(admin,/role=\{driveTestNotice\.ok\?'status':'alert'\}/)
