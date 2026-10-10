@@ -220,7 +220,7 @@ export function AdminWhatsappCenter(){
       <Metric label="Avisos preparados hoje" value={summary.prepared_today} description="Criados na fila manual, não enviados"/>
       <Metric label="Conversas abertas hoje" value={summary.opened_today} description="Abertura registrada, envio desconhecido"/>
       <Metric label="Enviados informados hoje" value={summary.reported_today} description="Declaração manual, sem verificação"/>
-      <Metric label="Aceitas no dispositivo hoje" value={summary.bridge_sent_today} description="Resposta da biblioteca · entrega não comprovada"/>
+      <Metric label="IDs retornados hoje" value={summary.bridge_sent_today} description="Somente aceite local · entrega não comprovada"/>
     </div>
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-white/10 bg-white/[.02] p-3 text-xs text-gray-400">
       <span><b className="text-white">{summary.missing_phone_today}</b> sem número hoje</span>
@@ -228,6 +228,10 @@ export function AdminWhatsappCenter(){
       <span><b className="text-white">{summary.total_records}</b> registros totais</span>
       <span><b className="text-white">{summary.bridge_attempts_today}</b> tentativas automáticas hoje</span>
       <span><b className="text-white">{summary.bridge_failed_today}</b> falhas automáticas hoje</span>
+      <span><b className="text-white">{receiptStats.server_acked_today}</b> confirmações do servidor WhatsApp hoje</span>
+      <span><b className="text-white">{receiptStats.delivered_today+receiptStats.read_today}</b> entregas/leitura observadas hoje</span>
+      <span><b className="text-white">{receiptStats.unconfirmed_today}</b> sem confirmação de servidor/entrega</span>
+      <span><b className="text-white">{receiptStats.rejected_today}</b> rejeições registradas</span>
       <span><b className="text-white">{summary.provider_delivered_today}</b> entregas comprovadas hoje</span>
     </div>
 
