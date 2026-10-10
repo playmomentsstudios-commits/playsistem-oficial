@@ -15,6 +15,22 @@
 
 **Uso experimental com o número +55 64 98129-4186.** A biblioteca Baileys é **não oficial**. O WhatsApp pode restringir ou banir o número. Não há garantia de continuidade, entrega ou funcionamento permanente. Não substitui a API oficial.
 
+## Correção de destinatários reais e confirmações (10/10/2026)
+
+A versão anterior podia retornar ID de `sendMessage()` sem a mensagem aparecer no aparelho. Agora, para cada envio real, a ponte consulta `socket.onWhatsApp()`, valida que o JID devolvido corresponde ao número autorizado e só então tenta enviar. Na Central, **ID gerado não significa entrega**. Os eventos de servidor, entrega e leitura são contabilizados em separado quando observados.
+
+**Atualização da ponte em um Windows já configurado:**
+
+1. Em Comunicação → Central WhatsApp, clique **Pausar envios**. Feche a janela da ponte com **Ctrl+C**.
+2. Baixe o ZIP atual do repositório e entre na pasta `services/whatsapp-bridge` do ZIP.
+3. Copie **`index.mjs`**, **`phone-utils.mjs`** e o novo **`receipt-tracker.mjs`** para a pasta antiga da ponte no seu computador, confirmando a substituição dos dois primeiros.
+4. **Não substitua nem compartilhe `.env` e não apague `.local/session`**. A chave e a sessão existentes permanecem no computador.
+5. Execute novamente **Iniciar WhatsApp Sagamente.cmd** e mantenha a janela aberta.
+6. Na Central, verifique **Conectado**. Não ative todos os clientes; selecione apenas um cliente com aceite.
+7. Ative temporariamente e faça **uma nova alteração de status** de uma tarefa desse cliente. Confira `Número de envio real`, `Destino reconhecido` e `Confirmação do WhatsApp` na auditoria. Confirme também com o destinatário.
+
+As tentativas antigas seguem classificadas como **sem confirmação**, não serão reenviadas automaticamente. Uma consulta sem confirmação de cadastro ou JID ambíguo será bloqueada; não há fallback cego para outros números. Desligue o piloto se o aparelho não mostrar a mensagem ou se aparecerem erros de consulta.
+
 ## Arquitetura
 
 - A aplicação web e o Cloudflare **não** executam o WhatsApp.
