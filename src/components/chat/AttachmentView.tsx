@@ -23,7 +23,7 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
     setUrl('')
     setError('')
     setPreviewLoading(kind==='image')
-    setDuration(0);setCurrent(0);probingDuration.current=false
+    setDuration(0);setCurrent(0);probingDuration.current=false;
     (kind==='image'?conversationsApi.imagePreviewUrl(path).catch(()=>conversationsApi.attachmentUrl(path)):conversationsApi.attachmentUrl(path)).then(async (value:string) => {
       if (kind !== 'audio') { if(active)setUrl(value); return }
       const response=await fetch(value)
