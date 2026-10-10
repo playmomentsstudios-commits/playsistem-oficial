@@ -220,7 +220,12 @@ async function tick(){
     if(socketOpen&&Date.now()-lastReport>12000){
       if(!await report('connected',null,currentPhone))await closeSession()
     }
-    if(socketOpen&&settingsResult.data.wa_bridge_auto_enabled)await sendOne()
+    if(socketOpen&&settingsResult.data.wa_bridge_auto_enabled){
+      const allowed=await invoke('wa_bridge_worker_capability',{
+        p_instance:instanceId,p_capability:'registered-jid-receipts-v1'
+      })
+      if(allowed)await sendOne()
+    }
   }catch(err){
     console.error('[bridge] Falha no ciclo:',err?.message||'erro inesperado')
   }finally{tickRunning=false}
