@@ -1,5 +1,6 @@
 import { BrandImage } from '../components/BrandImage'
 import { PushNotificationSettings } from '../components/ui/PushNotificationSettings'
+import { BADGE_REFRESH_EVENT, setUnreadAppBadge } from '../lib/appBadge'
 import { useEffect, useState, type CSSProperties } from 'react'
 import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -49,10 +50,27 @@ export function AdminLayout() {
   })
   useEffect(() => {
     if (!user?.id) return
-    const load = () => portalApi.unreadCounts(user.id).then(setCounts).catch(() => undefined)
+    let active = true
+    const load = () => {
+      void portalApi.unreadCounts(user.id).then(counts => {
+        if (!active) return
+        setCounts(counts)
+        void setUnreadAppBadge(counts.notifications)
+      }).catch(() => undefined)
+    }
+    const onVisible = () => { if (document.visibilityState === 'visible') load() }
     void load()
     const timer = window.setInterval(load, 10000)
-    return () => window.clearInterval(timer)
+    window.addEventListener(BADGE_REFRESH_EVENT, load)
+    window.addEventListener('focus', load)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      active = false
+      window.clearInterval(timer)
+      window.removeEventListener(BADGE_REFRESH_EVENT, load)
+      window.removeEventListener('focus', load)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
   }, [user?.id])
 
   useEffect(()=>{
