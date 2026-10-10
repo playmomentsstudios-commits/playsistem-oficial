@@ -129,6 +129,7 @@ export function ProjectStagePage(){
             <span className="text-[11px] text-gray-400">{rotulo(statusTarefa,task.status)} ▾</span>
           </summary>
           <div className="space-y-2 border-t border-white/10 px-3 py-3 text-xs">
+            <Link to={(adminView?'/admin/projetos/':'/app/projetos/')+id+'/etapas/'+stageId+'/tarefas/'+task.id} className="inline-flex min-h-10 items-center rounded-lg border border-[#A65A2A]/30 px-3 font-semibold text-[#DFA269] hover:bg-white/5">Abrir página exclusiva desta tarefa ↗</Link>
             {task.description&&<p className="whitespace-pre-wrap text-gray-300">{task.description}</p>}
             {(task.checklist||[]).length>0&&<div>
               <p className="mb-1 font-semibold text-gray-300">Checklist</p>
