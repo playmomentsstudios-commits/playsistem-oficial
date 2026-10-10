@@ -94,6 +94,7 @@ async function connect(){
     })
     socket=sock
     sock.ev.on('creds.update',saveCreds)
+    receiptTracker=attachDeliveryReceipts(sock,instanceId,invoke)
     sock.ev.on('connection.update',async ({connection,qr,lastDisconnect})=>{
       if(socket!==sock||stopping)return
       try{
