@@ -46,6 +46,7 @@ const NotificationsPage = lazy(() => import('./pages/customer/NotificationsPage'
 const PaymentsPage = lazy(() => import('./pages/customer/PaymentsPage').then(m => ({ default:m.PaymentsPage })))
 const ProjectsPage = lazy(() => import('./pages/customer/ProjectsPage').then(m => ({ default:m.ProjectsPage })))
 const ProjectStagePage = lazy(() => import('./pages/customer/ProjectStagePage').then(m => ({ default:m.ProjectStagePage })))
+const ProjectTaskPage = lazy(() => import('./pages/customer/ProjectTaskPage').then(m => ({ default:m.ProjectTaskPage })))
 const CustomerServicesPage = lazy(() => import('./pages/customer/CustomerServicesPage').then(m => ({ default:m.CustomerServicesPage })))
 const AnnouncementsPage = lazy(() => import('./pages/customer/AnnouncementsPage').then(m => ({ default:m.AnnouncementsPage })))
 const OrderDetailPage = lazy(() => import('./pages/customer/OrderDetailPage').then(m => ({ default:m.OrderDetailPage })))
@@ -168,6 +169,7 @@ export default function AppV2() {
                 <Route path="projetos" element={<ProjectsPage />} />
                 <Route path="projetos/:id" element={<ProjectsPage />} />
                 <Route path="projetos/:id/etapas/:stageId" element={<ProjectStagePage />} />
+                <Route path="projetos/:id/etapas/:stageId/tarefas/:taskId" element={<ProjectTaskPage />} />
                 <Route path="comunicados" element={<AnnouncementsPage />} />
                 <Route path="academia" element={<AcademyPage />} />
                 <Route path="academia/:id" element={<AcademyCoursePage />} />
@@ -198,6 +200,7 @@ export default function AppV2() {
                 <Route path="projetos" element={<AdminPermissionGate permission={['projects.view','projects.manage']}><AdminProjects /></AdminPermissionGate>} />
                 <Route path="projetos/:id" element={<AdminPermissionGate permission={['projects.view','projects.manage']}><AdminProjectDetailV2 /></AdminPermissionGate>} />
                 <Route path="projetos/:id/etapas/:stageId" element={<AdminPermissionGate permission={['projects.view','projects.manage']}><ProjectStagePage /></AdminPermissionGate>} />
+                <Route path="projetos/:id/etapas/:stageId/tarefas/:taskId" element={<AdminPermissionGate permission={['projects.view','projects.manage']}><ProjectTaskPage /></AdminPermissionGate>} />
                 <Route path="produtividade" element={<AdminPermissionGate permission={['projects.view','projects.manage']}><AdminProductivity /></AdminPermissionGate>} />
                 <Route path="comunicados" element={<AdminPermissionGate permission="community.manage"><AdminAnnouncements /></AdminPermissionGate>} />
                 <Route path="equipe" element={<AdminPermissionGate adminOnly><AdminTeam /></AdminPermissionGate>} />

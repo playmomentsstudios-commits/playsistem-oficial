@@ -148,6 +148,7 @@ export function ProjectsPage(){
                     <span className="text-[11px] text-gray-400">{rotulo(statusTarefa,task.status)} ▾</span>
                   </summary>
                   <div className="space-y-2 border-t border-white/10 px-3 pb-3 pt-2">
+                    <Link to={'/app/projetos/'+id+'/etapas/'+stage.id+'/tarefas/'+task.id} className="inline-flex min-h-10 items-center rounded-lg border border-[#A65A2A]/30 px-3 text-xs font-semibold text-[#DFA269]">Ver esta tarefa e seus arquivos ↗</Link>
                     {task.description&&<p className="whitespace-pre-wrap text-xs text-gray-400">{task.description}</p>}
                     {(task.checklist||[]).length>0&&<div><p className="mb-1 text-[11px] font-semibold text-gray-300">Checklist de execução</p>
                       {[...task.checklist].sort(sortByPosition).map((item:any)=><p key={item.id} className={'py-0.5 text-xs '+(item.completed?'text-emerald-300':'text-gray-400')}>{item.completed?'✓':'○'} {item.title}</p>)}
