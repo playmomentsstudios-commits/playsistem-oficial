@@ -67,7 +67,7 @@ export function WhatsappQrBridgePanel(){
   const online=!!bridge?.heartbeat_at&&(now-new Date(bridge.heartbeat_at).getTime()<35000)
   const connected=online&&bridge?.status==='connected'
   const correctNumber=connected&&bridge.connected_phone===config?.wa_bridge_sender_phone
-  const updatedBridge=bridge?.worker_capability==='registered-jid-receipts-v1'
+  const updatedBridge=Boolean(bridge?.worker_capability==='registered-jid-receipts-v1'&&bridge.worker_capability_at&&(now-new Date(bridge.worker_capability_at).getTime()<35000))
   const enabled=Boolean(config?.wa_bridge_auto_enabled)
   async function sendTest(){
     if(!window.confirm('Enviar UM teste automático exclusivamente para +55 64 98129-4186? Conta para o teto diário de 10 tentativas.'))return
