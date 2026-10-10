@@ -10,7 +10,7 @@ const sections:{key:keyof PushCategories;name:string;hint:string}[]=[
   {key:'commercial',name:'Orçamentos e pagamentos',hint:'Novidades comerciais e cobranças'},
   {key:'deadlines',name:'Prazos',hint:'Lembretes de datas e vencimentos'},
 ]
-export function PushNotificationSettings({compact=false}:{compact?:boolean}){
+export function PushNotificationSettings({compact=false,iconOnly=false}:{compact?:boolean;iconOnly?:boolean}){
   const {user}=useAuth()
   const [open,setOpen]=useState(false)
   const [enabled,setEnabled]=useState(false)
@@ -48,10 +48,11 @@ export function PushNotificationSettings({compact=false}:{compact?:boolean}){
   }
   return <>
     <button type="button" onClick={()=>{setError('');setFeedback('');setOpen(true)}}
-      className={compact
+      aria-label={iconOnly?'Configurar notificações Push':undefined}
+      className={iconOnly?'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/10 text-sm hover:bg-white/[.06]':compact
         ? 'inline-flex min-h-10 items-center gap-2 rounded-lg border border-white/10 px-3 text-xs font-semibold hover:bg-white/[.06]'
         : 'pm-compact-tap inline-flex gap-2 rounded-lg border border-white/10 bg-white/[.04] px-3 text-xs font-semibold hover:bg-white/[.08]'}>
-      <span aria-hidden="true">🔔</span>{compact?'Notificações Push':'Configurar avisos no celular e computador'}
+      <span aria-hidden="true">🔔</span>{iconOnly?'':compact?'Notificações Push':'Configurar avisos no celular e computador'}
     </button>
     {open&&createPortal(<div role="presentation" className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 p-3 backdrop-blur-sm"
       onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setOpen(false)}}>
