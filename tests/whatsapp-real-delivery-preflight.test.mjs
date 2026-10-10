@@ -21,7 +21,8 @@ test('never guess a real destination: require authoritative WhatsApp identity',(
   assert.throws(()=>registeredRecipientJid(expected,[{jid:full,exists:true},{jid:legacy,exists:true}]),/mais de uma conta/)
 })
 test('service queries WhatsApp and database verifies registered recipient before sending',()=>{
-  assert.match(worker,/registeredRecipientJid\(destination,await socket.onWhatsApp\(destination\)\)/)
+  assert.match(worker,/registeredRecipientJid\(destination,await Promise.race/)
+  assert.match(worker,/socket.onWhatsApp\(destination\)/)
   assert.match(worker,/wa_bridge_register_destination/)
   assert.match(migration,/destination_phone into v_phone/)
   assert.match(migration,/v_jidphone<>v_phone/)
