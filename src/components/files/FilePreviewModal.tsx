@@ -26,6 +26,7 @@ export function FilePreviewModal({ file, onClose }: Props) {
   const [error, setError] = useState('')
   const [lowResPreview, setLowResPreview] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  const [retryNonce, setRetryNonce] = useState(0)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
 
   const type = useMemo(() => file ? filePreviewType(file) : 'unsupported', [file])
@@ -71,8 +72,17 @@ export function FilePreviewModal({ file, onClose }: Props) {
             try {
               objectUrl = await portalApi.driveFileThumbnailBlobUrl(file.id)
               if (!disposed) setLowResPreview(true)
-            } catch {
-              throw new Error('Não foi possível carregar a prévia. Baixe o original para abrir a imagem.')
+            } catch (thumbnailError) {
+              const reason=thumbnailError instanceof Error?thumbnailError.message:''
+              // A revoked institutional refresh token cannot be repaired by a
+              // second request. Explain the real problem to the administrator.
+              if(/Drive.*(?:expirad|revogad|reconect|desconect)|GOOGLE_DRIVE_REFRESH_TOKEN/i.test(reason)) {
+                throw new Error('A conexão institucional do Google Drive expirou ou foi revogada. Solicite a reconexão ao administrador.')
+              }
+              // Large artworks still have a safe authenticated original fallback.
+              if(Number(file.file_size||0)>20*1024*1024)
+                throw new Error('Prévia indisponível para esta imagem de alta resolução. Baixe o original.')
+              objectUrl = await portalApi.driveImageOriginalBlobUrl(file.id)
             }
           } else {
             objectUrl = await portalApi.driveFileBlobUrl(file.id)
@@ -100,7 +110,7 @@ export function FilePreviewModal({ file, onClose }: Props) {
       if (objectUrl) URL.revokeObjectURL(objectUrl)
 
     }
-  }, [file?.id, file?.drive_file_id, file?.storage_path, canPreview])
+  }, [file?.id, file?.drive_file_id, file?.storage_path, canPreview, retryNonce])
 
   if (!file) return null
 
@@ -137,7 +147,7 @@ export function FilePreviewModal({ file, onClose }: Props) {
         ? 'Este arquivo é um link externo. Abra a origem em uma nova guia.'
         : error || 'Não foi possível gerar a prévia deste arquivo.'
 
-  if(type==='image'&&hasPrivateFile)return <ImageViewer url={previewUrl||''} name={file.name} onClose={onClose} onDownload={()=>void download()} downloading={downloading} error={error} loading={pending}/>
+  if(type==='image'&&hasPrivateFile)return <ImageViewer url={previewUrl||''} name={file.name} onClose={onClose} onDownload={()=>void download()} downloading={downloading} error={error} loading={pending} onRetry={()=>setRetryNonce(value=>value+1)}/>
 
   return createPortal(
     <div className="fixed inset-0 z-[150] bg-[#030403]/95 backdrop-blur-md p-0 sm:p-4 flex items-center justify-center" onMouseDown={e=>{ if(e.target === e.currentTarget) onClose() }}>
