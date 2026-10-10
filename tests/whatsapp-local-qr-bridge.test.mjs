@@ -37,8 +37,8 @@ test('customer delivery requires recorded opt-in, while test number is isolated'
   assert.match(sql,/wa_automatic_opt_in boolean not null default false/)
   assert.match(sql,/cfg\.wa_bridge_test_only or coalesce\(pref\.wa_automatic_opt_in,false\)/)
   assert.match(customer,/wa_automatic_opt_in/)
-  assert.match(worker,/SAGAMENTE_WHATSAPP_PHONE/)
-  assert.match(worker,/phone!==expectedPhone/)
+  assert.match(script,/SAGAMENTE_WHATSAPP_PHONE/)
+  assert.match(script,/phone!==expectedPhone/)
 })
 test('credentials stay on local host and no service role key reaches the website',()=>{
   assert.match(script,/process\.env\.SUPABASE_SERVICE_ROLE_KEY/)
