@@ -13,6 +13,8 @@ type BridgeState={
   qr_updated_at:string|null
   connected_phone:string|null
   last_error:string|null
+  worker_capability:string|null
+  worker_capability_at:string|null
 }
 const STATUS:Record<BridgeState['status'],string>={
   offline:'Ponte desligada',connecting:'Conectando dispositivo...',qr_ready:'Aguardando leitura do QR',
