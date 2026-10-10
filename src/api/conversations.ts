@@ -9,6 +9,7 @@ export interface MessageAttachment {
   attachment_name: string
   attachment_type: string
   attachment_size: number
+  attachment_preview_path?: string
 }
 
 export interface SupportConversation {
@@ -44,6 +45,21 @@ export interface SupportMessage extends Partial<MessageAttachment> {
   created_at: string
   deleted_at?: string | null
 }
+async function createImageThumbnail(file:File):Promise<Blob> {
+  const image=await createImageBitmap(file)
+  try {
+    const scale=Math.min(1,720/Math.max(image.width,image.height))
+    const canvas=document.createElement('canvas')
+    canvas.width=Math.max(1,Math.round(image.width*scale))
+    canvas.height=Math.max(1,Math.round(image.height*scale))
+    const context=canvas.getContext('2d')
+    if(!context)throw new Error('Canvas indisponível')
+    context.drawImage(image,0,0,canvas.width,canvas.height)
+    const blob=await new Promise<Blob|null>(resolve=>canvas.toBlob(resolve,'image/jpeg',0.72))
+    if(!blob)throw new Error('Falha ao gerar miniatura')
+    return blob
+  }finally{image.close()}
+}
 export const conversationsApi = {
   async deleteOwnMessage(messageId:string) {
     const { error } = await supabase.rpc('delete_own_chat_message',{p_message_id:messageId})
@@ -61,7 +77,20 @@ export const conversationsApi = {
       const { data: existing, error: lookupError } = await supabase.storage.from(CHAT_BUCKET).info(path)
       if (lookupError || !existing || Number(existing.metadata?.size) !== file.size || String(existing.metadata?.mimetype).split(';')[0] !== type.split(';')[0]) throw error
     }
-    return { attachment_path: path, attachment_name: file.name, attachment_type: type, attachment_size: file.size }
+    let attachment_preview_path: string | undefined
+    if (type.startsWith('image/') && type !== 'image/svg+xml') {
+      try {
+        const thumbnail=await createImageThumbnail(file)
+        const previewPath=path+'-preview.jpg'
+        const result=await supabase.storage.from(CHAT_BUCKET).upload(previewPath,thumbnail,{contentType:'image/jpeg',upsert:false})
+        if(!result.error) attachment_preview_path=previewPath
+        else {
+          const {data:existing}=await supabase.storage.from(CHAT_BUCKET).info(previewPath)
+          if(existing) attachment_preview_path=previewPath
+        }
+      }catch(error){console.warn('[Chat] Falha ao gerar miniatura; original preservado',error)}
+    }
+    return { attachment_path: path, attachment_name: file.name, attachment_type: type, attachment_size: file.size, ...(attachment_preview_path?{attachment_preview_path}:{}) }
   },
   async imagePreviewUrl(path:string):Promise<string> {
     // Ask Storage's image transformation endpoint for a lightweight private preview.

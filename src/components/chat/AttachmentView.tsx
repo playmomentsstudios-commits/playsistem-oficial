@@ -16,6 +16,7 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
   const audioRef=useRef<HTMLAudioElement>(null)
   const probingDuration=useRef(false)
   const path = message.attachment_path
+  const previewPath=message.attachment_preview_path
   const kind = previewKind(message.attachment_type || '')
   useEffect(() => {
     if (!path || kind === 'file') return
@@ -24,7 +25,7 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
     setError('')
     setPreviewLoading(kind==='image')
     setDuration(0);setCurrent(0);probingDuration.current=false;
-    (kind==='image'?conversationsApi.imagePreviewUrl(path).catch(()=>conversationsApi.attachmentUrl(path)):conversationsApi.attachmentUrl(path)).then(async (value:string) => {
+    (kind==='image'&&previewPath?conversationsApi.attachmentUrl(previewPath).catch(()=>conversationsApi.attachmentUrl(path)):conversationsApi.attachmentUrl(path)).then(async (value:string) => {
       if (kind !== 'audio') { if(active)setUrl(value); return }
       const response=await fetch(value)
       if(!response.ok)throw new Error('Falha ao carregar áudio')
@@ -33,7 +34,7 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
     })
       .catch(() => { if (active) {setError('Não foi possível abrir a prévia.');setPreviewLoading(false)} })
     return () => { active = false }
-  }, [path, kind, retry])
+  }, [path, previewPath, kind, retry])
 
   useEffect(()=>()=>{if(kind==='audio'&&url.startsWith('blob:'))URL.revokeObjectURL(url)},[kind,url])
   const clock=(value:number)=>Number.isFinite(value)&&value>=0?`${Math.floor(value/60)}:${String(Math.floor(value%60)).padStart(2,'0')}`:'0:00'
