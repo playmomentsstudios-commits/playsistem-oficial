@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict'
+import {readFileSync} from 'node:fs'
+import test from 'node:test'
+const sql=readFileSync(new URL('../supabase/migrations/20261010235940_whatsapp_central_editable_limits.sql',import.meta.url),'utf8')
+const center=readFileSync(new URL('../src/pages/admin/AdminWhatsappCenter.tsx',import.meta.url),'utf8')
+const bridge=readFileSync(new URL('../src/components/admin/WhatsappQrBridgePanel.tsx',import.meta.url),'utf8')
+const general=readFileSync(new URL('../src/pages/admin/AdminSettings.tsx',import.meta.url),'utf8')
+const history=readFileSync(new URL('../src/components/admin/PriorityAlertHistory.tsx',import.meta.url),'utf8')
+
+test('both daily limits allow 0..100 and default to 30 when previously unconfigured',()=>{
+  assert.match(sql,/wa_bridge_daily_limit between 0 and 100/)
+  assert.match(sql,/priority_daily_limit between 0 and 100/)
+  assert.match(sql,/wa_bridge_daily_limit set default 30/)
+  assert.match(sql,/priority_daily_limit set default 30/)
+  assert.match(sql,/when wa_bridge_daily_limit=10 then 30/)
+  assert.match(sql,/when priority_daily_limit=10 then 30/)
+  assert.match(center,/wa_bridge_daily_limit:settings.wa_bridge_daily_limit/)
+  assert.match(center,/max=\{100\}/)
+  assert.match(center,/Tentativas automáticas de WhatsApp por dia \(0–100\)/)
+  assert.match(center,/Alertas prioritários internos por dia \(0–100\)/)
+})
+test('daily amount does not permit burst sending or bypassing opt-in/verified connection',()=>{
+  assert.match(sql,/claimed_at>now\(\)-interval '2 minutes'/)
+  assert.match(sql,/claimed_at>now\(\)-interval '1 hour'\)>=10/)
+  assert.match(sql,/v_used>=cfg.wa_bridge_daily_limit/)
+  assert.match(sql,/for update/)
+  assert.match(sql,/wa_bridge_auto_enabled=false/)
+  assert.match(sql,/wa_bridge_customer_eligible\(o.recipient_user_id\)/)
+  assert.match(sql,/o.created_at>=cfg.wa_bridge_auto_started_at/)
+  assert.match(sql,/cfg.wa_bridge_single_customer_id/)
+  assert.match(bridge,/wa_bridge_daily_limit/)
+  assert.match(bridge,/Ativar para este cliente/)
+})
+test('all WhatsApp-related configuration is centralized, not duplicated in general admin settings',()=>{
+  assert.match(center,/import \{ PriorityAlertHistory \}/)
+  assert.match(center,/PriorityAlertHistory phone=\{settings.priority_whatsapp_phone\}/)
+  assert.match(center,/wa_prepare_project_status/)
+  assert.match(center,/priority_whatsapp_phone/)
+  assert.doesNotMatch(general,/priority_whatsapp_phone:settings.priority_whatsapp_phone/)
+  assert.doesNotMatch(general,/<PriorityAlertHistory/)
+  assert.doesNotMatch(general,/Alertas prioritários · custo zero/)
+  assert.match(history,/https:\/\/wa\.me\//)
+})
+test('quota is not an official WhatsApp free message allowance',()=>{
+  assert.match(center,/Não é limite oficial gratuito do WhatsApp/)
+  assert.match(center,/não aumenta a capacidade de envio do WhatsApp/)
+  assert.match(bridge,/NÃO OFICIAL/)
+})
