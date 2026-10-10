@@ -175,7 +175,7 @@ export function CustomerSettings(){
         <label className={'mt-3 flex items-start justify-between gap-4 rounded-xl border border-white/10 bg-white/[.035] p-4 '+(phoneValid?'cursor-pointer':'opacity-60')}>
           <div>
             <p className="text-sm font-semibold text-white">Autorizo avisos pelo WhatsApp</p>
-            <p className="mt-1 text-xs text-gray-400">Concordo em receber mensagens sobre meus projetos no número cadastrado. Posso retirar essa autorização aqui quando quiser.</p>
+            <p className="mt-1 text-xs text-gray-400">Concordo em receber mensagens sobre meus projetos no número cadastrado. Posso retirar o aceite a qualquer momento nesta página.</p>
           </div>
           <input type="checkbox" aria-label="Autorizo avisos dos meus projetos pelo WhatsApp"
             checked={Boolean(prefs?.wa_automatic_opt_in)}
