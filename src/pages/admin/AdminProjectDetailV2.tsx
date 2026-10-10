@@ -530,111 +530,158 @@ export function AdminProjectDetailV2(){
   if(loadError)return <div role="alert" className="pm-surface p-5 space-y-3"><p className="text-red-300">Não foi possível carregar este projeto: {loadError}</p><button type="button" onClick={()=>void load()} className="px-4 py-2 rounded-xl bg-[#A65A2A] text-white">Tentar novamente</button></div>
   if(!project)return <div><p>Projeto não encontrado.</p><Link to="/admin/projetos" className="text-[#A65A2A]">Voltar</Link></div>
 
+  const primaryCustomer=customers.find((item:any)=>item.id===project.customer_id)
+  const primaryCustomerName=project.customer_id
+    ? ([primaryCustomer?.first_name,primaryCustomer?.last_name].filter(Boolean).join(' ')||'Cliente vinculado')
+    : 'Não vinculado'
+  const additionalViewerNames=projectViewers.map((access:any)=>{
+    const client=customers.find((item:any)=>item.id===access.customer_id)
+    return [client?.first_name,client?.last_name].filter(Boolean).join(' ')||'Cliente cadastrado'
+  })
+
   return <div>
     <FilePreviewModal file={previewFile} onClose={()=>setPreviewFile(null)}/>
     {loadWarning&&<div role="alert" className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">{loadWarning} <button type="button" className="ml-2 underline" onClick={()=>void load()}>Tentar novamente</button></div>}
-    <Link to="/admin/projetos" className="inline-flex items-center min-h-10 text-sm text-gray-400 hover:text-white">← Voltar para projetos</Link>
+    <Link to="/admin/projetos" className="inline-flex min-h-8 items-center text-xs text-gray-400 hover:text-white">← Projetos</Link>
 
-    <div className="pm-surface p-5 flex flex-wrap justify-between gap-4 mt-3">
-      <div>
-        <h1 className="text-2xl font-bold">{project.title}</h1>
-        <p className="text-sm text-gray-500 mt-1">{rotulo(tipoProjeto,project.project_type)} · prioridade {rotulo(prioridade,project.priority)}</p>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <select value={project.status} onChange={e=>updateProject({status:e.target.value})} className="pm-control px-3">{projectStatuses.map(value=><option key={value} value={value}>{rotulo(statusProjeto,value)}</option>)}</select>
-        <select value={project.priority} onChange={e=>updateProject({priority:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10">{priorities.map(value=><option key={value} value={value}>{rotulo(prioridade,value)}</option>)}</select>
-        <div className="relative group">
-          <button type="button" className="min-h-10 px-3 rounded-xl border border-white/10 bg-white/[.04] text-gray-200 text-xs font-semibold hover:bg-white/[.08]">Exportar relatório ▾</button>
-          <div className="absolute right-0 top-full z-20 mt-1 hidden min-w-48 rounded-xl border border-white/10 bg-[#111114] p-1 shadow-xl group-hover:block group-focus-within:block">
-            <button type="button" onClick={()=>exportProjectReportSpreadsheet(project,team)} className="w-full rounded-lg px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/[.06]">Planilha (.xls)</button>
-            <button type="button" onClick={()=>printProjectReportPdf(project,team)} className="w-full rounded-lg px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/[.06]">Gerar PDF / Imprimir</button>
+    <section className="pm-surface relative z-20 mt-1 px-3 py-3 sm:px-4" aria-label="Resumo do projeto">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h1 className="min-w-0 text-xl font-bold leading-tight sm:text-2xl">{project.title}</h1>
+            <span className="shrink-0 rounded-md border border-white/10 bg-white/[.04] px-2 py-1 text-[10px] font-medium text-gray-400">{rotulo(tipoProjeto,project.project_type)}</span>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <label className="inline-flex items-center gap-1.5 text-[11px] text-gray-500">
+              <span>Andamento</span>
+              <select aria-label="Andamento do projeto" value={project.status} onChange={e=>void updateProject({status:e.target.value})}
+                className="h-8 max-w-[160px] rounded-lg border border-white/10 bg-[#171719] px-2 text-xs font-medium text-gray-100 focus-visible:outline-2 focus-visible:outline-[#A65A2A]">
+                {projectStatuses.map(value=><option key={value} value={value}>{rotulo(statusProjeto,value)}</option>)}
+              </select>
+            </label>
+            <label className="inline-flex items-center gap-1.5 text-[11px] text-gray-500">
+              <span>Prioridade</span>
+              <select aria-label="Prioridade do projeto" value={project.priority} onChange={e=>void updateProject({priority:e.target.value})}
+                className="h-8 max-w-[116px] rounded-lg border border-white/10 bg-[#171719] px-2 text-xs font-medium text-gray-100 focus-visible:outline-2 focus-visible:outline-[#A65A2A]">
+                {priorities.map(value=><option key={value} value={value}>{rotulo(prioridade,value)}</option>)}
+              </select>
+            </label>
+            {project.due_date&&<span className="text-[11px] text-gray-500">Entrega {new Date(project.due_date+'T12:00').toLocaleDateString('pt-BR')}</span>}
           </div>
         </div>
-        {user?.role==='admin'&&<button type="button" onClick={()=>void deleteProject()} className="min-h-10 px-3 rounded-xl border border-red-500/25 bg-red-500/10 text-red-300 text-xs font-semibold hover:bg-red-500/15">Excluir projeto</button>}
-      </div>
-    </div>
-
-    <section className="mt-3 pm-surface p-4" aria-label="Cliente vinculado ao projeto">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-semibold">Clientes com acesso ao projeto</h2>
-          <p className="text-xs text-gray-500 mt-1">
-            {project.project_type==='internal'
-              ? 'Projeto interno: não pode ser compartilhado com clientes. Para um trabalho contratado, crie um projeto de serviço ou site.'
-              : 'Defina um cliente principal e adicione outros visualizadores. Todos acompanham somente conteúdo liberado para clientes.'}
-          </p>
-        </div>
-        {project.customer_id&&project.project_type!=='internal'&&<Link to={'/admin/clientes/'+project.customer_id} className="text-xs text-[#F1C19D] hover:underline">Abrir cadastro do cliente ↗</Link>}
-      </div>
-      {project.project_type!=='internal'&&<div className="flex flex-col sm:flex-row gap-2 mt-3">
-        <select aria-label="Cliente principal do projeto" value={customerDraft} onChange={e=>setCustomerDraft(e.target.value)} disabled={savingCustomer}
-          className="min-h-11 flex-1 px-3 rounded-xl bg-black border border-white/10 disabled:opacity-50">
-          <option value="">Sem cliente vinculado</option>
-          {customers.map((client:any)=><option key={client.id} value={client.id} disabled={client.status!=='active'}>
-            {[client.first_name,client.last_name].filter(Boolean).join(' ')} — {client.email}{client.status!=='active'?' (conta inativa)':''}
-          </option>)}
-        </select>
-        <Button type="button" disabled={savingCustomer||(project.customer_id||'')===customerDraft} onClick={()=>void saveCustomerLink()}>
-          {savingCustomer?'Salvando...':project.customer_id?'Trocar cliente principal':'Vincular cliente principal'}
-        </Button>
-      </div>}
-      {project.project_type!=='internal'&&customers.length===0&&<p className="text-xs text-amber-300 mt-2">Não há clientes disponíveis ou não foi possível carregar a lista. Cadastre/ative o cliente na área de Clientes e tente novamente.</p>}
-      {project.project_type!=='internal'&&<div className="mt-4 pt-4 border-t border-white/10">
-        <h3 className="text-sm font-semibold">Visualizadores adicionais ({projectViewers.length})</h3>
-        <p className="text-xs text-gray-500 mt-1">Clientes extras podem visualizar o projeto e arquivos liberados. Apenas o cliente principal pode enviar arquivos e aprovar entregas.</p>
-        {projectViewers.length>0&&<div className="flex flex-col gap-2 mt-3">
-          {projectViewers.map((access:any)=>{
-            const client=customers.find((row:any)=>row.id===access.customer_id)
-            return <div key={access.customer_id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-white/[.035] border border-white/10">
-              <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{[client?.first_name,client?.last_name].filter(Boolean).join(' ')||'Cliente cadastrado'}</p>
-                <p className="text-xs text-gray-500 truncate">{client?.email||'Conta vinculada'}{client?.status!=='active'?' · Acesso suspenso':''}</p>
-              </div>
-              <button type="button" disabled={removingViewer===access.customer_id} onClick={()=>void removeViewer(access.customer_id)}
-                className="min-h-9 px-3 rounded-lg border border-red-500/20 text-red-300 text-xs disabled:opacity-50">Remover</button>
-            </div>
-          })}
-        </div>}
-        <div className="flex flex-col sm:flex-row gap-2 mt-3">
-          <select aria-label="Adicionar outro cliente ao projeto" value={viewerDraft} onChange={e=>setViewerDraft(e.target.value)}
-            disabled={savingViewer||!project.customer_id}
-            className="min-h-11 flex-1 px-3 rounded-xl bg-black border border-white/10 disabled:opacity-50">
-            <option value="">Selecione outro cliente</option>
-            {customers.filter((client:any)=>client.status==='active'&&client.id!==project.customer_id&&!projectViewers.some((a:any)=>a.customer_id===client.id))
-              .map((client:any)=><option key={client.id} value={client.id}>
-                {[client.first_name,client.last_name].filter(Boolean).join(' ')} — {client.email}
-              </option>)}
-          </select>
-          <Button type="button" disabled={!viewerDraft||savingViewer||!project.customer_id} onClick={()=>void addViewer()}>
-            {savingViewer?'Adicionando...':'+ Adicionar cliente'}
-          </Button>
-        </div>
-        {!project.customer_id&&<p className="text-xs text-amber-300 mt-2">Vincule primeiro o cliente principal para poder adicionar mais pessoas.</p>}
-      </div>}
-      {project.customer_id&&project.project_type!=='internal'&&<p className="text-xs text-emerald-300 mt-3">O cliente principal e os visualizadores ativos podem acessar este projeto em Minha Conta → Projetos.</p>}
-    </section>
-
-    <div className="mt-3 pm-surface px-4 py-3">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div className="flex items-center gap-3 min-w-[150px]">
-          <span className="text-xs text-gray-400">Progresso</span>
-          <b className="text-sm">{progress(project)}%</b>
-        </div>
-        <div className="h-1.5 bg-white/[.08] rounded-full overflow-hidden flex-1 min-w-[110px]" role="progressbar" aria-label="Progresso do projeto" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress(project)}>
-          <div className="h-full bg-[#A65A2A] rounded-full transition-[width] duration-300" style={{width:progress(project)+'%'}}/>
-        </div>
-        <details className="text-xs text-gray-400">
-          <summary className="cursor-pointer select-none hover:text-white">Detalhes do projeto</summary>
-          <div className="mt-3 max-w-2xl space-y-2">
-            <p className="whitespace-pre-wrap">{project.description||'Sem descrição.'}</p>
-            <p>Início: {project.start_date?new Date(project.start_date+'T12:00').toLocaleDateString('pt-BR'):'—'} · Prazo: {project.due_date?new Date(project.due_date+'T12:00').toLocaleDateString('pt-BR'):'—'}</p>
-            {project.drive_folder_url&&<a href={project.drive_folder_url} target="_blank" rel="noreferrer" className="text-[#A65A2A]">Abrir pasta no Drive ↗</a>}
+        <details className="group relative shrink-0 self-start">
+          <summary className="flex min-h-9 cursor-pointer list-none items-center gap-2 rounded-lg border border-white/15 bg-white/[.04] px-3 text-xs font-semibold text-gray-200 hover:bg-white/[.08] focus-visible:outline-2 focus-visible:outline-[#A65A2A]">
+            <span aria-hidden="true">⋯</span> Ações <span aria-hidden="true" className="text-gray-500 transition-transform group-open:rotate-180">▾</span>
+          </summary>
+          <div className="absolute right-0 top-full z-30 mt-1 w-56 rounded-xl border border-white/15 bg-[#111114] p-1.5 shadow-2xl">
+            <button type="button" onClick={()=>exportProjectReportSpreadsheet(project,team)} className="w-full rounded-lg px-3 py-2.5 text-left text-xs text-gray-200 hover:bg-white/[.07]">Exportar planilha (.xls)</button>
+            <button type="button" onClick={()=>printProjectReportPdf(project,team)} className="w-full rounded-lg px-3 py-2.5 text-left text-xs text-gray-200 hover:bg-white/[.07]">Gerar relatório PDF</button>
+            {user?.role==='admin'&&<>
+              <div className="my-1 border-t border-white/10"/>
+              <button type="button" onClick={()=>void deleteProject()} className="w-full rounded-lg px-3 py-2.5 text-left text-xs text-red-300 hover:bg-red-500/10">Excluir projeto</button>
+            </>}
           </div>
         </details>
       </div>
-    </div>
 
-    <div className="mt-3 flex gap-2 overflow-x-auto pb-1"><button type="button" onClick={()=>setProjectTab('execucao')} className={'shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border '+(projectTab==='execucao'?'bg-[#A65A2A]/15 text-[#F1C19D] border-[#A65A2A]/30':'bg-white/[.03] text-gray-400 border-white/10')}>Execução</button><button type="button" onClick={()=>setProjectTab('arquivos')} className={'shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border '+(projectTab==='arquivos'?'bg-[#A65A2A]/15 text-[#F1C19D] border-[#A65A2A]/30':'bg-white/[.03] text-gray-400 border-white/10')}>Arquivos <span className="ml-1 text-[10px] opacity-70">({files.length})</span></button><Link to="/admin/arquivos" className="shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border border-white/10 text-gray-400 flex items-center">Central de Arquivos ↗</Link></div>
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-white/[.07] pt-3">
+        <span className="shrink-0 text-[11px] text-gray-400">Progresso <strong className="ml-1 text-xs text-white">{progress(project)}%</strong></span>
+        <div className="h-1.5 min-w-[105px] flex-1 overflow-hidden rounded-full bg-white/[.08]" role="progressbar" aria-label="Progresso do projeto" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress(project)}>
+          <div className="h-full rounded-full bg-[#A65A2A] transition-[width] duration-300" style={{width:progress(project)+'%'}}/>
+        </div>
+        <details className="group relative shrink-0 text-xs text-gray-400">
+          <summary className="flex cursor-pointer list-none items-center gap-1 rounded-md px-1 py-1 hover:text-white focus-visible:outline-2 focus-visible:outline-[#A65A2A]">
+            Informações <span aria-hidden="true" className="transition-transform group-open:rotate-180">▾</span>
+          </summary>
+          <div className="absolute right-0 top-full z-30 mt-2 w-[min(22rem,82vw)] space-y-2 rounded-xl border border-white/15 bg-[#111114] p-4 text-xs leading-5 text-gray-300 shadow-2xl">
+            <p className="whitespace-pre-wrap break-words">{project.description||'Sem descrição.'}</p>
+            <p>Início: {project.start_date?new Date(project.start_date+'T12:00').toLocaleDateString('pt-BR'):'—'} · Prazo: {project.due_date?new Date(project.due_date+'T12:00').toLocaleDateString('pt-BR'):'—'}</p>
+            {project.drive_folder_url&&<a href={project.drive_folder_url} target="_blank" rel="noopener noreferrer" className="inline-block text-[#F1C19D] hover:underline">Abrir pasta no Drive ↗</a>}
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section className="pm-surface mt-2 px-3 py-2 sm:px-4" aria-label="Clientes com acesso ao projeto">
+      {project.project_type==='internal'
+        ? <div className="flex min-h-9 flex-wrap items-center gap-3 text-xs">
+            <span className="font-semibold text-gray-200">Acessos</span>
+            <span className="rounded-lg bg-white/[.05] px-2.5 py-1.5 text-gray-400">Somente equipe · projeto interno</span>
+          </div>
+        : <details className="group">
+            <summary className="flex min-h-9 cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-2 focus-visible:outline-2 focus-visible:outline-[#A65A2A]">
+              <span className="shrink-0 text-xs font-semibold text-gray-200">Acessos</span>
+              <span className="min-w-0 max-w-full rounded-lg border border-white/10 bg-white/[.035] px-2.5 py-1.5 text-xs text-gray-200">
+                <span className="mr-1.5 text-[10px] text-gray-500">Principal</span>
+                <span className="font-medium">{primaryCustomerName}</span>
+              </span>
+              {projectViewers.length>0&&<span className="min-w-0 max-w-full truncate rounded-lg border border-white/10 bg-white/[.035] px-2.5 py-1.5 text-xs text-gray-300" title={additionalViewerNames.join(', ')}>
+                <span className="mr-1.5 text-[10px] text-gray-500">+{projectViewers.length} acesso{projectViewers.length===1?'':'s'}</span>
+                {additionalViewerNames.slice(0,2).join(', ')}{projectViewers.length>2?'…':''}
+              </span>}
+              <span className="ml-auto inline-flex shrink-0 items-center gap-2 text-xs font-medium text-[#F1C19D]">
+                Gerenciar <span aria-hidden="true" className="transition-transform group-open:rotate-180">▾</span>
+              </span>
+            </summary>
+            <div className="mt-3 grid grid-cols-1 gap-3 border-t border-white/[.07] pt-3 lg:grid-cols-2">
+              <div className="min-w-0 rounded-xl border border-white/[.07] bg-black/15 p-3">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-xs font-semibold text-white">Cliente principal</h2>
+                  {project.customer_id&&<Link to={'/admin/clientes/'+project.customer_id} className="text-[11px] text-[#F1C19D] hover:underline">Ver cadastro ↗</Link>}
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row lg:flex-col xl:flex-row">
+                  <select aria-label="Cliente principal do projeto" value={customerDraft} onChange={e=>setCustomerDraft(e.target.value)} disabled={savingCustomer}
+                    className="min-h-10 min-w-0 flex-1 rounded-lg border border-white/10 bg-black px-3 text-xs text-gray-100 disabled:opacity-50">
+                    <option value="">Sem cliente vinculado</option>
+                    {customers.map((client:any)=><option key={client.id} value={client.id} disabled={client.status!=='active'}>
+                      {[client.first_name,client.last_name].filter(Boolean).join(' ')} — {client.email}{client.status!=='active'?' (conta inativa)':''}
+                    </option>)}
+                  </select>
+                  <Button type="button" disabled={savingCustomer||(project.customer_id||'')===customerDraft} onClick={()=>void saveCustomerLink()}>
+                    {savingCustomer?'Salvando...':project.customer_id?'Trocar':'Vincular'}
+                  </Button>
+                </div>
+                {customers.length===0&&<p className="mt-2 text-xs text-amber-300">Nenhum cliente ativo disponível. Cadastre ou ative um cliente primeiro.</p>}
+                <p className="mt-2 text-[11px] leading-4 text-gray-500">Somente o cliente principal pode enviar arquivos e aprovar entregas.</p>
+              </div>
+
+              <div className="min-w-0 rounded-xl border border-white/[.07] bg-black/15 p-3">
+                <h2 className="mb-2 text-xs font-semibold text-white">Visualizadores adicionais ({projectViewers.length})</h2>
+                {projectViewers.length>0&&<div className="mb-2 max-h-36 space-y-1.5 overflow-y-auto">
+                  {projectViewers.map((access:any)=>{
+                    const client=customers.find((row:any)=>row.id===access.customer_id)
+                    return <div key={access.customer_id} className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-white/[.07] bg-white/[.025] px-2.5 py-1.5">
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-medium text-white">{[client?.first_name,client?.last_name].filter(Boolean).join(' ')||'Cliente cadastrado'}</p>
+                        <p className="truncate text-[10px] text-gray-500">{client?.email||'Conta vinculada'}{client?.status!=='active'?' · Acesso suspenso':''}</p>
+                      </div>
+                      <button type="button" disabled={removingViewer===access.customer_id} onClick={()=>void removeViewer(access.customer_id)}
+                        className="min-h-8 shrink-0 rounded-lg border border-red-500/20 px-2.5 text-[11px] text-red-300 hover:bg-red-500/10 disabled:opacity-50">Remover</button>
+                    </div>
+                  })}
+                </div>}
+                <div className="flex flex-col gap-2 sm:flex-row lg:flex-col xl:flex-row">
+                  <select aria-label="Adicionar outro cliente ao projeto" value={viewerDraft} onChange={e=>setViewerDraft(e.target.value)}
+                    disabled={savingViewer||!project.customer_id}
+                    className="min-h-10 min-w-0 flex-1 rounded-lg border border-white/10 bg-black px-3 text-xs text-gray-100 disabled:opacity-50">
+                    <option value="">Selecione outro cliente</option>
+                    {customers.filter((client:any)=>client.status==='active'&&client.id!==project.customer_id&&!projectViewers.some((a:any)=>a.customer_id===client.id))
+                      .map((client:any)=><option key={client.id} value={client.id}>
+                        {[client.first_name,client.last_name].filter(Boolean).join(' ')} — {client.email}
+                      </option>)}
+                  </select>
+                  <Button type="button" disabled={!viewerDraft||savingViewer||!project.customer_id} onClick={()=>void addViewer()}>
+                    {savingViewer?'Adicionando...':'+ Adicionar'}
+                  </Button>
+                </div>
+                {!project.customer_id&&<p className="mt-2 text-[11px] text-amber-300">Vincule um cliente principal para adicionar visualizadores.</p>}
+              </div>
+              <p className="text-[11px] text-gray-500 lg:col-span-2">Os clientes visualizam somente conteúdo liberado. As permissões são gerenciadas por projeto.</p>
+            </div>
+          </details>}
+    </section>
+
+    <div className="mt-2 flex gap-2 overflow-x-auto pb-1" aria-label="Seções do projeto"><button type="button" onClick={()=>setProjectTab('execucao')} className={'shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border '+(projectTab==='execucao'?'bg-[#A65A2A]/15 text-[#F1C19D] border-[#A65A2A]/30':'bg-white/[.03] text-gray-400 border-white/10')}>Execução</button><button type="button" onClick={()=>setProjectTab('arquivos')} className={'shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border '+(projectTab==='arquivos'?'bg-[#A65A2A]/15 text-[#F1C19D] border-[#A65A2A]/30':'bg-white/[.03] text-gray-400 border-white/10')}>Arquivos <span className="ml-1 text-[10px] opacity-70">({files.length})</span></button><Link to="/admin/arquivos" className="shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border border-white/10 text-gray-400 flex items-center">Central de Arquivos ↗</Link></div>
 
     {projectTab==='arquivos'&&<div>
     <section className="mt-8">
