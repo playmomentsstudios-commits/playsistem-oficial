@@ -3,6 +3,12 @@ export interface PwaPrompt extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
 }
 
+export function isStandaloneApp(): boolean {
+  if (typeof window === 'undefined') return false
+  return window.matchMedia('(display-mode: standalone)').matches
+    || (navigator as Navigator & { standalone?: boolean }).standalone === true
+}
+
 let pendingPrompt: PwaPrompt | null = null
 export const INSTALL_PROMPT_CHANGED = 'sagamente:install-prompt'
 export function getInstallPrompt(): PwaPrompt | null { return pendingPrompt }

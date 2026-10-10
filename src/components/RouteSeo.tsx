@@ -34,7 +34,7 @@ export function RouteSeo(){
   return ()=>{live=false}
  },[pathname])
  const privateRoute=/^\/(admin|app)(\/|$)/.test(pathname)
- const utilityRoute=['/login','/cadastro','/email-confirmado','/esqueci-senha','/redefinir-senha','/carrinho','/comunidade'].includes(pathname)||pathname.startsWith('/certificados/')
+ const utilityRoute=['/abrir-app','/login','/cadastro','/email-confirmado','/esqueci-senha','/redefinir-senha','/carrinho','/comunidade'].includes(pathname)||pathname.startsWith('/certificados/')
  const page=pages[pathname]
  const info=remote?.path===pathname?remote:null
  useSeo({

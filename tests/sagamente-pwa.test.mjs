@@ -6,7 +6,7 @@ const manifest = JSON.parse(read('public/manifest.webmanifest'))
 
 test('PWA manifest contains required app metadata and official PNG sizes', () => {
   assert.equal(manifest.id, '/')
-  assert.equal(manifest.start_url, '/')
+  assert.equal(manifest.start_url, '/abrir-app')
   assert.equal(manifest.display, 'standalone')
   assert.equal(manifest.short_name, 'Sagamente')
   for (const size of [192, 512]) {

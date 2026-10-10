@@ -86,7 +86,7 @@ export function serveSeoRobots(request){
  const origin=new URL(request.url).origin
  const body=[
   'User-agent: *','Allow: /',
-  'Disallow: /admin/','Disallow: /app/','Disallow: /login',
+  'Disallow: /admin/','Disallow: /app/','Disallow: /abrir-app','Disallow: /login',
   'Disallow: /cadastro','Disallow: /esqueci-senha','Disallow: /redefinir-senha',
   'Disallow: /carrinho','Disallow: /email-confirmado',
   'Sitemap: '+origin+'/sitemap.xml',''
@@ -157,7 +157,7 @@ export function rewriteSeoHtml(response,row,request){
 }
 
 export function isPrivateSeoRoute(path){
- return /^\/(admin|app)(\/|$)/.test(path)
+ return /^\/(admin|app|abrir-app)(\/|$)/.test(path)
   || /^\/(login|cadastro|email-confirmado|esqueci-senha|redefinir-senha|carrinho)(\/|$)/.test(path)
 }
 export function preventIndexing(response){

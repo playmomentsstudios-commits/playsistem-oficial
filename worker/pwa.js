@@ -45,13 +45,13 @@ function manifestFrom(settings) {
     id: '/', name: name(settings.name, 'Sagamente', 80),
     short_name: name(settings.short_name, 'Sagamente', 24),
     description: name(settings.description, 'Tecnologia, criação e conhecimento.', 250),
-    lang: 'pt-BR', display: 'standalone', scope: '/', start_url: '/',
+    lang: 'pt-BR', display: 'standalone', scope: '/', start_url: '/abrir-app',
     theme_color: color(settings.theme_color, '#0a0a0b'),
     background_color: color(settings.background_color, '#0a0a0b'),
     categories: ['business', 'productivity', 'education'],
     icons,
     shortcuts: [
-      { name: 'Minha conta', url: '/app/dashboard' },
+      { name: 'Minha área', url: '/abrir-app' },
       { name: 'Academia', url: '/academia' }
     ]
   }
