@@ -1,4 +1,5 @@
 import { useEffect,useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { Button } from '../../components/ui/Button'
@@ -98,6 +99,13 @@ export function ProfilePage(){
  if(fetching)return <div className="py-16 text-center text-sm text-gray-500">Carregando cadastro...</div>
  return <div className="max-w-3xl">
    <CompactPageHeader title="Meu Perfil" description="Dados pessoais, contato e endereço." />
+   <div className="mt-3 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#A65A2A]/20 bg-[#A65A2A]/[.05] px-4 py-3">
+     <div>
+       <p className="text-sm font-semibold">Avisos pelo WhatsApp</p>
+       <p className="text-xs text-gray-400 mt-1">A autorização é separada das notificações Push. Verifique seu telefone antes de ativar.</p>
+     </div>
+     <Link to="/app/configuracoes#whatsapp" className="min-h-10 inline-flex items-center justify-center rounded-xl border border-[#A65A2A]/30 px-4 text-xs font-semibold text-[#DFA269]">Configurar WhatsApp</Link>
+   </div>
    <form onSubmit={save} className="space-y-3">
     <section className="pm-compact-card">
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
