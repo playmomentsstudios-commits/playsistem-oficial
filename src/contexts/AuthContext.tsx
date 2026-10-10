@@ -8,6 +8,7 @@ import {
 } from 'react'
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { pushNotificationApi } from '../api/pushNotifications'
 import type {
   User,
   UserRole,
@@ -191,6 +192,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session])
 
   const logout = useCallback(async () => {
+    // Prevent cross-account alerts on shared computers and phones.
+    await pushNotificationApi.unregisterCurrentDevice().catch(()=>undefined)
     const { error } = await supabase.auth.signOut()
     if (error) throw new Error(error.message)
     setSession(null)

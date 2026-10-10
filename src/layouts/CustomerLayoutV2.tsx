@@ -1,4 +1,5 @@
 import { BrandImage } from '../components/BrandImage'
+import { PushNotificationSettings } from '../components/ui/PushNotificationSettings'
 import { Component, type ErrorInfo, type ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -202,6 +203,7 @@ export function CustomerLayoutV2() {
           {accountMenuOpen&&<><button aria-label="Fechar menu" className="fixed inset-0 z-30 cursor-default" onClick={()=>setAccountMenuOpen(false)}/><div role="menu" className="absolute right-0 top-12 z-40 w-52 p-1.5 rounded-2xl border border-white/[.08] bg-[#111114] shadow-2xl">
             <Link to="/app/perfil" onClick={()=>setAccountMenuOpen(false)} className="flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#aaaab4] hover:text-white hover:bg-white/[.05]"><MenuIcon name="user" size={16}/>Perfil</Link>
             <Link to="/app/configuracoes" onClick={()=>setAccountMenuOpen(false)} className="flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#aaaab4] hover:text-white hover:bg-white/[.05]"><MenuIcon name="settings" size={16}/>Configurações</Link>
+            <div className="p-1"><PushNotificationSettings compact/></div>
             <div className="my-1 border-t border-white/[.06]"/>
             <button onClick={handleLogout} className="w-full flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#DFA269] hover:bg-[#A65A2A]/10"><MenuIcon name="logout" size={16}/>Sair</button>
           </div></>}
@@ -212,7 +214,7 @@ export function CustomerLayoutV2() {
           <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
         </button>
         <BrandImage variant="compact" alt="Sagamente" className="h-6"/>
-        <div className="w-[22px]"/>
+        <PushNotificationSettings iconOnly/>
       </div>
 
       <main className="pm-workspace-main flex-1 overflow-auto p-3 sm:p-4 lg:p-5">

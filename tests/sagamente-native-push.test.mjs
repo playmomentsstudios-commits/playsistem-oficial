@@ -1,0 +1,67 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+const read=(p)=>readFileSync(new URL('../'+p,import.meta.url),'utf8')
+const sw=read('public/sw.js')
+const ui=read('src/components/ui/PushNotificationSettings.tsx')
+const api=read('src/api/pushNotifications.ts')
+const control=read('supabase/functions/push-control/index.ts')
+const dispatcher=read('supabase/functions/push-dispatch/index.ts')
+const sql=read('supabase/migrations/20261010040000_pwa_push_v1.sql')
+
+test('PWA handles push only through the Service Worker, with same-origin route filtering',()=>{
+  assert.match(sw,/addEventListener\('push'/)
+  assert.match(sw,/showNotification/)
+  assert.match(sw,/addEventListener\('notificationclick'/)
+  assert.match(sw,/safeDestination/)
+  assert.match(sw,/\/\(\?:app\|admin\)/)
+  assert.doesNotMatch(sw,/cache\.put\(request.*notification/)
+})
+test('Browser opt-in requests permission only after user activation and unregisters on logout',()=>{
+  assert.match(api,/Notification\.requestPermission\(\)/)
+  assert.match(api,/pushManager\.subscribe/)
+  assert.match(api,/userVisibleOnly:true/)
+  assert.match(api,/action.*subscribe|call\('subscribe'/)
+  assert.match(api,/call\('unsubscribe'/)
+  assert.match(read('src/contexts/AuthContext.tsx'),/pushNotificationApi\.unregisterCurrentDevice\(\)/)
+})
+test('Private VAPID keys are server-only and subscriptions are inaccessible to browser RLS',()=>{
+  assert.match(sql,/create schema if not exists push_private/)
+  assert.match(sql,/revoke all on push_private\.config/)
+  assert.match(sql,/grant execute on function public\.push_internal_config\(\) to service_role/)
+  assert.match(sql,/alter table public\.push_subscriptions enable row level security/)
+  assert.match(sql,/revoke all on public\.push_subscriptions from anon,authenticated/)
+  assert.match(control,/requireUser\(req\)/)
+  assert.match(control,/validEndpoint/)
+  assert.match(control,/webpush\.generateVAPIDKeys/)
+  assert.doesNotMatch(api,/privateKey|vapid_private|dispatch_key/)
+})
+test('Database queues original in-app alerts and retries through pg_cron and pg_net',()=>{
+  assert.match(sql,/notifications_push_queue after insert on public\.notifications/)
+  assert.match(sql,/net\.http_post/)
+  assert.match(sql,/cron\.schedule/)
+  assert.match(sql,/for update skip locked/)
+  assert.match(sql,/notifications n join public\.push_delivery_queue q/)
+})
+test('Push dispatch verifies shared secret, permissions, active recipient and visibility',()=>{
+  assert.match(dispatcher,/equalSecret/)
+  assert.match(dispatcher,/x-sagamente-dispatch/)
+  assert.match(dispatcher,/project\.data\.project_type==="internal"/)
+  assert.match(dispatcher,/file\.data\?\.client_visible/)
+  assert.match(dispatcher,/project_customer_access/)
+  assert.match(dispatcher,/notify_push/)
+  assert.match(dispatcher,/safeLink/)
+  assert.match(dispatcher,/setVapidDetails/)
+  assert.match(dispatcher,/sendNotification/)
+  assert.match(dispatcher,/status===404\|\|status===410/)
+})
+test('Native alerts can be configured on phones, customers, administrators and collaborators',()=>{
+  assert.match(ui,/Ativar notificações/)
+  assert.match(ui,/Enviar teste/)
+  assert.match(ui,/categories\.map|sections\.map/)
+  assert.match(ui,/permission==='denied'/)
+  assert.match(ui,/createPortal/)
+  for(const p of ['src/layouts/AdminLayout.tsx','src/layouts/CustomerLayoutV2.tsx','src/pages/customer/CustomerSettings.tsx']) {
+    assert.match(read(p),/PushNotificationSettings/,p)
+  }
+})
