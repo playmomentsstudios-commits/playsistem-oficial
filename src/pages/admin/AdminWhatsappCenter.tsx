@@ -3,8 +3,14 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { settingsApi, type AppSettings } from '../../api/settings'
 import { useToast } from '../../contexts/ToastContext'
+import { WhatsappQrBridgePanel } from '../../components/admin/WhatsappQrBridgePanel'
 
-type WAState='ready_manual'|'missing_phone'|'historical'|'opened_manual'|'reported_sent'
+type WAState='ready_manual'|'missing_phone'|'historical'|'opened_manual'|'reported_sent'|'sending_auto'|'sent_auto'|'failed_auto'
+type WAAttempt={
+  id:string;outbox_id:string;destination_phone:string;test_mode:boolean;
+  status:'claimed'|'sent'|'failed';provider_message_id:string|null;
+  error_reason:string|null;claimed_at:string;completed_at:string|null
+}
 type WARecord={
   id:string
   notification_id:string
@@ -30,9 +36,13 @@ type Summary={
   provider_sent_today:number
   provider_delivered_today:number
   total_records:number
+  bridge_attempts_today:number
+  bridge_sent_today:number
+  bridge_failed_today:number
 }
 const EMPTY:Summary={prepared_today:0,historical_total:0,missing_phone_today:0,opened_today:0,
-  reported_today:0,provider_sent_today:0,provider_delivered_today:0,total_records:0}
+  reported_today:0,provider_sent_today:0,provider_delivered_today:0,total_records:0,
+  bridge_attempts_today:0,bridge_sent_today:0,bridge_failed_today:0}
 const RULES=[
   ['wa_prepare_project_status','Mudança de status ou prazo do projeto'],
   ['wa_prepare_task_status','Mudança de status de tarefa visível'],
@@ -47,6 +57,9 @@ const STATUS:Record<WAState,{label:string;tone:string}>={
   historical:{label:'Histórico · não enviado',tone:'text-gray-300 bg-white/5'},
   opened_manual:{label:'WhatsApp aberto',tone:'text-blue-200 bg-blue-500/10'},
   reported_sent:{label:'Envio declarado · não verificado',tone:'text-emerald-200 bg-emerald-500/10'},
+  sending_auto:{label:'Tentativa em curso / incerta',tone:'text-blue-200 bg-blue-500/10'},
+  sent_auto:{label:'Aceito pelo dispositivo · entrega não verificada',tone:'text-emerald-200 bg-emerald-500/10'},
+  failed_auto:{label:'Falha no envio automático',tone:'text-red-200 bg-red-500/10'},
 }
 const EVENT:Record<string,string>={
   project_status:'Status do projeto',project_updated:'Prazo do projeto',project_task:'Tarefa',
@@ -84,6 +97,7 @@ export function AdminWhatsappCenter(){
   const toast=useToast()
   const [settings,setSettings]=useState<AppSettings|null>(null)
   const [rows,setRows]=useState<WARecord[]>([])
+  const [attempts,setAttempts]=useState<WAAttempt[]>([])
   const [summary,setSummary]=useState<Summary>(EMPTY)
   const [loading,setLoading]=useState(true)
   const [saving,setSaving]=useState(false)
@@ -96,15 +110,20 @@ export function AdminWhatsappCenter(){
   async function load(){
     setError('')
     try{
-      const [cfg,list,daily]=await Promise.all([
+      const [cfg,list,daily,attemptRows]=await Promise.all([
         settingsApi.appSettings(),
         supabase.from('whatsapp_message_outbox')
           .select('id,notification_id,recipient_name,destination_phone,recipient_user_id,event_type,title,message_body,target_link,status,source,created_at,opened_at,reported_at')
           .order('created_at',{ascending:false}).limit(300),
-        supabase.rpc('wa_daily_dashboard')
+        supabase.rpc('wa_daily_dashboard'),
+        supabase.from('whatsapp_bridge_attempts')
+          .select('id,outbox_id,destination_phone,test_mode,status,provider_message_id,error_reason,claimed_at,completed_at')
+          .order('claimed_at',{ascending:false}).limit(300),
       ])
       if(list.error)throw list.error
       if(daily.error)throw daily.error
+      if(attemptRows.error)throw attemptRows.error
+      setAttempts((attemptRows.data||[]) as WAAttempt[])
       setSettings(cfg)
       setRows((list.data||[]) as WARecord[])
       setSummary({...EMPTY,...(daily.data&&typeof daily.data==='object'?daily.data as Partial<Summary>:{})})
@@ -113,6 +132,7 @@ export function AdminWhatsappCenter(){
     }finally{setLoading(false)}
   }
   useEffect(()=>{void load()},[])
+  const attemptByOutbox=useMemo(()=>new Map(attempts.map(a=>[a.outbox_id,a])),[attempts])
   const filtered=useMemo(()=>rows.filter(r=>{
     if(filter!=='all'&&r.status!==filter)return false
     const s=search.trim().toLowerCase()
@@ -137,7 +157,7 @@ export function AdminWhatsappCenter(){
         wa_prepare_file_review:settings.wa_prepare_file_review,
         wa_prepare_priority_events:settings.wa_prepare_priority_events,
       })
-      toast('Configurações salvas. O canal WhatsApp continua manual e gratuito.','success')
+      toast('Preferências salvas. A conexão experimental é controlada no painel de QR Code.','success')
       await load()
     }catch(err:any){toast(err?.message||'Não foi possível salvar as configurações.','error')}
     finally{setSaving(false)}
@@ -150,7 +170,7 @@ export function AdminWhatsappCenter(){
     await load()
   }
   function openWhatsApp(item:WARecord){
-    if(!item.destination_phone||item.status==='historical'||item.status==='missing_phone')return
+    if(!item.destination_phone||['historical','missing_phone','sending_auto','sent_auto'].includes(item.status))return
     const destination=item.destination_phone.replace(/\D/g,'')
     if(!/^55\d{10,11}$/.test(destination)){
       toast('Número do destinatário inválido. Atualize o cadastro.','error')
@@ -186,20 +206,23 @@ export function AdminWhatsappCenter(){
     </header>
 
     <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[.04] p-4 text-sm text-amber-100">
-      <strong>WhatsApp automático desativado · R$ 0,00 em tarifas.</strong>
-      <p className="mt-1 text-xs text-amber-100/80">A Sagamente ainda não está conectada a um provedor oficial de envio e confirmação de entrega. Abrir o WhatsApp não significa enviar. Os indicadores de envio comprovado permanecem em zero.</p>
+      <strong>Piloto experimental por QR Code · sem tarifa de API.</strong>
+      <p className="mt-1 text-xs text-amber-100/80">A ponte local é não oficial e pode causar bloqueio da conta. Sem provedor conectado à API oficial da Meta. Uma tentativa aceita pelo dispositivo não comprova entrega nem leitura. Nada é enviado automaticamente antes da conexão e da ativação explícita.</p>
     </div>
+    <WhatsappQrBridgePanel/>
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <Metric label="Avisos preparados hoje" value={summary.prepared_today} description="Criados na fila manual, não enviados"/>
       <Metric label="Conversas abertas hoje" value={summary.opened_today} description="Abertura registrada, envio desconhecido"/>
       <Metric label="Enviados informados hoje" value={summary.reported_today} description="Declaração manual, sem verificação"/>
-      <Metric label="Entregas confirmadas hoje" value={summary.provider_delivered_today} description="Sem provedor conectado · zero confirmado"/>
+      <Metric label="Aceitas no dispositivo hoje" value={summary.bridge_sent_today} description="Resposta da biblioteca · entrega não comprovada"/>
     </div>
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-white/10 bg-white/[.02] p-3 text-xs text-gray-400">
       <span><b className="text-white">{summary.missing_phone_today}</b> sem número hoje</span>
       <span><b className="text-white">{summary.historical_total}</b> eventos antigos identificados</span>
       <span><b className="text-white">{summary.total_records}</b> registros totais</span>
-      <span><b className="text-white">{summary.provider_sent_today}</b> envios comprovados pela API hoje</span>
+      <span><b className="text-white">{summary.bridge_attempts_today}</b> tentativas automáticas hoje</span>
+      <span><b className="text-white">{summary.bridge_failed_today}</b> falhas automáticas hoje</span>
+      <span><b className="text-white">{summary.provider_delivered_today}</b> entregas comprovadas hoje</span>
     </div>
 
     <div className="flex flex-wrap items-center gap-2 border-b border-white/10">
@@ -211,7 +234,7 @@ export function AdminWhatsappCenter(){
       view==='settings'&&settings?<div className="space-y-5">
         <section className="rounded-2xl border border-white/10 bg-[#141416] p-5">
           <h2 className="font-semibold">Canal e custo</h2>
-          <p className="mt-1 text-xs text-gray-500">Modo disponível: manual. Envio automático e cobrança estão bloqueados.</p>
+          <p className="mt-1 text-xs text-gray-500">Envio manual continua disponível. O piloto automatizado por QR Code é controlado na seção de conexão e começa desativado.</p>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <label className="block text-xs text-gray-400">WhatsApp administrativo (DDI + DDD + número)
               <input type="tel" inputMode="numeric" value={settings.priority_whatsapp_phone||''}
@@ -220,8 +243,8 @@ export function AdminWhatsappCenter(){
             </label>
             <div className="rounded-xl border border-white/10 bg-black/30 p-3">
               <p className="text-xs text-gray-400">Modo de envio</p>
-              <p className="mt-2 text-sm font-semibold text-white">Manual · WhatsApp por link</p>
-              <p className="mt-1 text-[11px] text-gray-500">Não é um serviço de envio automático. Não gera custos de API.</p>
+              <p className="mt-2 text-sm font-semibold text-white">Manual + piloto local por QR Code</p>
+              <p className="mt-1 text-[11px] text-gray-500">O piloto exige Node ligado e ativação explícita. Biblioteca não oficial, risco de bloqueio.</p>
             </div>
             <label className="block text-xs text-gray-400">Teto diário de avisos administrativos prioritários (0–10)
               <input type="number" min={0} max={10} step={1} value={settings.priority_daily_limit}
@@ -236,7 +259,7 @@ export function AdminWhatsappCenter(){
           </div>
         </section>
         <section className="rounded-2xl border border-white/10 bg-[#141416] p-5">
-          <h2 className="font-semibold">Eventos que entram na fila manual</h2>
+          <h2 className="font-semibold">Eventos que entram na fila de preparo</h2>
           <p className="mt-1 text-xs text-gray-500">Desativar uma categoria impede novos preparos. Não altera notificações internas nem apaga histórico.</p>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {RULES.map(([key,label])=><label key={key} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-xs text-gray-300">
@@ -274,11 +297,22 @@ export function AdminWhatsappCenter(){
                 <p className="mt-1 text-xs text-gray-400">{item.destination_phone?('+'+item.destination_phone):'Telefone não cadastrado ou inválido'} · {EVENT[item.event_type]||item.event_type}</p>
                 <p className="mt-1 text-[11px] text-gray-600">{localDate(item.created_at)} · {item.source==='historical'?'Importado para auditoria':'Gerado pelo sistema'}</p>
               </div>
-              {item.status!=='historical'&&item.status!=='missing_phone'&&<div className="flex flex-wrap gap-2">
+              {!['historical','missing_phone','sending_auto','sent_auto'].includes(item.status)&&<div className="flex flex-wrap gap-2">
                 <button onClick={()=>openWhatsApp(item)} disabled={busy===item.id} className="min-h-9 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 text-xs text-emerald-200 disabled:opacity-50">Abrir WhatsApp</button>
                 {item.status==='opened_manual'&&<button onClick={()=>void reportSent(item)} disabled={busy===item.id} className="min-h-9 rounded-lg border border-white/15 px-3 text-xs text-gray-200 disabled:opacity-50">Informar envio manual</button>}
               </div>}
             </div>
+            {attemptByOutbox.get(item.id)&&<div className="mt-3 rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-gray-300">
+              <p className="font-semibold">Registro da tentativa automática</p>
+              <p className="mt-1">Número de envio real: <strong className="text-white">+{attemptByOutbox.get(item.id)!.destination_phone}</strong>
+                {attemptByOutbox.get(item.id)!.test_mode&&<span className="ml-2 text-amber-200">(PILOTO · não enviado ao número do cliente)</span>}
+              </p>
+              <p className="mt-1">Número original da notificação: {item.destination_phone?'+'+item.destination_phone:'indisponível'}</p>
+              <p className="mt-1">Situação: {attemptByOutbox.get(item.id)!.status==='sent'?'Aceita pela biblioteca (sem confirmação de entrega)':attemptByOutbox.get(item.id)!.status==='failed'?'Falhou':'Em andamento ou resultado incerto'}</p>
+              {attemptByOutbox.get(item.id)!.provider_message_id&&<p className="mt-1 break-all text-gray-500">ID da mensagem: {attemptByOutbox.get(item.id)!.provider_message_id}</p>}
+              {attemptByOutbox.get(item.id)!.error_reason&&<p className="mt-1 text-red-300">Erro: {attemptByOutbox.get(item.id)!.error_reason}</p>}
+              <p className="mt-1 text-gray-500">Iniciada em {localDate(attemptByOutbox.get(item.id)!.claimed_at)}</p>
+            </div>}
             <details className="mt-3 rounded-xl border border-white/5 bg-black/30 p-3">
               <summary className="cursor-pointer text-xs font-semibold text-gray-300">Ver mensagem preparada</summary>
               <p className="mt-3 whitespace-pre-wrap break-words text-xs leading-relaxed text-gray-400">{item.message_body}</p>
@@ -291,6 +325,6 @@ export function AdminWhatsappCenter(){
           </article>)}
         </div>}
       </>:null}
-    <p className="pb-5 text-[11px] text-gray-600">A Sagamente não consulta conversas externas no WhatsApp. Apenas um provedor oficial com confirmação de envio e webhooks poderá comprovar status de enviado, entregue e lido no futuro.</p>
+    <p className="pb-5 text-[11px] text-gray-600">A ponte experimental registra o aceite da biblioteca, não a entrega ou leitura. Para confirmação oficial de envio/entrega/leitura é necessária integração com a API oficial da Meta.</p>
   </div>
 }

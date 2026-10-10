@@ -41,6 +41,7 @@ export function CustomerSettings(){
         notify_project_updates:prefs.notify_project_updates,
         notify_file_updates:prefs.notify_file_updates,
         notify_commercial_updates:prefs.notify_commercial_updates,
+        wa_automatic_opt_in:prefs.wa_automatic_opt_in,
         profile_contact_visible_to_team:prefs.profile_contact_visible_to_team,
       })
       setPrefs(saved)
@@ -110,6 +111,7 @@ export function CustomerSettings(){
           {option('Atualizações de projetos','Avisos relacionados ao andamento dos seus projetos.','notify_project_updates')}
           {option('Atualizações de arquivos','Avisos sobre novos arquivos, versões e aprovações.','notify_file_updates')}
           {option('Orçamentos e pedidos','Avisos relacionados a orçamento, pedido e fluxo comercial.','notify_commercial_updates')}
+          {option('Aceito notificações automáticas pelo WhatsApp','Opcional. A automação de testes não envia para clientes. Ao ativar, você autoriza o recebimento de avisos importantes pelo WhatsApp cadastrado, caso esse canal seja liberado futuramente. Pode desativar a qualquer momento.','wa_automatic_opt_in')}
         </div>
       </section>
 

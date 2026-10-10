@@ -43,6 +43,13 @@ jobs:
       - name: Tests
         run: pnpm test
 
+      - name: Validate local WhatsApp bridge dependencies
+        run: |
+          npm install --no-audit --no-fund --prefix services/whatsapp-bridge
+          cd services/whatsapp-bridge
+          node --check index.mjs
+          node --input-type=module -e "import('@whiskeysockets/baileys').then(m=>{if(typeof m.default!=='function'||typeof m.useMultiFileAuthState!=='function')process.exit(1)})"
+
       - name: Build
         run: pnpm build
 

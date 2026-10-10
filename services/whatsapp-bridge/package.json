@@ -1,0 +1,15 @@
+{
+  "name": "sagamente-whatsapp-local-bridge",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {"node": ">=22"},
+  "scripts": {"start": "node index.mjs", "check": "node --check index.mjs"},
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.1",
+    "@whiskeysockets/baileys": "^6.7.18",
+    "dotenv": "^16.6.1",
+    "pino": "^9.11.0",
+    "qrcode": "^1.5.4"
+  }
+}
