@@ -66,8 +66,10 @@ async function makeIcon(image: HTMLImageElement, size: number, maskable: boolean
   if (!ctx) throw new Error('Este navegador não conseguiu preparar os ícones.')
   ctx.fillStyle = background
   ctx.fillRect(0, 0, size, size)
-  const inset = maskable ? Math.round(size * 0.205) : 0
-  ctx.drawImage(image, inset, inset, size - 2 * inset, size - 2 * inset)
+  // Android applies its own adaptive icon mask. Padding the whole source here
+  // produces a visible black frame around the artwork on the launcher.
+  // Keep the background full bleed; artwork should be centered in its source.
+  ctx.drawImage(image, 0, 0, size, size)
   const blob = await new Promise<Blob>((resolve, reject) =>
     canvas.toBlob(result => result ? resolve(result) : reject(new Error('Falha ao converter a imagem em PNG.')), 'image/png'))
   return new File([blob], 'sagamente-pwa-' + (maskable ? 'maskable-' : '') + size + '.png', { type: 'image/png' })
@@ -173,7 +175,7 @@ export function PwaSettings() {
       const updated = data as SavedIdentity
       setSaved(updated)
       setDraft(Object.fromEntries(Object.keys(DEFAULT).map(key => [key, updated[key as keyof AppIdentity]])) as AppIdentity)
-      toast('Identidade do aplicativo publicada! Instale novamente no iPhone para atualizar ícone e nome.', 'success')
+      toast('Identidade publicada! Reinstale o aplicativo no Android ou iPhone para atualizar o ícone e o nome.', 'success')
     } catch (cause: unknown) {
       toast(cause instanceof Error ? cause.message : 'Não foi possível publicar o aplicativo.', 'error')
     } finally {
