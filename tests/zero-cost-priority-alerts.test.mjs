@@ -3,7 +3,9 @@ import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
 const sql=readFileSync(new URL('../supabase/migrations/20261010190000_zero_cost_priority_alerts.sql',import.meta.url),'utf8')
-const admin=readFileSync(new URL('../src/pages/admin/AdminSettings.tsx',import.meta.url),'utf8')
+const center=readFileSync(new URL('../src/pages/admin/AdminWhatsappCenter.tsx',import.meta.url),'utf8')
+const other=readFileSync(new URL('../src/pages/admin/AdminSettings.tsx',import.meta.url),'utf8')
+const limits=readFileSync(new URL('../supabase/migrations/20261010235940_whatsapp_central_editable_limits.sql',import.meta.url),'utf8')
 const history=readFileSync(new URL('../src/components/admin/PriorityAlertHistory.tsx',import.meta.url),'utf8')
 
 test('priority alerts only fire for confirmed production Asaas and project milestones',()=>{
@@ -17,10 +19,11 @@ test('priority alerts only fire for confirmed production Asaas and project miles
 test('the zero-cost mode cannot enable automatic WhatsApp billing',()=>{
   assert.match(sql,/priority_whatsapp_mode text not null default 'manual'/)
   assert.match(sql,/priority_whatsapp_mode = 'manual'/)
-  assert.match(sql,/priority_daily_limit between 0 and 10/)
+  assert.match(limits,/priority_daily_limit between 0 and 100/)
   assert.match(history,/https:\/\/wa\.me\//)
   assert.doesNotMatch(history,/api\.whatsapp\.com\/messages|graph\.facebook\.com|sendMessage\(/)
-  assert.match(admin,/WhatsApp em modo manual/)
+  assert.match(center,/Alertas prioritários internos/)
+  assert.doesNotMatch(other,/Alertas prioritários · custo zero/)
 })
 
 test('server-side idempotency and daily cap protect the admin inbox',()=>{
