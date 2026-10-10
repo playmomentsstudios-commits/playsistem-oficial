@@ -158,6 +158,7 @@ export function AdminWhatsappCenter(){
         priority_project_completed:settings.priority_project_completed,
         priority_whatsapp_phone:settings.priority_whatsapp_phone,
         wa_bridge_daily_limit:settings.wa_bridge_daily_limit,
+        wa_bridge_auto_enabled:false,
         wa_prepare_project_status:settings.wa_prepare_project_status,
         wa_prepare_task_status:settings.wa_prepare_task_status,
         wa_prepare_stage_status:settings.wa_prepare_stage_status,
@@ -165,7 +166,7 @@ export function AdminWhatsappCenter(){
         wa_prepare_file_review:settings.wa_prepare_file_review,
         wa_prepare_priority_events:settings.wa_prepare_priority_events,
       })
-      toast('Preferências salvas. A conexão experimental é controlada no painel de QR Code.','success')
+      toast('Preferências salvas. Os envios automáticos foram pausados; reative somente após conferir o teto e os destinatários.','success')
       await load()
     }catch(err:any){toast(err?.message||'Não foi possível salvar as configurações.','error')}
     finally{setSaving(false)}
