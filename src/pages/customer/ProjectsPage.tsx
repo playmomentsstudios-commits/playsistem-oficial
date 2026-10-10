@@ -1,6 +1,7 @@
 import { useEffect,useMemo,useState } from 'react'
 import { Link,useParams } from 'react-router-dom'
 import { portalApi } from '../../api/portal'
+import { customerProjectFileGroups } from '../../lib/projectFileOrganization'
 import { projectProgress } from '../../lib/projectProgress'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { LoadingState,ErrorState } from '../../components/ui/AsyncState'
@@ -62,7 +63,10 @@ export function ProjectsPage(){
       task.client_visible&&(task.stage_id===null||visibleStageIds.has(task.stage_id)))
       .sort(sortByPosition)
   },[project,stages])
-  const published=useMemo(()=>files.filter((file:any)=>file.client_visible),[files])
+  // Display only files attached to public stages/tasks, grouped by their
+  // actual delivery context. Internal Drive folder names stay private.
+  const fileGroups=useMemo(()=>customerProjectFileGroups(files,stages,tasks),[files,stages,tasks])
+  const published=useMemo(()=>fileGroups.flatMap(group=>group.files),[fileGroups])
   const completed=useMemo(()=>tasks.filter(isComplete),[tasks])
   const remaining=useMemo(()=>tasks.filter((task:any)=>task.status!=='completed'&&task.status!=='cancelled'),[tasks])
   const percentage=useMemo(()=>projectProgress({tasks}),[tasks])
@@ -119,10 +123,19 @@ export function ProjectsPage(){
           <Link to="/app/arquivos" className="pm-compact-tap text-xs font-semibold text-[#DFA269] hover:underline">Biblioteca completa ↗</Link>
         </div>
         <div id="arquivos-projeto-conteudo" hidden={!filesExpanded} className="mt-2">
-          {filesExpanded&&(published.length?<div className="pm-compact-card">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
-              {published.map((file:any)=><ClientProjectFileCard key={file.id} file={file} onOpen={openFile} compact/>)}
-            </div>
+          {filesExpanded&&(published.length?<div className="pm-compact-card space-y-4" aria-label="Entregas organizadas por etapa e tarefa">
+            {fileGroups.map(group=><section key={group.key} aria-label={group.title}>
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <h3 className="text-xs font-semibold text-white">{group.title} <span className="font-normal text-gray-500">({group.files.length})</span></h3>
+                  <p className="mt-0.5 text-[11px] text-gray-400">{group.description}</p>
+                </div>
+                {group.stageId&&<Link to={'/app/projetos/'+id+'/etapas/'+group.stageId+(group.taskId?'/tarefas/'+group.taskId:'')} className="inline-flex min-h-9 items-center text-xs font-semibold text-[#DFA269] hover:underline">{group.taskId?'Ver tarefa':'Ver etapa'} ↗</Link>}
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+                {group.files.map((file:any)=><ClientProjectFileCard key={file.id} file={file} onOpen={openFile} compact/>)}
+              </div>
+            </section>)}
           </div>:<p className="pm-compact-card text-xs text-gray-400">Nenhum arquivo liberado para visualização ainda. As novas artes aparecerão aqui após publicação pela equipe.</p>)}
         </div>
       </section>
