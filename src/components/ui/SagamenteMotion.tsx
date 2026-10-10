@@ -23,13 +23,13 @@ export function SagamenteMotion({ size = 48, className = '', label, monochrome, 
 }
 
 const statusColors: Record<string, string> = {
-  active: '#60A5FA', in_progress: '#60A5FA', completed: '#34D399',
-  review: '#C4B5FD', paused: '#FBBF24', planning: '#A1A1AA',
+  active: '#F28C38', in_progress: '#F28C38', completed: '#34D399',
+  review: '#60A5FA', paused: '#FBBF24', planning: '#A1A1AA',
   pending: '#FBBF24', cancelled: '#F87171'
 }
 export function ProjectStatusMark({ status }: { status: string }) {
   const color = statusColors[status] || '#A1A1AA'
   return <span className="sagamente-status-mark" style={{ color }} aria-hidden="true">
-    <SagamenteMotion size={13} monochrome="currentColor" animate={status === 'active' || status === 'in_progress' || status === 'review'} />
+    <SagamenteMotion size={13} monochrome="currentColor" animate={true} />
   </span>
 }
