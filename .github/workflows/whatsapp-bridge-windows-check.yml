@@ -1,0 +1,31 @@
+name: WhatsApp Windows Launcher Check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/whatsapp-bridge/**'
+      - '.github/workflows/whatsapp-bridge-windows-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: PowerShell parser (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate installer script syntax
+        shell: pwsh
+        run: |
+          $path = 'services/whatsapp-bridge/instalar-e-iniciar-windows.ps1'
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -ne 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+          Write-Host 'Installer parsed successfully. No account linked and no keys used.'
