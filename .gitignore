@@ -19,3 +19,6 @@ Thumbs.db
 
 # Generated during dev, test and build from the official Sagamente SVG.
 /public/pwa/*.png
+
+# Sessão privada, nunca versionar credenciais de WhatsApp.
+/services/whatsapp-bridge/.local/
