@@ -39,6 +39,7 @@ const ProfilePage = lazy(() => import('./pages/customer/ProfilePage').then(m => 
 const OrdersPage = lazy(() => import('./pages/customer/OrdersPage').then(m => ({ default:m.OrdersPage })))
 const QuotesPage = lazy(() => import('./pages/customer/QuotesPage').then(m => ({ default:m.QuotesPage })))
 const ConversationsPage = lazy(() => import('./pages/customer/ConversationsPage').then(m => ({ default:m.ConversationsPage })))
+const HelpPage = lazy(() => import('./pages/customer/HelpPage').then(m => ({ default:m.HelpPage })))
 const FilesPage = lazy(() => import('./pages/customer/FilesPage').then(m => ({ default:m.FilesPage })))
 const NotificationsPage = lazy(() => import('./pages/customer/NotificationsPage').then(m => ({ default:m.NotificationsPage })))
 const PaymentsPage = lazy(() => import('./pages/customer/PaymentsPage').then(m => ({ default:m.PaymentsPage })))
@@ -155,6 +156,7 @@ export default function AppV2() {
                 <Route path="orcamentos" element={<QuotesPage />} />
                 <Route path="orcamentos/:id" element={<QuoteDetailPage />} />
                 <Route path="pagamentos" element={<PaymentsPage />} />
+                <Route path="ajuda" element={<HelpPage />} />
                 <Route path="conversas" element={<ConversationsPage />} />
                 <Route path="conversas/:id" element={<ConversationsPage />} />
                 <Route path="arquivos" element={<FilesPage />} />
