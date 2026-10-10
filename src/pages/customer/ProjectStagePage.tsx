@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { portalApi } from '../../api/portal'
+import { customerProjectFileGroups } from '../../lib/projectFileOrganization'
 import { projectProgress } from '../../lib/projectProgress'
 import { rotulo, statusEtapa, statusTarefa } from '../../lib/labels.ptBR'
 import { CompactPageHeader } from '../../components/ui/CompactWorkspace'
@@ -58,17 +59,14 @@ export function ProjectStagePage(){
     .filter((task:any)=>task.client_visible&&task.project_id===id&&task.stage_id===stageId)
     .sort(byPosition),[project,id,stageId])
   const stageFiles=useMemo(()=>{
-    // The task association is authoritative for legacy files without stage_id;
-    // newly uploaded files also carry stage_id directly.
-    const linkedTasks=new Map<string,string>()
-    for(const task of project?.tasks||[]){
-      if(task.client_visible&&task.project_id===id&&task.id&&task.stage_id)linkedTasks.set(task.id,task.stage_id)
-    }
-    return files.filter((file:any)=>{
-      if(!file.client_visible||file.project_id!==id)return false
-      if(file.task_id&&linkedTasks.has(file.task_id))return linkedTasks.get(file.task_id)===stageId
-      return file.stage_id===stageId
-    })
+    // Exactly the same visibility rules as the customer project gallery.
+    // Files of a hidden task must not appear just because stage_id matches.
+    const groups=customerProjectFileGroups(files,
+      (project?.stages||[]).filter((row:any)=>row.project_id===id),
+      (project?.tasks||[]).filter((row:any)=>row.project_id===id))
+    return groups.filter(group=>group.stageId===stageId)
+      .flatMap(group=>group.files)
+      .filter((file:any)=>file.project_id===id)
   },[files,project,id,stageId])
   const done=tasks.filter(isCompleted).length
   const progress=projectProgress({tasks})
