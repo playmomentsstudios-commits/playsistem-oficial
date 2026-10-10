@@ -105,11 +105,11 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
     {error&&<button type="button" onClick={()=>{setError('');setRetry(value=>value+1)}} className="block mt-1 text-xs underline">Tentar novamente</button>}
   </div>
   return <div className="space-y-2 mb-2 min-w-0">
-    <p className="font-semibold break-words" style={{ overflowWrap: 'anywhere' }}>{message.attachment_name}</p>
-    <p className="text-xs opacity-75">{formatFileSize(message.attachment_size || 0)} · Arquivo original</p>
+    {kind!=='image'&&<p className="font-semibold break-words" style={{ overflowWrap: 'anywhere' }}>{message.attachment_name}</p>}
+    {kind!=='image'&&<p className="text-xs opacity-75">{formatFileSize(message.attachment_size || 0)} · Arquivo original</p>}
     {kind==='image'&&previewLoading&&!error&&<div role="status" className="text-xs opacity-70">Carregando imagem…</div>}
-    {url && kind === 'image' && !error && <img key={retry} src={url} alt={message.attachment_name || 'Imagem enviada'} loading="eager" decoding="async" className="max-h-48 md:max-h-56 max-w-full rounded-xl object-contain bg-black/20" onLoad={()=>setPreviewLoading(false)} onError={() => {setPreviewLoading(false);setUrl('');setError('Imagem corrompida ou incompatível. Tente novamente ou baixe o original.')}} />}
-    {url && kind === 'image' && !error && <button type="button" className="block text-xs underline" onClick={()=>setExpanded(true)}>Ampliar imagem</button>}
+    {url && kind === 'image' && !error && <img key={retry} src={url} alt={message.attachment_name || 'Imagem enviada'} loading="eager" decoding="async" className="max-h-[65dvh] md:max-h-[560px] w-full max-w-[640px] rounded-xl object-contain bg-black/20" onClick={()=>setExpanded(true)} role="button" tabIndex={0} onKeyDown={event=>{if(event.key==='Enter')setExpanded(true)}} onLoad={()=>setPreviewLoading(false)} onError={() => {setPreviewLoading(false);setUrl('');setError('Imagem corrompida ou incompatível. Tente novamente ou baixe o original.')}} />}
+    {url && kind === 'image' && !error && <p className="max-w-[640px] truncate text-[10px] opacity-70" title={message.attachment_name}>{message.attachment_name}</p>}
     {expanded && url && kind === 'image' && <div role="dialog" aria-modal="true" aria-label="Visualização ampliada" className="fixed inset-0 z-[100] bg-black/95 flex flex-col p-4">
       <div className="flex justify-between gap-3 items-center"><span className="truncate text-sm">{message.attachment_name}</span><button type="button" className="rounded-lg bg-white/20 px-4 py-3" onClick={()=>setExpanded(false)}>Fechar</button></div>
       {expandedUrl?<img src={expandedUrl} alt={message.attachment_name||'Imagem'} className="flex-1 min-h-0 w-full object-contain" onError={()=>{setExpandedUrl('');setExpandedError('Imagem incompatível ou corrompida. Baixe o original.')}}/>:<div className="flex-1 flex items-center justify-center" role="status">{expandedError||'Carregando imagem…'}</div>}
