@@ -9,7 +9,8 @@ type WAState='ready_manual'|'missing_phone'|'historical'|'opened_manual'|'report
 type WAAttempt={
   id:string;outbox_id:string;destination_phone:string;test_mode:boolean;
   status:'claimed'|'sent'|'failed';provider_message_id:string|null;
-  error_reason:string|null;claimed_at:string;completed_at:string|null
+  error_reason:string|null;claimed_at:string;completed_at:string|null;
+  ack_status:'unconfirmed'|'server_ack'|'delivered'|'read'|'rejected';ack_at:string|null;destination_jid:string|null
 }
 type WARecord={
   id:string
@@ -99,6 +100,7 @@ export function AdminWhatsappCenter(){
   const [rows,setRows]=useState<WARecord[]>([])
   const [attempts,setAttempts]=useState<WAAttempt[]>([])
   const [summary,setSummary]=useState<Summary>(EMPTY)
+  const [receiptStats,setReceiptStats]=useState({server_acked_today:0,delivered_today:0,read_today:0,unconfirmed_today:0,rejected_today:0})
   const [loading,setLoading]=useState(true)
   const [saving,setSaving]=useState(false)
   const [busy,setBusy]=useState<string|null>(null)
@@ -110,19 +112,22 @@ export function AdminWhatsappCenter(){
   async function load(){
     setError('')
     try{
-      const [cfg,list,daily,attemptRows]=await Promise.all([
+      const [cfg,list,daily,attemptRows,receiptDaily]=await Promise.all([
         settingsApi.appSettings(),
         supabase.from('whatsapp_message_outbox')
           .select('id,notification_id,recipient_name,destination_phone,recipient_user_id,event_type,title,message_body,target_link,status,source,created_at,opened_at,reported_at')
           .order('created_at',{ascending:false}).limit(300),
         supabase.rpc('wa_daily_dashboard'),
         supabase.from('whatsapp_bridge_attempts')
-          .select('id,outbox_id,destination_phone,test_mode,status,provider_message_id,error_reason,claimed_at,completed_at')
+          .select('id,outbox_id,destination_phone,test_mode,status,provider_message_id,error_reason,claimed_at,completed_at,ack_status,ack_at,destination_jid')
           .order('claimed_at',{ascending:false}).limit(300),
+        supabase.rpc('wa_bridge_receipt_summary'),
       ])
       if(list.error)throw list.error
       if(daily.error)throw daily.error
       if(attemptRows.error)throw attemptRows.error
+      if(receiptDaily.error)throw receiptDaily.error
+      setReceiptStats({server_acked_today:0,delivered_today:0,read_today:0,unconfirmed_today:0,rejected_today:0,...(receiptDaily.data||{})})
       setAttempts((attemptRows.data||[]) as WAAttempt[])
       setSettings(cfg)
       setRows((list.data||[]) as WARecord[])
