@@ -68,7 +68,7 @@ export const pushNotificationApi={
       await call('subscribe',{
         subscription:{endpoint:serialized.endpoint,keys:serialized.keys},
         categories,
-        deviceLabel:(navigator.userAgentData as {platform?:string}|undefined)?.platform||
+        deviceLabel:(navigator as Navigator & {userAgentData?:{platform?:string}}).userAgentData?.platform||
           navigator.platform||'Dispositivo',
       })
     }catch(e) {
