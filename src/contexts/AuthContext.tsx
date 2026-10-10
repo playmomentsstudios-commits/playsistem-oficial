@@ -9,6 +9,7 @@ import {
 import type { Session, User as SupabaseUser } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { pushNotificationApi } from '../api/pushNotifications'
+import { setUnreadAppBadge } from '../lib/appBadge'
 import type {
   User,
   UserRole,
@@ -94,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const syncSession = useCallback(async (nextSession: Session | null) => {
     setSession(nextSession)
     if (!nextSession?.user) {
+      void setUnreadAppBadge(0)
       setUser(null)
       setIsLoading(false)
       return
@@ -196,6 +198,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await pushNotificationApi.unregisterCurrentDevice().catch(()=>undefined)
     const { error } = await supabase.auth.signOut()
     if (error) throw new Error(error.message)
+    await setUnreadAppBadge(0)
     setSession(null)
     setUser(null)
   }, [])
