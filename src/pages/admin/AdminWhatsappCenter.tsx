@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { settingsApi, type AppSettings } from '../../api/settings'
 import { useToast } from '../../contexts/ToastContext'
 import { WhatsappQrBridgePanel } from '../../components/admin/WhatsappQrBridgePanel'
+import { PriorityAlertHistory } from '../../components/admin/PriorityAlertHistory'
 
 type WAState='ready_manual'|'missing_phone'|'historical'|'opened_manual'|'reported_sent'|'sending_auto'|'sent_auto'|'failed_auto'
 type WAAttempt={
@@ -155,6 +156,7 @@ export function AdminWhatsappCenter(){
         priority_project_created:settings.priority_project_created,
         priority_project_completed:settings.priority_project_completed,
         priority_whatsapp_phone:settings.priority_whatsapp_phone,
+        wa_bridge_daily_limit:settings.wa_bridge_daily_limit,
         wa_prepare_project_status:settings.wa_prepare_project_status,
         wa_prepare_task_status:settings.wa_prepare_task_status,
         wa_prepare_stage_status:settings.wa_prepare_stage_status,
@@ -244,7 +246,7 @@ export function AdminWhatsappCenter(){
       view==='settings'&&settings?<div className="space-y-5">
         <section className="rounded-2xl border border-white/10 bg-[#141416] p-5">
           <h2 className="font-semibold">Canal e custo</h2>
-          <p className="mt-1 text-xs text-gray-500">Envio manual continua disponível. O piloto automatizado por QR Code é controlado na seção de conexão e começa desativado.</p>
+          <p className="mt-1 text-xs text-gray-500">Envio manual continua disponível. A ponte automática é controlada acima, na seção de conexão, com ativação independente da quantidade configurada.</p>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <label className="block text-xs text-gray-400">WhatsApp administrativo (DDI + DDD + número)
               <input type="tel" inputMode="numeric" value={settings.priority_whatsapp_phone||''}
@@ -256,17 +258,39 @@ export function AdminWhatsappCenter(){
               <p className="mt-2 text-sm font-semibold text-white">Manual + piloto local por QR Code</p>
               <p className="mt-1 text-[11px] text-gray-500">O piloto exige Node ligado e ativação explícita. Biblioteca não oficial, risco de bloqueio.</p>
             </div>
-            <label className="block text-xs text-gray-400">Teto diário de avisos administrativos prioritários (0–10)
-              <input type="number" min={0} max={10} step={1} value={settings.priority_daily_limit}
-                onChange={e=>setSettings({...settings,priority_daily_limit:Math.max(0,Math.min(10,Math.floor(Number(e.target.value)||0)))})}
+            <label className="block text-xs text-gray-400">Tentativas automáticas de WhatsApp por dia (0–100)
+              <input type="number" min={0} max={100} step={1} value={settings.wa_bridge_daily_limit}
+                onChange={e=>setSettings({...settings,wa_bridge_daily_limit:Math.max(0,Math.min(100,Math.floor(Number(e.target.value)||0)))})}
                 className="mt-1 min-h-11 w-full rounded-xl border border-white/10 bg-black px-3 text-sm text-white"/>
-              <span className="mt-1 block text-[11px] text-gray-500">Não é franquia gratuita de mensagens WhatsApp.</span>
+              <span className="mt-1 block text-[11px] text-gray-500">Consumidas hoje: {summary.bridge_attempts_today} de {settings.wa_bridge_daily_limit}. Padrão: 30. Intervalo mínimo: 2 minutos entre tentativas e 10 por hora, independentemente deste teto. Não é limite oficial gratuito do WhatsApp.</span>
+            </label>
+            <label className="block text-xs text-gray-400">Alertas prioritários internos por dia (0–100)
+              <input type="number" min={0} max={100} step={1} value={settings.priority_daily_limit}
+                onChange={e=>setSettings({...settings,priority_daily_limit:Math.max(0,Math.min(100,Math.floor(Number(e.target.value)||0)))})}
+                className="mt-1 min-h-11 w-full rounded-xl border border-white/10 bg-black px-3 text-sm text-white"/>
+              <span className="mt-1 block text-[11px] text-gray-500">Controla apenas avisos internos/Push de pagamentos e marcos de projetos; não aumenta a capacidade de envio do WhatsApp.</span>
             </label>
             <label className="flex items-center justify-between rounded-xl border border-white/10 bg-black/30 p-3 text-sm">
               <span>Alertas prioritários internos habilitados</span>
               <input type="checkbox" checked={settings.priority_alerts_enabled} onChange={e=>setSettings({...settings,priority_alerts_enabled:e.target.checked})}/>
             </label>
           </div>
+        </section>
+
+        <section className="rounded-2xl border border-white/10 bg-[#141416] p-5">
+          <h2 className="font-semibold">Alertas prioritários internos</h2>
+          <p className="mt-1 text-xs text-gray-500">Caixa de entrada/Push: pagamentos confirmados no Asaas, criação ou conclusão de projetos. Não são tentativas de WhatsApp; o teto é separado.</p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {([
+              ['priority_payment_confirmed','Pagamento confirmado pelo Asaas'],
+              ['priority_project_created','Projeto criado'],
+              ['priority_project_completed','Projeto concluído'],
+            ] as const).map(([key,label])=><label key={key} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-xs text-gray-300">
+              <span>{label}</span>
+              <input type="checkbox" checked={Boolean(settings[key])} onChange={e=>setSettings({...settings,[key]:e.target.checked})}/>
+            </label>)}
+          </div>
+          <PriorityAlertHistory phone={settings.priority_whatsapp_phone} dailyLimit={settings.priority_daily_limit}/>
         </section>
         <section className="rounded-2xl border border-white/10 bg-[#141416] p-5">
           <h2 className="font-semibold">Eventos que entram na fila de preparo</h2>
