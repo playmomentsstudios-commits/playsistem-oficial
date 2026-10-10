@@ -40,6 +40,7 @@ const MENU:{label:string;href:string;icon:IconName;group:string}[]=[
   { label: 'Início', href: '/app/dashboard', icon: 'home', group: 'principal' },
   { label: 'Pedidos', href: '/app/pedidos', icon: 'orders', group: 'negocios' },
   { label: 'Projetos', href: '/app/projetos', icon: 'projects', group: 'principal' },
+  { label: 'Notificações', href: '/app/notificacoes', icon: 'notifications', group: 'principal' },
   { label: 'Serviços', href: '/app/servicos', icon: 'services', group: 'negocios' },
   { label: 'Orçamentos', href: '/app/orcamentos', icon: 'quotes', group: 'negocios' },
   { label: 'Pagamentos', href: '/app/pagamentos', icon: 'payments', group: 'negocios' },
@@ -220,7 +221,7 @@ export function CustomerLayoutV2() {
         <Link to="/app/conversas" aria-label="Abrir conversa com a equipe" className="relative w-10 h-10 rounded-xl flex items-center justify-center text-[#7d7d88] hover:text-white hover:bg-white/[.05]" title="Mensagens">
           <MenuIcon name="chat" size={18}/>{counts.messages>0&&<span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#A65A2A] text-[8px] font-bold text-white flex items-center justify-center">{counts.messages>99?'99+':counts.messages}</span>}
         </Link>
-        <Link to="/app/notificacoes" className="relative w-10 h-10 rounded-xl flex items-center justify-center text-[#7d7d88] hover:text-white hover:bg-white/[.05]" title="Notificações">
+        <Link to="/app/notificacoes" aria-label="Abrir notificações" className="relative w-10 h-10 rounded-xl flex items-center justify-center text-[#7d7d88] hover:text-white hover:bg-white/[.05]" title="Notificações recebidas">
           <MenuIcon name="notifications" size={18}/>{counts.notifications>0&&<span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#A65A2A] text-[8px] font-bold text-white flex items-center justify-center">{counts.notifications>99?'99+':counts.notifications}</span>}
         </Link>
         <div className="relative ml-1">
@@ -253,7 +254,10 @@ export function CustomerLayoutV2() {
             <MenuIcon name="chat" size={18}/>
             {counts.messages>0&&<span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#A65A2A] px-1 text-[8px] font-bold text-white">{counts.messages>99?'99+':counts.messages}</span>}
           </Link>
-          <PushNotificationSettings iconOnly/>
+          <Link to="/app/notificacoes" aria-label="Abrir notificações" title="Notificações recebidas" className="relative flex h-10 w-10 items-center justify-center rounded-lg text-gray-300 hover:bg-white/[.05]">
+            <MenuIcon name="notifications" size={19}/>
+            {counts.notifications>0&&<span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#A65A2A] px-1 text-[8px] font-bold text-white">{counts.notifications>99?'99+':counts.notifications}</span>}
+          </Link>
           <button type="button" onClick={()=>void handleLogout()} disabled={loggingOut} aria-label="Sair da conta" title="Sair da conta" className="flex h-10 w-10 items-center justify-center rounded-lg text-[#DFA269] hover:bg-white/[.05] disabled:opacity-50"><MenuIcon name="logout" size={19}/></button>
         </div>
       </div>
