@@ -41,7 +41,8 @@ function chunk(type, data) {
 function createIcon(size, maskable = false) {
   const rowSize = 1 + Math.ceil(size / 4)
   const raw = Buffer.alloc(size * rowSize)
-  const scale = size * (maskable ? 0.58 : 0.81) / 124
+  // Android applies the launcher mask; avoid an extra reduction of the artwork.
+  const scale = size * 0.81 / 124
   const left = (size - 100 * scale) / 2
   const top = (size - 124 * scale) / 2
   for (let y = 0; y < size; y++) {

@@ -10,6 +10,8 @@ test('Sagamente admin has a dedicated configurable PWA tab', () => {
   assert.match(site, /<PwaSettings\s*\/>/)
   assert.match(editor, /Nome abaixo do ícone/)
   assert.match(editor, /makeIcon\(/)
+  assert.match(editor, /ctx\.drawImage\(image, 0, 0, size, size\)/)
+  assert.doesNotMatch(editor, /maskable \? Math\.round\(size \* 0\.205\)/)
   assert.match(editor, /uploadSiteAsset\(files\[index\], 'BRAND'\)/)
   assert.match(editor, /icon_maskable_drive_file_id/)
   assert.match(editor, /Publicar aplicativo/)
