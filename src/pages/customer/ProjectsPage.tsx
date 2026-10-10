@@ -4,6 +4,7 @@ import { portalApi } from '../../api/portal'
 import { projectProgress } from '../../lib/projectProgress'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { LoadingState,ErrorState } from '../../components/ui/AsyncState'
+import { ProjectStatusMark } from '../../components/ui/SagamenteMotion'
 import { FilePreviewModal } from '../../components/files/FilePreviewModal'
 import { ClientProjectFileCard } from '../../components/files/ClientProjectFileCard'
 import { CompactPageHeader,CompactDisclosure } from '../../components/ui/CompactWorkspace'
@@ -78,7 +79,7 @@ export function ProjectsPage(){
       <FilePreviewModal file={previewFile} onClose={()=>setPreviewFile(null)}/>
       <section className="pm-compact-card" aria-label="Resumo do projeto">
         <CompactPageHeader title={project.title} backTo="/app/projetos" backLabel="Meus projetos"
-          actions={<span className="pm-tag pm-tag-progress">{rotulo(statusProjeto,project.status)}</span>}>
+          actions={<span className="pm-tag pm-tag-progress inline-flex items-center gap-1 whitespace-nowrap"><ProjectStatusMark status={project.status}/>{rotulo(statusProjeto,project.status)}</span>}>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-gray-400">
             <span>Prazo: <strong className="text-gray-200">{formatDate(project.due_date)}</strong></span>
             <span>Etapa: <strong className="text-gray-200">{currentStage?.name||'A definir'}</strong></span>
@@ -176,7 +177,7 @@ export function ProjectsPage(){
       const done=listedTasks.filter(isComplete).length
       const percent=projectProgress({tasks:listedTasks})
       return <Link key={item.id} to={'/app/projetos/'+item.id} className="pm-compact-card pm-compact-card-interactive block">
-        <div className="flex flex-wrap justify-between gap-3"><b className="text-sm text-white">{item.title}</b><span className="text-xs text-gray-400">{rotulo(statusProjeto,item.status)}</span></div>
+        <div className="flex flex-wrap justify-between gap-3"><b className="text-sm text-white">{item.title}</b><span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-gray-400"><ProjectStatusMark status={item.status}/>{rotulo(statusProjeto,item.status)}</span></div>
         <p className="text-[11px] text-gray-400 mt-2">{listedTasks.length?percent+'% concluído · '+done+' de '+listedTasks.length+' entregas concluídas':'Aguardando atualização das entregas'}</p>
         <div className="h-1.5 bg-white/10 rounded-full mt-2 overflow-hidden"><div className="h-full bg-[#A65A2A] rounded-full" style={{width:(listedTasks.length?percent:0)+'%'}}/></div>
         {item.due_date&&<p className="text-[11px] text-gray-500 mt-2">Prazo: {formatDate(item.due_date)}</p>}

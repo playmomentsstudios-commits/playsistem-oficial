@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
 import { prioridade,rotulo,statusProjeto,tipoProjeto } from '../../lib/labels.ptBR'
+import { ProjectStatusMark } from '../../components/ui/SagamenteMotion'
 import { CompactPageHeader } from '../../components/ui/CompactWorkspace'
 import { settingsApi } from '../../api/settings'
 
@@ -125,7 +126,7 @@ export function AdminProjects(){
     {loading?<p className="text-gray-400">Carregando...</p>:!filtered.length?<p className="text-gray-500">Nenhum projeto encontrado.</p>:<div className="grid gap-2 lg:grid-cols-2">{filtered.map(project=><Link key={project.id} to={'/admin/projetos/'+project.id} className="pm-compact-card pm-compact-card-interactive block">
       <div className="flex justify-between gap-3">
         <div><b className="text-white">{project.title}</b><p className="text-xs text-gray-500 mt-1">{rotulo(tipoProjeto,project.project_type)} · prioridade {rotulo(prioridade,project.priority)}</p></div>
-        <span className={"pm-tag "+(project.status==="completed"?"pm-tag-success":project.status==="active"?"pm-tag-progress":project.status==="review"?"pm-tag-review":project.status==="paused"?"pm-tag-pending":project.status==="cancelled"?"pm-tag-danger":"pm-tag-neutral")}>{rotulo(statusProjeto,project.status)}</span>
+        <span className={"pm-tag inline-flex items-center gap-1 whitespace-nowrap "+(project.status==="completed"?"pm-tag-success":project.status==="active"?"pm-tag-progress":project.status==="review"?"pm-tag-review":project.status==="paused"?"pm-tag-pending":project.status==="cancelled"?"pm-tag-danger":"pm-tag-neutral")}><ProjectStatusMark status={project.status}/>{rotulo(statusProjeto,project.status)}</span>
       </div>
       <div className="flex justify-between mt-2 text-xs"><span className="text-gray-500">Progresso</span><b>{progress(project)}%</b></div>
       <div className="h-1.5 bg-white/10 rounded mt-1.5"><div className="h-full bg-[#A65A2A] rounded" style={{width:progress(project)+'%'}}/></div>
