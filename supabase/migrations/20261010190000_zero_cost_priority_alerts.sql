@@ -9,13 +9,18 @@ alter table public.app_settings
  add column if not exists priority_whatsapp_phone text not null default '5564981294186',
  add column if not exists priority_whatsapp_mode text not null default 'manual';
 
-do $
+do $$
 begin
  if not exists(select 1 from pg_constraint where conname='priority_alert_daily_limit_valid' and conrelid='public.app_settings'::regclass) then
   alter table public.app_settings add constraint priority_alert_daily_limit_valid check (priority_daily_limit between 0 and 10);
  end if;
  if not exists(select 1 from pg_constraint where conname='priority_alert_phone_valid' and conrelid='public.app_settings'::regclass) then
-  alter table public.app_settings add constraint priority_alert_phone_valid check (priority_whatsapp_phone ~ '^55[0-9]{10,11}
+  alter table public.app_settings add constraint priority_alert_phone_valid check (priority_whatsapp_phone ~ '^55[0-9]{10,11}$');
+ end if;
+ if not exists(select 1 from pg_constraint where conname='priority_whatsapp_manual_only' and conrelid='public.app_settings'::regclass) then
+  alter table public.app_settings add constraint priority_whatsapp_manual_only check (priority_whatsapp_mode = 'manual');
+ end if;
+end $$;
 
 create table if not exists public.priority_alert_log (
  event_key text primary key,
