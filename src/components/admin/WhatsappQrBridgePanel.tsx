@@ -159,6 +159,7 @@ export function WhatsappQrBridgePanel(){
         <p className="text-xs text-gray-400">
           <strong>1.</strong> Mantenha o serviço Node ligado. <strong>2.</strong> Conecte o dispositivo, se necessário. <strong>3.</strong> Selecione o destino abaixo e salve. <strong>4.</strong> Ative explicitamente os envios. Só eventos novos entram na fila.
         </p>
+        {connected&&!updatedBridge&&<p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">Ponte Windows desatualizada. Para liberar envios a clientes, atualize index.mjs, phone-utils.mjs e receipt-tracker.mjs no computador e reinicie o serviço. A conexão atual não poderá disparar mensagens automaticamente.</p>}
         {bridge?.last_error&&<p className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-xs text-red-300">{bridge.last_error}</p>}
         {loadError&&<p role="alert" className="text-xs text-red-300">{loadError}</p>}
         <div className="flex flex-wrap gap-2">
