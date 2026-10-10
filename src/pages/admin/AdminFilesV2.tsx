@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
 import { FilePreviewModal } from '../../components/files/FilePreviewModal'
+import { CompactPageHeader } from '../../components/ui/CompactWorkspace'
 import { DriveFileThumbnail } from '../../components/files/DriveFileThumbnail'
 import { settingsApi } from '../../api/settings'
 import { supabase } from '../../lib/supabase'
@@ -512,15 +513,12 @@ export function AdminFilesV2(){
 
   return <div>
     <FilePreviewModal file={previewFile} onClose={()=>setPreviewFile(null)}/>
-    <div className="flex flex-wrap justify-between gap-4 items-end mb-6">
-      <div>
-        <p className="text-[11px] uppercase tracking-[.18em] text-[#A65A2A] font-semibold">Operação</p>
-        <h1 className="text-2xl font-bold mt-1">Central de Arquivos</h1>
-        <p className="text-sm text-gray-500 mt-1">Clientes e produção interna → Projeto → Tarefa/Etapa → arquivo.</p>
-        <p className={'text-[11px] mt-1 '+(driveSyncWarning?'text-amber-300':'text-gray-500')}>{driveSyncWarning|| (driveSyncing?'↻ Atualizando arquivos adicionados diretamente ao Google Drive...':'Sincronização automática com Google Drive ativa')}</p>
-      </div>
-      <div className="flex items-center gap-2"><Button type="button" variant="secondary" loading={testing} onClick={testDrive}>Testar Drive</Button><button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='__unassigned__')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-10 px-3.5 rounded-xl bg-[#A65A2A] hover:bg-[#87441f] text-white text-sm font-bold flex items-center gap-1.5"><span className="text-lg leading-none">＋</span>Novo</button></div>
-    </div>
+    <CompactPageHeader eyebrow="Operação" title="Central de Arquivos" description="Projetos, tarefas e arquivos sincronizados com o Drive." actions={<>
+      <Button type="button" variant="secondary" loading={testing} onClick={testDrive}>Testar Drive</Button>
+      <button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='__unassigned__')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="pm-compact-tap rounded-lg bg-[#A65A2A] px-3 text-xs font-bold text-white">＋ Novo arquivo</button>
+    </>}>
+      <p className={'text-[11px] '+(driveSyncWarning?'text-amber-300':'text-gray-500')}>{driveSyncWarning|| (driveSyncing?'↻ Atualizando arquivos do Google Drive...':'Sincronização automática com Google Drive ativa')}</p>
+    </CompactPageHeader>
 
     {uploadResult&&<div className="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 flex items-start gap-3">
       <div className="w-9 h-9 shrink-0 rounded-xl bg-emerald-500/10 text-emerald-300 flex items-center justify-center font-bold">✓</div>
@@ -529,7 +527,7 @@ export function AdminFilesV2(){
     </div>}
 
     <section>
-      <div className="mb-3 flex items-end justify-between gap-3"><div><p className="text-[10px] uppercase tracking-[.16em] text-gray-600">Biblioteca</p><h2 className="text-base font-bold mt-1">Clientes e projetos internos</h2></div><span className="text-[10px] text-gray-600">{customers.length} clientes · {projects.length} projetos · {files.length} arquivos</span></div>
+      <div className="mb-2 flex items-end justify-between gap-2"><div><p className="text-[10px] uppercase tracking-[.16em] text-gray-600">Biblioteca</p><h2 className="text-base font-bold mt-1">Clientes e projetos internos</h2></div><span className="text-[10px] text-gray-600">{customers.length} clientes · {projects.length} projetos · {files.length} arquivos</span></div>
       <div className="mb-3">
         <input value={customerSearch} onChange={e=>setCustomerSearch(e.target.value)} placeholder="Buscar cliente, projeto ou arquivo..." className="w-full min-h-10 px-3.5 rounded-xl bg-[#141416] border border-white/10 text-sm"/>
       </div>
