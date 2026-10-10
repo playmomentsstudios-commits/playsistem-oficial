@@ -1,4 +1,5 @@
 import { useEffect,useState } from 'react'
+import { supabase } from '../../lib/supabase'
 import { Link } from 'react-router-dom'
 import { settingsApi,type UserPreferences } from '../../api/settings'
 import { useAuth } from '../../contexts/AuthContext'
@@ -12,18 +13,36 @@ export function CustomerSettings(){
   const [prefs,setPrefs]=useState<UserPreferences|null>(null)
   const [loading,setLoading]=useState(true)
   const [saving,setSaving]=useState(false)
+  const [phone,setPhone]=useState<string|null>(null)
+  const [phoneError,setPhoneError]=useState('')
   const [password,setPassword]=useState('')
   const [confirmPassword,setConfirmPassword]=useState('')
   const [changingPassword,setChangingPassword]=useState(false)
 
   useEffect(()=>{
+    if(!user?.id)return
+    const id=user.id
     let active=true
-    settingsApi.userPreferences()
-      .then(row=>{if(active)setPrefs(row)})
-      .catch(error=>toast(error.message||'Não foi possível carregar suas configurações.','error'))
-      .finally(()=>{if(active)setLoading(false)})
+    async function load(){
+      try{
+        const [preferences,profile]=await Promise.all([
+          settingsApi.userPreferences(),
+          supabase.from('profiles').select('phone').eq('id',id).maybeSingle(),
+        ])
+        if(profile.error)throw profile.error
+        if(!active)return
+        setPrefs(preferences)
+        setPhone(profile.data?.phone||null)
+        setPhoneError('')
+      }catch(error:any){
+        if(!active)return
+        setPhoneError('Não foi possível conferir seu telefone. Recarregue esta página.')
+        toast(error.message||'Não foi possível carregar suas configurações.','error')
+      }finally{if(active)setLoading(false)}
+    }
+    void load()
     return()=>{active=false}
-  },[])
+  },[user?.id])
 
   function toggle(key:keyof UserPreferences){
     return (e:React.ChangeEvent<HTMLInputElement>)=>setPrefs(current=>current?{...current,[key]:e.target.checked}:current)
@@ -31,6 +50,7 @@ export function CustomerSettings(){
 
   async function save(){
     if(!prefs)return
+    if(prefs.wa_automatic_opt_in&&!phoneValid)return toast('Cadastre um telefone válido no seu perfil antes de autorizar o WhatsApp.','error')
     try{
       setSaving(true)
       const saved=await settingsApi.saveUserPreferences({
@@ -64,6 +84,12 @@ export function CustomerSettings(){
     }catch(error:any){toast(error.message||'Não foi possível alterar a senha.','error')}
     finally{setChangingPassword(false)}
   }
+
+  const phoneDigits=(phone||'').replace(/\D/g,'')
+  const internationalPhone=/^55\d{10,11}$/.test(phoneDigits)?phoneDigits:/^\d{10,11}$/.test(phoneDigits)?'55'+phoneDigits:''
+  const phoneValid=Boolean(internationalPhone)
+  const consentCurrent=Boolean(prefs?.wa_automatic_opt_in&&prefs.wa_opt_in_at&&prefs.wa_opt_in_phone===internationalPhone)
+  const consentStale=Boolean(prefs?.wa_automatic_opt_in&&!consentCurrent)
 
   if(loading)return <div className="py-16 text-center text-sm text-gray-500">Carregando configurações...</div>
 
@@ -111,8 +137,49 @@ export function CustomerSettings(){
           {option('Atualizações de projetos','Avisos relacionados ao andamento dos seus projetos.','notify_project_updates')}
           {option('Atualizações de arquivos','Avisos sobre novos arquivos, versões e aprovações.','notify_file_updates')}
           {option('Orçamentos e pedidos','Avisos relacionados a orçamento, pedido e fluxo comercial.','notify_commercial_updates')}
-          {option('Aceito receber avisos dos meus projetos pelo WhatsApp','Opcional: autorizo a Sagamente a enviar atualizações dos projetos para o número cadastrado em meu perfil. A conexão é experimental e não oficial. Posso retirar o aceite a qualquer momento; se meu número mudar, preciso renovar a autorização.','wa_automatic_opt_in')}
         </div>
+      </section>
+
+      <section id="whatsapp" aria-labelledby="whatsapp-settings-title" className="pm-compact-card lg:col-span-2 scroll-mt-24 border border-[#A65A2A]/25">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 id="whatsapp-settings-title" className="text-base font-semibold text-white">WhatsApp — Avisos dos meus projetos</h2>
+            <p className="text-xs text-gray-400 mt-1">Autorização opcional para receber status, etapas e arquivos dos projetos aos quais você tem acesso.</p>
+          </div>
+          <span className={'rounded-lg px-2.5 py-1.5 text-[11px] font-semibold '+(consentCurrent?'bg-emerald-500/10 text-emerald-300':'bg-amber-500/10 text-amber-200')}>
+            {consentCurrent?'Autorização registrada':consentStale?'Autorização precisa ser renovada':'Não autorizado'}
+          </span>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+            <p className="text-[11px] text-gray-400">Telefone cadastrado para avisos</p>
+            <p className="text-sm text-white mt-1">{phone||'Telefone não cadastrado'}</p>
+            <Link to="/app/perfil" className="inline-flex mt-2 text-xs font-semibold text-[#DFA269] underline">Conferir ou alterar meu telefone</Link>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+            <p className="text-[11px] text-gray-400">Canais independentes</p>
+            <p className="mt-1 text-xs text-gray-300">Ativar notificações Push não autoriza o WhatsApp. O aceite precisa ser feito separadamente nesta seção.</p>
+          </div>
+        </div>
+        {phoneError&&<p role="alert" className="mt-3 text-xs text-red-300">{phoneError}</p>}
+        {!phoneValid&&<p role="alert" className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/[.06] p-3 text-xs text-amber-200">Para autorizar, cadastre primeiro um telefone com DDD em Meu Perfil. Depois volte aqui.</p>}
+        {consentStale&&<p role="alert" className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/[.06] p-3 text-xs text-amber-200">O número mudou desde a autorização anterior. Desmarque e salve para revogar, depois marque novamente e salve para autorizar o novo número.</p>}
+        <label className={'mt-3 flex items-start justify-between gap-4 rounded-xl border border-white/10 bg-white/[.035] p-4 '+(phoneValid?'cursor-pointer':'opacity-60')}>
+          <div>
+            <p className="text-sm font-semibold text-white">Autorizo avisos pelo WhatsApp</p>
+            <p className="mt-1 text-xs text-gray-400">Concordo em receber mensagens sobre meus projetos no número cadastrado. Posso retirar essa autorização aqui quando quiser.</p>
+          </div>
+          <input type="checkbox" aria-label="Autorizo avisos dos meus projetos pelo WhatsApp"
+            checked={Boolean(prefs?.wa_automatic_opt_in)}
+            disabled={!prefs||(!phoneValid&&!prefs.wa_automatic_opt_in)}
+            onChange={toggle('wa_automatic_opt_in')}
+            className="mt-1 h-5 w-5 shrink-0 accent-[#A65A2A]"/>
+        </label>
+        <p className="mt-2 text-[11px] text-gray-500">A Sagamente utiliza uma integração experimental e não oficial, sujeita a restrições do WhatsApp. A autorização não garante entrega ou leitura.</p>
+        <button type="button" disabled={saving||!prefs} onClick={()=>void save()}
+          className="mt-4 min-h-11 rounded-xl bg-[#A65A2A] px-5 text-sm font-semibold text-white disabled:opacity-40">
+          {saving?'Salvando...':'Salvar autorização de WhatsApp'}
+        </button>
       </section>
 
       <section className="pm-compact-card">
