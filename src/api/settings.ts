@@ -33,6 +33,12 @@ export type AppSettings={
   priority_project_completed:boolean
   priority_whatsapp_phone:string
   priority_whatsapp_mode:'manual'
+  wa_prepare_project_status:boolean
+  wa_prepare_task_status:boolean
+  wa_prepare_stage_status:boolean
+  wa_prepare_file_updates:boolean
+  wa_prepare_file_review:boolean
+  wa_prepare_priority_events:boolean
   favicon_url:string|null
   staff_logo_url:string|null
   staff_platform_name:string

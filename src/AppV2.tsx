@@ -78,6 +78,7 @@ const AdminReports = lazy(() => import('./pages/admin/AdminReports').then(m => (
 const AdminConversion = lazy(() => import('./pages/admin/AdminConversion').then(m => ({ default:m.AdminConversion })))
 const AdminAudit = lazy(() => import('./pages/admin/AdminAudit').then(m => ({ default:m.AdminAudit })))
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings').then(m => ({ default:m.AdminSettings })))
+const AdminWhatsappCenter = lazy(() => import('./pages/admin/AdminWhatsappCenter').then(m => ({ default:m.AdminWhatsappCenter })))
 const AdminAutoAttendant = lazy(() => import('./pages/admin/AdminAutoAttendant').then(m => ({ default:m.AdminAutoAttendant })))
 const AdminLandingPages = lazy(() => import('./pages/admin/AdminLandingPages').then(m => ({ default:m.AdminLandingPages })))
 const AdminResumes = lazy(() => import('./pages/admin/AdminResumes').then(m => ({ default:m.AdminResumes })))
@@ -204,6 +205,7 @@ export default function AppV2() {
                 <Route path="curriculos/novo" element={<AdminPermissionGate permission="site.manage"><AdminResumeEditor /></AdminPermissionGate>} />
                 <Route path="curriculos/:id" element={<AdminPermissionGate permission="site.manage"><AdminResumeEditor /></AdminPermissionGate>} />
                 <Route path="configuracoes" element={<AdminPermissionGate adminOnly><AdminSettings /></AdminPermissionGate>} />
+                <Route path="whatsapp" element={<AdminPermissionGate adminOnly><AdminWhatsappCenter /></AdminPermissionGate>} />
                 <Route path="auditoria" element={<AdminPermissionGate adminOnly><AdminAudit /></AdminPermissionGate>} />
                 <Route path="relatorios" element={<AdminPermissionGate permission="reports.view"><AdminReports /></AdminPermissionGate>} />
                 <Route path="conversao" element={<AdminPermissionGate permission="reports.view"><AdminConversion /></AdminPermissionGate>} />
