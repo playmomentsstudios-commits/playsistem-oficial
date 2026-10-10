@@ -1,10 +1,11 @@
-import { useEffect,useMemo,useState } from 'react'
+import { useEffect,useMemo,useRef,useState } from 'react'
 import { portalApi } from '../../api/portal'
 import { fileManagementApi } from '../../api/fileManagement'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
 import { FilePreviewModal } from '../../components/files/FilePreviewModal'
+import { DriveFileThumbnail } from '../../components/files/DriveFileThumbnail'
 import { settingsApi } from '../../api/settings'
 import { supabase } from '../../lib/supabase'
 
@@ -58,6 +59,9 @@ export function AdminFilesV2(){
   const {user}=useAuth()
   const toast=useToast()
   const [files,setFiles]=useState<any[]>([])
+  const [driveSyncing,setDriveSyncing]=useState(false)
+  const [driveSyncWarning,setDriveSyncWarning]=useState('')
+  const driveSyncRef=useRef(false)
   const [uploadOpen,setUploadOpen]=useState(false)
   const [customers,setCustomers]=useState<any[]>([])
   const [institutions,setInstitutions]=useState<any[]>([])
@@ -123,6 +127,40 @@ export function AdminFilesV2(){
       setDriveLimitGb(Math.min(50,Math.max(1,settings.drive_upload_limit_gb||50)))
     }).catch(()=>undefined)
   },[])
+
+  useEffect(()=>{
+    if(loading||!projects.length)return
+    let active=true
+    const reconcile=async()=>{
+      if(driveSyncRef.current||document.visibilityState==='hidden')return
+      driveSyncRef.current=true
+      setDriveSyncing(true)
+      try{
+        const linked=projects.filter((row:any)=>Boolean(row.drive_folder_id))
+        const results=await Promise.allSettled(linked.map((row:any)=>portalApi.syncDriveProjectFiles(row.id)))
+        const rejected=results.filter(result=>result.status==='rejected').length
+        const fresh=await portalApi.files()
+        if(active){
+          setFiles(fresh)
+          setDriveSyncWarning(rejected?rejected+' projeto(s) não sincronizado(s). Tente novamente ou verifique a conexão do Drive.':'')
+        }
+      }catch(error:any){
+        if(active)setDriveSyncWarning(error?.message||'Não foi possível atualizar arquivos do Drive.')
+      }finally{
+        driveSyncRef.current=false
+        if(active)setDriveSyncing(false)
+      }
+    }
+    void reconcile()
+    const handleVisible=()=>{if(document.visibilityState==='visible')void reconcile()}
+    document.addEventListener('visibilitychange',handleVisible)
+    const timer=window.setInterval(handleVisible,120000)
+    return ()=>{
+      active=false
+      document.removeEventListener('visibilitychange',handleVisible)
+      window.clearInterval(timer)
+    }
+  },[loading,projects])
 
   const customerProjects=useMemo(()=>customer===INTERNAL_LIBRARY_KEY
     ? projects.filter((p:any)=>p.project_type==='internal')
@@ -479,6 +517,7 @@ export function AdminFilesV2(){
         <p className="text-[11px] uppercase tracking-[.18em] text-[#A65A2A] font-semibold">Operação</p>
         <h1 className="text-2xl font-bold mt-1">Central de Arquivos</h1>
         <p className="text-sm text-gray-500 mt-1">Clientes e produção interna → Projeto → Tarefa/Etapa → arquivo.</p>
+        <p className={'text-[11px] mt-1 '+(driveSyncWarning?'text-amber-300':'text-gray-500')}>{driveSyncWarning|| (driveSyncing?'↻ Atualizando arquivos adicionados diretamente ao Google Drive...':'Sincronização automática com Google Drive ativa')}</p>
       </div>
       <div className="flex items-center gap-2"><Button type="button" variant="secondary" loading={testing} onClick={testDrive}>Testar Drive</Button><button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='__unassigned__')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="min-h-10 px-3.5 rounded-xl bg-[#A65A2A] hover:bg-[#87441f] text-white text-sm font-bold flex items-center gap-1.5"><span className="text-lg leading-none">＋</span>Novo</button></div>
     </div>
@@ -631,7 +670,7 @@ export function AdminFilesV2(){
                 const internalRow=isInternalRow(row)
                 return <div key={row.id} className="relative p-2.5 rounded-xl bg-[#171719] border border-white/8 hover:border-white/15 transition-colors">
                   <button type="button" onClick={()=>open(row)} className="w-full text-left">
-                    <div className="h-14 rounded-lg bg-white/[0.035] flex items-center justify-center text-2xl">{fileIcon(row)}</div>
+                    <div className="h-20 rounded-lg bg-white/[0.035] flex items-center justify-center text-2xl overflow-hidden"><DriveFileThumbnail file={row} fallback={fileIcon(row)} className="w-full h-full"/></div>
                     <div className="mt-2 flex items-center justify-between gap-2">
                       <span className="text-[9px] font-bold text-[#A65A2A]">{extension(row.name)} · v{row.version_number||1}</span>
                       <span className="text-[9px] text-gray-600">{sizeLabel(row.file_size)}</span>
