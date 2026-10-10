@@ -162,10 +162,12 @@ async function sendOne(){
       if(!socketOpen||!socket)throw new Error('Sessão desconectada antes do envio.')
       const destination=digits(job.phone)
       if(!/^55\d{10,11}$/.test(destination))throw new Error('Telefone inválido.')
-      // During self-tests, use the verified registered PN JID, which may
-      // omit the ninth digit in Brazil. Never apply this to other recipients.
       const address=job.test_only&&destination===expectedPhone&&currentPnJid
-        ? currentPnJid : destination+'@s.whatsapp.net'
+        ? currentPnJid : registeredRecipientJid(destination,await socket.onWhatsApp(destination))
+      const verified=await invoke('wa_bridge_register_destination',{
+        p_instance:instanceId,p_attempt:job.attempt_id,p_jid:address
+      })
+      if(!verified)throw new Error('A identidade WhatsApp não corresponde ao telefone autorizado.')
       const result=await socket.sendMessage(address,{text:job.message})
       if(!result?.key?.id)throw new Error('WhatsApp não retornou identificador da mensagem.')
       msgId=String(result.key.id)
