@@ -17,10 +17,14 @@ alter table public.messages add constraint messages_attachment_check check (
    and char_length(attachment_type) between 1 and 255
    and attachment_size between 1 and 52428800
    and (
-     (attachment_drive_file_id is null and attachment_path = conversation_id::text || '/' || sender_id::text || '/' || id::text)
+     (attachment_drive_file_id is null and attachment_path is not null and attachment_path = conversation_id::text || '/' || sender_id::text || '/' || id::text)
      or (attachment_drive_file_id is not null and attachment_path is null)
    )
  )
 );
 grant insert (attachment_drive_file_id) on public.messages to authenticated;
+alter table public.messages drop constraint messages_content_check;
+alter table public.messages add constraint messages_content_check check (
+ char_length(content) <= 5000 and (char_length(trim(content)) > 0 or attachment_path is not null or attachment_drive_file_id is not null)
+);
 -- Storage validation only applies to legacy objects.

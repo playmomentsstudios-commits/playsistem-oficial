@@ -41,8 +41,8 @@ test('customer thumbnail cards load lazily and clean up their blob URLs',()=>{
   assert.match(card,/object-contain/)
   assert.match(card,/onOpen\(file\)/)
   assert.match(card,/Prévia indisponível/)
-  assert.match(api,/supabase\.functions\.invoke\('google-drive-file-thumbnail'/)
-  assert.match(api,/data instanceof Blob/)
+  assert.match(api,/privateFunctionFile\('google-drive-file-thumbnail'/)
+  assert.match(api,/data.type.startsWith/)
 })
 
 test('project and file library show artwork previews without public file URLs',()=>{
