@@ -668,12 +668,12 @@ export function AdminFilesV2(){
                 const internalRow=isInternalRow(row)
                 return <div key={row.id} className="relative p-2.5 rounded-xl bg-[#171719] border border-white/8 hover:border-white/15 transition-colors">
                   <button type="button" onClick={()=>open(row)} className="w-full text-left">
-                    <div className="h-20 rounded-lg bg-white/[0.035] flex items-center justify-center text-2xl overflow-hidden"><DriveFileThumbnail file={row} fallback={fileIcon(row)} className="w-full h-full"/></div>
-                    <div className="mt-2 flex items-center justify-between gap-2">
+                    <div className="h-64 sm:h-72 rounded-lg bg-white/[0.035] flex items-center justify-center text-2xl overflow-hidden"><DriveFileThumbnail file={row} fallback={fileIcon(row)} className="w-full h-full"/></div>
+                    {!String(row.mime_type||row.file_type||'').startsWith('image/')&&<div className="mt-2 flex items-center justify-between gap-2">
                       <span className="text-[9px] font-bold text-[#A65A2A]">{extension(row.name)} · v{row.version_number||1}</span>
                       <span className="text-[9px] text-gray-600">{sizeLabel(row.file_size)}</span>
-                    </div>
-                    <p className="text-xs font-semibold truncate mt-1" title={row.name}>{row.name}</p>
+                    </div>}
+                    <p className="text-xs font-normal text-gray-400 truncate mt-2" title={row.name}>{row.name}</p>
                     <p className="text-[9px] text-gray-500 truncate mt-1">{row.stage?.name?('📁 '+row.stage.name):(row.custom_folder?.name?('📁 '+row.custom_folder.name):(row.task?.title||'Arquivo geral'))}</p>
                     {review&&<span className={'inline-flex mt-2 px-2 py-1 rounded-full text-[9px] font-semibold '+review.className}>{review.label}</span>}
                   </button>

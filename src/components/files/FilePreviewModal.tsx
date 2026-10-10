@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { ImageViewer } from './ImageViewer'
 import { portalApi } from '../../api/portal'
 import {
   MAX_INLINE_PREVIEW_BYTES,
@@ -23,12 +24,8 @@ export function FilePreviewModal({ file, onClose }: Props) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
-  const [zoom, setZoom] = useState(1)
-  const [rotation, setRotation] = useState(0)
   const [lowResPreview, setLowResPreview] = useState(false)
   const [downloading, setDownloading] = useState(false)
-  const [loadingOriginal, setLoadingOriginal] = useState(false)
-  const fullResolutionUrlRef = useRef<string | null>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
 
   const type = useMemo(() => file ? filePreviewType(file) : 'unsupported', [file])
@@ -37,10 +34,10 @@ export function FilePreviewModal({ file, onClose }: Props) {
   const hasPrivateFile = Boolean(file && (
     (file.storage_provider === 'google_drive' && file.drive_file_id) || file.storage_path
   ))
-  const canPreview = Boolean(file && hasPrivateFile && type !== 'unsupported' && !tooLarge)
+  const canPreview = Boolean(file && hasPrivateFile && type !== 'unsupported' && (!tooLarge || type === 'image'))
 
   useEffect(() => {
-    if (!file) return
+    if (!file || type === 'image') return
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     closeButtonRef.current?.focus()
@@ -55,17 +52,14 @@ export function FilePreviewModal({ file, onClose }: Props) {
       document.body.style.overflow = previousOverflow
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [file, onClose])
+  }, [file, onClose, type])
 
   useEffect(() => {
     let disposed = false
     let objectUrl: string | null = null
     setPreviewUrl(null)
     setError('')
-    setZoom(1)
-    setRotation(0)
     setLowResPreview(false)
-    if (fullResolutionUrlRef.current) { URL.revokeObjectURL(fullResolutionUrlRef.current); fullResolutionUrlRef.current = null }
     if (!file || !canPreview) { setPending(false); return }
 
     const load = async () => {
@@ -78,7 +72,7 @@ export function FilePreviewModal({ file, onClose }: Props) {
               objectUrl = await portalApi.driveFileThumbnailBlobUrl(file.id)
               if (!disposed) setLowResPreview(true)
             } catch {
-              objectUrl = await portalApi.driveFileBlobUrl(file.id)
+              throw new Error('Não foi possível carregar a prévia. Baixe o original para abrir a imagem.')
             }
           } else {
             objectUrl = await portalApi.driveFileBlobUrl(file.id)
@@ -104,22 +98,19 @@ export function FilePreviewModal({ file, onClose }: Props) {
     return () => {
       disposed = true
       if (objectUrl) URL.revokeObjectURL(objectUrl)
-      if (fullResolutionUrlRef.current) {
-        URL.revokeObjectURL(fullResolutionUrlRef.current)
-        fullResolutionUrlRef.current = null
-      }
+
     }
   }, [file?.id, file?.drive_file_id, file?.storage_path, canPreview])
 
   if (!file) return null
 
   const download = async () => {
-    if (!previewUrl || downloading) return
+    if ((!previewUrl && !hasPrivateFile) || downloading) return
     setDownloading(true)
-    let url = previewUrl
+    let url = previewUrl || ''
     let temporary = false
     try {
-      if (lowResPreview && file.storage_provider === 'google_drive') {
+      if ((lowResPreview || !url) && file.storage_provider === 'google_drive') {
         url = await portalApi.driveFileBlobUrl(file.id)
         temporary = true
       }
@@ -138,23 +129,6 @@ export function FilePreviewModal({ file, onClose }: Props) {
     }
   }
 
-  const loadOriginalResolution = async () => {
-    if (!file || loadingOriginal || !lowResPreview) return
-    setLoadingOriginal(true)
-    try {
-      const url = await portalApi.driveFileBlobUrl(file.id)
-      if (fullResolutionUrlRef.current) URL.revokeObjectURL(fullResolutionUrlRef.current)
-      fullResolutionUrlRef.current = url
-      setPreviewUrl(url)
-      setLowResPreview(false)
-      setZoom(1)
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não foi possível carregar a imagem original.')
-    } finally {
-      setLoadingOriginal(false)
-    }
-  }
-
   const fallback = tooLarge
     ? 'Este arquivo é grande demais para carregar diretamente no visualizador. Abra o original no Google Drive para evitar lentidão.'
     : type === 'unsupported'
@@ -163,12 +137,14 @@ export function FilePreviewModal({ file, onClose }: Props) {
         ? 'Este arquivo é um link externo. Abra a origem em uma nova guia.'
         : error || 'Não foi possível gerar a prévia deste arquivo.'
 
+  if(type==='image'&&hasPrivateFile)return <ImageViewer url={previewUrl||''} name={file.name} onClose={onClose} onDownload={()=>void download()} downloading={downloading} error={error} loading={pending}/>
+
   return createPortal(
     <div className="fixed inset-0 z-[150] bg-[#030403]/95 backdrop-blur-md p-0 sm:p-4 flex items-center justify-center" onMouseDown={e=>{ if(e.target === e.currentTarget) onClose() }}>
       <section role="dialog" aria-modal="true" aria-label={'Visualizar '+file.name} className="w-full h-full sm:h-[min(92vh,850px)] max-w-[1300px] overflow-hidden rounded-none sm:rounded-2xl border border-white/10 bg-[#101112] shadow-2xl flex flex-col">
         <header className="shrink-0 px-3 sm:px-5 py-3 min-h-[70px] flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 border-b border-white/10">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="hidden sm:grid h-10 w-10 shrink-0 rounded-xl bg-[#A65A2A]/15 text-[#DFA269] place-items-center" aria-hidden="true">{type === 'image' ? '▧' : type === 'pdf' ? '▤' : type === 'audio' ? '♫' : type === 'video' ? '▶' : '◇'}</span>
+            <span className="hidden sm:grid h-10 w-10 shrink-0 rounded-xl bg-[#A65A2A]/15 text-[#DFA269] place-items-center" aria-hidden="true">{type === 'pdf' ? '▤' : type === 'audio' ? '♫' : type === 'video' ? '▶' : '◇'}</span>
             <div className="min-w-0">
               <h2 className="text-sm sm:text-base font-semibold text-white truncate max-w-[68vw] sm:max-w-[55vw]" title={file.name}>{file.name}</h2>
               <p className="text-[11px] text-[#ADB0AC] mt-1">{filePreviewLabel(type)} · {previewSizeLabel(file.file_size)}{file.version_number ? ' · v'+file.version_number : ''}</p>
@@ -187,16 +163,6 @@ export function FilePreviewModal({ file, onClose }: Props) {
             <p className="text-sm text-[#DDDDDD]">Preparando prévia protegida...</p>
             <p className="text-xs text-gray-500">Arquivos maiores podem levar alguns instantes.</p>
           </div> : previewUrl && !error && canPreview ? <>
-            {type === 'image' && <div className="w-full h-full overflow-auto flex items-center justify-center p-6 sm:p-10">
-              <img
-                src={previewUrl}
-                alt={file.name}
-                draggable={false}
-                className="max-w-full max-h-full object-contain select-none transition-transform duration-200"
-                style={{transform:'rotate('+rotation+'deg) scale('+zoom+')'}}
-                onError={()=>setError('O navegador não conseguiu ler esta imagem.')}
-              />
-            </div>}
             {type === 'pdf' && <iframe title={'Documento PDF: '+file.name} src={previewUrl+'#toolbar=1&navpanes=0'} className="h-full w-full bg-white" onError={()=>setError('O navegador não conseguiu abrir este PDF.')}/>}
             {type === 'audio' && <div className="w-full max-w-xl p-7 sm:p-10 text-center space-y-6">
               <div aria-hidden="true" className="mx-auto grid place-items-center rounded-full w-28 h-28 bg-[#2E5D46]/20 border border-[#2E5D46]/50 text-5xl text-[#DFA269]">♫</div>
@@ -214,13 +180,7 @@ export function FilePreviewModal({ file, onClose }: Props) {
         </div>
         <footer className="shrink-0 min-h-12 py-2 px-3 sm:px-5 border-t border-white/[0.08] flex justify-between items-center gap-3">
           <span className="text-[11px] text-[#81858B]">{lowResPreview?'Prévia otimizada · arquivo original preservado no Drive':'Prévia privativa · SAGAMENTE'}</span>
-          {type === 'image' && previewUrl && !error && <div className="flex items-center gap-2">
-            {lowResPreview&&<button type="button" disabled={loadingOriginal} onClick={()=>void loadOriginalResolution()} className="px-3 h-9 rounded-lg bg-[#A65A2A]/20 text-xs text-[#F1C19D] disabled:opacity-50">{loadingOriginal?'Carregando...':'Alta resolução'}</button>}
-            <button type="button" onClick={()=>setZoom(value=>Math.max(.5,Number((value-.25).toFixed(2))))} className="w-9 h-9 rounded-lg bg-white/[.06] text-white" aria-label="Reduzir zoom">−</button>
-            <span className="min-w-[52px] text-center text-xs text-gray-300">{Math.round(zoom*100)}%</span>
-            <button type="button" onClick={()=>setZoom(value=>Math.min(3,Number((value+.25).toFixed(2))))} className="w-9 h-9 rounded-lg bg-white/[.06] text-white" aria-label="Ampliar zoom">+</button>
-            <button type="button" onClick={()=>setRotation(value=>(value+90)%360)} className="px-3 h-9 rounded-lg bg-white/[.06] text-xs text-white" aria-label="Girar imagem">↻ Girar</button>
-          </div>}
+
         </footer>
       </section>
     </div>, document.body

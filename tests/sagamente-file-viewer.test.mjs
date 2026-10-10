@@ -25,7 +25,8 @@ test('Private Drive preview uses authenticated server download, not public drive
   assert.doesNotMatch(modal,/drive\/file\/d\/|docs\.google\.com\/gview/)
 })
 test('Images PDF audio and video have native preview with safe unsupported fallbacks',()=>{
-  assert.match(modal,/<img/)
+  assert.match(modal,/<ImageViewer/)
+  assert.match(read('src/components/files/ImageViewer.tsx'),/<img/)
   assert.match(modal,/<iframe/)
   assert.match(modal,/<audio controls/)
   assert.match(modal,/<video controls/)

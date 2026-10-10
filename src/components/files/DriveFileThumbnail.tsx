@@ -13,6 +13,7 @@ export function DriveFileThumbnail({ file, fallback = '🖼️', className = '' 
     && filePreviewType(file) === 'image'
 
   useEffect(() => {
+    setUrl(null)
     if (!eligible) return
     let active = true
     let objectUrl: string | null = null
@@ -44,7 +45,7 @@ export function DriveFileThumbnail({ file, fallback = '🖼️', className = '' 
   return <span ref={wrapper} className={'relative flex items-center justify-center overflow-hidden ' + className}>
     {url
       ? <img src={url} alt={'Miniatura de ' + file.name} loading="lazy"
-          className="h-full w-full object-cover" onError={() => setUrl(null)} />
+          className="h-full w-full object-contain" onError={() => setUrl(null)} />
       : <span aria-hidden="true">{fallback}</span>}
   </span>
 }

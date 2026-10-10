@@ -72,9 +72,9 @@ export function ClientProjectFileCard({file,onOpen,compact=false}:Props){
   return <button type="button" ref={buttonRef} onClick={()=>onOpen(file)}
     aria-label={'Visualizar '+file.name}
     className={'group min-w-0 w-full overflow-hidden rounded-xl border border-white/10 bg-[#161719] text-left hover:border-[#A65A2A]/60 hover:bg-[#1b1a19] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DFA269] transition-colors '+(compact?'':'shadow-sm')}>
-    <div className={'relative w-full bg-[#0b0c0e] overflow-hidden flex items-center justify-center '+(compact?'h-28 sm:h-32':'h-36 sm:h-44')}>
+    <div className={'relative w-full bg-[#0b0c0e] overflow-hidden flex items-center justify-center '+(compact?'h-48 sm:h-56':'h-64 sm:h-72')}>
       {thumbnail ? <img src={thumbnail} alt={'Prévia de '+file.name} loading="lazy"
-        className="w-full h-full object-contain group-hover:scale-[1.025] transition-transform duration-300"
+        className="w-full h-full object-contain"
         onError={()=>{setState('unavailable');setThumbnail(null)}}/>
         : <div className="flex flex-col items-center justify-center gap-2 text-[#797D81]">
             <span aria-hidden="true" className="text-4xl">{type.symbol}</span>
@@ -82,12 +82,10 @@ export function ClientProjectFileCard({file,onOpen,compact=false}:Props){
             {state==='unavailable'&&<span className="text-[11px]">Prévia indisponível</span>}
             {!canFetch&&<span className="text-[11px]">{type.label}</span>}
           </div>}
-      <span className="absolute left-2 top-2 rounded-md bg-black/75 px-2 py-1 text-[10px] font-semibold text-white">{type.label}</span>
-      <span className="absolute bottom-2 right-2 rounded-lg bg-black/75 px-2.5 py-1.5 text-[10px] text-white opacity-95 group-hover:bg-[#A65A2A]">Ampliar ↗</span>
     </div>
     <div className={'min-w-0 '+(compact?'px-2.5 py-2':'p-3')}>
-      <p className="text-xs font-medium text-gray-100 line-clamp-2 break-words" title={file.name}>{file.name}</p>
-      {!compact&&<p className="text-[10px] text-gray-500 mt-1">{thumbnail?'Prévia carregada · ':''}Visualizar e baixar</p>}
+      <p className="text-xs font-normal text-gray-400 line-clamp-1 break-words" title={file.name}>{file.name}</p>
+
     </div>
   </button>
 }

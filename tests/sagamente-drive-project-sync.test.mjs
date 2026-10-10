@@ -34,5 +34,5 @@ test('Private image thumbnails use protected API and modal downloads the origina
   assert.match(viewer, /driveFileThumbnailBlobUrl\(file\.id\)/)
   assert.match(viewer, /lowResPreview/)
   assert.match(viewer, /driveFileBlobUrl\(file\.id\)/)
-  assert.match(viewer, /Alta resolução/)
+  assert.match(viewer, /<ImageViewer/)
 })
