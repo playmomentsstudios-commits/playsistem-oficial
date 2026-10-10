@@ -100,6 +100,11 @@ Deno.serve(async (req: Request) => {
         if (matched) {
           const changes: Record<string, unknown> = {};
           for (const [key, value] of Object.entries(metadata)) {
+            // Stage is the logical delivery association. Standard Drive folders
+            // do not carry stage IDs, so folder inventory must never erase it.
+            // New/previously unknown files still receive a stage when discovered
+            // in a dedicated stage folder (see insert metadata below).
+            if (key === "stage_id") continue;
             if ((matched[key] ?? null) !== value && key !== "file_type") changes[key] = value;
           }
           if (Object.keys(changes).length) {
