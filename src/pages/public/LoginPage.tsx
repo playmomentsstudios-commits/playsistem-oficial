@@ -56,9 +56,9 @@ export function LoginPage() {
           <p className="text-sm mb-6 sm:mb-7 leading-relaxed" style={{ color: '#777784' }}>Entre para continuar seus projetos e cursos.</p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 sm:gap-4">
-            <Input label="E-mail" type="email" placeholder="seu@email.com"
+            <Input label="E-mail" type="email" name="email" autoComplete="username" autoCapitalize="none" placeholder="seu@email.com"
               value={email} onChange={e => setEmail(e.target.value)} error={errors.email} />
-            <Input label="Senha" type="password" placeholder="••••••••"
+            <Input label="Senha" type="password" name="password" autoComplete="current-password" placeholder="••••••••"
               value={password} onChange={e => setPassword(e.target.value)} error={errors.password} />
 
             <div className="flex justify-end">
