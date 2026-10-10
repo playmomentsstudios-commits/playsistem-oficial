@@ -303,7 +303,7 @@ export function AdminProjectDetailV2(){
   useEffect(()=>{
     if(fileTask&&(!selectedFileTask||['completed','cancelled'].includes(selectedFileTask.status)))setFileTask('')
   },[fileTask,selectedFileTask?.id,selectedFileTask?.status])
-  const effectiveFileStage=selectedFileTask?.stage_id||(fileStage==='__general__'?null:fileStage||sortedStages[0]?.id||null)
+  const effectiveFileStage=selectedFileTask?.stage_id||(fileStage==='__general__'?null:fileStage||(project?.project_type==='internal'?sortedStages[0]?.id:null))
 
   useEffect(()=>{
     if(project?.project_type==='internal'&&!fileStage&&sortedStages[0]?.id)setFileStage(sortedStages[0].id)
