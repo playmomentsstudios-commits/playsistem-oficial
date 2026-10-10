@@ -196,7 +196,7 @@ export function WhatsappQrBridgePanel(){
           </p>}
           {mode==='single_client'&&!target&&<p className="text-xs text-red-300">O cliente selecionado perdeu a autorização ou mudou de número. O sistema impedirá novas tentativas reais para ele.</p>}
           <p className="text-[11px] text-gray-500">Modo salvo: {mode==='self_test'?'Teste no número da empresa':mode==='single_client'?'Somente um cliente':'Todos os clientes autorizados'}.
-          {trialAccepted?' Teste individual aceito pela biblioteca; confirme com o destinatário antes de ampliar.':' Ainda não houve teste individual aceito.'}</p>
+          {trialAccepted?' Entrega individual observada; confirme também diretamente com o destinatário antes de ampliar.':' Nenhuma entrega individual foi confirmada.'}</p>
           <button type="button" onClick={()=>void configureMode()}
             disabled={busy||enabled||(choiceMode==='single_client'&&!choiceCustomer)||(choiceMode==='consented_clients'&&!trialAccepted)}
             className="min-h-10 rounded-xl border border-[#A65A2A]/30 bg-[#A65A2A]/10 px-4 text-xs font-semibold text-[#DFA269] disabled:opacity-40">
