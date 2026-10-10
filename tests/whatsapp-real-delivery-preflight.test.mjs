@@ -73,3 +73,9 @@ test('admin distinguishes local identifiers, server confirmation and delivery',(
   assert.match(ui,/receiptStats.delivered_today/)
   assert.match(ui,/wa_bridge_receipt_summary/)
 })
+
+test('all-client delivery requires a real WhatsApp delivery receipt',()=>{
+  const sql=readFileSync(new URL('../supabase/migrations/20261010235921_wa_real_receipt_before_all_clients.sql',import.meta.url),'utf8')
+  assert.match(sql,/ack_status in \('delivered','read'\)/)
+  assert.match(sql,/wa_bridge_delivery_mode='consented_clients'/)
+})
