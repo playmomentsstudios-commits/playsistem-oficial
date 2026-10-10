@@ -167,7 +167,7 @@ async function sendOne(){
       const destination=digits(job.phone)
       if(!/^55\d{10,11}$/.test(destination))throw new Error('Telefone inválido.')
       const address=job.test_only&&destination===expectedPhone&&currentPnJid
-        ? currentPnJid : registeredRecipientJid(destination,await socket.onWhatsApp(destination))
+        ? currentPnJid : registeredRecipientJid(destination,await Promise.race([socket.onWhatsApp(destination),wait(15000).then(()=>{throw new Error('Consulta de destino WhatsApp excedeu 15 segundos; tentativa interrompida.')})]))
       const verified=await invoke('wa_bridge_register_destination',{
         p_instance:instanceId,p_attempt:job.attempt_id,p_jid:address
       })
