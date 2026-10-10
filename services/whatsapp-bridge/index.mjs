@@ -5,6 +5,7 @@ import { resolve } from 'node:path'
 import makeWASocket, { DisconnectReason, useMultiFileAuthState, Browsers } from '@whiskeysockets/baileys'
 import { createClient } from '@supabase/supabase-js'
 import QRCode from 'qrcode'
+import { resolveAuthorizedAccount } from './phone-utils.mjs'
 import pino from 'pino'
 
 const url=process.env.SUPABASE_URL?.trim()
@@ -20,6 +21,7 @@ const logger=pino({level:'silent'})
 let socket=null
 let socketOpen=false
 let currentPhone=null
+let currentPnJid=null
 let connectionStatus='offline'
 let connecting=false
 let busy=false
@@ -32,9 +34,6 @@ let tickRunning=false
 
 const wait=(milliseconds)=>new Promise(resolve=>setTimeout(resolve,milliseconds))
 function digits(value){return String(value||'').replace(/\D/g,'')}
-function phoneOfSocket(sock){
-  return digits(String(sock?.user?.id||'').split('@')[0].split(':')[0])
-}
 async function invoke(name,params){
   const {data,error}=await db.rpc(name,params)
   if(error)throw new Error(name+': '+error.message)
@@ -60,6 +59,7 @@ async function closeSession(logout=false){
   socket=null
   socketOpen=false
   currentPhone=null
+  currentPnJid=null
   lastQrData=null
   retryAt=Date.now()+10000
   if(old){
@@ -103,21 +103,31 @@ async function connect(){
           }
         }
         if(connection==='open'){
-          const phone=phoneOfSocket(sock)
-          if(phone!==expectedPhone){
-            console.error('[bridge] A conta vinculada não corresponde ao número autorizado.')
-            await report('error',null,null,'Número vinculado diferente do número permitido.')
+          // The verified PN JID can omit the Brazilian mobile ninth digit.
+          // Never treat @lid as a phone or accept a changed DDD/subscriber.
+          const account=resolveAuthorizedAccount(expectedPhone,
+            sock.user?.id,state.creds?.me?.id,sock.authState?.creds?.me?.id)
+          if(!account){
+            console.error('[bridge] O identificador PN desta sessão não corresponde ao número autorizado.')
+            await report('error',null,null,
+              'Número PN não autorizado ou não identificado. Verifique DDI, DDD e os oito dígitos finais. Conta não liberada.')
+            await db.from('app_settings').update({wa_bridge_auto_enabled:false}).eq('id',true)
+            await db.from('whatsapp_bridge_state').update({requested_mode:'stopped'}).eq('id',true)
             await closeSession(true)
             return
           }
-          currentPhone=phone
+          currentPhone=account.authorizedPhone
+          currentPnJid=account.pnJid
           lastQrData=null
           socketOpen=true
-          if(await report('connected',null,phone))console.log('[bridge] Número esperado conectado; envios permanecem sujeitos à ativação no painel.')
+          if(account.observedPhone!==expectedPhone){
+            console.log('[bridge] Número reconhecido com JID legado brasileiro (9º dígito ausente).')
+          }
+          if(await report('connected',null,expectedPhone))console.log('[bridge] Número autorizado conectado; envios permanecem sujeitos à ativação no painel.')
         }
         if(connection==='close'){
           const reason=lastDisconnect?.error?.output?.statusCode
-          socket=null;socketOpen=false;currentPhone=null;lastQrData=null
+          socket=null;socketOpen=false;currentPhone=null;currentPnJid=null;lastQrData=null
           if(reason===DisconnectReason.loggedOut){
             await report('logged_out')
             await rm(authDir,{recursive:true,force:true}).catch(()=>{})
@@ -152,7 +162,11 @@ async function sendOne(){
       if(!socketOpen||!socket)throw new Error('Sessão desconectada antes do envio.')
       const destination=digits(job.phone)
       if(!/^55\d{10,11}$/.test(destination))throw new Error('Telefone inválido.')
-      const result=await socket.sendMessage(destination+'@s.whatsapp.net',{text:job.message})
+      // During self-tests, use the verified registered PN JID, which may
+      // omit the ninth digit in Brazil. Never apply this to other recipients.
+      const address=job.test_only&&destination===expectedPhone&&currentPnJid
+        ? currentPnJid : destination+'@s.whatsapp.net'
+      const result=await socket.sendMessage(address,{text:job.message})
       if(!result?.key?.id)throw new Error('WhatsApp não retornou identificador da mensagem.')
       msgId=String(result.key.id)
       success=true
