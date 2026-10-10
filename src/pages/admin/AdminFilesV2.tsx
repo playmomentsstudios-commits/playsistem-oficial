@@ -71,6 +71,7 @@ export function AdminFilesV2(){
   const [loading,setLoading]=useState(true)
   const [saving,setSaving]=useState(false)
   const [testing,setTesting]=useState(false)
+  const [driveTestNotice,setDriveTestNotice]=useState<{ok:boolean;message:string}|null>(null)
   const [progress,setProgress]=useState(0)
   const [provider,setProvider]=useState<'google_drive'|'supabase'|'external'>('google_drive')
   const [customer,setCustomer]=useState('')
@@ -139,11 +140,15 @@ export function AdminFilesV2(){
       try{
         const linked=projects.filter((row:any)=>Boolean(row.drive_folder_id))
         const results=await Promise.allSettled(linked.map((row:any)=>portalApi.syncDriveProjectFiles(row.id)))
-        const rejected=results.filter(result=>result.status==='rejected').length
+        const rejected=results.filter(result=>result.status==='rejected')
+        const firstError=rejected[0]?.status==='rejected'?rejected[0].reason:null
+        const errorDetail=firstError instanceof Error?firstError.message:''
         const fresh=await portalApi.files()
         if(active){
           setFiles(fresh)
-          setDriveSyncWarning(rejected?rejected+' projeto(s) não sincronizado(s). Tente novamente ou verifique a conexão do Drive.':'')
+          setDriveSyncWarning(rejected.length
+            ? rejected.length+' projeto(s) não sincronizado(s). '+(errorDetail||'Verifique a conexão do Drive.')
+            : '')
         }
       }catch(error:any){
         if(active)setDriveSyncWarning(error?.message||'Não foi possível atualizar arquivos do Drive.')
@@ -296,12 +301,18 @@ export function AdminFilesV2(){
   },[libraryProject])
 
   async function testDrive(){
+    setDriveTestNotice(null)
     try{
       setTesting(true)
       const result=await portalApi.driveConnectionTest()
-      toast('Google Drive conectado: '+(result.account?.emailAddress||result.account?.displayName||'conta autorizada')+'.','success')
-    }catch(error:any){toast(error.message||'Falha ao testar Google Drive.','error')}
-    finally{setTesting(false)}
+      const message='Google Drive conectado: '+(result.account?.emailAddress||result.account?.displayName||'conta autorizada')+'. Pastas da Sagamente acessíveis.'
+      setDriveTestNotice({ok:true,message})
+      toast(message,'success')
+    }catch(error:any){
+      const message=error instanceof Error?error.message:'Falha ao testar Google Drive.'
+      setDriveTestNotice({ok:false,message})
+      toast(message,'error')
+    }finally{setTesting(false)}
   }
 
   async function createFolder(){
@@ -518,6 +529,9 @@ export function AdminFilesV2(){
       <button type="button" onClick={()=>{setUploadOpen(true);if(libraryCustomer&&libraryCustomer!=='__unassigned__')setCustomer(libraryCustomer);if(libraryProject&&libraryProject!=='sem-projeto')setProject(libraryProject)}} className="pm-compact-tap rounded-lg bg-[#A65A2A] px-3 text-xs font-bold text-white">＋ Novo arquivo</button>
     </>}>
       <p className={'text-[11px] '+(driveSyncWarning?'text-amber-300':'text-gray-500')}>{driveSyncWarning|| (driveSyncing?'↻ Atualizando arquivos do Google Drive...':'Sincronização automática com Google Drive ativa')}</p>
+      {driveTestNotice&&<p role={driveTestNotice.ok?'status':'alert'} className={'mt-2 text-xs leading-5 '+(driveTestNotice.ok?'text-emerald-300':'text-amber-300')}>
+        {driveTestNotice.message}
+      </p>}
     </CompactPageHeader>
 
     {uploadResult&&<div className="mb-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 flex items-start gap-3">
