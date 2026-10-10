@@ -1,6 +1,7 @@
 import { useEffect,useMemo,useRef,useState } from 'react'
 import { Link,useNavigate,useParams } from 'react-router-dom'
 import { portalApi } from '../../api/portal'
+import { adminProjectFolderGroups,standardProjectFolders } from '../../lib/projectFileOrganization'
 import { projectProgress as progress } from '../../lib/projectProgress'
 import { fileManagementApi } from '../../api/fileManagement'
 import { useAuth } from '../../contexts/AuthContext'
@@ -15,14 +16,7 @@ const projectStatuses=['planning','active','paused','review','completed','cancel
 const priorities=['low','medium','high','urgent']
 const taskStatuses=['pending','in_progress','review','completed','cancelled']
 const stageStatuses=['pending','in_progress','review','completed']
-const driveFolderOptions=[
-  ['received','01 - Arquivos recebidos'],
-  ['raw','02 - Brutos'],
-  ['production','03 - Produção'],
-  ['preview','04 - Prévia'],
-  ['approved','05 - Aprovados'],
-  ['delivery','06 - Entrega final'],
-]
+const driveFolderOptions=standardProjectFolders.map(({kind,label})=>[kind,label])
 
 function fileSize(value:number|null|undefined){
   if(!value)return '—'
@@ -57,6 +51,8 @@ export function AdminProjectDetailV2(){
   const [savingViewer,setSavingViewer]=useState(false)
   const [removingViewer,setRemovingViewer]=useState<string|null>(null)
   const [files,setFiles]=useState<any[]>([])
+  const [folderDirectory,setFolderDirectory]=useState<{standard:any[];custom:any[];stages:any[]}>({standard:[],custom:[],stages:[]})
+  const [movingFile,setMovingFile]=useState<string|null>(null)
   const [syncingFiles,setSyncingFiles]=useState(false)
   const [syncedAt,setSyncedAt]=useState<Date|null>(null)
   const syncLock=useRef(false)
@@ -96,17 +92,20 @@ export function AdminProjectDetailV2(){
         portalApi.projectFiles(id),
         portalApi.customers(),
         portalApi.projectViewers(id),
+        portalApi.projectDriveFolderDirectory(id),
       ])
-      const [members,projectFiles,clientRows,viewerRows]=results
+      const [members,projectFiles,clientRows,viewerRows,folders]=results
       setTeam(members.status==='fulfilled'?members.value:[])
       setFiles(projectFiles.status==='fulfilled'?projectFiles.value:[])
       setCustomers(clientRows.status==='fulfilled'?clientRows.value:[])
       setProjectViewers(viewerRows.status==='fulfilled'?viewerRows.value:[])
+      setFolderDirectory(folders.status==='fulfilled'?folders.value:{standard:[],custom:[],stages:[]})
       const warnings=[]
       if(members.status==='rejected')warnings.push('equipe')
       if(projectFiles.status==='rejected')warnings.push('arquivos')
       if(clientRows.status==='rejected')warnings.push('clientes')
       if(viewerRows.status==='rejected')warnings.push('acessos adicionais')
+      if(folders.status==='rejected')warnings.push('pastas do Google Drive')
       if(warnings.length)setLoadWarning('Alguns recursos não puderam ser carregados: '+warnings.join(', ')+'. O projeto continua disponível.')
     }catch(error:any){
       setLoadError(error?.message||'Falha ao carregar o projeto.')
@@ -510,13 +509,23 @@ export function AdminProjectDetailV2(){
     }catch(error:any){toast(error.message,'error')}
   }
 
-  async function moveProjectFile(file:any,folderKind:string){
+  async function moveProjectFile(file:any,destination:string){
+    if(movingFile||file.storage_provider!=='google_drive'||!file.drive_file_id)return
+    const isCustom=destination.startsWith('custom:')
+    const folder=isCustom?folderDirectory.custom.find((row:any)=>row.id===destination.slice(7)):folderDirectory.standard.find((row:any)=>row.folder_kind===destination)
+    if(!folder)return toast('Pasta de destino indisponível. Atualize a lista.','error')
+    if(file.drive_folder_id===folder.drive_folder_id)return toast('Arquivo já está nessa pasta.','success')
+    const folderName=isCustom?folder.name:folder.folder_name
+    if(!window.confirm('Mover "'+file.name+'" para "'+folderName+'" no Google Drive? A etapa, tarefa e visibilidade serão preservadas.'))return
+    setMovingFile(file.id)
     try{
-      await fileManagementApi.move(file.id,folderKind)
-      toast('Arquivo movido no Google Drive.','success')
+      if(isCustom)await fileManagementApi.moveToCustom(file.id,folder.id)
+      else await fileManagementApi.move(file.id,destination)
+      toast('Arquivo movido para '+folderName+'.','success')
       setFileMenu(null)
       await load()
-    }catch(error:any){toast(error.message,'error')}
+    }catch(error:any){toast(error?.message||'Não foi possível mover o arquivo.','error')}
+    finally{setMovingFile(null)}
   }
 
   async function renameProjectFile(file:any){
@@ -539,6 +548,9 @@ export function AdminProjectDetailV2(){
   if(loadError)return <div role="alert" className="pm-surface p-5 space-y-3"><p className="text-red-300">Não foi possível carregar este projeto: {loadError}</p><button type="button" onClick={()=>void load()} className="px-4 py-2 rounded-xl bg-[#A65A2A] text-white">Tentar novamente</button></div>
   if(!project)return <div><p>Projeto não encontrado.</p><Link to="/admin/projetos" className="text-[#A65A2A]">Voltar</Link></div>
 
+  const fileGroups=adminProjectFolderGroups(files,folderDirectory.standard,folderDirectory.custom,folderDirectory.stages,project.drive_folder_id)
+  const foldersWithFiles=fileGroups.filter(group=>group.files.length>0).length
+  const publishedFiles=files.filter(file=>file.client_visible).length
   const primaryCustomer=customers.find((item:any)=>item.id===project.customer_id)
   const primaryCustomerName=project.customer_id
     ? ([primaryCustomer?.first_name,primaryCustomer?.last_name].filter(Boolean).join(' ')||'Cliente vinculado')
@@ -697,7 +709,8 @@ export function AdminProjectDetailV2(){
       <div className="flex flex-wrap justify-between gap-3 items-end">
         <div>
           <h2 className="text-xl font-bold">Arquivos do projeto</h2>
-          <p className="text-sm text-gray-500">Os mesmos arquivos da Central de Arquivos, vinculados diretamente a este projeto.</p>
+          <p className="text-sm text-gray-500">Pastas reais do Google Drive. Organize arquivos sem perder os vínculos das etapas e tarefas.</p>
+           <p className="mt-1 text-xs text-gray-400">{files.length} arquivo(s) · {foldersWithFiles} pasta(s) com conteúdo · {publishedFiles} liberado(s) ao cliente</p>
         </div>
 <div className="flex items-center flex-wrap gap-3">
           <span className="text-[11px] text-gray-500">{syncingFiles?'Atualizando arquivos do Drive...':syncedAt?'Sincronizado às '+syncedAt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'Sincronização automática ativa'}</span>
@@ -766,8 +779,16 @@ export function AdminProjectDetailV2(){
 
         
 
-        <div className="mt-5 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {files.length===0?<p className="text-sm text-gray-500">Nenhum arquivo vinculado a este projeto.</p>:files.map(file=>{
+        <div className="mt-5 space-y-3" aria-label="Arquivos por pasta no Google Drive">
+          {files.length===0&&<p className="text-sm text-gray-500">Nenhum arquivo vinculado a este projeto.</p>}
+          {fileGroups.map(group=><details key={group.key} open={group.files.length>0} className="rounded-xl border border-white/10 bg-black/20">
+            <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs sm:px-4">
+              <span className="flex min-w-0 items-center gap-2"><span aria-hidden="true">📁</span><strong className="truncate text-gray-100">{group.name}</strong>{group.parent&&<span className="hidden text-gray-500 sm:inline">· {group.parent}</span>}</span>
+              <span className="shrink-0 text-gray-400">{group.files.length} arquivo(s) <span aria-hidden="true">▾</span></span>
+            </summary>
+            <div className="border-t border-white/10 p-2.5 sm:p-3">
+              {group.files.length===0?<p className="py-2 text-xs text-gray-500">Pasta vazia.</p>:<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {group.files.map(file=>{
             const review=reviewBadge(file)
             return <div key={file.id} className="p-3 rounded-xl bg-white/5 border border-white/10">
               <div className="flex gap-3">
@@ -775,7 +796,8 @@ export function AdminProjectDetailV2(){
                 <button onClick={()=>openFile(file)} className="text-left min-w-0 flex-1">
                   <div className="flex items-center gap-2 min-w-0"><p className="text-sm font-medium truncate" title={file.name}>{file.name}</p><span className="text-[9px] text-[#A65A2A] shrink-0">v{file.version_number||1}</span></div>
                   <p className="text-xs text-gray-500 mt-1">{fileSize(file.file_size)} · {file.client_visible?'Cliente':'Equipe'}</p>
-                  <p className="text-[10px] text-gray-600 mt-1">{file.stage?.name?('📁 '+file.stage.name):(tasks.find((task:any)=>task.id===file.task_id)?.title||'Arquivo geral do projeto')}</p>
+                  <p className="text-[10px] text-gray-400 mt-1">{tasks.find((task:any)=>task.id===file.task_id)?.title?('Tarefa: '+tasks.find((task:any)=>task.id===file.task_id)?.title):'Sem tarefa vinculada'}</p>
+                  <p className="text-[10px] text-gray-500 mt-1">Etapa: {tasks.find((task:any)=>task.id===file.task_id)?.stage_id?sortedStages.find((stage:any)=>stage.id===tasks.find((task:any)=>task.id===file.task_id)?.stage_id)?.name||'Não localizada':file.stage?.name||'Não vinculada'}</p>
                   {review&&<span className={'inline-flex mt-2 px-2 py-1 rounded-full text-[9px] font-semibold '+review.className}>{review.label}</span>}
                 </button>
               </div>
@@ -802,7 +824,7 @@ export function AdminProjectDetailV2(){
                      Liberado para o cliente
                    </label>
                    <label className="block text-[10px] text-gray-500">Tarefa
-                    <select value={file.task_id||''} onChange={async e=>{await portalApi.assignClientFileTask(file.id,e.target.value||null);setFileMenu(null);await load()}} className="mt-1 w-full px-2 py-1.5 rounded-lg bg-black border border-white/10 text-xs">
+                    <select value={file.task_id||''} onChange={async e=>{try{await portalApi.assignClientFileTask(file.id,e.target.value||null);setFileMenu(null);await load()}catch(error:any){toast(error?.message||'Não foi possível vincular a tarefa.','error')}}} className="mt-1 w-full px-2 py-1.5 rounded-lg bg-black border border-white/10 text-xs">
                       <option value="">Arquivo geral</option>
                       {tasks.map((task:any)=><option key={task.id} value={task.id}>{task.title}</option>)}
                     </select>
@@ -816,16 +838,23 @@ export function AdminProjectDetailV2(){
                       {sortedStages.map((stage:any)=><option key={stage.id} value={stage.id}>{stage.name}</option>)}
                     </select>
                   </label>
-                  {file.storage_provider==='google_drive'&&<label className="block text-[10px] text-gray-500 mt-2">Pasta
-                    <select defaultValue="" onChange={e=>{if(e.target.value){void moveProjectFile(file,e.target.value);setFileMenu(null)}}} className="mt-1 w-full px-2 py-1.5 rounded-lg bg-black border border-white/10 text-xs">
-                      <option value="">Mover para...</option>
-                      {driveFolderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
+                  {file.storage_provider==='google_drive'&&<label className="block text-[10px] text-gray-500 mt-2">Pasta física no Drive
+                    <select value={folderDirectory.custom.some((row:any)=>row.drive_folder_id===file.drive_folder_id)?'custom:'+folderDirectory.custom.find((row:any)=>row.drive_folder_id===file.drive_folder_id)?.id:folderDirectory.standard.find((row:any)=>row.drive_folder_id===file.drive_folder_id)?.folder_kind||''}
+                      disabled={movingFile===file.id} onChange={e=>{if(e.target.value)void moveProjectFile(file,e.target.value)}}
+                      className="mt-1 w-full px-2 py-1.5 rounded-lg bg-black border border-white/10 text-xs disabled:opacity-60">
+                      <option value="">Outra pasta / raiz</option>
+                      {folderDirectory.standard.map((row:any)=><option key={row.folder_kind} value={row.folder_kind}>{row.folder_name}</option>)}
+                      {folderDirectory.custom.length>0&&<optgroup label="Subpastas personalizadas">{folderDirectory.custom.map((row:any)=><option key={row.id} value={'custom:'+row.id}>{row.name}</option>)}</optgroup>}
                     </select>
+                    <span className="mt-1 block text-[9px] text-gray-600">Mover não altera etapa, tarefa nem acesso do cliente.</span>
                   </label>}
                 </div>}
               </div>
             </div>
           })}
+              </div>}
+            </div>
+          </details>)}
         </div>
       </div>
     </section>
