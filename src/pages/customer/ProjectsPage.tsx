@@ -102,7 +102,7 @@ export function ProjectsPage(){
       <section id="arquivos-projeto" className="mt-4 scroll-mt-20" aria-label="Arquivos do projeto">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <h2 className="pm-compact-section-title">Arquivos para visualizar</h2>
+            <h2 className="pm-compact-section-title">Arquivos disponíveis do projeto</h2>
             <span className="text-xs text-gray-500">({published.length})</span>
           </div>
           <Link to="/app/arquivos" className="pm-compact-tap text-xs font-semibold text-[#DFA269] hover:underline">Biblioteca completa ↗</Link>
@@ -135,10 +135,10 @@ export function ProjectsPage(){
                   </summary>
                   <div className="space-y-2 border-t border-white/10 px-3 pb-3 pt-2">
                     {task.description&&<p className="whitespace-pre-wrap text-xs text-gray-400">{task.description}</p>}
-                    {(task.checklist||[]).length>0&&<div><p className="mb-1 text-[11px] font-semibold text-gray-300">Checklist</p>
+                    {(task.checklist||[]).length>0&&<div><p className="mb-1 text-[11px] font-semibold text-gray-300">Checklist de execução</p>
                       {[...task.checklist].sort(sortByPosition).map((item:any)=><p key={item.id} className={'py-0.5 text-xs '+(item.completed?'text-emerald-300':'text-gray-400')}>{item.completed?'✓':'○'} {item.title}</p>)}
                     </div>}
-                    {(task.links||[]).filter((link:any)=>link.client_visible).length>0&&<div className="flex flex-wrap gap-2">{task.links.filter((link:any)=>link.client_visible).map((link:any)=><a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="pm-compact-tap rounded-lg border border-[#A65A2A]/25 px-3 text-[11px] text-[#DFA269]">{link.label} ↗</a>)}</div>}
+                    {(task.links||[]).filter((link:any)=>link.client_visible).length>0&&<div><p className="mb-1 text-[11px] font-semibold text-gray-300">Links de visualização</p><div className="flex flex-wrap gap-2">{task.links.filter((link:any)=>link.client_visible).map((link:any)=><a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="pm-compact-tap rounded-lg border border-[#A65A2A]/25 px-3 text-[11px] text-[#DFA269]">{link.label} ↗</a>)}</div></div>}
                     {projectFiles(task.id).length>0&&<div className="grid grid-cols-2 gap-2 md:grid-cols-3">{projectFiles(task.id).map((file:any)=><ClientProjectFileCard key={file.id} file={file} onOpen={openFile} compact/>)}</div>}
                   </div>
                 </details>)}
