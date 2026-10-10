@@ -1,5 +1,6 @@
 import { useEffect,useMemo,useState } from 'react'
 import { Link } from 'react-router-dom'
+import { CompactPageHeader } from '../../components/ui/CompactWorkspace'
 import { useAuth } from '../../contexts/AuthContext'
 import { portalApi } from '../../api/portal'
 import { crmApi,CRM_STAGE_LABELS,type CrmCustomer } from '../../api/crm'
@@ -101,28 +102,21 @@ export function AdminDashboard(){
 
   return <div>
     {error&&<div className="mb-4 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 text-sm text-amber-200">{error}</div>}
-    <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
-      <div>
-        <p className="text-[11px] uppercase tracking-[0.18em] text-[#A65A2A] font-semibold">Visão geral</p>
-        <h1 className="text-2xl md:text-3xl font-bold mt-1">Painel administrativo</h1>
-        <p className="text-sm text-gray-500 mt-1">Acompanhe operação, comercial e financeiro em uma única visão.</p>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <Link to="/admin/projetos" className="min-h-11 px-4 rounded-xl border border-white/[0.08] bg-white/[0.025] hover:bg-white/[0.05] text-gray-300 text-sm font-semibold flex items-center justify-center">Ver operação</Link>
-        <Link to="/admin/crm" className="min-h-11 px-4 rounded-xl bg-[#A65A2A] hover:bg-[#87441f] shadow-[0_8px_24px_rgba(166,90,42,.16)] text-white text-sm font-semibold flex items-center justify-center">Abrir CRM</Link>
-      </div>
-    </div>
+    <CompactPageHeader eyebrow="Visão geral" title="Painel administrativo" description="Operação, comercial e financeiro." actions={<>
+      <Link to="/admin/projetos" className="pm-compact-tap rounded-lg border border-white/10 bg-white/[.025] px-3 text-xs font-semibold text-gray-200">Operação</Link>
+      <Link to="/admin/crm" className="pm-compact-tap rounded-lg bg-[#A65A2A] px-3 text-xs font-semibold text-white">Abrir CRM</Link>
+    </>} />
 
-    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2.5">
-      {cards.map(card=><Link key={card.label} to={card.href} className="pm-surface pm-surface-interactive p-3.5 md:p-4 group relative overflow-hidden min-h-[108px]">
+    <div className="grid grid-cols-2 gap-2 lg:grid-cols-3 xl:grid-cols-6">
+      {cards.map(card=><Link key={card.label} to={card.href} className="pm-compact-card pm-compact-card-interactive group relative min-h-[80px] overflow-hidden">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
         <div className="flex items-start justify-between gap-3"><p className="text-[10px] uppercase tracking-[0.12em] text-gray-500">{card.label}</p><span className="text-gray-700 group-hover:text-gray-300 transition-colors" aria-hidden="true">↗</span></div>
-        <p className={'text-2xl font-bold mt-2.5 '+card.tone}>{card.value}</p>
+        <p className={'text-xl font-bold mt-1 '+card.tone}>{card.value}</p>
         <p className="text-[10px] text-gray-600 mt-1.5">{card.hint}</p>
       </Link>)}
     </div>
 
-    {(metrics.pendingPayments>0||metrics.overdueActions>0||metrics.unread>0)&&<div className="mt-4 p-4 rounded-2xl border border-amber-500/15 bg-amber-500/[0.035] flex flex-wrap items-center gap-3">
+    {(metrics.pendingPayments>0||metrics.overdueActions>0||metrics.unread>0)&&<div className="mt-3 p-3 rounded-xl border border-amber-500/15 bg-amber-500/[0.035] flex flex-wrap items-center gap-3">
       <div className="min-w-0 flex-1"><p className="text-sm font-semibold text-amber-100">Pontos que pedem atenção</p><p className="text-xs text-gray-500 mt-1">{[metrics.pendingPayments&&`${metrics.pendingPayments} pagamento(s) pendente(s)`,metrics.overdueActions&&`${metrics.overdueActions} retorno(s) comercial(is) atrasado(s)`,metrics.unread&&`${metrics.unread} mensagem(ns) não lida(s)`].filter(Boolean).join(' · ')}</p></div>
       <Link to={metrics.overdueActions?'/admin/crm':metrics.pendingPayments?'/admin/pagamentos':'/admin/conversas'} className="text-xs font-semibold text-amber-300 hover:text-amber-200">Resolver agora →</Link>
     </div>}
@@ -140,9 +134,9 @@ export function AdminDashboard(){
       </Link>
     </div>
 
-    <div className="grid xl:grid-cols-3 gap-4 mt-6">
+    <div className="mt-3 grid gap-3 xl:grid-cols-3">
       <section className="pm-surface overflow-hidden">
-        <div className="p-4 md:p-5 border-b border-white/8 flex items-center justify-between gap-3">
+        <div className="p-3 border-b border-white/8 flex items-center justify-between gap-3">
           <div><p className="text-[10px] uppercase tracking-[0.14em] text-gray-600">Comercial</p><h2 className="font-semibold mt-1">Próximas ações</h2></div>
           <Link to="/admin/crm" className="text-xs text-[#ff5364] hover:text-[#ff7a86]">Funil comercial →</Link>
         </div>

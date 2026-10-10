@@ -2,6 +2,7 @@ import { useEffect,useState } from 'react'
 import { Link,useParams,useSearchParams } from 'react-router-dom'
 import { portalApi } from '../../api/portal'
 import { OrderStatusBadge } from '../../components/ui/Badge'
+import { CompactPageHeader } from '../../components/ui/CompactWorkspace'
 import { rotulo,statusPagamento } from '../../lib/labels.ptBR'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
@@ -53,20 +54,18 @@ export function OrderDetailPage(){
     {isNew&&<div className="mb-6 p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
       <div className="flex gap-3 items-start"><span className="text-2xl">✓</span><div><p className="text-xs uppercase tracking-widest text-emerald-400 font-semibold">Pedido recebido</p><h2 className="text-xl font-bold mt-1">Sua compra foi registrada</h2><p className="text-sm text-gray-400 mt-2">{row.payment_status==='paid'?'Pagamento confirmado. Você pode acompanhar o andamento abaixo.':'O pedido já está na sua conta. Acompanhe aqui a confirmação do pagamento e as próximas atualizações.'}</p><div className="flex flex-wrap gap-2 mt-4"><Link to="/app/pedidos" className="px-3 py-2 rounded-lg bg-white/5 text-xs font-semibold">Meus pedidos</Link><Link to="/app/pagamentos" className="px-3 py-2 rounded-lg bg-[#A65A2A] text-white text-xs font-semibold">Ver pagamento</Link></div></div></div>
     </div>}
-    <Link to="/app/pedidos" className="text-sm text-[#A65A2A]">← Pedidos</Link>
-    <div className="flex flex-wrap justify-between gap-4 mt-4">
-      <div><h1 className="text-2xl font-bold">{row.order_number}</h1><p className="text-sm text-gray-500">{new Date(row.created_at).toLocaleString('pt-BR')}</p></div>
-      <OrderStatusBadge status={row.status}/>
-    </div>
+    <CompactPageHeader title={row.order_number} backTo="/app/pedidos" backLabel="Pedidos"
+      description={new Date(row.created_at).toLocaleString('pt-BR')}
+      actions={<OrderStatusBadge status={row.status}/>} />
 
-    <div className="grid lg:grid-cols-[1fr_320px] gap-5 mt-6">
-      <div className="p-5 rounded-2xl bg-[#141416] border border-white/10">
-        <h2 className="font-bold mb-4">Itens</h2>
+    <div className="mt-3 grid gap-3 lg:grid-cols-[1fr_300px]">
+      <div className="pm-compact-card">
+        <h2 className="mb-2 font-bold">Itens</h2>
         {row.items?.map((item:any)=><div key={item.id} className="flex justify-between gap-4 py-3 border-b border-white/5"><div><p>{item.name_snapshot}</p><p className="text-xs text-gray-500">{item.quantity} × {money(item.unit_price)}</p></div><b>{money(item.total_price)}</b></div>)}
       </div>
 
-      <aside className="space-y-4">
-        <div className="p-5 rounded-2xl bg-[#141416] border border-white/10">
+      <aside className="space-y-3">
+        <div className="pm-compact-card">
           <div className="flex justify-between text-sm"><span>Subtotal</span><span>{money(row.subtotal)}</span></div>
           {row.play_cash_discount>0&&<div className="flex justify-between text-sm text-green-400 mt-2"><span>Play Cash</span><span>- {money(row.play_cash_discount)}</span></div>}
           <div className="flex justify-between mt-3 pt-3 border-t border-white/10"><span>Total</span><b>{money(row.total)}</b></div>
@@ -81,7 +80,7 @@ export function OrderDetailPage(){
           {row.payment_status!=='paid'&&<Link to="/app/pagamentos" className="inline-block mt-4 text-[#A65A2A]">Efetuar pagamento →</Link>}
         </div>
 
-        {row.projects?.[0]&&<div className="p-5 rounded-2xl bg-[#141416] border border-white/10"><p className="text-xs text-gray-500">Projeto relacionado</p><Link to={'/app/projetos/'+row.projects[0].id} className="font-semibold">{row.projects[0].title}</Link></div>}
+        {row.projects?.[0]&&<div className="pm-compact-card"><p className="text-xs text-gray-500">Projeto relacionado</p><Link to={'/app/projetos/'+row.projects[0].id} className="font-semibold">{row.projects[0].title}</Link></div>}
         <Link to="/app/conversas" className="block p-4 text-center rounded-xl bg-white/5">Falar sobre este pedido</Link>
       </aside>
     </div>

@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { useToast } from '../../contexts/ToastContext'
+import { CompactPageHeader } from '../../components/ui/CompactWorkspace'
 
 type ProfileForm={
   first_name:string;last_name:string;phone:string;document_number:string;postal_code:string;street:string
@@ -96,12 +97,11 @@ export function ProfilePage(){
  }
  if(fetching)return <div className="py-16 text-center text-sm text-gray-500">Carregando cadastro...</div>
  return <div className="max-w-3xl">
-   <h1 className="text-2xl font-bold text-white mb-2">Meu Perfil</h1>
-   <p className="text-sm text-gray-500 mb-6">Atualize seus dados de contato, cadastro e endereço.</p>
-   <form onSubmit={save} className="space-y-6">
-    <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
+   <CompactPageHeader title="Meu Perfil" description="Dados pessoais, contato e endereço." />
+   <form onSubmit={save} className="space-y-3">
+    <section className="pm-compact-card">
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-        <div className="w-24 h-24 rounded-full overflow-hidden bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
+        <div className="w-16 h-16 rounded-full overflow-hidden bg-white/[0.05] border border-white/10 flex items-center justify-center shrink-0">
           {avatarUrl?<img src={avatarUrl} alt="Foto de perfil" className="w-full h-full object-cover"/>:<span className="text-2xl font-bold text-gray-500">{(form.first_name?.[0]||user?.email?.[0]||'?').toUpperCase()}</span>}
         </div>
         <div>
@@ -117,13 +117,13 @@ export function ProfilePage(){
         </div>
       </div>
     </section>
-    <section className="p-5 rounded-2xl bg-[#141416] border border-white/10 space-y-4">
+    <section className="pm-compact-card space-y-4">
       <h2 className="font-semibold">Dados pessoais</h2>
       <div className="grid sm:grid-cols-2 gap-3"><Input label="Nome" value={form.first_name} onChange={field('first_name')}/><Input label="Sobrenome" value={form.last_name} onChange={field('last_name')}/></div>
       <Input label="E-mail" value={user?.email||''} disabled/>
       <div className="grid sm:grid-cols-2 gap-3"><Input label="Telefone" value={form.phone} onChange={field('phone')}/><Input label="CPF/CNPJ (quando necessário)" value={form.document_number} onChange={field('document_number')}/></div>
     </section>
-    <section className="p-5 rounded-2xl bg-[#141416] border border-white/10 space-y-4">
+    <section className="pm-compact-card space-y-4">
       <div><h2 className="font-semibold">Endereço</h2><p className="text-xs text-gray-500 mt-1">Usado quando necessário para cadastro, pedido ou prestação do serviço.</p></div>
       <div className="grid sm:grid-cols-[160px_1fr] gap-3"><Input label="CEP" value={form.postal_code} onChange={field('postal_code')}/><Input label="Rua / Avenida" value={form.street} onChange={field('street')}/></div>
       <div className="grid sm:grid-cols-[140px_1fr] gap-3"><Input label="Número" value={form.address_number} onChange={field('address_number')}/><Input label="Complemento" value={form.address_complement} onChange={field('address_complement')}/></div>

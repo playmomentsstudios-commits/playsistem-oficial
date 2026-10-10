@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
 import { prioridade,rotulo,statusProjeto,tipoProjeto } from '../../lib/labels.ptBR'
+import { CompactPageHeader } from '../../components/ui/CompactWorkspace'
 import { settingsApi } from '../../api/settings'
 
 const tipos=['internal','product','service','website','design','audiovisual','other']
@@ -86,16 +87,9 @@ export function AdminProjects(){
   const completedCount=rows.filter(p=>p.status==='completed').length
 
   return <div>
-    <div className="flex flex-wrap justify-between gap-4 items-end mb-6">
-      <div>
-        <p className="text-[11px] uppercase tracking-[.18em] text-[#A65A2A] font-semibold">Operação</p>
-        <h1 className="text-2xl font-bold text-white mt-1">Projetos</h1>
-        <p className="text-sm text-gray-500 mt-1">Trabalhos, prazos e andamento das entregas.</p>
-      </div>
-      <Button onClick={()=>setShowForm(value=>!value)}>{showForm?'Fechar':'Novo projeto'}</Button>
-    </div>
+    <CompactPageHeader eyebrow="Operação" title="Projetos" description="Trabalhos, prazos e entregas." actions={<Button onClick={()=>setShowForm(value=>!value)}>{showForm?'Fechar formulário':'+ Novo projeto'}</Button>} />
 
-    <div className="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-5">{[['Ativos',activeCount,'text-blue-300'],['Em revisão',reviewCount,'text-violet-300'],['Atrasados',overdueCount,'text-red-300'],['Concluídos',completedCount,'text-emerald-300']].map(([label,value,tone])=><div key={String(label)} className="p-4 rounded-2xl bg-[#141416] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">{label}</p><p className={'text-xl font-bold mt-2 '+tone}>{value}</p></div>)}</div>
+    <div className="mb-3 grid grid-cols-2 gap-2 xl:grid-cols-4">{[['Ativos',activeCount,'text-blue-300'],['Em revisão',reviewCount,'text-violet-300'],['Atrasados',overdueCount,'text-red-300'],['Concluídos',completedCount,'text-emerald-300']].map(([label,value,tone])=><div key={String(label)} className="pm-compact-metric"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">{label}</p><p className={'text-xl font-bold '+tone}>{value}</p></div>)}</div>
 
     {showForm&&<form onSubmit={create} className="p-5 mb-6 rounded-2xl bg-[#141416] border border-white/10 space-y-4">
       <div className="grid md:grid-cols-2 gap-3">
@@ -119,8 +113,8 @@ export function AdminProjects(){
       <Button type="submit">Criar e abrir projeto</Button>
     </form>}
 
-    <div className="p-3 rounded-2xl bg-[#111113] border border-white/10 flex flex-wrap gap-3 mb-5">
-      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar projeto..." className="min-h-11 flex-1 min-w-56 px-4 rounded-xl bg-black/40 border border-white/10"/>
+    <div className="pm-compact-toolbar mb-3">
+      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar projeto..." className="min-h-10 flex-1 min-w-44 rounded-lg border border-white/10 bg-black/40 px-3 text-sm"/>
       <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} className="px-3 py-2 rounded-xl bg-black border border-white/10">
         <option value="todos">Todas as situações</option>
         {statuses.map(value=><option key={value} value={value}>{rotulo(statusProjeto,value)}</option>)}
@@ -128,14 +122,14 @@ export function AdminProjects(){
       <Link to="/admin/produtividade" className="min-h-11 px-4 rounded-xl bg-white/[0.05] border border-white/10 text-sm flex items-center hover:bg-white/[0.08]">Abrir tarefas →</Link>
     </div>
 
-    {loading?<p className="text-gray-400">Carregando...</p>:!filtered.length?<p className="text-gray-500">Nenhum projeto encontrado.</p>:<div className="grid lg:grid-cols-2 gap-4">{filtered.map(project=><Link key={project.id} to={'/admin/projetos/'+project.id} className="p-5 rounded-2xl bg-[#141416] border border-white/10 hover:border-white/20 transition-colors">
+    {loading?<p className="text-gray-400">Carregando...</p>:!filtered.length?<p className="text-gray-500">Nenhum projeto encontrado.</p>:<div className="grid gap-2 lg:grid-cols-2">{filtered.map(project=><Link key={project.id} to={'/admin/projetos/'+project.id} className="pm-compact-card pm-compact-card-interactive block">
       <div className="flex justify-between gap-3">
         <div><b className="text-white">{project.title}</b><p className="text-xs text-gray-500 mt-1">{rotulo(tipoProjeto,project.project_type)} · prioridade {rotulo(prioridade,project.priority)}</p></div>
         <span className={"pm-tag "+(project.status==="completed"?"pm-tag-success":project.status==="active"?"pm-tag-progress":project.status==="review"?"pm-tag-review":project.status==="paused"?"pm-tag-pending":project.status==="cancelled"?"pm-tag-danger":"pm-tag-neutral")}>{rotulo(statusProjeto,project.status)}</span>
       </div>
-      <div className="flex justify-between mt-4 text-sm"><span className="text-gray-500">Progresso</span><b>{progress(project)}%</b></div>
-      <div className="h-2 bg-white/10 rounded mt-2"><div className="h-2 bg-[#A65A2A] rounded" style={{width:progress(project)+'%'}}/></div>
-      {project.due_date&&<p className={'text-xs mt-3 '+(project.due_date<today&&!['completed','cancelled'].includes(project.status)?'text-red-300':'text-gray-500')}>Prazo: {new Date(project.due_date+'T12:00').toLocaleDateString('pt-BR')}{project.due_date<today&&!['completed','cancelled'].includes(project.status)?' · atrasado':''}</p>}
+      <div className="flex justify-between mt-2 text-xs"><span className="text-gray-500">Progresso</span><b>{progress(project)}%</b></div>
+      <div className="h-1.5 bg-white/10 rounded mt-1.5"><div className="h-full bg-[#A65A2A] rounded" style={{width:progress(project)+'%'}}/></div>
+      {project.due_date&&<p className={'text-xs mt-2 '+(project.due_date<today&&!['completed','cancelled'].includes(project.status)?'text-red-300':'text-gray-500')}>Prazo: {new Date(project.due_date+'T12:00').toLocaleDateString('pt-BR')}{project.due_date<today&&!['completed','cancelled'].includes(project.status)?' · atrasado':''}</p>}
     </Link>)}</div>}
   </div>
 }

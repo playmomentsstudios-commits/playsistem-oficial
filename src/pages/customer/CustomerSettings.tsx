@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { settingsApi,type UserPreferences } from '../../api/settings'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
+import { CompactPageHeader } from '../../components/ui/CompactWorkspace'
 
 export function CustomerSettings(){
   const {user,updatePassword}=useAuth()
@@ -72,23 +73,19 @@ export function CustomerSettings(){
   )
 
   return <div className="max-w-5xl">
-    <div className="mb-6">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-[#A65A2A] font-semibold">Conta</p>
-      <h1 className="text-2xl font-bold mt-1">Configurações</h1>
-      <p className="text-sm text-gray-500 mt-1">Controle sua experiência, notificações, privacidade e segurança.</p>
-    </div>
+    <CompactPageHeader eyebrow="Conta" title="Configurações" description="Experiência, notificações, privacidade e segurança." />
 
-    <div className="grid lg:grid-cols-2 gap-5">
-      <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
+    <div className="grid gap-3 lg:grid-cols-2">
+      <section className="pm-compact-card">
         <h2 className="font-semibold">Experiência do portal</h2>
         <p className="text-xs text-gray-500 mt-1">Preferências aplicadas quando você entrar na sua conta.</p>
-        <div className="space-y-3 mt-5">
+        <div className="space-y-2 mt-3">
           {option('Menu lateral expandido','Entrar no portal com os nomes das opções visíveis.','sidebar_expanded')}
           {option('Chat flutuante','Mostrar o atalho de conversa sobre as páginas do portal.','floating_chat_enabled')}
         </div>
       </section>
 
-      <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
+      <section className="pm-compact-card">
         <h2 className="font-semibold">Dados da conta</h2>
         <p className="text-xs text-gray-500 mt-1">Contato, cadastro e endereço ficam no seu perfil.</p>
         <div className="mt-5 p-3 rounded-xl bg-white/[0.035] border border-white/8">
@@ -99,10 +96,10 @@ export function CustomerSettings(){
         <Link to="/app/perfil" className="inline-flex mt-4 min-h-11 px-4 items-center rounded-xl bg-white/[0.06] border border-white/10 text-sm font-semibold">Editar cadastro e endereço</Link>
       </section>
 
-      <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
+      <section className="pm-compact-card">
         <h2 className="font-semibold">Notificações</h2>
         <p className="text-xs text-gray-500 mt-1">Escolha quais comunicações deseja receber.</p>
-        <div className="space-y-3 mt-5">
+        <div className="space-y-2 mt-3">
           {option('Notificações no portal','Manter avisos dentro da sua conta.','notify_portal')}
           {option('Notificações por e-mail','Permitir comunicações transacionais por e-mail.','notify_email')}
           {option('Atualizações de projetos','Avisos relacionados ao andamento dos seus projetos.','notify_project_updates')}
@@ -111,10 +108,10 @@ export function CustomerSettings(){
         </div>
       </section>
 
-      <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
+      <section className="pm-compact-card">
         <h2 className="font-semibold">Privacidade</h2>
         <p className="text-xs text-gray-500 mt-1">Controle o uso interno dos seus dados de contato.</p>
-        <div className="space-y-3 mt-5">
+        <div className="space-y-2 mt-3">
           {option('Contato visível à equipe','Permitir que colaboradores autorizados vejam seus dados de contato para atendimento e execução dos serviços.','profile_contact_visible_to_team')}
         </div>
         <p className="text-[10px] text-gray-600 mt-3">Essa preferência não altera dados obrigatórios de pedidos, pagamentos ou registros necessários para executar serviços contratados.</p>

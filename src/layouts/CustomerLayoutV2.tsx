@@ -186,7 +186,7 @@ export function CustomerLayoutV2() {
     </>}
 
     <div className="flex-1 flex flex-col min-w-0">
-      <header className="hidden md:flex h-16 items-center justify-end gap-2 px-6 border-b border-white/5 bg-[#0b0b0d]/95">
+      <header className="hidden md:flex h-14 items-center justify-end gap-2 px-6 border-b border-white/5 bg-[#0b0b0d]/95">
         <Link to="/app/conversas" className="relative w-10 h-10 rounded-xl flex items-center justify-center text-[#7d7d88] hover:text-white hover:bg-white/[.05]" title="Mensagens">
           <MenuIcon name="chat" size={18}/>{counts.messages>0&&<span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#A65A2A] text-[8px] font-bold text-white flex items-center justify-center">{counts.messages>99?'99+':counts.messages}</span>}
         </Link>
@@ -215,7 +215,7 @@ export function CustomerLayoutV2() {
         <div className="w-[22px]"/>
       </div>
 
-      <main className="flex-1 overflow-auto p-4 md:p-8">
+      <main className="pm-workspace-main flex-1 overflow-auto p-3 sm:p-4 lg:p-5">
         <CustomerRouteBoundary key={location.pathname} route={location.pathname}><Outlet/></CustomerRouteBoundary>
       </main>
     </div>

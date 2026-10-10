@@ -6,6 +6,7 @@ import { useToast } from '../../contexts/ToastContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { FilePreviewModal } from '../../components/files/FilePreviewModal'
 import { ClientProjectFileCard } from '../../components/files/ClientProjectFileCard'
+import { CompactPageHeader } from '../../components/ui/CompactWorkspace'
 
 function sizeLabel(value:number|null|undefined){
   if(!value)return '—'
@@ -208,29 +209,26 @@ export function FilesPage(){
 
   return <div>
     <FilePreviewModal file={previewFile} onClose={()=>setPreviewFile(null)}/>
-    <div className="mb-6">
-      <h1 className="text-2xl font-bold text-white">Meus Arquivos</h1>
-      <p className="text-sm text-gray-500">Organizados por projeto, como uma biblioteca de pastas.</p>
-    </div>
+    <CompactPageHeader title="Meus Arquivos" description="Artes e documentos organizados por projeto." />
 
     {loading?<LoadingState label="Organizando seus arquivos..." />:groups.length===0?<EmptyState icon="📁" title="Nenhum projeto ou arquivo ainda"/>:<>
       <section>
-        <div className="mb-4">
-          <h2 className="text-sm font-semibold text-white">Projetos</h2>
-          <p className="text-xs text-gray-500">Entre em uma pasta para ver somente os arquivos daquele projeto.</p>
+        <div className="pm-compact-toolbar mb-2">
+          <h2 className="shrink-0 text-xs font-semibold text-white">Projetos</h2>
+          <input value={projectSearch} onChange={e=>setProjectSearch(e.target.value)} placeholder="Buscar projeto ou arquivo..." aria-label="Buscar projeto ou arquivo" className="min-h-10 min-w-0 flex-1 rounded-lg border border-white/10 bg-black px-3 text-xs"/>
+          <span className="shrink-0 text-[11px] text-gray-500">{filteredGroups.length} pasta(s)</span>
         </div>
-        <input value={projectSearch} onChange={e=>setProjectSearch(e.target.value)} placeholder="Buscar projeto ou arquivo..." className="w-full min-h-11 px-4 rounded-xl bg-[#141416] border border-white/10 text-sm mb-4"/>
 
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-3">
-          {filteredGroups.map(([id,group])=><button key={id} type="button" onClick={()=>{setProjectId(id);setVersionGroup(null);setFileSearch('');setFileType('all');setFileReview('all');setUploadFiles([]);setUploadProgress(0)}} className="group text-left p-3 sm:p-4 min-h-[112px] rounded-2xl border border-white/8 bg-[#121214] hover:bg-[#171719] hover:border-white/15 transition-all">
+          {filteredGroups.map(([id,group])=><button key={id} type="button" onClick={()=>{setProjectId(id);setVersionGroup(null);setFileSearch('');setFileType('all');setFileReview('all');setUploadFiles([]);setUploadProgress(0)}} className="pm-compact-card pm-compact-card-interactive group min-h-[75px] text-left">
             <div className="flex items-start gap-3">
-              <div className="w-11 h-11 rounded-xl bg-[#A65A2A]/10 text-[#A65A2A] flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-lg bg-[#A65A2A]/10 text-[#A65A2A] flex items-center justify-center shrink-0">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h6l2 2h8v10H4z"/><path d="M8 12h8"/></svg>
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold truncate">{group.project?.title||'Arquivos gerais'}</p>
                 <p className="text-[10px] text-gray-500 mt-1">{group.files.length} arquivo(s)</p>
-                <p className="text-[10px] text-gray-600 mt-2">{group.files[0]?.created_at?'Atualizado em '+new Date(group.files[0].created_at).toLocaleDateString('pt-BR'):'Sem arquivos ainda'}</p>
+                <p className="text-[10px] text-gray-600 mt-1">{group.files[0]?.created_at?'Atualizado em '+new Date(group.files[0].created_at).toLocaleDateString('pt-BR'):'Sem arquivos ainda'}</p>
               </div>
               <span className="text-gray-600 group-hover:text-[#A65A2A] transition-colors">›</span>
             </div>
@@ -240,7 +238,7 @@ export function FilesPage(){
     </>}
 
     {projectId&&selected&&<div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4" onMouseDown={event=>{if(event.currentTarget===event.target&&!uploading){setProjectId(null);setVersionGroup(null)}}}>
-      <div role="dialog" aria-modal="true" aria-label={selected.project?.title||'Arquivos do projeto'} className="w-full max-w-5xl h-[92vh] sm:h-auto sm:max-h-[86vh] rounded-t-2xl sm:rounded-2xl border border-white/10 bg-[#111113] shadow-2xl overflow-hidden flex flex-col">
+      <div role="dialog" aria-modal="true" aria-label={selected.project?.title||'Arquivos do projeto'} className="w-full max-w-5xl h-[94vh] sm:h-auto sm:max-h-[90vh] rounded-t-2xl sm:rounded-2xl border border-white/10 bg-[#111113] shadow-2xl overflow-hidden flex flex-col">
         <div className="h-14 px-4 sm:px-5 border-b border-white/10 flex items-center gap-3 shrink-0">
           <button type="button" onClick={()=>{setProjectId(null);setVersionGroup(null)}} className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-300" aria-label="Voltar">←</button>
           <div className="min-w-0 flex-1">
@@ -263,7 +261,7 @@ export function FilesPage(){
           <button type="button" disabled={uploading} onClick={()=>{setProjectId(null);setVersionGroup(null)}} className="w-10 h-10 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-gray-400 text-lg" aria-label="Fechar">×</button>
         </div>
 
-        <div className="p-3 sm:p-5 overflow-y-auto">
+        <div className="p-2.5 sm:p-3 overflow-y-auto">
           {uploadFiles.length>0&&projectId!=='general'&&selectedIsPrimary&&<div className="mb-4 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
@@ -274,8 +272,8 @@ export function FilesPage(){
             </div>
             {uploading&&<div className="h-2 bg-white/10 rounded-full overflow-hidden mt-3"><div className="h-full bg-[#A65A2A] transition-[width]" style={{width:uploadProgress+'%'}}/></div>}
           </div>}
-          <div className="grid sm:grid-cols-3 gap-2 mb-4">
-            <input value={fileSearch} onChange={e=>setFileSearch(e.target.value)} placeholder="Buscar arquivo..." className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs"/>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
+            <input value={fileSearch} onChange={e=>setFileSearch(e.target.value)} placeholder="Buscar arquivo..." className="min-h-10 min-w-0 px-3 rounded-lg bg-black border border-white/10 text-xs"/>
             <select value={fileType} onChange={e=>setFileType(e.target.value)} className="min-h-10 px-3 rounded-xl bg-black border border-white/10 text-xs">
               <option value="all">Todos os formatos</option>
               <option value="image">Imagens</option>
@@ -297,7 +295,7 @@ export function FilesPage(){
             {filteredVersionGroups.map(group=>{
               const file=group.latest
               const status=reviewLabel(file)
-              return <div key={group.groupId} className="p-2.5 sm:p-3 min-h-[178px] rounded-xl bg-[#171719] border border-white/8">
+              return <div key={group.groupId} className="min-w-0 rounded-xl border border-white/10 bg-[#171719] p-2">
                 <ClientProjectFileCard file={file} onOpen={open} compact/>
                 <div className="mt-2 flex items-center justify-between gap-2">
                   <span className="text-[9px] font-bold text-[#A65A2A]">{extension(file.name)} · v{file.version_number||1}</span>
