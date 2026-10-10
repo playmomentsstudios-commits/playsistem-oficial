@@ -25,6 +25,10 @@ export function FilePreviewModal({ file, onClose }: Props) {
   const [error, setError] = useState('')
   const [zoom, setZoom] = useState(1)
   const [rotation, setRotation] = useState(0)
+  const [lowResPreview, setLowResPreview] = useState(false)
+  const [downloading, setDownloading] = useState(false)
+  const [loadingOriginal, setLoadingOriginal] = useState(false)
+  const fullResolutionUrlRef = useRef<string | null>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
 
   const type = useMemo(() => file ? filePreviewType(file) : 'unsupported', [file])
@@ -60,14 +64,25 @@ export function FilePreviewModal({ file, onClose }: Props) {
     setError('')
     setZoom(1)
     setRotation(0)
+    setLowResPreview(false)
+    if (fullResolutionUrlRef.current) { URL.revokeObjectURL(fullResolutionUrlRef.current); fullResolutionUrlRef.current = null }
     if (!file || !canPreview) { setPending(false); return }
 
     const load = async () => {
       setPending(true)
       try {
         if (file.storage_provider === 'google_drive' && file.drive_file_id) {
-          // Edge Function validates files.view / project membership / client_visible.
-          objectUrl = await portalApi.driveFileBlobUrl(file.id)
+          // Load lightweight, authenticated Drive artwork first. Never use it for downloads.
+          if (type === 'image') {
+            try {
+              objectUrl = await portalApi.driveFileThumbnailBlobUrl(file.id)
+              if (!disposed) setLowResPreview(true)
+            } catch {
+              objectUrl = await portalApi.driveFileBlobUrl(file.id)
+            }
+          } else {
+            objectUrl = await portalApi.driveFileBlobUrl(file.id)
+          }
         } else if (file.storage_path) {
           // Signed storage access is generated only for the signed-in user.
           const signedUrl = await portalApi.fileUrl(file.storage_path)
@@ -94,14 +109,46 @@ export function FilePreviewModal({ file, onClose }: Props) {
 
   if (!file) return null
 
-  const download = () => {
-    if (!previewUrl) return
-    const a = document.createElement('a')
-    a.href = previewUrl
-    a.download = file.name || 'arquivo'
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
+  const download = async () => {
+    if (!previewUrl || downloading) return
+    setDownloading(true)
+    let url = previewUrl
+    let temporary = false
+    try {
+      if (lowResPreview && file.storage_provider === 'google_drive') {
+        url = await portalApi.driveFileBlobUrl(file.id)
+        temporary = true
+      }
+      const a = document.createElement('a')
+      a.href = url
+      a.download = file.name || 'arquivo'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      if (temporary) window.setTimeout(() => URL.revokeObjectURL(url), 30000)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Falha ao baixar o arquivo original.')
+      if (temporary) URL.revokeObjectURL(url)
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  const loadOriginalResolution = async () => {
+    if (!file || loadingOriginal || !lowResPreview) return
+    setLoadingOriginal(true)
+    try {
+      const url = await portalApi.driveFileBlobUrl(file.id)
+      if (fullResolutionUrlRef.current) URL.revokeObjectURL(fullResolutionUrlRef.current)
+      fullResolutionUrlRef.current = url
+      setPreviewUrl(url)
+      setLowResPreview(false)
+      setZoom(1)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Não foi possível carregar a imagem original.')
+    } finally {
+      setLoadingOriginal(false)
+    }
   }
 
   const fallback = tooLarge
@@ -124,7 +171,7 @@ export function FilePreviewModal({ file, onClose }: Props) {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {previewUrl && <button type="button" onClick={download} className="rounded-lg min-h-10 px-3 bg-[#A65A2A] hover:bg-[#81431E] text-white text-xs font-semibold">↓ Baixar</button>}
+            {previewUrl && <button type="button" disabled={downloading} onClick={()=>void download()} className="rounded-lg min-h-10 px-3 bg-[#A65A2A] hover:bg-[#81431E] text-white text-xs font-semibold disabled:opacity-50">{downloading?'Baixando original...':'↓ Baixar original'}</button>}
             {originalUrl && <a href={originalUrl} target="_blank" rel="noopener noreferrer" className="rounded-lg min-h-10 px-3 inline-flex items-center border border-white/15 text-[#DFA269] hover:bg-white/5 text-xs font-semibold">↗ Abrir original</a>}
             <button type="button" onClick={onClose} ref={closeButtonRef} className="w-10 h-10 rounded-lg bg-white/[0.06] hover:bg-white/10 text-xl text-white" title="Fechar" aria-label="Fechar visualizador">×</button>
           </div>
@@ -162,8 +209,9 @@ export function FilePreviewModal({ file, onClose }: Props) {
           </div>}
         </div>
         <footer className="shrink-0 min-h-12 py-2 px-3 sm:px-5 border-t border-white/[0.08] flex justify-between items-center gap-3">
-          <span className="text-[11px] text-[#81858B]">Prévia privativa · SAGAMENTE</span>
+          <span className="text-[11px] text-[#81858B]">{lowResPreview?'Prévia otimizada · arquivo original preservado no Drive':'Prévia privativa · SAGAMENTE'}</span>
           {type === 'image' && previewUrl && !error && <div className="flex items-center gap-2">
+            {lowResPreview&&<button type="button" disabled={loadingOriginal} onClick={()=>void loadOriginalResolution()} className="px-3 h-9 rounded-lg bg-[#A65A2A]/20 text-xs text-[#F1C19D] disabled:opacity-50">{loadingOriginal?'Carregando...':'Alta resolução'}</button>}
             <button type="button" onClick={()=>setZoom(value=>Math.max(.5,Number((value-.25).toFixed(2))))} className="w-9 h-9 rounded-lg bg-white/[.06] text-white" aria-label="Reduzir zoom">−</button>
             <span className="min-w-[52px] text-center text-xs text-gray-300">{Math.round(zoom*100)}%</span>
             <button type="button" onClick={()=>setZoom(value=>Math.min(3,Number((value+.25).toFixed(2))))} className="w-9 h-9 rounded-lg bg-white/[.06] text-white" aria-label="Ampliar zoom">+</button>
