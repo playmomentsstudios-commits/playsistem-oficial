@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import test from 'node:test'
 
-const sql=readFileSync(new URL('../supabase/migrations/20261010235500_wa_optin_real_recipient_rollout.sql',import.meta.url),'utf8')
+const sql=readFileSync(new URL('../supabase/migrations/20261010235743_wa_optin_real_recipient_rollout.sql',import.meta.url),'utf8')
 const component=readFileSync(new URL('../src/components/admin/WhatsappQrBridgePanel.tsx',import.meta.url),'utf8')
 const prefs=readFileSync(new URL('../src/pages/customer/CustomerSettings.tsx',import.meta.url),'utf8')
 
