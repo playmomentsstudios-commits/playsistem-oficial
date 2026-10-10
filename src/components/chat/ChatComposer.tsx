@@ -2,20 +2,27 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '../ui/Button'
 import { formatFileSize, previewKind, validateAttachment } from '../../lib/attachments'
 import { useAudioRecorder } from './useAudioRecorder'
+import { portalApi } from '../../api/portal'
 
 interface Props {
   disabled: boolean
   onBusy: (busy: boolean) => void
   onSend: (text: string, file: File | null, id: string) => Promise<void>
   compact?: boolean
+  customerId?: string
+  staff?: boolean
 }
-export function ChatComposer({ disabled, onBusy, onSend, compact = false }: Props) {
+export function ChatComposer({ disabled, onBusy, onSend, compact = false,customerId,staff = false }: Props) {
   const [text, setText] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [toolsOpen,setToolsOpen]=useState(false)
+  const [projectFiles,setProjectFiles]=useState<any[]>([])
+  const [pickerOpen,setPickerOpen]=useState(false)
+  const [pickerBusy,setPickerBusy]=useState(false)
+  const [pickerSearch,setPickerSearch]=useState('')
   const textarea=useRef<HTMLTextAreaElement>(null)
   const input = useRef<HTMLInputElement>(null)
   const photos = useRef<HTMLInputElement>(null)
@@ -43,6 +50,31 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false }: Prop
     return () => URL.revokeObjectURL(url)
   }, [file])
 
+  async function openProjectPicker(){
+    if(!customerId)return
+    setPickerBusy(true);setError('');setPickerOpen(true)
+    try{
+      const [files,projects]=await Promise.all([portalApi.files(),portalApi.projects()])
+      const permitted=new Set(projects.filter((project:any)=>project.customer_id===customerId).map((project:any)=>project.id))
+      setProjectFiles(files.filter((item:any)=>item.client_visible&&permitted.has(item.project_id)&&item.storage_provider==='google_drive'))
+    }catch{setError('Não foi possível consultar os arquivos do projeto.')}
+    finally{setPickerBusy(false)}
+  }
+  async function selectProjectFile(item:any){
+    setPickerBusy(true);setError('')
+    try{
+      const url=await portalApi.driveFileBlobUrl(item.id)
+      try{
+        const response=await fetch(url)
+        const blob=await response.blob()
+        const selectedFile=new File([blob],item.name,{type:item.mime_type||'application/octet-stream'})
+        const invalid=validateAttachment(selectedFile)
+        if(invalid)throw new Error(invalid)
+        choose(selectedFile);setPickerOpen(false);setToolsOpen(false)
+      }finally{URL.revokeObjectURL(url)}
+    }catch(cause){setError(cause instanceof Error?cause.message:'Não foi possível selecionar o arquivo.')}
+    finally{setPickerBusy(false)}
+  }
   function resizeTextarea(){
     const element=textarea.current
     if(!element)return
@@ -85,10 +117,17 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false }: Prop
       <button type="button" className="w-10 h-10 rounded-full bg-white/[0.06] hover:bg-white/[0.1] flex items-center justify-center text-gray-300" disabled={disabled || busy} onClick={() => camera.current?.click()} title="Abrir câmera" aria-label="Abrir câmera">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h3l1.5-2h7L17 7h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
       </button>
+      {staff&&customerId&&<button type="button" className="min-h-10 px-3 rounded-full bg-white/[0.06] hover:bg-white/[0.1] text-xs text-gray-200" disabled={disabled||busy} onClick={()=>void openProjectPicker()}>Arquivos do projeto</button>}
       {!audio.recording && <button type="button" className="w-10 h-10 rounded-full bg-white/[0.06] hover:bg-white/[0.1] flex items-center justify-center text-gray-300" disabled={disabled || busy || !!file} onClick={audio.start} title="Gravar áudio" aria-label="Gravar áudio">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg>
       </button>}
     </div>
+    {pickerOpen&&<div role="dialog" aria-label="Escolher arquivo do projeto" className="rounded-xl border border-white/10 bg-[#1c1c20] p-3 space-y-2">
+      <div className="flex items-center justify-between"><strong className="text-sm">Arquivos do projeto</strong><button type="button" onClick={()=>setPickerOpen(false)} aria-label="Fechar arquivos">✕</button></div>
+      <input value={pickerSearch} onChange={event=>setPickerSearch(event.target.value)} placeholder="Buscar arquivo…" aria-label="Buscar arquivo do projeto" className="w-full min-h-10 rounded-lg bg-black/30 px-3 text-sm"/>
+      <div className="max-h-52 overflow-y-auto space-y-1">{pickerBusy?<p className="text-xs">Preparando arquivo…</p>:projectFiles.filter(item=>item.name?.toLowerCase().includes(pickerSearch.toLowerCase())).map(item=><button key={item.id} type="button" onClick={()=>void selectProjectFile(item)} className="w-full text-left rounded-lg p-2 hover:bg-white/10 text-xs truncate">📎 {item.name}</button>)}</div>
+      {!pickerBusy&&!projectFiles.length&&<p className="text-xs text-gray-400">Nenhum arquivo compartilhável encontrado para o cliente.</p>}
+    </div>}
     {audio.recording && <div className="flex flex-wrap items-center gap-2 rounded-xl bg-red-950/40 p-3">
       <p role="status" className="text-sm">Gravando {Math.floor(audio.seconds / 60)}:{String(audio.seconds % 60).padStart(2, '0')} / 5:00</p>
       <Button type="button" className="min-h-11" onClick={() => audio.stop()}>Parar e ouvir</Button>
