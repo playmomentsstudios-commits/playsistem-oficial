@@ -32,6 +32,8 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   const [infoOpen,setInfoOpen]=useState(false)
   const [mobileChat,setMobileChat]=useState(false)
   const [team,setTeam]=useState<ConversationTeamMember[]>([])
+  const [customerAvatar,setCustomerAvatar]=useState<string|null>(null)
+  const [lastReadAt,setLastReadAt]=useState<string|null>(null)
   const [staffPermissions,setStaffPermissions]=useState<string[]>([])
   const [transferring,setTransferring]=useState(false)
   const end = useRef<HTMLDivElement>(null)
@@ -133,6 +135,8 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
     setConversations(previous=>previous.map(item=>item.id===selected?{...item,last_message:message.content,last_message_at:message.created_at,last_sender_id:user.id,unread_count:0}:item).sort((a,b)=>(b.last_message_at||'').localeCompare(a.last_message_at||'')))
   }
 
+  useEffect(()=>{if(!selected)return;let active=true;setCustomerAvatar(null);const customerId=conversations.find(item=>item.id===selected)?.customer_id;if(!customerId)return;void import('../../lib/supabase').then(({supabase})=>supabase.from('profiles').select('avatar_url').eq('id',customerId).maybeSingle()).then(({data})=>{if(active)setCustomerAvatar(data?.avatar_url||null)}).catch(()=>undefined);return()=>{active=false}},[selected,conversations])
+  useEffect(()=>{if(!selected||!user?.id)return;let active=true;const refresh=async()=>{try{const {supabase}=await import('../../lib/supabase');const conversation=conversations.find(item=>item.id===selected);const recipient=staff?conversation?.customer_id:null;if(!recipient){if(active)setLastReadAt(null);return}const {data}=await supabase.from('conversation_reads').select('last_read_at').eq('conversation_id',selected).eq('user_id',recipient).maybeSingle();if(active)setLastReadAt(data?.last_read_at||null)}catch{if(active)setLastReadAt(null)}};void refresh();const timer=window.setInterval(()=>void refresh(),5000);return()=>{active=false;window.clearInterval(timer)}},[selected,user?.id,staff,conversations])
   const conversation = conversations.find(item => item.id === selected)
   const name = (item: SupportConversation) => `${item.customer?.first_name || 'Cliente'} ${item.customer?.last_name || ''}`.trim()
   const assigneeName=(item?:SupportConversation|null)=>{
@@ -231,7 +235,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
           <div className={"flex-1 min-w-0 flex-col "+(staff&&!mobileChat?"hidden md:flex":"flex")}>
             <div className="min-h-[64px] px-3 md:px-4 border-b border-white/10 flex items-center gap-3 bg-[#141416]/95 backdrop-blur shrink-0">
               {staff&&<button onClick={()=>setMobileChat(false)} className="md:hidden w-9 h-9 rounded-lg hover:bg-white/[.05] text-gray-300" aria-label="Voltar para conversas">←</button>}
-              <div className={'w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0 '+(staff?'bg-white/[.07]':'bg-[#A65A2A] text-white')}>{staff&&conversation?initials(name(conversation)):'SA'}</div>
+              <div className={'w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold shrink-0 '+(staff?'bg-white/[.07]':'bg-[#A65A2A] text-white')}>{staff?(customerAvatar?<img src={customerAvatar} alt="Foto do cliente" className="w-full h-full object-cover"/>:conversation?initials(name(conversation)):'CL'):<img src="/sagamente-logo-compact.svg" alt="Sagamente" className="w-8 h-8 object-contain"/>}</div>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold truncate">{staff ? (conversation ? name(conversation) : 'Selecione uma conversa') : 'Sagamente'}</p>
                 {!staff&&<p className="text-[10px] text-emerald-400">Conversa com a equipe</p>}
@@ -260,7 +264,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
                     <div className={`max-w-[86%] md:max-w-[68%] px-3 py-2 text-[13px] md:text-sm leading-[1.35] shadow-sm ${mine?'bg-[#A65A2A] text-white':'bg-[#232326] text-gray-100'} ${mine?(samePrevious?'rounded-tr-md':'rounded-tr-[18px]'):(samePrevious?'rounded-tl-md':'rounded-tl-[18px]')} ${mine?(sameNext?'rounded-br-md':'rounded-br-[18px]'):(sameNext?'rounded-bl-md':'rounded-bl-[18px]')} rounded-l-[18px] rounded-r-[18px]`}>
                       <AttachmentView message={message} />
                       {message.content&&<p className="whitespace-pre-wrap break-words" style={{ overflowWrap:'anywhere' }}>{message.content}</p>}
-                      <p className="text-[9px] mt-1 opacity-55 text-right leading-none">{new Date(message.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</p>
+                      <p className="text-[9px] mt-1 opacity-70 text-right leading-none flex justify-end items-center gap-1">{new Date(message.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}{mine&&<span title={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'Visualizada':'Enviada'} aria-label={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'Visualizada':'Enviada'} className={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'text-orange-200':'text-white/65'}>{lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'✓✓':'✓'}</span>}</p>
                     </div>
                   </div>
                 </div>
