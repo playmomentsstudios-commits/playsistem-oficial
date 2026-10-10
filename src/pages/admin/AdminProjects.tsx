@@ -126,7 +126,7 @@ export function AdminProjects(){
     {loading?<p className="text-gray-400">Carregando...</p>:!filtered.length?<p className="text-gray-500">Nenhum projeto encontrado.</p>:<div className="grid gap-2 lg:grid-cols-2">{filtered.map(project=><Link key={project.id} to={'/admin/projetos/'+project.id} className="pm-compact-card pm-compact-card-interactive block">
       <div className="flex justify-between gap-3">
         <div><b className="text-white">{project.title}</b><p className="text-xs text-gray-500 mt-1">{rotulo(tipoProjeto,project.project_type)} · prioridade {rotulo(prioridade,project.priority)}</p></div>
-        <span className={"pm-tag inline-flex items-center gap-1 whitespace-nowrap "+(project.status==="completed"?"pm-tag-success":project.status==="active"?"pm-tag-progress":project.status==="review"?"pm-tag-review":project.status==="paused"?"pm-tag-pending":project.status==="cancelled"?"pm-tag-danger":"pm-tag-neutral")}><ProjectStatusMark status={project.status}/>{rotulo(statusProjeto,project.status)}</span>
+        <span title={rotulo(statusProjeto,project.status)} aria-label={rotulo(statusProjeto,project.status)} className="inline-flex items-center justify-center shrink-0 rounded-lg bg-white/[.04] px-2 py-1"><ProjectStatusMark status={project.status}/></span>
       </div>
       <div className="flex justify-between mt-2 text-xs"><span className="text-gray-500">Progresso</span><b>{progress(project)}%</b></div>
       <div className="h-1.5 bg-white/10 rounded mt-1.5"><div className="h-full bg-[#A65A2A] rounded" style={{width:progress(project)+'%'}}/></div>
