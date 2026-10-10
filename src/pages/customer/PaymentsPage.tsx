@@ -6,6 +6,7 @@ import { useToast } from '../../contexts/ToastContext'
 import { EmptyState } from '../../components/ui/EmptyState'
 import { LoadingState,ErrorState } from '../../components/ui/AsyncState'
 import { metodoPagamento,rotulo,statusPagamento } from '../../lib/labels.ptBR'
+import { CompactPageHeader,CompactDisclosure } from '../../components/ui/CompactWorkspace'
 
 const money=(v:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v/100)
 
@@ -38,30 +39,15 @@ export function PaymentsPage(){
 
 
   return <div>
-    <div className="mb-6">
-      <h1 className="text-2xl font-bold text-white">Pagamentos</h1>
-      <p className="text-sm text-gray-500">Acompanhe valores, confirmações e suas formas de pagamento</p>
-    </div>
+    <CompactPageHeader title="Pagamentos" description="Cobranças, comprovantes e confirmações." />
 
-    <section className="mb-6 p-5 rounded-2xl bg-[#141416] border border-white/10">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.18em] text-[#A65A2A] font-semibold">Carteira</p>
-          <h2 className="font-semibold text-white mt-1">Formas de pagamento</h2>
-          <p className="text-xs text-gray-500 mt-1">Seus cartões poderão ser usados nas próximas compras sem preencher tudo novamente.</p>
-        </div>
-        <button type="button" onClick={()=>toast('O cadastro seguro de cartão será liberado assim que a tokenização do provedor estiver ativa.','info')} className="min-h-11 px-4 rounded-xl bg-white/[0.06] border border-white/10 text-sm font-semibold text-white">
-          + Adicionar cartão
-        </button>
+    <CompactDisclosure title="Carteira e cartões" summary="Gerenciar formas de pagamento" className="mb-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-xl text-xs text-gray-400">Os cartões poderão ser utilizados após a ativação da tokenização segura pelo provedor.</p>
+        <button type="button" onClick={()=>toast('O cadastro seguro de cartão será liberado assim que a tokenização do provedor estiver ativa.','info')} className="pm-compact-tap rounded-lg border border-white/10 bg-white/[.05] px-3 text-xs font-semibold">+ Adicionar cartão</button>
       </div>
-      <div className="mt-4 p-4 rounded-xl bg-black/20 border border-white/5 flex gap-3">
-        <span aria-hidden="true">🔒</span>
-        <div>
-          <p className="text-sm text-white font-medium">Cartão protegido pelo provedor de pagamento</p>
-          <p className="text-xs text-gray-500 mt-1">A Sagamente não armazenará número completo do cartão nem código de segurança. O cartão será salvo por tokenização.</p>
-        </div>
-      </div>
-    </section>
+      <p className="mt-3 text-[11px] text-gray-500">🔒 A Sagamente não armazena números completos de cartão nem códigos de segurança.</p>
+    </CompactDisclosure>
 
     {loading
       ? <LoadingState />
@@ -69,12 +55,12 @@ export function PaymentsPage(){
         ? <ErrorState message={error} action={<button onClick={()=>{setLoading(true);void load()}} className="min-h-11 px-4 rounded-xl bg-white/5">Tentar novamente</button>}/>
       : !rows.length
         ? <EmptyState icon="💳" title="Nenhum pagamento registrado"/>
-        : <div className="space-y-4">{rows.map(payment=>{
+        : <div className="space-y-2">{rows.map(payment=>{
           const manualPix=payment.provider==='manual'&&payment.method==='pix_manual'
           const asaasPix=payment.provider==='asaas'&&payment.method==='pix_gateway'?payment.provider_payload?.pixQrCode:null
           const hostedCard=payment.provider==='asaas_checkout'&&payment.method==='card'&&payment.status==='pending'?payment.provider_payload?.checkoutLink:null
-          return <div key={payment.id} className="p-5 rounded-2xl bg-[#141416] border border-white/10">
-            <div className="flex flex-wrap justify-between gap-4">
+          return <div key={payment.id} className="pm-compact-card">
+            <div className="flex flex-wrap justify-between gap-2">
               <div>
                 <p className="font-semibold text-white">{payment.order?.order_number||'Pagamento Sagamente'}</p>
                 <p className="text-sm text-gray-400">{money(payment.amount)} · {rotulo(metodoPagamento,payment.method)}</p>
@@ -85,10 +71,10 @@ export function PaymentsPage(){
               </div>
             </div>
 
-            {manualPix&&<p className="mt-4 text-sm text-gray-500">Pagamento PIX manual legado — mantido somente para histórico.</p>}
+            {manualPix&&<p className="mt-2 text-xs text-gray-500">Pagamento PIX manual legado — mantido somente para histórico.</p>}
 
             {payment.status==='paid'
-              ? <p className="mt-4 text-emerald-400">✓ Pagamento recebido e confirmado</p>
+              ? <p className="mt-2 text-xs text-emerald-400">✓ Pagamento recebido e confirmado</p>
 : hostedCard?<div className="mt-4 p-4 rounded-xl bg-white/5 text-sm space-y-3">
                 <p className="font-semibold text-white">Cartão · checkout seguro Asaas</p>
                 <p className="text-xs text-gray-400">Continue o pagamento no ambiente seguro do Asaas. Se a sessão tiver expirado, volte ao carrinho para gerar uma nova sessão.</p>
