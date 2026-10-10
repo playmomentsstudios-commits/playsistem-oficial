@@ -1,4 +1,5 @@
 import { useEffect,useState } from 'react'
+import { createPortal } from 'react-dom'
 import { DEFAULT_PUSH_CATEGORIES,pushNotificationApi,supportStatus,type PushCategories } from '../../api/pushNotifications'
 import { useAuth } from '../../contexts/AuthContext'
 
@@ -52,7 +53,7 @@ export function PushNotificationSettings({compact=false}:{compact?:boolean}){
         : 'pm-compact-tap inline-flex gap-2 rounded-lg border border-white/10 bg-white/[.04] px-3 text-xs font-semibold hover:bg-white/[.08]'}>
       <span aria-hidden="true">🔔</span>{compact?'Notificações Push':'Configurar avisos no celular e computador'}
     </button>
-    {open&&<div role="presentation" className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 p-3 backdrop-blur-sm"
+    {open&&createPortal(<div role="presentation" className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 p-3 backdrop-blur-sm"
       onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setOpen(false)}}>
       <section role="dialog" aria-modal="true" aria-labelledby="push-settings-title" className="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl border border-white/15 bg-[#141416] p-4 text-white shadow-2xl sm:p-5">
         <div className="mb-3 flex items-start justify-between gap-3">
@@ -96,6 +97,6 @@ export function PushNotificationSettings({compact=false}:{compact?:boolean}){
         </div>
         <p className="mt-3 text-[10px] leading-4 text-gray-500">As preferências são específicas deste dispositivo. Os avisos dependem das permissões do sistema e de conexão com a internet. Para segurança, exibimos mensagens resumidas na tela bloqueada.</p>
       </section>
-    </div>}
+    </div>,document.body)}
   </>
 }
