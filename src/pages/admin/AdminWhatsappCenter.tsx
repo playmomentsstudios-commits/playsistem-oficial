@@ -6,6 +6,11 @@ import { useToast } from '../../contexts/ToastContext'
 import { WhatsappQrBridgePanel } from '../../components/admin/WhatsappQrBridgePanel'
 
 type WAState='ready_manual'|'missing_phone'|'historical'|'opened_manual'|'reported_sent'|'sending_auto'|'sent_auto'|'failed_auto'
+type WAAttempt={
+  id:string;outbox_id:string;destination_phone:string;test_mode:boolean;
+  status:'claimed'|'sent'|'failed';provider_message_id:string|null;
+  error_reason:string|null;claimed_at:string;completed_at:string|null
+}
 type WARecord={
   id:string
   notification_id:string
@@ -92,6 +97,7 @@ export function AdminWhatsappCenter(){
   const toast=useToast()
   const [settings,setSettings]=useState<AppSettings|null>(null)
   const [rows,setRows]=useState<WARecord[]>([])
+  const [attempts,setAttempts]=useState<WAAttempt[]>([])
   const [summary,setSummary]=useState<Summary>(EMPTY)
   const [loading,setLoading]=useState(true)
   const [saving,setSaving]=useState(false)
@@ -104,15 +110,20 @@ export function AdminWhatsappCenter(){
   async function load(){
     setError('')
     try{
-      const [cfg,list,daily]=await Promise.all([
+      const [cfg,list,daily,attemptRows]=await Promise.all([
         settingsApi.appSettings(),
         supabase.from('whatsapp_message_outbox')
           .select('id,notification_id,recipient_name,destination_phone,recipient_user_id,event_type,title,message_body,target_link,status,source,created_at,opened_at,reported_at')
           .order('created_at',{ascending:false}).limit(300),
-        supabase.rpc('wa_daily_dashboard')
+        supabase.rpc('wa_daily_dashboard'),
+        supabase.from('whatsapp_bridge_attempts')
+          .select('id,outbox_id,destination_phone,test_mode,status,provider_message_id,error_reason,claimed_at,completed_at')
+          .order('claimed_at',{ascending:false}).limit(300),
       ])
       if(list.error)throw list.error
       if(daily.error)throw daily.error
+      if(attemptRows.error)throw attemptRows.error
+      setAttempts((attemptRows.data||[]) as WAAttempt[])
       setSettings(cfg)
       setRows((list.data||[]) as WARecord[])
       setSummary({...EMPTY,...(daily.data&&typeof daily.data==='object'?daily.data as Partial<Summary>:{})})
@@ -121,6 +132,7 @@ export function AdminWhatsappCenter(){
     }finally{setLoading(false)}
   }
   useEffect(()=>{void load()},[])
+  const attemptByOutbox=useMemo(()=>new Map(attempts.map(a=>[a.outbox_id,a])),[attempts])
   const filtered=useMemo(()=>rows.filter(r=>{
     if(filter!=='all'&&r.status!==filter)return false
     const s=search.trim().toLowerCase()
@@ -290,6 +302,17 @@ export function AdminWhatsappCenter(){
                 {item.status==='opened_manual'&&<button onClick={()=>void reportSent(item)} disabled={busy===item.id} className="min-h-9 rounded-lg border border-white/15 px-3 text-xs text-gray-200 disabled:opacity-50">Informar envio manual</button>}
               </div>}
             </div>
+            {attemptByOutbox.get(item.id)&&<div className="mt-3 rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-gray-300">
+              <p className="font-semibold">Registro da tentativa automática</p>
+              <p className="mt-1">Número de envio real: <strong className="text-white">+{attemptByOutbox.get(item.id)!.destination_phone}</strong>
+                {attemptByOutbox.get(item.id)!.test_mode&&<span className="ml-2 text-amber-200">(PILOTO · não enviado ao número do cliente)</span>}
+              </p>
+              <p className="mt-1">Número original da notificação: {item.destination_phone?'+'+item.destination_phone:'indisponível'}</p>
+              <p className="mt-1">Situação: {attemptByOutbox.get(item.id)!.status==='sent'?'Aceita pela biblioteca (sem confirmação de entrega)':attemptByOutbox.get(item.id)!.status==='failed'?'Falhou':'Em andamento ou resultado incerto'}</p>
+              {attemptByOutbox.get(item.id)!.provider_message_id&&<p className="mt-1 break-all text-gray-500">ID da mensagem: {attemptByOutbox.get(item.id)!.provider_message_id}</p>}
+              {attemptByOutbox.get(item.id)!.error_reason&&<p className="mt-1 text-red-300">Erro: {attemptByOutbox.get(item.id)!.error_reason}</p>}
+              <p className="mt-1 text-gray-500">Iniciada em {localDate(attemptByOutbox.get(item.id)!.claimed_at)}</p>
+            </div>}
             <details className="mt-3 rounded-xl border border-white/5 bg-black/30 p-3">
               <summary className="cursor-pointer text-xs font-semibold text-gray-300">Ver mensagem preparada</summary>
               <p className="mt-3 whitespace-pre-wrap break-words text-xs leading-relaxed text-gray-400">{item.message_body}</p>
