@@ -27,7 +27,7 @@ test('WhatsApp opt-in is distinct from activating device Push',()=>{
 test('user sees current phone and can withdraw; only own preference update is sent',()=>{
   assert.match(consent,/supabase\.from\('profiles'\)\.select\('phone'\)\.eq\('id',id\)/)
   assert.match(consent,/Conferir ou alterar meu telefone/)
-  assert.match(consent,/Posso retirar essa autorização/)
+  assert.match(consent,/Posso retirar o aceite a qualquer momento/)
   assert.match(consent,/pref[s]?\.wa_automatic_opt_in/)
   assert.match(api,/wa_opt_in_phone:string\|null/)
   assert.match(api,/wa_opt_in_at:string\|null/)
