@@ -283,7 +283,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
             </div>
             {!staff&&subject&&<p className="shrink-0 border-b border-white/10 px-4 py-2 text-xs text-[#DFA269]">{prompt}</p>}
             {selectedMessages.length>0&&<div className="shrink-0 flex items-center justify-between gap-2 px-3 py-2 border-b border-white/10 bg-[#1b1b1e]"><span className="text-xs text-gray-200">{selectedMessages.length} selecionada(s)</span><div className="flex gap-2"><button type="button" onClick={()=>setSelectedMessages([])} className="text-xs px-2 py-2 text-gray-300">Cancelar</button><button type="button" disabled={bulkDeleting} onClick={()=>void deleteSelectedMessages()} className="text-xs px-3 py-2 rounded-lg bg-red-500/20 text-red-200 disabled:opacity-50">{bulkDeleting?'Excluindo…':'Excluir selecionadas'}</button></div></div>}
-            <div ref={messageViewport} role="log" aria-label="Mensagens" aria-live="polite" className="flex-1 overflow-y-auto min-h-0 px-3 md:px-5 py-3 bg-[#0f0f11]">
+            <div role="log" ref={messageViewport} aria-label="Mensagens" aria-live="polite" className="flex-1 overflow-y-auto min-h-0 px-3 md:px-5 py-3 bg-[#0f0f11]">
               {messagesLoading && <p role="status">Carregando mensagens…</p>}
               {!messagesLoading && selected && !messages.length && !error && <p className="text-sm text-gray-400">Nenhuma mensagem ainda. Inicie a conversa abaixo.</p>}
               {messages.map((message,index) => {
