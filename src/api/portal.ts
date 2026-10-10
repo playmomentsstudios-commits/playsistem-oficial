@@ -760,7 +760,15 @@ export const portalApi = {
   },
   driveFileThumbnailBlobUrl: async (fileId:string) => {
     const data=await privateFunctionFile('google-drive-file-thumbnail',{file_id:fileId})
-    if(!data.type.startsWith('image/'))throw new Error('Miniatura indisponível.')
+    if(!/^image\/(?:jpeg|png|webp|gif)$/i.test(data.type))throw new Error('Miniatura indisponível.')
+    return URL.createObjectURL(data)
+  },
+  driveImageOriginalBlobUrl: async (fileId:string) => {
+    // Bounded fallback when Google cannot generate its lightweight thumbnail.
+    // This endpoint still checks the signed-in user and project access.
+    const data=await privateFunctionFile('google-drive-file-download',{file_id:fileId})
+    if(data.size>20*1024*1024)throw new Error('Imagem maior que o limite de pré-visualização.')
+    if(!/^image\/(?:jpeg|png)$/i.test(data.type))throw new Error('O arquivo original não é JPG ou PNG.')
     return URL.createObjectURL(data)
   },
   driveFileBlobUrl: async (fileId:string) => {

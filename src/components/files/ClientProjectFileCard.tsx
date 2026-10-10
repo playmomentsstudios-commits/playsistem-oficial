@@ -1,5 +1,6 @@
 import { useEffect,useRef,useState } from 'react'
 import { portalApi } from '../../api/portal'
+import { filePreviewType } from '../../lib/filePreview'
 
 type Props = {
   file:any
@@ -8,11 +9,11 @@ type Props = {
 }
 
 function kind(file:any){
-  const type=String(file.mime_type||file.file_type||'').toLowerCase()
-  if(type.startsWith('image/'))return {label:'Imagem',symbol:'▧',previewable:true}
-  if(type.includes('pdf'))return {label:'PDF',symbol:'▤',previewable:true}
-  if(type.startsWith('video/'))return {label:'Vídeo',symbol:'▶',previewable:false}
-  if(type.startsWith('audio/'))return {label:'Áudio',symbol:'♫',previewable:false}
+  const type=filePreviewType(file)
+  if(type==='image')return {label:'Imagem',symbol:'▧',previewable:true}
+  if(type==='pdf')return {label:'PDF',symbol:'▤',previewable:false}
+  if(type==='video')return {label:'Vídeo',symbol:'▶',previewable:false}
+  if(type==='audio')return {label:'Áudio',symbol:'♫',previewable:false}
   return {label:'Arquivo',symbol:'◇',previewable:false}
 }
 
@@ -24,6 +25,7 @@ export function ClientProjectFileCard({file,onOpen,compact=false}:Props){
   const buttonRef=useRef<HTMLButtonElement>(null)
   const [thumbnail,setThumbnail]=useState<string|null>(null)
   const [state,setState]=useState<'waiting'|'loading'|'ready'|'unavailable'>('waiting')
+  const [previewError,setPreviewError]=useState('')
   const type=kind(file)
   const canFetch=Boolean(file?.client_visible&&type.previewable
     &&file.storage_provider==='google_drive'&&file.drive_file_id)
@@ -35,6 +37,7 @@ export function ClientProjectFileCard({file,onOpen,compact=false}:Props){
     let observer:IntersectionObserver|null=null
     setThumbnail(null)
     setState('waiting')
+    setPreviewError('')
     if(!canFetch)return
 
     const start=()=>{
@@ -46,8 +49,12 @@ export function ClientProjectFileCard({file,onOpen,compact=false}:Props){
         objectUrl=url
         setThumbnail(url)
         setState('ready')
-      }).catch(()=>{
-        if(!disposed)setState('unavailable')
+      }).catch((cause:unknown)=>{
+        if(!disposed){
+          const message=cause instanceof Error?cause.message:''
+          setPreviewError(/Google Drive|conexão|revogad/i.test(message)?'Drive desconectado':'Prévia indisponível')
+          setState('unavailable')
+        }
       })
     }
 
@@ -79,7 +86,7 @@ export function ClientProjectFileCard({file,onOpen,compact=false}:Props){
         : <div className="flex flex-col items-center justify-center gap-2 text-[#797D81]">
             <span aria-hidden="true" className="text-4xl">{type.symbol}</span>
             {state==='loading'&&<span className="text-[11px] animate-pulse">Carregando prévia...</span>}
-            {state==='unavailable'&&<span className="text-[11px]">Prévia indisponível</span>}
+            {state==='unavailable'&&<span className="text-center text-[11px]">{previewError||'Prévia indisponível'}</span>}
             {!canFetch&&<span className="text-[11px]">{type.label}</span>}
           </div>}
     </div>

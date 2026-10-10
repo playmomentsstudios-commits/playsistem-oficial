@@ -21,15 +21,18 @@ test('thumbnail proxy authenticates user and preserves project file visibility',
   assert.doesNotMatch(edge,/\.update\(\{\s*client_visible:/)
 })
 
-test('thumbnail proxy requests short-lived Google thumbnail, not full originals',()=>{
+test('thumbnail prefers short-lived Google image and safely falls back to bounded private JPG/PNG',()=>{
   assert.match(edge,/fields=id,mimeType,thumbnailLink/)
   assert.match(edge,/trustedThumbnailHost/)
-  assert.match(edge,/url\.protocol !== "https:"/)
+  assert.match(edge,/url\.protocol === "https:"/)
   assert.match(edge,/getDriveAccessToken\(\)/)
   assert.match(edge,/Authorization: "Bearer " \+ token/)
   assert.match(edge,/private, no-store/)
-  assert.match(edge,/maxSize = 3 \* 1024 \* 1024/)
-  assert.doesNotMatch(edge,/alt=media/)
+  assert.match(edge,/MAX_THUMBNAIL_BYTES = 3 \* 1024 \* 1024/)
+  assert.match(edge,/\?alt=media/)
+  assert.match(edge,/MAX_ORIGINAL_PREVIEW_BYTES = 20 \* 1024 \* 1024/)
+  assert.match(edge,/readCappedImage\(original, MAX_ORIGINAL_PREVIEW_BYTES\)/)
+  assert.match(edge,/imageMatches\(bytes, mime\)/)
   assert.doesNotMatch(edge,/Access-Control-Allow-Origin.*https:\/\/drive\.google\.com/)
 })
 
@@ -42,7 +45,7 @@ test('customer thumbnail cards load lazily and clean up their blob URLs',()=>{
   assert.match(card,/onOpen\(file\)/)
   assert.match(card,/Prévia indisponível/)
   assert.match(api,/privateFunctionFile\('google-drive-file-thumbnail'/)
-  assert.match(api,/data.type.startsWith/)
+  assert.match(api,/jpeg\|png\|webp\|gif/)
 })
 
 test('project and file library show artwork previews without public file URLs',()=>{
