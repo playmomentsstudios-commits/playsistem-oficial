@@ -1,3 +1,4 @@
+import { privateFunctionFile } from '../lib/privateFunctionFile'
 import { supabase } from '../lib/supabase'
 import { attachmentMime, validateAttachment } from '../lib/attachments'
 
@@ -5,7 +6,8 @@ import { attachmentMime, validateAttachment } from '../lib/attachments'
 const MESSAGE_FIELDS = '*'
 export const CHAT_BUCKET = 'chat-attachments'
 export interface MessageAttachment {
-  attachment_path: string
+  attachment_path: string | null
+  attachment_drive_file_id?: string
   attachment_name: string
   attachment_type: string
   attachment_size: number
@@ -45,20 +47,14 @@ export interface SupportMessage extends Partial<MessageAttachment> {
   created_at: string
   deleted_at?: string | null
 }
-async function createImageThumbnail(file:File):Promise<Blob> {
-  const image=await createImageBitmap(file)
-  try {
-    const scale=Math.min(1,720/Math.max(image.width,image.height))
-    const canvas=document.createElement('canvas')
-    canvas.width=Math.max(1,Math.round(image.width*scale))
-    canvas.height=Math.max(1,Math.round(image.height*scale))
-    const context=canvas.getContext('2d')
-    if(!context)throw new Error('Canvas indisponível')
-    context.drawImage(image,0,0,canvas.width,canvas.height)
-    const blob=await new Promise<Blob|null>(resolve=>canvas.toBlob(resolve,'image/jpeg',0.72))
-    if(!blob)throw new Error('Falha ao gerar miniatura')
-    return blob
-  }finally{image.close()}
+async function invokeChat(body:Record<string,unknown>) {
+  const {data,error}=await supabase.functions.invoke('chat-drive-upload',{body,timeout:60000})
+  if(error) {
+    let detail=''
+    try{detail=(await error.context?.json())?.error||''}catch{/* response already read */}
+    throw new Error(detail||error.message||'Falha no envio do anexo.')
+  }
+  return data
 }
 export const conversationsApi = {
   async deleteOwnMessage(messageId:string) {
@@ -68,43 +64,42 @@ export const conversationsApi = {
   async upload(conversationId: string, senderId: string, id: string, file: File): Promise<MessageAttachment> {
     const invalid = validateAttachment(file)
     if (invalid) throw new Error(invalid)
-    const path = conversationId + '/' + senderId + '/' + id
     const type = attachmentMime(file)
-    const { error } = await supabase.storage.from(CHAT_BUCKET).upload(path, file, { contentType: type, upsert: false })
-    // The immutable path is reused only for the same pending file after a lost response.
-    if (error && !['409', '400'].includes(String(error.statusCode))) throw error
-    if (error) {
-      const { data: existing, error: lookupError } = await supabase.storage.from(CHAT_BUCKET).info(path)
-      if (lookupError || !existing || Number(existing.metadata?.size) !== file.size || String(existing.metadata?.mimetype).split(';')[0] !== type.split(';')[0]) throw error
+    const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer())
+    const sha256=Array.from(new Uint8Array(digest),value=>value.toString(16).padStart(2,'0')).join('')
+    const body={conversation_id:conversationId,message_id:id,name:file.name,type,size:file.size,sha256}
+    let session=await invokeChat({...body,action:'begin'})
+    if(session.attachment)return session.attachment
+    // The resumable URL grants only this upload; no Google OAuth credential reaches the browser.
+    // Always finalize against Drive's checksum, including lost successful PUT responses.
+    let offset=Number(session.next_offset||0)
+    // 5 MB chunks are multiples of Drive's required 256 KB; retries resume server state.
+    while(offset<file.size){
+      const end=Math.min(offset+5*1024*1024,file.size)
+      try{
+        const response=await fetch(session.upload_url,{method:'PUT',headers:{'Content-Type':type.split(';')[0],'Content-Range':`bytes ${offset}-${end-1}/${file.size}`},body:file.slice(offset,end),signal:AbortSignal.timeout(180000)})
+        if(response.status!==308&&!response.ok)throw new Error('Falha no upload para o Google Drive. Código '+response.status+'.')
+        offset=end
+      }catch(error){
+        // One server check may recover a committed chunk or a lost final response.
+        const recovered=await invokeChat({...body,action:'begin'})
+        if(recovered.attachment)return recovered.attachment
+        if(Number(recovered.next_offset||0)<=offset)throw error
+        session=recovered;offset=Number(recovered.next_offset)
+      }
     }
-    let attachment_preview_path: string | undefined
-    if (type.startsWith('image/') && type !== 'image/svg+xml') {
-      try {
-        const thumbnail=await createImageThumbnail(file)
-        const previewPath=path+'-preview.jpg'
-        const result=await supabase.storage.from(CHAT_BUCKET).upload(previewPath,thumbnail,{contentType:'image/jpeg',upsert:false})
-        if(!result.error) attachment_preview_path=previewPath
-        else {
-          const {data:existing}=await supabase.storage.from(CHAT_BUCKET).info(previewPath)
-          if(existing) attachment_preview_path=previewPath
-        }
-      }catch(error){console.warn('[Chat] Falha ao gerar miniatura; original preservado',error)}
-    }
-    return { attachment_path: path, attachment_name: file.name, attachment_type: type, attachment_size: file.size, ...(attachment_preview_path?{attachment_preview_path}:{}) }
+    return (await invokeChat({...body,action:'finalize'})).attachment
   },
-  async imagePreviewUrl(path:string):Promise<string> {
-    // Ask Storage's image transformation endpoint for a lightweight private preview.
-    // No additional original is stored. Some projects/plans do not support transforms.
-    const {data,error}=await supabase.storage.from(CHAT_BUCKET).createSignedUrl(path,600,{
-      transform:{width:720,height:720,resize:'contain',quality:70},
-    })
+  async mediaUrl(message:SupportMessage,mode:'thumbnail'|'expanded'|'original'|'download'):Promise<string> {
+    if(message.attachment_drive_file_id){
+      const data=await privateFunctionFile('chat-drive-media',{message_id:message.id,mode})
+      return URL.createObjectURL(data)
+    }
+    const path=(mode==='thumbnail'||mode==='expanded')&&message.attachment_preview_path?message.attachment_preview_path:message.attachment_path
+    if(!path)throw new Error('Anexo não encontrado.')
+    // Compatibility only: existing Storage originals remain readable until audited migration.
+    const {data,error}=await supabase.storage.from(CHAT_BUCKET).createSignedUrl(path,600,mode==='download'?{download:message.attachment_name}:undefined)
     if(error)throw error
-    return data.signedUrl
-  },
-  async attachmentUrl(path: string, downloadName?: string): Promise<string> {
-    const { data, error } = await supabase.storage.from(CHAT_BUCKET).createSignedUrl(path, 600,
-      downloadName ? { download: downloadName } : undefined)
-    if (error) throw error
     return data.signedUrl
   },
   async list(): Promise<SupportConversation[]> {

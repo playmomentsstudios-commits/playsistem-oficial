@@ -9,13 +9,14 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
   const [downloading, setDownloading] = useState(false)
   const [previewLoading,setPreviewLoading]=useState(false)
   const [expanded,setExpanded]=useState(false)
-  const [previewFallback,setPreviewFallback]=useState(false)
+  const [expandedUrl,setExpandedUrl]=useState('')
+  const [expandedError,setExpandedError]=useState('')
   const [playing,setPlaying] = useState(false)
   const [duration,setDuration] = useState(0)
   const [current,setCurrent] = useState(0)
   const audioRef=useRef<HTMLAudioElement>(null)
   const probingDuration=useRef(false)
-  const path = message.attachment_path
+  const path = message.attachment_drive_file_id || message.attachment_path
   const previewPath=message.attachment_preview_path
   const kind = previewKind(message.attachment_type || '')
   useEffect(() => {
@@ -25,18 +26,29 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
     setError('')
     setPreviewLoading(kind==='image')
     setDuration(0);setCurrent(0);probingDuration.current=false;
-    (kind==='image'&&previewPath?conversationsApi.attachmentUrl(previewPath).catch(()=>conversationsApi.attachmentUrl(path)):conversationsApi.attachmentUrl(path)).then(async (value:string) => {
-      if (kind !== 'audio') { if(active)setUrl(value); return }
-      const response=await fetch(value)
-      if(!response.ok)throw new Error('Falha ao carregar áudio')
-      const blob=await response.blob()
-      if(active)setUrl(URL.createObjectURL(blob))
-    })
-      .catch(() => { if (active) {setError('Não foi possível abrir a prévia.');setPreviewLoading(false)} })
-    return () => { active = false }
-  }, [path, previewPath, kind, retry])
+    let objectUrl=''
+    conversationsApi.mediaUrl(message,kind==='image'?'thumbnail':'original').then(async (value:string) => {
+      objectUrl=value
+      if(!active){if(value.startsWith('blob:'))URL.revokeObjectURL(value);return}
+      setUrl(value)
+    }).catch((cause:Error) => { if (active) {setError(cause.message||'Não foi possível abrir a prévia.');setPreviewLoading(false)} })
+    return () => { active = false; if(objectUrl.startsWith('blob:'))URL.revokeObjectURL(objectUrl) }
+  }, [path, message.id, previewPath, kind, retry])
 
-  useEffect(()=>()=>{if(kind==='audio'&&url.startsWith('blob:'))URL.revokeObjectURL(url)},[kind,url])
+  useEffect(()=>{
+    if(!expanded)return
+    let active=true;let objectUrl=''
+    setExpandedUrl('');setExpandedError('')
+    void conversationsApi.mediaUrl(message,'expanded').then(value=>{
+      objectUrl=value
+      if(active)setExpandedUrl(value)
+      else if(value.startsWith('blob:'))URL.revokeObjectURL(value)
+    }).catch((cause:Error)=>{if(active)setExpandedError(cause.message)})
+    const close=(event:KeyboardEvent)=>{if(event.key==='Escape')setExpanded(false)}
+    window.addEventListener('keydown',close)
+    return()=>{active=false;window.removeEventListener('keydown',close);if(objectUrl.startsWith('blob:'))URL.revokeObjectURL(objectUrl)}
+  },[expanded,message.id,path])
+
   const clock=(value:number)=>Number.isFinite(value)&&value>=0?`${Math.floor(value/60)}:${String(Math.floor(value%60)).padStart(2,'0')}`:'0:00'
   function syncDuration(el:HTMLAudioElement){
     const length=el.duration
@@ -65,7 +77,7 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
     setError('')
     try {
       // Request a fresh download URL on each click, preserving the original filename.
-      const href = await conversationsApi.attachmentUrl(path, message.attachment_name)
+      const href = await conversationsApi.mediaUrl(message,'download')
       const link = document.createElement('a')
       link.href = href
       link.download = message.attachment_name || 'arquivo'
@@ -73,6 +85,7 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
       document.body.append(link)
       link.click()
       link.remove()
+      if(href.startsWith('blob:'))window.setTimeout(()=>URL.revokeObjectURL(href),60000)
     } catch { setError('Não foi possível baixar o arquivo. Tente novamente.') }
     finally { setDownloading(false) }
   }
@@ -86,6 +99,8 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
       </div>
     </div>
     {url&&<audio ref={audioRef} src={url} preload="metadata" onLoadedMetadata={event=>syncDuration(event.currentTarget)} onDurationChange={event=>syncDuration(event.currentTarget)} onSeeked={event=>handleSeeked(event.currentTarget)} onTimeUpdate={event=>{if(!probingDuration.current)setCurrent(event.currentTarget.currentTime)}} onPlay={()=>setPlaying(true)} onPause={()=>setPlaying(false)} onEnded={()=>setPlaying(false)} onError={()=>setError('Formato de áudio indisponível neste navegador.')} />}
+    <button type="button" onClick={download} disabled={downloading} className="block text-xs underline mt-2">{downloading?'Preparando…':'Baixar original'}</button>
+    {error&&<p role="alert" className="text-xs">{error}</p>}
     {!url&&!error&&<span className="text-xs opacity-70">Carregando áudio…</span>}
     {error&&<button type="button" onClick={()=>{setError('');setRetry(value=>value+1)}} className="block mt-1 text-xs underline">Tentar novamente</button>}
   </div>
@@ -93,15 +108,15 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
     <p className="font-semibold break-words" style={{ overflowWrap: 'anywhere' }}>{message.attachment_name}</p>
     <p className="text-xs opacity-75">{formatFileSize(message.attachment_size || 0)} · Arquivo original</p>
     {kind==='image'&&previewLoading&&!error&&<div role="status" className="text-xs opacity-70">Carregando imagem…</div>}
-    {url && kind === 'image' && !error && <img key={retry} src={url} alt={message.attachment_name || 'Imagem enviada'} loading="eager" decoding="async" className="max-h-48 md:max-h-56 max-w-full rounded-xl object-contain bg-black/20" onLoad={()=>setPreviewLoading(false)} onError={() => {if(!previewFallback){setPreviewFallback(true);void conversationsApi.attachmentUrl(path).then(setUrl).catch(()=>{setPreviewLoading(false);setError('Prévia indisponível. O original continua disponível para download.')})}else{setPreviewLoading(false);setUrl('');setError('Não foi possível renderizar a imagem neste dispositivo. Tente baixar o original.')}}} />}
+    {url && kind === 'image' && !error && <img key={retry} src={url} alt={message.attachment_name || 'Imagem enviada'} loading="eager" decoding="async" className="max-h-48 md:max-h-56 max-w-full rounded-xl object-contain bg-black/20" onLoad={()=>setPreviewLoading(false)} onError={() => {setPreviewLoading(false);setUrl('');setError('Imagem corrompida ou incompatível. Tente novamente ou baixe o original.')}} />}
     {url && kind === 'image' && !error && <button type="button" className="block text-xs underline" onClick={()=>setExpanded(true)}>Ampliar imagem</button>}
     {expanded && url && kind === 'image' && <div role="dialog" aria-modal="true" aria-label="Visualização ampliada" className="fixed inset-0 z-[100] bg-black/95 flex flex-col p-4">
       <div className="flex justify-between gap-3 items-center"><span className="truncate text-sm">{message.attachment_name}</span><button type="button" className="rounded-lg bg-white/20 px-4 py-3" onClick={()=>setExpanded(false)}>Fechar</button></div>
-      <img src={url} alt={message.attachment_name||'Imagem'} className="flex-1 min-h-0 w-full object-contain" />
+      {expandedUrl?<img src={expandedUrl} alt={message.attachment_name||'Imagem'} className="flex-1 min-h-0 w-full object-contain" onError={()=>{setExpandedUrl('');setExpandedError('Imagem incompatível ou corrompida. Baixe o original.')}}/>:<div className="flex-1 flex items-center justify-center" role="status">{expandedError||'Carregando imagem…'}</div>}
       <button type="button" onClick={download} className="rounded-lg bg-white/20 px-4 py-3">Baixar original</button>
     </div>}
     {url && kind === 'video' && <video aria-label={`Vídeo: ${message.attachment_name}`} controls playsInline preload="metadata" src={url} className="max-h-48 md:max-h-56 max-w-full rounded-xl bg-black/20" onError={() => setError('Vídeo indisponível neste navegador ou link expirado. Baixe o original ou tente novamente.')} />}
-    {error && <p role="alert" className="text-xs">{error} {kind !== 'file' && <button type="button" className="underline min-h-11" onClick={() => {setUrl('');setError('');setPreviewFallback(false);setRetry(value => value + 1)}}>Reabrir prévia</button>}</p>}
+    {error && <p role="alert" className="text-xs">{error} {kind !== 'file' && <button type="button" className="underline min-h-11" onClick={() => {setUrl('');setError('');setRetry(value => value + 1)}}>Reabrir prévia</button>}</p>}
     <button type="button" onClick={download} disabled={downloading} className="min-h-9 px-2.5 rounded-lg bg-white/[.08] text-xs font-semibold disabled:opacity-50">{downloading ? 'Preparando download…' : 'Baixar original'}</button>
   </div>
 }

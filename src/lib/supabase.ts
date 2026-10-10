@@ -9,8 +9,8 @@ const configuredProjectMatches =
   configuredUrl.length > 0 &&
   configuredUrl.includes(`${projectId}.supabase.co`)
 
-const supabaseUrl = configuredProjectMatches ? configuredUrl : canonicalUrl
-const supabaseAnonKey =
+export const supabaseUrl = configuredProjectMatches ? configuredUrl : canonicalUrl
+export const supabaseAnonKey =
   configuredProjectMatches && configuredAnonKey
     ? configuredAnonKey
     : publicAnonKey
