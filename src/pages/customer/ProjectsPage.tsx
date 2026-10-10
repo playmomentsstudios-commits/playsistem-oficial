@@ -177,7 +177,7 @@ export function ProjectsPage(){
       const done=listedTasks.filter(isComplete).length
       const percent=projectProgress({tasks:listedTasks})
       return <Link key={item.id} to={'/app/projetos/'+item.id} className="pm-compact-card pm-compact-card-interactive block">
-        <div className="flex flex-wrap justify-between gap-3"><b className="text-sm text-white">{item.title}</b><span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-gray-400"><ProjectStatusMark status={item.status}/>{rotulo(statusProjeto,item.status)}</span></div>
+        <div className="flex flex-wrap justify-between gap-3"><b className="text-sm text-white">{item.title}</b><span title={rotulo(statusProjeto,item.status)} aria-label={rotulo(statusProjeto,item.status)} className="inline-flex shrink-0 items-center justify-center rounded-lg bg-white/[.04] px-2 py-1"><ProjectStatusMark status={item.status}/></span></div>
         <p className="text-[11px] text-gray-400 mt-2">{listedTasks.length?percent+'% concluído · '+done+' de '+listedTasks.length+' entregas concluídas':'Aguardando atualização das entregas'}</p>
         <div className="h-1.5 bg-white/10 rounded-full mt-2 overflow-hidden"><div className="h-full bg-[#A65A2A] rounded-full" style={{width:(listedTasks.length?percent:0)+'%'}}/></div>
         {item.due_date&&<p className="text-[11px] text-gray-500 mt-2">Prazo: {formatDate(item.due_date)}</p>}
