@@ -2,6 +2,7 @@ import { useEffect,useState } from 'react'
 import { Link } from 'react-router-dom'
 import { settingsApi,type AppSettings } from '../../api/settings'
 import { useToast } from '../../contexts/ToastContext'
+import { PriorityAlertHistory } from '../../components/admin/PriorityAlertHistory'
 
 const DEFAULTS:AppSettings={
   id:true,
@@ -16,6 +17,13 @@ const DEFAULTS:AppSettings={
   orders_default_filter:'all',
   internal_operation_notifications:true,
   commercial_notifications:true,
+  priority_alerts_enabled:true,
+  priority_daily_limit:10,
+  priority_payment_confirmed:true,
+  priority_project_created:true,
+  priority_project_completed:true,
+  priority_whatsapp_phone:'5564981294186',
+  priority_whatsapp_mode:'manual',
   favicon_url:'/favicon.svg',
   staff_logo_url:'/staff-logo.svg',
   staff_platform_name:'Área do colaborador',
@@ -57,6 +65,12 @@ export function AdminSettings(){
         orders_default_filter:settings.orders_default_filter,
         internal_operation_notifications:settings.internal_operation_notifications,
         commercial_notifications:settings.commercial_notifications,
+        priority_alerts_enabled:settings.priority_alerts_enabled,
+        priority_daily_limit:settings.priority_daily_limit,
+        priority_payment_confirmed:settings.priority_payment_confirmed,
+        priority_project_created:settings.priority_project_created,
+        priority_project_completed:settings.priority_project_completed,
+        priority_whatsapp_phone:settings.priority_whatsapp_phone,
         staff_platform_name:settings.staff_platform_name.trim()||'Área do colaborador',
         staff_primary_color:settings.staff_primary_color,
         staff_background_color:settings.staff_background_color,
@@ -198,6 +212,47 @@ export function AdminSettings(){
             <input type="checkbox" checked={settings.commercial_notifications} onChange={e=>setSettings({...settings,commercial_notifications:e.target.checked})} className="accent-[#A65A2A]"/>
           </label>
         </div>
+      </section>
+
+
+      <section className="p-5 rounded-2xl bg-[#141416] border border-white/10 lg:col-span-2">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="font-semibold">Alertas prioritários · custo zero</h2>
+            <p className="text-xs text-gray-500 mt-1">Apenas pagamentos reais confirmados pelo Asaas e marcos importantes de projetos. Os avisos automáticos usam a caixa de entrada e o Push da Sagamente.</p>
+          </div>
+          <span className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-[11px] font-semibold text-emerald-300">Custo externo: R$ 0,00</span>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 mt-5">
+          <label className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-3 text-sm">
+            <span>Ativar alertas prioritários</span>
+            <input aria-label="Ativar alertas prioritários" type="checkbox" checked={settings.priority_alerts_enabled} onChange={e=>setSettings({...settings,priority_alerts_enabled:e.target.checked})} className="accent-[#A65A2A]"/>
+          </label>
+          <label className="text-xs text-gray-400">Máximo de alertas por dia (0 a 10)
+            <input type="number" min={0} max={10} step={1} value={settings.priority_daily_limit}
+              onChange={e=>setSettings({...settings,priority_daily_limit:Math.max(0,Math.min(10,Math.floor(Number(e.target.value)||0)))})}
+              className="mt-1 block w-full min-h-11 rounded-xl border border-white/10 bg-black px-3 text-sm text-white"/>
+          </label>
+          {([
+            ['priority_payment_confirmed','Pagamento confirmado pelo Asaas'],
+            ['priority_project_created','Projeto criado'],
+            ['priority_project_completed','Projeto concluído'],
+          ] as const).map(([key,label])=><label key={key} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-3 text-sm">
+            <span>{label}</span>
+            <input type="checkbox" checked={settings[key]} onChange={e=>setSettings({...settings,[key]:e.target.checked})} className="accent-[#A65A2A]"/>
+          </label>)}
+          <label className="text-xs text-gray-400">WhatsApp administrativo (Brasil, com DDI)
+            <input type="tel" inputMode="numeric" value={settings.priority_whatsapp_phone}
+              onChange={e=>setSettings({...settings,priority_whatsapp_phone:e.target.value.replace(/\D/g,'').slice(0,13)})}
+              placeholder="5564981294186"
+              className="mt-1 block w-full min-h-11 rounded-xl border border-white/10 bg-black px-3 text-sm text-white"/>
+          </label>
+        </div>
+        <div className="mt-4 rounded-xl border border-amber-500/15 bg-amber-500/[0.035] p-3 text-xs leading-relaxed text-amber-100/80">
+          <strong>WhatsApp em modo manual.</strong> O botão abre a conversa com a mensagem preenchida, sem disparo automático pela API. Nenhuma integração paga, plano de créditos ou biblioteca não oficial será acionada. Para receber Push, ative as notificações no dispositivo.
+        </div>
+        <p className="mt-3 text-xs text-gray-500">Alterações no limite, número e tipos de aviso passam a valer ao clicar em “Salvar configurações” no fim desta página.</p>
+        <PriorityAlertHistory phone={settings.priority_whatsapp_phone} dailyLimit={settings.priority_daily_limit}/>
       </section>
 
       <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
