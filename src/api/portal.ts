@@ -368,7 +368,12 @@ export const portalApi = {
     const {data,error}=await supabase.functions.invoke('google-drive-project-sync',{
       body:{project_id:projectId},
     })
-    if(error)throw error
+    if(error){
+      let details:any=null
+      try{details=await (error as any).context?.clone?.().json?.()}catch{}
+      throw new Error(typeof details?.error==='string'&&details.error
+        ? details.error:'Não foi possível sincronizar os arquivos do Google Drive.')
+    }
     if(!data?.ok)throw new Error(data?.error||'Não foi possível sincronizar os arquivos do Google Drive.')
     return data as {ok:true;added:number;updated:number;scanned:number;folders:number;unconfigured?:boolean}
   },
@@ -580,9 +585,16 @@ export const portalApi = {
   },
   driveConnectionTest: async () => {
     const { data,error }=await supabase.functions.invoke('google-drive-test')
-    if(error) throw error
-    if(!data?.ok) throw new Error(data?.error||'Não foi possível conectar ao Google Drive.')
-    return data
+    if(error){
+      // Supabase wraps non-2xx replies in FunctionsHttpError. Read the JSON
+      // returned by our authenticated Edge Function instead of hiding it.
+      let details:any=null
+      try{details=await (error as any).context?.clone?.().json?.()}catch{}
+      throw new Error(typeof details?.error==='string'&&details.error
+        ? details.error : 'Não foi possível testar o Drive (HTTP '+((error as any).context?.status||'indisponível')+').')
+    }
+    if(!data?.ok)throw new Error(data?.error||'Não foi possível conectar ao Google Drive.')
+    return data as {ok:true;account?:{emailAddress?:string;displayName?:string};folders?:{root:boolean;clients:boolean}}
   },
   ensureClientDriveFolder: async (customerId:string) => {
     const { data,error }=await supabase.functions.invoke('google-drive-client-folder',{body:{customer_id:customerId}})
