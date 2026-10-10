@@ -40,6 +40,8 @@ export type AppSettings={
   wa_bridge_sender_phone:string
   wa_bridge_test_phone:string
   wa_bridge_auto_started_at:string|null
+  wa_bridge_delivery_mode:'self_test'|'single_client'|'consented_clients'
+  wa_bridge_single_customer_id:string|null
   wa_prepare_project_status:boolean
   wa_prepare_task_status:boolean
   wa_prepare_stage_status:boolean
