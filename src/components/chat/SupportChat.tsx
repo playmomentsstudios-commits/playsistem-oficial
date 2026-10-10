@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { ChatComposer } from './ChatComposer'
 import { AttachmentView } from './AttachmentView'
 import { portalApi } from '../../api/portal'
+import { SagamenteMotion } from '../ui/SagamenteMotion'
 
 type InboxFilter='all'|'unread'|'mine'|'unassigned'|'urgent'
 const statusLabel:Record<string,string>={open:'Aberta',pending:'Aguardando',resolved:'Resolvida'}
@@ -26,6 +27,10 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [deletingMessage,setDeletingMessage] = useState<string|null>(null)
+  const [selectedMessages,setSelectedMessages] = useState<string[]>([])
+  const [bulkDeleting,setBulkDeleting] = useState(false)
+  const messageViewport = useRef<HTMLDivElement>(null)
+  const longPress = useRef<ReturnType<typeof setTimeout>|null>(null)
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
   const [filter, setFilter] = useState('')
@@ -93,6 +98,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
 
   useEffect(() => {
     setMessages([])
+    setSelectedMessages([])
     setMessagesLoading(!!selected)
   }, [selected])
 
@@ -126,7 +132,30 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
     return () => { active = false; window.clearInterval(timer) }
   }, [selected, retry])
 
-  useEffect(() => { end.current?.scrollIntoView({ block: 'end', behavior: messages.length > 1 ? 'smooth' : 'auto' }) }, [messages.length])
+  useEffect(() => {
+    const pane = messageViewport.current
+    if (pane && !messagesLoading) pane.scrollTop = pane.scrollHeight
+  }, [selected, messagesLoading, messages.length, messages.at(-1)?.id])
+  useEffect(() => () => { if (longPress.current) clearTimeout(longPress.current) }, [])
+  function toggleMessage(id:string) {
+    setSelectedMessages(previous=>previous.includes(id)?previous.filter(value=>value!==id):[...previous,id])
+  }
+  async function deleteSelectedMessages() {
+    if (bulkDeleting || !selectedMessages.length) return
+    const ids = [...selectedMessages]
+    if (!window.confirm('Excluir '+ids.length+' mensagem(ns) para todos?')) return
+    setBulkDeleting(true)
+    let failed=0
+    for (const id of ids) {
+      try {
+        await conversationsApi.deleteOwnMessage(id)
+        setMessages(previous=>previous.map(item=>item.id===id?{...item,deleted_at:new Date().toISOString()}:item))
+      } catch { failed++ }
+    }
+    setSelectedMessages([])
+    setBulkDeleting(false)
+    if (failed) setError('Não foi possível excluir '+failed+' mensagem(ns). Tente novamente.')
+  }
 
   async function deleteMessage(messageId:string) {
     if (!user?.id || deletingMessage) return
@@ -187,11 +216,11 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   }),[conversations,filter,inboxFilter,user?.id])
 
   return (
-    <div className={compact ? 'h-full flex flex-col' : 'flex flex-col gap-3'} style={{ color: '#f0f0f2' }}>
+    <div className={compact ? 'h-full flex flex-col' : 'flex flex-col gap-3 min-h-0'} style={{ color: '#f0f0f2' }}>
       {!compact&&<div className="flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-2xl font-bold">Conversas</h1><p className="text-sm text-gray-500">{staff ? 'Central de atendimento ao cliente' : 'Chat direto com a equipe Sagamente'}</p></div>{staff&&<div className="flex items-center gap-2 text-xs text-gray-500"><span>{counts.unread} não lida(s)</span><span>•</span><span>{counts.unassigned} sem responsável</span></div>}</div>}
       {error && <div role="alert" className="p-3 rounded-xl bg-red-950/40 text-sm">{error} <button className="underline min-h-11 px-2" onClick={() => setRetry(value => value + 1)}>Tentar novamente</button></div>}
       {loading ? <p role="status">Carregando conversas…</p> : (
-        <div className={'relative flex overflow-hidden bg-[#141416] '+(compact?'rounded-none h-full':'md:rounded-2xl md:border md:border-white/10 h-[calc(100dvh-178px)] min-h-[420px] md:h-[calc(100dvh-150px)] md:min-h-[600px]')}>
+        <div className={'relative flex overflow-hidden bg-[#141416] '+(compact?'rounded-none h-full':'md:rounded-2xl md:border md:border-white/10 h-[calc(100dvh-160px)] min-h-[320px] md:h-[calc(100dvh-150px)] md:min-h-[500px]')}>
           {staff && <aside className={'w-full md:w-[330px] xl:w-[360px] shrink-0 border-white/10 bg-[#101012] flex-col '+(mobileChat?'hidden md:flex':'flex')+' md:border-r'}>
             <div className="p-3 border-b border-white/10">
               <div className="flex items-center justify-between gap-3 mb-3">
@@ -245,7 +274,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
           <div className={"flex-1 min-w-0 flex-col "+(staff&&!mobileChat?"hidden md:flex":"flex")}>
             <div className="min-h-[64px] px-3 md:px-4 border-b border-white/10 flex items-center gap-3 bg-[#141416]/95 backdrop-blur shrink-0">
               {staff&&<button onClick={()=>setMobileChat(false)} className="md:hidden w-9 h-9 rounded-lg hover:bg-white/[.05] text-gray-300" aria-label="Voltar para conversas">←</button>}
-              <div className={'w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold shrink-0 '+(staff?'bg-white/[.07]':'bg-[#A65A2A] text-white')}>{staff?(customerAvatar?<img src={customerAvatar} alt="Foto do cliente" className="w-full h-full object-cover"/>:conversation?initials(name(conversation)):'CL'):<img src="/sagamente-logo-compact.svg" alt="Sagamente" className="w-8 h-8 object-contain"/>}</div>
+              <div className={'w-10 h-10 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold shrink-0 '+(staff?'bg-white/[.07]':'bg-[#171719] text-white')}>{staff?(customerAvatar?<img src={customerAvatar} alt="Foto do cliente" className="w-full h-full object-cover"/>:conversation?initials(name(conversation)):'CL'):<SagamenteMotion size={25} monochrome="#FFFFFF" animate={false} label="Sagamente"/>}</div>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold truncate">{staff ? (conversation ? name(conversation) : 'Selecione uma conversa') : 'Sagamente'}</p>
                 {!staff&&<p className="text-[10px] text-emerald-400">Conversa com a equipe</p>}
@@ -254,7 +283,8 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
               {staff&&conversation&&<button onClick={()=>setInfoOpen(true)} className="min-h-10 px-3 rounded-xl border border-white/10 hover:bg-white/[.05] text-xs font-semibold">Informações</button>}
             </div>
             {!staff&&subject&&<p className="shrink-0 border-b border-white/10 px-4 py-2 text-xs text-[#DFA269]">{prompt}</p>}
-            <div role="log" aria-label="Mensagens" aria-live="polite" className="flex-1 overflow-y-auto min-h-0 px-3 md:px-5 py-3 bg-[#0f0f11]">
+            {selectedMessages.length>0&&<div className="shrink-0 flex items-center justify-between gap-2 px-3 py-2 border-b border-white/10 bg-[#1b1b1e]"><span className="text-xs text-gray-200">{selectedMessages.length} selecionada(s)</span><div className="flex gap-2"><button type="button" onClick={()=>setSelectedMessages([])} className="text-xs px-2 py-2 text-gray-300">Cancelar</button><button type="button" disabled={bulkDeleting} onClick={()=>void deleteSelectedMessages()} className="text-xs px-3 py-2 rounded-lg bg-red-500/20 text-red-200 disabled:opacity-50">{bulkDeleting?'Excluindo…':'Excluir selecionadas'}</button></div></div>}
+            <div ref={messageViewport} role="log" aria-label="Mensagens" aria-live="polite" className="flex-1 overflow-y-auto min-h-0 px-3 md:px-5 py-3 bg-[#0f0f11]">
               {messagesLoading && <p role="status">Carregando mensagens…</p>}
               {!messagesLoading && selected && !messages.length && !error && <p className="text-sm text-gray-400">Nenhuma mensagem ainda. Inicie a conversa abaixo.</p>}
               {messages.map((message,index) => {
@@ -270,11 +300,12 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
                 const label=day.toDateString()===today.toDateString()?'Hoje':day.toDateString()===yesterday.toDateString()?'Ontem':day.toLocaleDateString('pt-BR',{day:'2-digit',month:'long'})
                 return <div key={message.id}>
                   {dayChanged&&<div className="flex justify-center py-3"><span className="px-2.5 py-1 rounded-full bg-black/35 border border-white/[.05] text-[10px] text-gray-500">{label}</span></div>}
-                  <div className={`flex ${mine?'justify-end':'justify-start'} ${sameNext?'mb-[3px]':'mb-2'}`}>
-                    <div className={`max-w-[94%] md:max-w-[78%] ${message.attachment_type?.startsWith('image/')?'w-[min(640px,94%)] p-1.5':'px-3 py-2'} text-[13px] md:text-sm leading-[1.35] shadow-sm ${mine?'bg-[#A65A2A] text-white':'bg-[#232326] text-gray-100'} ${mine?(samePrevious?'rounded-tr-md':'rounded-tr-[18px]'):(samePrevious?'rounded-tl-md':'rounded-tl-[18px]')} ${mine?(sameNext?'rounded-br-md':'rounded-br-[18px]'):(sameNext?'rounded-bl-md':'rounded-bl-[18px]')} rounded-l-[18px] rounded-r-[18px]`}>
+                  <div className={`flex items-center gap-2 ${mine?'justify-end':'justify-start'} ${sameNext?'mb-[3px]':'mb-2'}`}>
+                    {selectedMessages.length>0&&mine&&!message.deleted_at&&<input type="checkbox" aria-label="Selecionar mensagem" checked={selectedMessages.includes(message.id)} onChange={()=>toggleMessage(message.id)} className="accent-orange-500 shrink-0 w-4 h-4" />}
+                     <div onContextMenu={event=>{if(mine&&!message.deleted_at){event.preventDefault();toggleMessage(message.id)}}} onTouchStart={()=>{if(mine&&!message.deleted_at)longPress.current=setTimeout(()=>toggleMessage(message.id),550)}} onTouchEnd={()=>{if(longPress.current)clearTimeout(longPress.current)}} onTouchMove={()=>{if(longPress.current)clearTimeout(longPress.current)}} className={`max-w-[94%] md:max-w-[78%] ${message.attachment_type?.startsWith('image/')?'w-[min(640px,94%)] p-1.5':'px-3 py-2'} text-[13px] md:text-sm leading-[1.35] shadow-sm ${mine?'bg-[#A65A2A] text-white':'bg-[#232326] text-gray-100'} ${mine?(samePrevious?'rounded-tr-md':'rounded-tr-[18px]'):(samePrevious?'rounded-tl-md':'rounded-tl-[18px]')} ${mine?(sameNext?'rounded-br-md':'rounded-br-[18px]'):(sameNext?'rounded-bl-md':'rounded-bl-[18px]')} rounded-l-[18px] rounded-r-[18px]`}>
                       {message.deleted_at?<p className="italic text-xs opacity-70">Mensagem excluída</p>:<AttachmentView message={message} />}
                       {!message.deleted_at&&message.content&&<p className="whitespace-pre-wrap break-words px-1" style={{ overflowWrap:'anywhere' }}>{message.content}</p>}
-                      <p className="text-[9px] mt-1 opacity-70 text-right leading-none flex justify-end items-center gap-1">{mine&&!message.deleted_at&&<button type="button" disabled={!!deletingMessage} onClick={()=>{if(window.confirm('Excluir esta mensagem para todos?'))void deleteMessage(message.id)}} className="underline mr-2" aria-label="Excluir mensagem para todos">Excluir</button>}{new Date(message.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}{mine&&<span title={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'Visualizada':'Enviada'} aria-label={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'Visualizada':'Enviada'} className={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'text-orange-200':'text-white/65'}>{lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'✓✓':'✓'}</span>}</p>
+                      <p className="text-[9px] mt-1 opacity-70 text-right leading-none flex justify-end items-center gap-1">{mine&&!message.deleted_at&&selectedMessages.length===0&&<button type="button" disabled={!!deletingMessage} onClick={()=>{if(window.confirm('Excluir esta mensagem para todos?'))void deleteMessage(message.id)}} className="underline mr-2" aria-label="Excluir mensagem para todos">Excluir</button>}{new Date(message.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}{mine&&<span title={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'Visualizada':'Enviada'} aria-label={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'Visualizada':'Enviada'} className={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'text-orange-200':'text-white/65'}>{lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'✓✓':'✓'}</span>}</p>
                     </div>
                   </div>
                 </div>
