@@ -25,6 +25,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   const [loading, setLoading] = useState(true)
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [sending, setSending] = useState(false)
+  const [deletingMessage,setDeletingMessage] = useState<string|null>(null)
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
   const [filter, setFilter] = useState('')
@@ -105,7 +106,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
         const result = await conversationsApi.messages(selected)
         if (active) {
           // Preserve confirmed sends if polling started just before the send.
-          setMessages(previous => [...new Map([...result, ...previous].map(message => [message.id, message])).values()]
+          setMessages(previous => [...new Map([...previous, ...result].map(message => [message.id, message])).values()]
             .sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id)))
           setError('')
           if (user?.id) {
@@ -127,6 +128,15 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
 
   useEffect(() => { end.current?.scrollIntoView({ block: 'end', behavior: messages.length > 1 ? 'smooth' : 'auto' }) }, [messages.length])
 
+  async function deleteMessage(messageId:string) {
+    if (!user?.id || deletingMessage) return
+    setDeletingMessage(messageId)
+    try {
+      await conversationsApi.deleteOwnMessage(messageId)
+      setMessages(previous=>previous.map(item=>item.id===messageId?{...item,deleted_at:new Date().toISOString()}:item))
+    } catch { setError('Não foi possível excluir a mensagem. Tente novamente.') }
+    finally { setDeletingMessage(null) }
+  }
   async function send(content: string, file: File | null, id: string) {
     if (!user || !selected) throw new Error('Selecione uma conversa.')
     const attachment = file ? await conversationsApi.upload(selected, user.id, id, file) : undefined
@@ -262,16 +272,16 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
                   {dayChanged&&<div className="flex justify-center py-3"><span className="px-2.5 py-1 rounded-full bg-black/35 border border-white/[.05] text-[10px] text-gray-500">{label}</span></div>}
                   <div className={`flex ${mine?'justify-end':'justify-start'} ${sameNext?'mb-[3px]':'mb-2'}`}>
                     <div className={`max-w-[86%] md:max-w-[68%] px-3 py-2 text-[13px] md:text-sm leading-[1.35] shadow-sm ${mine?'bg-[#A65A2A] text-white':'bg-[#232326] text-gray-100'} ${mine?(samePrevious?'rounded-tr-md':'rounded-tr-[18px]'):(samePrevious?'rounded-tl-md':'rounded-tl-[18px]')} ${mine?(sameNext?'rounded-br-md':'rounded-br-[18px]'):(sameNext?'rounded-bl-md':'rounded-bl-[18px]')} rounded-l-[18px] rounded-r-[18px]`}>
-                      <AttachmentView message={message} />
-                      {message.content&&<p className="whitespace-pre-wrap break-words" style={{ overflowWrap:'anywhere' }}>{message.content}</p>}
-                      <p className="text-[9px] mt-1 opacity-70 text-right leading-none flex justify-end items-center gap-1">{new Date(message.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}{mine&&<span title={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'Visualizada':'Enviada'} aria-label={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'Visualizada':'Enviada'} className={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'text-orange-200':'text-white/65'}>{lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'✓✓':'✓'}</span>}</p>
+                      {message.deleted_at?<p className="italic text-xs opacity-70">Mensagem excluída</p>:<AttachmentView message={message} />}
+                      {!message.deleted_at&&message.content&&<p className="whitespace-pre-wrap break-words" style={{ overflowWrap:'anywhere' }}>{message.content}</p>}
+                      <p className="text-[9px] mt-1 opacity-70 text-right leading-none flex justify-end items-center gap-1">{mine&&!message.deleted_at&&<button type="button" disabled={!!deletingMessage} onClick={()=>{if(window.confirm('Excluir esta mensagem para todos?'))void deleteMessage(message.id)}} className="underline mr-2" aria-label="Excluir mensagem para todos">Excluir</button>}{new Date(message.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}{mine&&<span title={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'Visualizada':'Enviada'} aria-label={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'Visualizada':'Enviada'} className={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'text-orange-200':'text-white/65'}>{lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'✓✓':'✓'}</span>}</p>
                     </div>
                   </div>
                 </div>
               })}
               <div ref={end} />
             </div>
-            <div className="shrink-0 bg-[#141416] border-t border-white/10"><ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} compact /></div>
+            <div className="shrink-0 bg-[#141416] border-t border-white/10"><ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} compact staff={staff} customerId={conversation?.customer_id} /></div>
           </div>
           {infoOpen&&staff&&conversation&&<button className="fixed inset-0 z-40 bg-black/55 md:hidden" onClick={()=>setInfoOpen(false)} aria-label="Fechar informações"/>}
           {infoOpen&&staff&&conversation&&<aside className="fixed inset-y-0 right-0 z-50 w-[88vw] max-w-sm md:static md:z-auto md:w-[300px] md:max-w-none shrink-0 border-l border-white/10 bg-[#111113] overflow-y-auto">
