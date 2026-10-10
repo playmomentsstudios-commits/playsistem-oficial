@@ -37,7 +37,7 @@ export function WhatsappQrBridgePanel(){
       supabase.from('whatsapp_bridge_state').select('requested_mode,status,heartbeat_at,qr_data_url,qr_updated_at,connected_phone,last_error,worker_capability,worker_capability_at').eq('id',true).maybeSingle(),
       settingsApi.appSettings(),
       supabase.rpc('wa_bridge_eligible_customers'),
-      supabase.from('whatsapp_bridge_attempts').select('id',{count:'exact',head:true}).eq('status','sent').eq('test_mode',false)
+      supabase.from('whatsapp_bridge_attempts').select('id',{count:'exact',head:true}).eq('status','sent').eq('test_mode',false).in('ack_status',['delivered','read'])
     ])
     if(status.error)throw status.error
     if(customers.error)throw customers.error
