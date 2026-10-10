@@ -5,6 +5,7 @@ import { resolve } from 'node:path'
 import makeWASocket, { DisconnectReason, useMultiFileAuthState, Browsers } from '@whiskeysockets/baileys'
 import { createClient } from '@supabase/supabase-js'
 import QRCode from 'qrcode'
+import { attachDeliveryReceipts } from './receipt-tracker.mjs'
 import { resolveAuthorizedAccount, registeredRecipientJid } from './phone-utils.mjs'
 import pino from 'pino'
 
