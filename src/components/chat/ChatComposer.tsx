@@ -22,6 +22,7 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false,custome
   const [previewFailed,setPreviewFailed]=useState(false)
   const [preview, setPreview] = useState('')
   const [sending, setSending] = useState(false)
+  const [sendAfterRecording,setSendAfterRecording]=useState(false)
   const [error, setError] = useState('')
   const [toolsOpen,setToolsOpen]=useState(false)
   const [projectFiles,setProjectFiles]=useState<any[]>([])
@@ -62,6 +63,14 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false,custome
   const isImage=!!file&&previewKind(file.type)==='image'
   const audio = useAudioRecorder(choose)
   const busy = sending || audio.recording || audio.requesting
+  useEffect(()=>{
+    if(!sendAfterRecording)return
+    if(audio.error){setSendAfterRecording(false);return}
+    if(audio.recording||audio.requesting||!file)return
+    setSendAfterRecording(false)
+    const frame=window.requestAnimationFrame(()=>textarea.current?.form?.requestSubmit())
+    return ()=>window.cancelAnimationFrame(frame)
+  },[sendAfterRecording,audio.recording,audio.requesting,audio.error,file])
   useEffect(() => { onBusy(busy); return () => onBusy(false) }, [busy, onBusy])
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   useEffect(() => {
@@ -116,6 +125,7 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false,custome
   }
   async function submit(event: React.FormEvent) {
     event.preventDefault()
+    if (audio.recording){setSendAfterRecording(true);audio.stop();return}
     if (disabled || busy || sendingRef.current || (!text.trim() && !file)) return
     sendingRef.current = true
     setSending(true)
@@ -166,7 +176,7 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false,custome
     {audio.recording && <div className="flex flex-wrap items-center gap-2 rounded-xl bg-red-950/40 p-3">
       <p role="status" className="text-sm">Gravando {Math.floor(audio.seconds / 60)}:{String(audio.seconds % 60).padStart(2, '0')} / 5:00</p>
       <Button type="button" className="min-h-11" onClick={() => audio.stop()}>Parar e ouvir</Button>
-      <Button type="button" variant="ghost" className="min-h-11" onClick={() => audio.stop(true)}>Cancelar gravação</Button>
+      <Button type="button" variant="ghost" className="min-h-11" onClick={() => {setSendAfterRecording(false);audio.stop(true)}}>Cancelar gravação</Button>
     </div>}
     {file && (isImage?<div className="space-y-3">
       <div className="w-full h-[min(58dvh,540px)] flex items-center justify-center">
@@ -185,7 +195,7 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false,custome
       <textarea ref={textarea} aria-label={isImage?'Legenda opcional':'Mensagem'} placeholder={isImage?'Adicione uma legenda…':file ? 'Adicione uma mensagem…' : 'Mensagem'} value={text} maxLength={5000} rows={compact?1:2} disabled={disabled || busy} onKeyDown={keyDown} onChange={event => { setText(event.target.value); pendingId.current = null; resizeTextarea() }} className={"flex-1 min-w-0 rounded-[22px] text-sm bg-white/[.065] border border-white/[.07] resize-none outline-none focus:border-white/15 "+(compact?"min-h-11 max-h-28 px-4 py-[11px] leading-5":"p-3")} />
       {isImage&&<button type="button" disabled={sending} onClick={()=>choose(null)} className="min-h-11 px-2 text-xs text-gray-400">Cancelar</button>}
       {!audio.recording&&<button type="button" className="w-11 h-11 shrink-0 rounded-full bg-[#A65A2A]/20 border border-[#A65A2A]/40 text-[#F28C38] flex items-center justify-center disabled:opacity-35" disabled={disabled || busy || !!file} onClick={audio.start} title="Gravar áudio" aria-label="Gravar áudio"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></button>}
-      <button type="submit" aria-label="Enviar mensagem" title="Enviar mensagem" className="w-11 h-11 shrink-0 rounded-full bg-[#A65A2A] text-white flex items-center justify-center disabled:opacity-35 transition-opacity" disabled={disabled || busy || (!text.trim() && !file)}>
+      <button type="submit" aria-label={audio.recording?"Finalizar e enviar áudio":"Enviar mensagem"} title={audio.recording?"Finalizar e enviar áudio":"Enviar mensagem"} className="w-11 h-11 shrink-0 rounded-full bg-[#A65A2A] text-white flex items-center justify-center disabled:opacity-35 transition-opacity" disabled={disabled || sending || audio.requesting || (!audio.recording && !text.trim() && !file)}>
         {sending?<span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"/>:<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>}
       </button>
     </div>
