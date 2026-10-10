@@ -139,6 +139,7 @@ export function ProjectsPage(){
             return <CompactDisclosure key={stage.id} title={stage.name}
               summary={<span>{rotulo(statusEtapa,stage.status)} · {stageComplete}/{stageTasks.length}</span>}
               defaultOpen={stage.status==='in_progress'}>
+              <Link to={'/app/projetos/'+id+'/etapas/'+stage.id} className="mb-2 inline-flex min-h-10 items-center text-xs font-semibold text-[#DFA269] hover:underline">Visualizar página desta etapa ↗</Link>
               {stage.description&&<p className="mb-2 whitespace-pre-wrap text-xs text-gray-400">{stage.description}</p>}
               {stageTasks.length>0?<div className="space-y-1.5">
                 {stageTasks.map((task:any)=><details key={task.id} className="overflow-hidden rounded-lg border border-white/10 bg-black/20">

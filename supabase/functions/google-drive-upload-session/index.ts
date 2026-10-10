@@ -49,8 +49,17 @@ Deno.serve(async (req) => {
       taskStageId = task.stage_id || null;
     }
 
+    // External projects keep their current operational Drive folders; stage
+    // association is metadata, never a new public folder or access grant.
+    const effectiveStageId = taskStageId || (staffAllowed ? requestedStageId : null);
+    if (effectiveStageId) {
+      const { data: stage, error: stageError } = await ctx.db.from("project_stages")
+        .select("id,project_id").eq("id", effectiveStageId).maybeSingle();
+      if (stageError || stage?.project_id !== projectId) throw new Error("Stage does not belong to project");
+    }
+
     const folders = await ensureProjectFolder(ctx.db, ctx.userId, projectId);
-    const internalStageId = taskStageId || requestedStageId;
+    const internalStageId = effectiveStageId;
     let target:any = null;
 
     if (project.project_type === "internal") {
@@ -95,7 +104,7 @@ Deno.serve(async (req) => {
         playMomentsTaskId: taskId || "",
         playMomentsUploadId: uploadId,
         playMomentsCustomFolderId: customFolderId || "",
-        playMomentsStageId: project.project_type === "internal" ? (internalStageId || target.stage_id || "") : "",
+        playMomentsStageId: project.project_type === "internal" ? (internalStageId || target.stage_id || "") : (staffAllowed ? (effectiveStageId || "") : ""),
       },
     };
 
@@ -139,7 +148,7 @@ Deno.serve(async (req) => {
       customer_id: project.customer_id,
       upload_id: uploadId,
       custom_folder_id: customFolderId,
-      stage_id: project.project_type === "internal" ? (internalStageId || target.stage_id || null) : null,
+      stage_id: project.project_type === "internal" ? (internalStageId || target.stage_id || null) : (staffAllowed ? effectiveStageId : null),
     });
   } catch (error) {
     return json({ ok: false, error: error instanceof Error ? error.message : "Unknown error" }, 400);
