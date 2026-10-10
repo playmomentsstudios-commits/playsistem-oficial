@@ -24,6 +24,12 @@ const DEFAULTS:AppSettings={
   priority_project_completed:true,
   priority_whatsapp_phone:'5564981294186',
   priority_whatsapp_mode:'manual',
+  wa_prepare_project_status:true,
+  wa_prepare_task_status:true,
+  wa_prepare_stage_status:false,
+  wa_prepare_file_updates:false,
+  wa_prepare_file_review:true,
+  wa_prepare_priority_events:true,
   favicon_url:'/favicon.svg',
   staff_logo_url:'/staff-logo.svg',
   staff_platform_name:'Área do colaborador',
@@ -248,6 +254,7 @@ export function AdminSettings(){
               className="mt-1 block w-full min-h-11 rounded-xl border border-white/10 bg-black px-3 text-sm text-white"/>
           </label>
         </div>
+        <Link to="/admin/whatsapp" className="mt-4 inline-flex min-h-11 items-center rounded-xl border border-[#A65A2A]/30 bg-[#A65A2A]/10 px-4 text-sm font-semibold text-[#DFA269]">Abrir Central de WhatsApp →</Link>
         <div className="mt-4 rounded-xl border border-amber-500/15 bg-amber-500/[0.035] p-3 text-xs leading-relaxed text-amber-100/80">
           <strong>WhatsApp em modo manual.</strong> O botão abre a conversa com a mensagem preenchida, sem disparo automático pela API. Nenhuma integração paga, plano de créditos ou biblioteca não oficial será acionada. Para receber Push, ative as notificações no dispositivo.
         </div>
