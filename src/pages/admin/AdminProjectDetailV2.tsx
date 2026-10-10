@@ -671,7 +671,7 @@ export function AdminProjectDetailV2(){
                       </option>)}
                   </select>
                   <Button type="button" disabled={!viewerDraft||savingViewer||!project.customer_id} onClick={()=>void addViewer()}>
-                    {savingViewer?'Adicionando...':'+ Adicionar'}
+                    {savingViewer?'Adicionando...':'+ Adicionar cliente'}
                   </Button>
                 </div>
                 {!project.customer_id&&<p className="mt-2 text-[11px] text-amber-300">Vincule um cliente principal para adicionar visualizadores.</p>}
