@@ -386,8 +386,37 @@ export const portalApi = {
     return data
   },
   assignClientFileTask: async (fileId:string,taskId:string|null) => {
-    const { error }=await supabase.from('client_files').update({task_id:taskId}).eq('id',fileId)
-    if(error) throw error
+    const {data:file,error:fileError}=await supabase.from('client_files').select('id,project_id').eq('id',fileId).single()
+    if(fileError)throw fileError
+    let stageId:string|null=null
+    if(taskId){
+      const {data:task,error:taskError}=await supabase.from('tasks').select('id,project_id,stage_id').eq('id',taskId).single()
+      if(taskError)throw taskError
+      if(!file.project_id||task.project_id!==file.project_id)throw new Error('Esta tarefa não pertence ao projeto do arquivo.')
+      stageId=task.stage_id
+    }
+    // Removing a task preserves the explicit stage assignment.
+    const values=taskId?{task_id:taskId,stage_id:stageId}:{task_id:null}
+    const {error}=await supabase.from('client_files').update(values).eq('id',fileId)
+    if(error)throw error
+  },
+  assignClientFileStage: async (fileId:string,stageId:string|null) => {
+    const {data:file,error:fileError}=await supabase.from('client_files').select('id,project_id,task_id').eq('id',fileId).single()
+    if(fileError)throw fileError
+    if(file.task_id){
+      const {data:task,error:taskError}=await supabase.from('tasks').select('stage_id').eq('id',file.task_id).single()
+      if(taskError)throw taskError
+      if(task.stage_id)throw new Error('A etapa deste arquivo é definida pela tarefa vinculada. Altere a tarefa primeiro.')
+    }
+    if(stageId){
+      const {data:stage,error:stageError}=await supabase.from('project_stages').select('id,project_id').eq('id',stageId).single()
+      if(stageError)throw stageError
+      if(stage.project_id!==file.project_id)throw new Error('A etapa selecionada não pertence ao projeto do arquivo.')
+    }
+    const {data,error}=await supabase.from('client_files').update({stage_id:stageId}).eq('id',fileId).select('id,stage_id').maybeSingle()
+    if(error)throw error
+    if(!data||data.stage_id!==stageId)throw new Error('A associação com a etapa não foi confirmada.')
+    return data
   },
   fileReviews: async (fileId:string) => {
     const { data,error }=await supabase.from('file_reviews')
