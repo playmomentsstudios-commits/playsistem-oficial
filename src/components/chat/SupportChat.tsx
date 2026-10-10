@@ -281,7 +281,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
               })}
               <div ref={end} />
             </div>
-            <div className="shrink-0 bg-[#141416] border-t border-white/10"><ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} compact /></div>
+            <div className="shrink-0 bg-[#141416] border-t border-white/10"><ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} compact staff={staff} customerId={conversation?.customer_id} /></div>
           </div>
           {infoOpen&&staff&&conversation&&<button className="fixed inset-0 z-40 bg-black/55 md:hidden" onClick={()=>setInfoOpen(false)} aria-label="Fechar informações"/>}
           {infoOpen&&staff&&conversation&&<aside className="fixed inset-y-0 right-0 z-50 w-[88vw] max-w-sm md:static md:z-auto md:w-[300px] md:max-w-none shrink-0 border-l border-white/10 bg-[#111113] overflow-y-auto">
