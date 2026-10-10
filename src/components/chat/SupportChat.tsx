@@ -25,10 +25,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   const [loading, setLoading] = useState(true)
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [sending, setSending] = useState(false)
-  const [selectedMessages,setSelectedMessages] = useState<string[]>([])
-  const [deletingBatch,setDeletingBatch] = useState(false)
-  const pressTimer=useRef<ReturnType<typeof setTimeout>|null>(null)
-  const pressTriggered=useRef(false)
+  const [deletingMessage,setDeletingMessage] = useState<string|null>(null)
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
   const [filter, setFilter] = useState('')
@@ -131,20 +128,14 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
 
   useEffect(() => { end.current?.scrollIntoView({ block: 'end', behavior: messages.length > 1 ? 'smooth' : 'auto' }) }, [messages.length])
 
-  useEffect(()=>{setSelectedMessages([])},[selected])
-  function cancelPress(){if(pressTimer.current){clearTimeout(pressTimer.current);pressTimer.current=null}}
-  function toggleMessage(id:string){setSelectedMessages(current=>current.includes(id)?current.filter(x=>x!==id):[...current,id])}
-  async function deleteSelected(){
-    if(deletingBatch||!selectedMessages.length||!window.confirm('Excluir '+selectedMessages.length+' mensagem(ns) para todos?'))return
-    setDeletingBatch(true)
-    const failed:string[]=[]
-    for(const id of selectedMessages){
-      try{await conversationsApi.deleteOwnMessage(id);setMessages(current=>current.map(m=>m.id===id?{...m,deleted_at:new Date().toISOString()}:m))}
-      catch{failed.push(id)}
-    }
-    setSelectedMessages(failed)
-    if(failed.length)setError('Não foi possível excluir '+failed.length+' mensagem(ns).')
-    setDeletingBatch(false)
+  async function deleteMessage(messageId:string) {
+    if (!user?.id || deletingMessage) return
+    setDeletingMessage(messageId)
+    try {
+      await conversationsApi.deleteOwnMessage(messageId)
+      setMessages(previous=>previous.map(item=>item.id===messageId?{...item,deleted_at:new Date().toISOString()}:item))
+    } catch { setError('Não foi possível excluir a mensagem. Tente novamente.') }
+    finally { setDeletingMessage(null) }
   }
   async function send(content: string, file: File | null, id: string) {
     if (!user || !selected) throw new Error('Selecione uma conversa.')
@@ -279,23 +270,16 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
                 const label=day.toDateString()===today.toDateString()?'Hoje':day.toDateString()===yesterday.toDateString()?'Ontem':day.toLocaleDateString('pt-BR',{day:'2-digit',month:'long'})
                 return <div key={message.id}>
                   {dayChanged&&<div className="flex justify-center py-3"><span className="px-2.5 py-1 rounded-full bg-black/35 border border-white/[.05] text-[10px] text-gray-500">{label}</span></div>}
-                  <div className={`flex ${mine?'justify-end':'justify-start'} ${sameNext?'mb-[3px]':'mb-2'} ${selectedMessages.includes(message.id)?'bg-white/10 rounded-xl':''}`}>
-                    <div role={mine&&!message.deleted_at?'button':undefined} tabIndex={mine&&!message.deleted_at?0:undefined} aria-label={mine&&!message.deleted_at?'Segure para selecionar mensagem':undefined} aria-pressed={mine&&!message.deleted_at?selectedMessages.includes(message.id):undefined}
-                      onPointerDown={event=>{if(!mine||message.deleted_at||event.button!==0)return;pressTriggered.current=false;cancelPress();pressTimer.current=setTimeout(()=>{pressTriggered.current=true;toggleMessage(message.id)},550)}}
-                      onPointerUp={cancelPress} onPointerCancel={cancelPress} onPointerLeave={cancelPress}
-                      onContextMenu={event=>{if(!mine||message.deleted_at)return;event.preventDefault();cancelPress();if(!pressTriggered.current){pressTriggered.current=true;toggleMessage(message.id)}}}
-                      onClickCapture={event=>{if(!event.currentTarget.contains(event.target as Node))return;if(!mine||message.deleted_at)return;if(selectedMessages.length||pressTriggered.current){event.preventDefault();event.stopPropagation();if(!pressTriggered.current)toggleMessage(message.id);pressTriggered.current=false}}}
-                      onKeyDown={event=>{if(event.target!==event.currentTarget)return;if(mine&&!message.deleted_at&&(event.key==='Enter'||event.key===' ')){event.preventDefault();toggleMessage(message.id)}}}
-                      className={`max-w-[94%] md:max-w-[78%] ${message.attachment_type?.startsWith('image/')?'w-[min(640px,94%)] p-1.5':'px-2 py-2'} text-[13px] md:text-sm leading-[1.35] shadow-sm ${mine?'bg-[#A65A2A] text-white':'bg-[#232326] text-gray-100'} ${mine?(samePrevious?'rounded-tr-md':'rounded-tr-[18px]'):(samePrevious?'rounded-tl-md':'rounded-tl-[18px]')} ${mine?(sameNext?'rounded-br-md':'rounded-br-[18px]'):(sameNext?'rounded-bl-md':'rounded-bl-[18px]')} rounded-l-[18px] rounded-r-[18px]`}>
+                  <div className={`flex ${mine?'justify-end':'justify-start'} ${sameNext?'mb-[3px]':'mb-2'}`}>
+                    <div className={`max-w-[94%] md:max-w-[78%] ${message.attachment_type?.startsWith('image/')?'w-[min(640px,94%)] p-1.5':'px-3 py-2'} text-[13px] md:text-sm leading-[1.35] shadow-sm ${mine?'bg-[#A65A2A] text-white':'bg-[#232326] text-gray-100'} ${mine?(samePrevious?'rounded-tr-md':'rounded-tr-[18px]'):(samePrevious?'rounded-tl-md':'rounded-tl-[18px]')} ${mine?(sameNext?'rounded-br-md':'rounded-br-[18px]'):(sameNext?'rounded-bl-md':'rounded-bl-[18px]')} rounded-l-[18px] rounded-r-[18px]`}>
                       {message.deleted_at?<p className="italic text-xs opacity-70">Mensagem excluída</p>:<AttachmentView message={message} />}
                       {!message.deleted_at&&message.content&&<p className="whitespace-pre-wrap break-words px-1" style={{ overflowWrap:'anywhere' }}>{message.content}</p>}
-                      <p className="text-[9px] mt-1 opacity-70 text-right leading-none flex justify-end items-center gap-1">{new Date(message.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}{mine&&<span title={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'Visualizada':'Enviada'} aria-label={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'Visualizada':'Enviada'} className={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'text-orange-200':'text-white/65'}>{lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'✓✓':'✓'}</span>}</p>
+                      <p className="text-[9px] mt-1 opacity-70 text-right leading-none flex justify-end items-center gap-1">{mine&&!message.deleted_at&&<button type="button" disabled={!!deletingMessage} onClick={()=>{if(window.confirm('Excluir esta mensagem para todos?'))void deleteMessage(message.id)}} className="underline mr-2" aria-label="Excluir mensagem para todos">Excluir</button>}{new Date(message.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}{mine&&<span title={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'Visualizada':'Enviada'} aria-label={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'Visualizada':'Enviada'} className={lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'text-orange-200':'text-white/65'}>{lastReadAt&&new Date(lastReadAt).getTime()>=new Date(message.created_at).getTime()?'✓✓':'✓'}</span>}</p>
                     </div>
                   </div>
                 </div>
               })}
               <div ref={end} />
-              {selectedMessages.length>0&&<div className="sticky bottom-3 z-30 mx-auto w-fit flex items-center gap-3 rounded-2xl bg-[#29292d] border border-white/20 shadow-xl px-4 py-3 text-sm"><span>{selectedMessages.length} selecionada(s)</span><button type="button" onClick={()=>setSelectedMessages([])} className="underline">Cancelar</button><button type="button" disabled={deletingBatch} onClick={()=>void deleteSelected()} className="rounded-lg bg-red-700 px-3 py-2 font-semibold disabled:opacity-50">{deletingBatch?'Excluindo…':'Excluir'}</button></div>}
             </div>
             <div className="shrink-0 bg-[#141416] border-t border-white/10"><ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} compact staff={staff} customerId={conversation?.customer_id} /></div>
           </div>
