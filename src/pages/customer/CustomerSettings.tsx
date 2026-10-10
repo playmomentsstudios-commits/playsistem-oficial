@@ -98,6 +98,10 @@ export function CustomerSettings(){
     if(loading||location.hash!=='#whatsapp')return
     document.getElementById('whatsapp')?.scrollIntoView({block:'start',behavior:'smooth'})
   },[loading,location.hash])
+  useEffect(()=>{
+    if(loading||location.hash!=='#notificacoes')return
+    document.getElementById('notificacoes')?.scrollIntoView({block:'start',behavior:'smooth'})
+  },[loading,location.hash])
 
   if(loading)return <div className="py-16 text-center text-sm text-gray-500">Carregando configurações...</div>
 
@@ -132,9 +136,12 @@ export function CustomerSettings(){
         <Link to="/app/perfil" className="inline-flex mt-4 min-h-11 px-4 items-center rounded-xl bg-white/[0.06] border border-white/10 text-sm font-semibold">Editar cadastro e endereço</Link>
       </section>
 
-      <section className="pm-compact-card">
-        <h2 className="font-semibold">Notificações</h2>
-        <p className="text-xs text-gray-500 mt-1">Escolha quais comunicações deseja receber.</p>
+      <section id="notificacoes" className="pm-compact-card scroll-mt-24">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-semibold">Preferências de notificações</h2>
+          <Link to="/app/notificacoes" className="inline-flex min-h-10 items-center text-xs font-semibold text-[#DFA269] hover:underline">← Ver notificações recebidas</Link>
+        </div>
+        <p className="text-xs text-gray-500 mt-1">Configure os canais de aviso. As notificações recebidas ficam no sino do aplicativo.</p>
         <div className="mt-3 rounded-lg border border-white/10 bg-black/20 p-3">
           <p className="mb-2 text-xs font-semibold">Avisos do aplicativo instalado</p>
           <PushNotificationSettings/>
