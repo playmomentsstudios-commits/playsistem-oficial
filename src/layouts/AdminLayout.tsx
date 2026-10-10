@@ -1,4 +1,5 @@
 import { BrandImage } from '../components/BrandImage'
+import { PushNotificationSettings } from '../components/ui/PushNotificationSettings'
 import { useEffect, useState, type CSSProperties } from 'react'
 import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -170,6 +171,7 @@ export function AdminLayout() {
               <MenuIcon name="notifications" size={17}/>
               {counts.notifications>0&&<span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-[#A65A2A] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-[var(--staff-surface,#0a0a0b)]">{counts.notifications>99?'99+':counts.notifications}</span>}
             </Link>
+            <div className="hidden lg:block"><PushNotificationSettings compact/></div>
             <div className="relative">
               <button type="button" aria-haspopup="menu" aria-expanded={accountOpen} onClick={()=>setAccountOpen(v=>!v)} className="flex items-center gap-2.5 rounded-xl border border-white/[0.07] bg-white/[0.025] px-2.5 py-1.5 hover:bg-white/[0.05] transition-colors">
                 <span className="w-8 h-8 rounded-lg bg-[#A65A2A] text-white text-xs font-bold flex items-center justify-center">{(user?.name||'A').trim().charAt(0).toUpperCase()}</span>
@@ -179,6 +181,7 @@ export function AdminLayout() {
               {accountOpen&&<><button aria-label="Fechar menu" onClick={()=>setAccountOpen(false)} className="fixed inset-0 z-40 cursor-default"/><div role="menu" className="absolute right-0 top-[calc(100%+8px)] z-50 w-56 rounded-xl border border-white/10 bg-[#111113] p-1.5 shadow-2xl">
                 <Link to="/app/perfil" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="about" size={15}/><span>Perfil</span></Link>
                 {user?.role==='admin'&&<Link to="/admin/configuracoes" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="settings" size={15}/><span>Configurações</span></Link>}
+                <div className="p-1"><PushNotificationSettings compact/></div>
                 <div className="my-1 border-t border-white/[0.07]"/>
                 <button onClick={()=>{setAccountOpen(false);void handleLogout()}} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-[#DFA269] hover:bg-[#A65A2A]/10"><span>↩</span><span>Sair</span></button>
               </div></>}
