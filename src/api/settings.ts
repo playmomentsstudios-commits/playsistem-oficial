@@ -10,6 +10,8 @@ export type UserPreferences={
   notify_file_updates:boolean
   notify_commercial_updates:boolean
   wa_automatic_opt_in:boolean
+  wa_opt_in_phone:string|null
+  wa_opt_in_at:string|null
   profile_contact_visible_to_team:boolean
   updated_at:string
 }
