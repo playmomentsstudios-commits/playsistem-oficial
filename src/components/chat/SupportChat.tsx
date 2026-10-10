@@ -215,11 +215,11 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   }),[conversations,filter,inboxFilter,user?.id])
 
   return (
-    <div className={compact ? 'h-full flex flex-col' : 'flex flex-col gap-3 min-h-0'} style={{ color: '#f0f0f2' }}>
+    <div className={compact ? 'h-full flex flex-col' : 'flex flex-col gap-2 min-h-0'} style={{ color: '#f0f0f2' }}>
       {!compact&&<div className="flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-2xl font-bold">Conversas</h1><p className="text-sm text-gray-500">{staff ? 'Central de atendimento ao cliente' : 'Chat direto com a equipe Sagamente'}</p></div>{staff&&<div className="flex items-center gap-2 text-xs text-gray-500"><span>{counts.unread} não lida(s)</span><span>•</span><span>{counts.unassigned} sem responsável</span></div>}</div>}
       {error && <div role="alert" className="p-3 rounded-xl bg-red-950/40 text-sm">{error} <button className="underline min-h-11 px-2" onClick={() => setRetry(value => value + 1)}>Tentar novamente</button></div>}
       {loading ? <p role="status">Carregando conversas…</p> : (
-        <div className={'relative flex overflow-hidden bg-[#141416] '+(compact?'rounded-none h-full':'md:rounded-2xl md:border md:border-white/10 h-[calc(100dvh-160px)] min-h-[320px] md:h-[calc(100dvh-150px)] md:min-h-[500px]')}>
+        <div className={'relative flex min-h-0 overflow-hidden bg-[#141416] '+(compact?'rounded-none h-full':'md:rounded-2xl md:border md:border-white/10 h-[calc(100dvh-230px)] min-h-[300px] md:h-[calc(100dvh-150px)] md:min-h-[500px]')}>
           {staff && <aside className={'w-full md:w-[330px] xl:w-[360px] shrink-0 border-white/10 bg-[#101012] flex-col '+(mobileChat?'hidden md:flex':'flex')+' md:border-r'}>
             <div className="p-3 border-b border-white/10">
               <div className="flex items-center justify-between gap-3 mb-3">
@@ -311,7 +311,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
               })}
 
             </div>
-            <div className="shrink-0 bg-[#141416] border-t border-white/10"><ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} compact staff={staff} customerId={conversation?.customer_id} /></div>
+            <div className="shrink-0 min-h-0 bg-[#141416] border-t border-white/10"><ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} compact staff={staff} customerId={conversation?.customer_id} /></div>
           </div>
           {infoOpen&&staff&&conversation&&<button className="fixed inset-0 z-40 bg-black/55 md:hidden" onClick={()=>setInfoOpen(false)} aria-label="Fechar informações"/>}
           {infoOpen&&staff&&conversation&&<aside className="fixed inset-y-0 right-0 z-50 w-[88vw] max-w-sm md:static md:z-auto md:w-[300px] md:max-w-none shrink-0 border-l border-white/10 bg-[#111113] overflow-y-auto">
