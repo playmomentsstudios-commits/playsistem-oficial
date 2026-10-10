@@ -11,7 +11,7 @@ test('SAGAMENTE V2 logo signatures omit subtitle and retain geometric colors',()
  }
  const symbol=read('public/sagamente-mark.svg')
  assert.match(symbol,/viewBox="0 0 100 124"/)
- assert.equal((symbol.match(/\sM /g)||[]).length,6)
+ assert.equal((symbol.match(/(?:\"| )M /g)||[]).length,6)
 })
 test('Brand center has reversible preset and PWA generator uses V2 palette',()=>{
  const panel=read('src/components/admin/BrandIdentitySettings.tsx')
