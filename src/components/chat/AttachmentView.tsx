@@ -114,6 +114,6 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
     {expanded && kind === 'image' && <ImageViewer url={expandedUrl} name={message.attachment_name||'Imagem'} onClose={()=>setExpanded(false)} onDownload={()=>void download()} downloading={downloading} loading={!expandedUrl} error={expandedError} onRetry={()=>setExpandedRetry(value=>value+1)}/>}
     {url && kind === 'video' && <video aria-label={`Vídeo: ${message.attachment_name}`} controls playsInline preload="metadata" src={url} className="max-h-48 md:max-h-56 max-w-full rounded-xl bg-black/20" onError={() => setError('Vídeo indisponível neste navegador ou link expirado. Baixe o original ou tente novamente.')} />}
     {error && <p role="alert" className="text-xs">{error} {kind !== 'file' && <button type="button" className="underline min-h-11" onClick={() => {setUrl('');setError('');setRetry(value => value + 1)}}>Reabrir prévia</button>}</p>}
-    {kind!=='image'&&<button type="button" onClick={download} disabled={downloading} className="min-h-9 px-2.5 rounded-lg bg-white/[.08] text-xs font-semibold disabled:opacity-50">{downloading ? 'Preparando download…' : 'Baixar original'}</button>}
+    {(kind!=='image'||!!error)&&<button type="button" onClick={download} disabled={downloading} className="min-h-9 px-2.5 rounded-lg bg-white/[.08] text-xs font-semibold disabled:opacity-50">{downloading ? 'Preparando download…' : 'Baixar original'}</button>}
   </div>
 }

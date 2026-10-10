@@ -49,7 +49,8 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false,custome
   }
   function chooseImages(files:FileList|null){
     const selected=Array.from(files||[])
-    if(selected.length<2||selected.some(item=>previewKind(item.type)!=='image')){choose(selected[0]||null);return}
+    if(selected.length<2){choose(selected[0]||null);return}
+    if(selected.some(item=>previewKind(item.type)!=='image')){setError('Para selecionar vários arquivos de uma vez, escolha somente imagens.');return}
     const invalid=selected.map(validateAttachment).find(Boolean)
     if(invalid){setError(invalid);return}
     setQueue(selected);setFile(selected[0]);setSelectedPreview(0);setPreviewFailed(false);setError('');pendingId.current=null
