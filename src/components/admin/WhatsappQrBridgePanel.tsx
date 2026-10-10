@@ -48,6 +48,16 @@ export function WhatsappQrBridgePanel(){
   const connected=online&&bridge?.status==='connected'
   const correctNumber=connected&&bridge.connected_phone===config?.wa_bridge_sender_phone
   const enabled=Boolean(config?.wa_bridge_auto_enabled)
+  async function sendTest(){
+    if(!window.confirm('Enviar UM teste automático exclusivamente para +55 64 98129-4186? Conta para o teto diário de 10 tentativas.'))return
+    try{
+      setBusy(true)
+      const {error}=await supabase.rpc('wa_bridge_prepare_test')
+      if(error)throw error
+      toast('Teste preparado na fila. O serviço local tentará enviar em alguns segundos.','success')
+    }catch(error:any){toast(error?.message||'Não foi possível preparar o teste.','error')}
+    finally{setBusy(false)}
+  }
   async function action(value:'connect'|'disconnect'|'enable'|'disable'){
     if(value==='enable'&&!window.confirm('Ativar até 10 tentativas automáticas por dia para o número de teste +55 64 98129-4186? A integração é NÃO OFICIAL e existe risco de bloqueio do WhatsApp comercial.'))return
     if(value==='disconnect'&&!window.confirm('Desconectar o dispositivo e revogar a sessão local do WhatsApp?'))return
@@ -105,6 +115,7 @@ export function WhatsappQrBridgePanel(){
           <button disabled={busy} onClick={()=>void action('connect')} className="min-h-10 rounded-xl bg-[#A65A2A] px-4 text-xs font-semibold text-white disabled:opacity-50">Solicitar conexão</button>
           {!enabled?<button disabled={busy||!correctNumber} onClick={()=>void action('enable')} className="min-h-10 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-4 text-xs font-semibold text-emerald-300 disabled:opacity-40">Ativar piloto</button>:
           <button disabled={busy} onClick={()=>void action('disable')} className="min-h-10 rounded-xl border border-amber-500/25 px-4 text-xs text-amber-300 disabled:opacity-50">Pausar envios</button>}
+          {enabled&&correctNumber&&config?.wa_bridge_test_only&&<button disabled={busy} onClick={()=>void sendTest()} className="min-h-10 rounded-xl border border-[#A65A2A]/30 bg-[#A65A2A]/10 px-4 text-xs font-semibold text-[#DFA269] disabled:opacity-50">Enviar teste para meu WhatsApp</button>}
           <button disabled={busy} onClick={()=>void action('disconnect')} className="min-h-10 rounded-xl border border-white/15 px-4 text-xs text-gray-300 disabled:opacity-50">Desconectar aparelho</button>
         </div>
         <p className="text-[11px] text-gray-500">Envios automáticos: <strong className={enabled?'text-emerald-300':'text-gray-300'}>{enabled?'ATIVADOS (piloto)':'desativados'}</strong>. {online?'Serviço detectado.':'O QR real só aparece quando o serviço local estiver funcionando.'}</p>
