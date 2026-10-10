@@ -257,10 +257,25 @@ export function CustomerLayoutV2() {
         </div>
       </div>
 
-      <main className="pm-workspace-main flex-1 overflow-auto p-3 sm:p-4 lg:p-5">
+      <main className="pm-workspace-main flex-1 overflow-auto p-3 pb-24 sm:p-4 sm:pb-24 md:pb-4 lg:p-5">
         <CustomerRouteBoundary key={location.pathname} route={location.pathname}><Outlet/></CustomerRouteBoundary>
       </main>
     </div>
+    <nav aria-label="Navegação principal do cliente" className="md:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-4 border-t border-white/10 bg-[#0d0d0f]/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
+      {([
+        {href:'/app/dashboard',label:'Início',icon:'home'},
+        {href:'/app/projetos',label:'Projetos',icon:'projects'},
+        {href:'/app/conversas',label:'Conversas',icon:'chat'},
+        {href:'/app/perfil',label:'Conta',icon:'user'},
+      ] as {href:string,label:string,icon:IconName}[]).map(item=>{
+        const active=location.pathname===item.href||location.pathname.startsWith(item.href+'/')
+        return <Link key={item.href} to={item.href} aria-current={active?'page':undefined} className={'relative flex min-h-[60px] flex-col items-center justify-center gap-1 text-[10px] font-medium '+(active?'text-[#DFA269]':'text-gray-400')}>
+          <MenuIcon name={item.icon} size={20}/>
+          <span>{item.label}</span>
+          {item.icon==='chat'&&counts.messages>0&&<span className="absolute top-1.5 left-[calc(50%+8px)] rounded-full bg-[#A65A2A] px-1 text-[9px] font-bold text-white">{counts.messages>99?'99+':counts.messages}</span>}
+        </Link>
+      })}
+    </nav>
     {floatingChatEnabled&&<FloatingCustomerChat unread={counts.messages}/>} 
   </div>
 }
