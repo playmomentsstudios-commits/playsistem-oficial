@@ -73,7 +73,7 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false,custome
 
   async function openProjectPicker(){
     if(!customerId)return
-    setPickerBusy(true);setError('');setPickerOpen(true)
+    setPickerBusy(true);setError('');setPickerOpen(true);setToolsOpen(false)
     try{
       const [files,projects,linked]=await Promise.all([
         portalApi.files(),
@@ -140,7 +140,7 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false,custome
       if (mounted.current) setSending(false)
     }
   }
-  return <form onSubmit={submit} className={compact?'p-2.5 space-y-2':'p-3 border-t border-white/10 space-y-3'}>
+  return <form onSubmit={submit} className={compact?'p-2.5 space-y-2 max-h-[min(55dvh,440px)] overflow-y-auto overscroll-contain':'p-3 border-t border-white/10 space-y-3'}>
     <input ref={input} type="file" className="hidden" aria-label="Selecionar arquivo original" disabled={disabled || busy} onChange={event => { choose(event.target.files?.[0] || null); event.target.value = '' }} />
     <input ref={photos} multiple type="file" accept="image/*,video/*" className="hidden" aria-label="Selecionar foto ou vídeo" disabled={disabled || busy} onChange={event => { chooseImages(event.target.files); event.target.value = '' }} />
     <input ref={camera} type="file" accept="image/*" capture="environment" className="hidden" aria-label="Abrir câmera" disabled={disabled || busy} onChange={event => { choose(event.target.files?.[0] || null); event.target.value = '' }} />
@@ -154,10 +154,8 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false,custome
       <button type="button" className="w-10 h-10 rounded-full bg-white/[0.06] hover:bg-white/[0.1] flex items-center justify-center text-gray-300" disabled={disabled || busy} onClick={() => camera.current?.click()} title="Abrir câmera" aria-label="Abrir câmera">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h3l1.5-2h7L17 7h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
       </button>
-      {staff&&customerId&&<button type="button" className="min-h-10 px-3 rounded-full bg-white/[0.06] hover:bg-white/[0.1] text-xs text-gray-200" disabled={disabled||busy} onClick={()=>void openProjectPicker()}>Arquivos do projeto</button>}
-      {!audio.recording && <button type="button" className="w-10 h-10 rounded-full bg-white/[0.06] hover:bg-white/[0.1] flex items-center justify-center text-gray-300" disabled={disabled || busy || !!file} onClick={audio.start} title="Gravar áudio" aria-label="Gravar áudio">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg>
-      </button>}
+      {staff&&customerId&&<button type="button" className="w-10 h-10 rounded-full bg-white/[0.06] hover:bg-white/[0.1] text-gray-200 flex items-center justify-center" title="Arquivos do projeto" aria-label="Arquivos do projeto" disabled={disabled||busy} onClick={()=>void openProjectPicker()}><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v2"/><rect x="3" y="10" width="18" height="11" rx="2"/></svg></button>}
+      
     </div>
     {pickerOpen&&<div role="dialog" aria-label="Escolher arquivo do projeto" className="rounded-xl border border-white/10 bg-[#1c1c20] p-3 space-y-2">
       <div className="flex items-center justify-between"><strong className="text-sm">Arquivos do projeto</strong><button type="button" onClick={()=>setPickerOpen(false)} aria-label="Fechar arquivos">✕</button></div>
@@ -186,6 +184,7 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false,custome
       {compact&&!isImage&&<button type="button" onClick={()=>setToolsOpen(value=>!value)} className="w-11 h-11 shrink-0 rounded-full bg-white/[0.06] hover:bg-white/[0.1] text-xl text-gray-300" aria-label="Mais opções" title="Mais opções">＋</button>}
       <textarea ref={textarea} aria-label={isImage?'Legenda opcional':'Mensagem'} placeholder={isImage?'Adicione uma legenda…':file ? 'Adicione uma mensagem…' : 'Mensagem'} value={text} maxLength={5000} rows={compact?1:2} disabled={disabled || busy} onKeyDown={keyDown} onChange={event => { setText(event.target.value); pendingId.current = null; resizeTextarea() }} className={"flex-1 min-w-0 rounded-[22px] text-sm bg-white/[.065] border border-white/[.07] resize-none outline-none focus:border-white/15 "+(compact?"min-h-11 max-h-28 px-4 py-[11px] leading-5":"p-3")} />
       {isImage&&<button type="button" disabled={sending} onClick={()=>choose(null)} className="min-h-11 px-2 text-xs text-gray-400">Cancelar</button>}
+      {!audio.recording&&<button type="button" className="w-11 h-11 shrink-0 rounded-full bg-[#A65A2A]/20 border border-[#A65A2A]/40 text-[#F28C38] flex items-center justify-center disabled:opacity-35" disabled={disabled || busy || !!file} onClick={audio.start} title="Gravar áudio" aria-label="Gravar áudio"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></button>}
       <button type="submit" aria-label="Enviar mensagem" title="Enviar mensagem" className="w-11 h-11 shrink-0 rounded-full bg-[#A65A2A] text-white flex items-center justify-center disabled:opacity-35 transition-opacity" disabled={disabled || busy || (!text.trim() && !file)}>
         {sending?<span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"/>:<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>}
       </button>
