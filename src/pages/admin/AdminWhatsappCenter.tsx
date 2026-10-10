@@ -195,7 +195,7 @@ export function AdminWhatsappCenter(){
 
     <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[.04] p-4 text-sm text-amber-100">
       <strong>Piloto experimental por QR Code · sem tarifa de API.</strong>
-      <p className="mt-1 text-xs text-amber-100/80">A ponte local é não oficial e pode causar bloqueio da conta. Uma tentativa aceita pelo dispositivo não comprova entrega nem leitura. Nada é enviado automaticamente antes da conexão e da ativação explícita.</p>
+      <p className="mt-1 text-xs text-amber-100/80">A ponte local é não oficial e pode causar bloqueio da conta. Sem provedor conectado à API oficial da Meta. Uma tentativa aceita pelo dispositivo não comprova entrega nem leitura. Nada é enviado automaticamente antes da conexão e da ativação explícita.</p>
     </div>
     <WhatsappQrBridgePanel/>
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
