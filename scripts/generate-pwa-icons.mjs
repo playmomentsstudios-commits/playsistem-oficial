@@ -10,7 +10,7 @@ const shapes = [...svg.matchAll(/<path fill="(#[a-f0-9]{6})" d="([^"]+)"/gi)]
     color: match[1].toUpperCase(),
     points: [...part.matchAll(/-?\d+(?:\.\d+)?/g)].map((item) => Number(item[0]))
   })))
-const palette = ['#0A0A0B', '#F3EDE7', '#A65A2A']
+const palette = ['#1D1D20', '#FFFFFF', '#B24B18']
 if (shapes.length < 3 || shapes.some((shape) => shape.points.length < 6 || shape.points.length % 2)) {
   throw new Error('Símbolo Sagamente inesperado; confira public/sagamente-mark.svg')
 }
@@ -41,7 +41,7 @@ function chunk(type, data) {
 function createIcon(size, maskable = false) {
   const rowSize = 1 + Math.ceil(size / 4)
   const raw = Buffer.alloc(size * rowSize)
-  const scale = size * (maskable ? 0.58 : 0.75) / 124
+  const scale = size * (maskable ? 0.58 : 0.81) / 124
   const left = (size - 100 * scale) / 2
   const top = (size - 124 * scale) / 2
   for (let y = 0; y < size; y++) {

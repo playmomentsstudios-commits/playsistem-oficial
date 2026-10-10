@@ -68,6 +68,21 @@ export function BrandIdentitySettings(){
     }catch(e:any){toast(e?.message||'Não foi possível enviar a imagem.','error')}
     finally{setUploading(null)}
   }
+  // The preset only prepares edits; nothing is published until the admin saves.
+  // OG image is preserved until the 1200x630 PNG is uploaded to Drive.
+  const prepareV2=()=>{
+    setDraft(current=>current?{
+      ...current,
+      brand_logo_dark_url:BRAND_DEFAULTS.dark,
+      brand_logo_light_url:BRAND_DEFAULTS.light,
+      brand_logo_compact_url:BRAND_DEFAULTS.compact,
+      brand_symbol_url:BRAND_DEFAULTS.symbol,
+      brand_staff_logo_url:BRAND_DEFAULTS.staff,
+      brand_favicon_url:BRAND_DEFAULTS.favicon,
+    }:current)
+    setColor('#B24B18')
+    toast('Kit geométrico V2 preparado. Confira as prévias e publique quando estiver pronto.','success')
+  }
   const save=async()=>{
     if(!draft||!row)return
     try{
@@ -92,7 +107,13 @@ export function BrandIdentitySettings(){
         </div>
         <span className={'text-xs font-medium px-3 py-2 rounded-full '+(changed?'bg-amber-500/10 text-amber-200':'bg-emerald-500/10 text-emerald-300')}>{changed?'Alterações não publicadas':'Identidade salva'}</span>
       </div>
-      <p className="mt-3 text-sm leading-6 text-gray-400">Gerencie as versões oficiais da marca em um único lugar. Os arquivos são guardados no Google Drive; o banco registra apenas seus endereços. A substituição mantém os arquivos anteriores para recuperação.</p>
+      <p className="mt-3 text-sm leading-6 text-gray-400">Gerencie as versões oficiais da marca em um único lugar. Os arquivos enviados por aqui são guardados no Google Drive; o banco registra apenas seus endereços. A substituição mantém os arquivos anteriores para recuperação.</p>
+      <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-white/10 bg-black/20 p-3">
+        <span className="text-xs font-semibold text-gray-200">Kit V2 · S geométrico</span>
+        <span className="text-xs text-gray-400">Cobre #B24B18 · Grafite #1D1D20 · Branco #FFFFFF</span>
+        {canUpload&&<button type="button" onClick={prepareV2} className="ml-auto min-h-10 rounded-lg border border-[#B24B18] px-3 text-xs font-semibold text-[#E8AC89] hover:bg-[#B24B18]/10">Preparar versões V2</button>}
+      </div>
+      <p className="mt-2 text-xs text-gray-500">O kit prepara seis versões estáticas; a capa social 1200 × 630 PNG permanece como está até ser enviada ao Drive. Nenhuma mudança é publicada automaticamente.</p>
       {!canUpload&&<p className="mt-3 p-3 rounded-xl border border-amber-500/20 text-xs text-amber-200">Somente o Admin Mestre pode enviar novas imagens para o Drive.</p>}
     </section>
 
