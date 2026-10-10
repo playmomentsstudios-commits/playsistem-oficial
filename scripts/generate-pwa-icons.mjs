@@ -10,7 +10,7 @@ const shapes = [...svg.matchAll(/<path fill="(#[a-f0-9]{6})" d="([^"]+)"/gi)]
     color: match[1].toUpperCase(),
     points: [...part.matchAll(/-?\d+(?:\.\d+)?/g)].map((item) => Number(item[0]))
   })))
-const palette = ['#0A0A0B', '#F3EDE7', '#A65A2A']
+const palette = ['#1D1D20', '#FFFFFF', '#B24B18']
 if (shapes.length < 3 || shapes.some((shape) => shape.points.length < 6 || shape.points.length % 2)) {
   throw new Error('Símbolo Sagamente inesperado; confira public/sagamente-mark.svg')
 }
