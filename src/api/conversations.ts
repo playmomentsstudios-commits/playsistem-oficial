@@ -42,8 +42,13 @@ export interface SupportMessage extends Partial<MessageAttachment> {
   sender_id: string
   content: string
   created_at: string
+  deleted_at?: string | null
 }
 export const conversationsApi = {
+  async deleteOwnMessage(messageId:string) {
+    const { error } = await supabase.rpc('delete_own_chat_message',{p_message_id:messageId})
+    if (error) throw error
+  },
   async upload(conversationId: string, senderId: string, id: string, file: File): Promise<MessageAttachment> {
     const invalid = validateAttachment(file)
     if (invalid) throw new Error(invalid)
