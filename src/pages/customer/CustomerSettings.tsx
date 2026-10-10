@@ -1,4 +1,5 @@
 import { useEffect,useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { Link } from 'react-router-dom'
 import { settingsApi,type UserPreferences } from '../../api/settings'
@@ -9,6 +10,7 @@ import { PushNotificationSettings } from '../../components/ui/PushNotificationSe
 
 export function CustomerSettings(){
   const {user,updatePassword}=useAuth()
+  const location=useLocation()
   const toast=useToast()
   const [prefs,setPrefs]=useState<UserPreferences|null>(null)
   const [loading,setLoading]=useState(true)
@@ -89,7 +91,13 @@ export function CustomerSettings(){
   const internationalPhone=/^55\d{10,11}$/.test(phoneDigits)?phoneDigits:/^\d{10,11}$/.test(phoneDigits)?'55'+phoneDigits:''
   const phoneValid=Boolean(internationalPhone)
   const consentCurrent=Boolean(prefs?.wa_automatic_opt_in&&prefs.wa_opt_in_at&&prefs.wa_opt_in_phone===internationalPhone)
-  const consentStale=Boolean(prefs?.wa_automatic_opt_in&&!consentCurrent)
+  const consentStale=Boolean(prefs?.wa_automatic_opt_in&&prefs.wa_opt_in_at&&!consentCurrent)
+  const consentPending=Boolean(prefs?.wa_automatic_opt_in&&!prefs.wa_opt_in_at)
+
+  useEffect(()=>{
+    if(loading||location.hash!=='#whatsapp')return
+    document.getElementById('whatsapp')?.scrollIntoView({block:'start',behavior:'smooth'})
+  },[loading,location.hash])
 
   if(loading)return <div className="py-16 text-center text-sm text-gray-500">Carregando configurações...</div>
 
@@ -147,7 +155,7 @@ export function CustomerSettings(){
             <p className="text-xs text-gray-400 mt-1">Autorização opcional para receber status, etapas e arquivos dos projetos aos quais você tem acesso.</p>
           </div>
           <span className={'rounded-lg px-2.5 py-1.5 text-[11px] font-semibold '+(consentCurrent?'bg-emerald-500/10 text-emerald-300':'bg-amber-500/10 text-amber-200')}>
-            {consentCurrent?'Autorização registrada':consentStale?'Autorização precisa ser renovada':'Não autorizado'}
+            {consentCurrent?'Autorização registrada':consentStale?'Autorização precisa ser renovada':consentPending?'Aguardando salvar':'Não autorizado'}
           </span>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
