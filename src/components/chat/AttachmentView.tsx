@@ -9,6 +9,7 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
   const [downloading, setDownloading] = useState(false)
   const [previewLoading,setPreviewLoading]=useState(false)
   const [expanded,setExpanded]=useState(false)
+  const [previewFallback,setPreviewFallback]=useState(false)
   const [playing,setPlaying] = useState(false)
   const [duration,setDuration] = useState(0)
   const [current,setCurrent] = useState(0)
@@ -22,8 +23,8 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
     setUrl('')
     setError('')
     setPreviewLoading(kind==='image')
-    setDuration(0);setCurrent(0);probingDuration.current=false
-    conversationsApi.attachmentUrl(path).then(async value => {
+    setDuration(0);setCurrent(0);probingDuration.current=false;
+    (kind==='image'?conversationsApi.imagePreviewUrl(path).catch(()=>conversationsApi.attachmentUrl(path)):conversationsApi.attachmentUrl(path)).then(async (value:string) => {
       if (kind !== 'audio') { if(active)setUrl(value); return }
       const response=await fetch(value)
       if(!response.ok)throw new Error('Falha ao carregar áudio')
@@ -91,7 +92,7 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
     <p className="font-semibold break-words" style={{ overflowWrap: 'anywhere' }}>{message.attachment_name}</p>
     <p className="text-xs opacity-75">{formatFileSize(message.attachment_size || 0)} · Arquivo original</p>
     {kind==='image'&&previewLoading&&!error&&<div role="status" className="text-xs opacity-70">Carregando imagem…</div>}
-    {url && kind === 'image' && !error && <img key={retry} src={url} alt={message.attachment_name || 'Imagem enviada'} loading="eager" decoding="async" className="max-h-48 md:max-h-56 max-w-full rounded-xl object-contain bg-black/20" onLoad={()=>setPreviewLoading(false)} onError={() => {setPreviewLoading(false);setUrl('');setError('Prévia indisponível ou expirada. Baixe o original ou tente novamente.')}} />}
+    {url && kind === 'image' && !error && <img key={retry} src={url} alt={message.attachment_name || 'Imagem enviada'} loading="eager" decoding="async" className="max-h-48 md:max-h-56 max-w-full rounded-xl object-contain bg-black/20" onLoad={()=>setPreviewLoading(false)} onError={() => {if(!previewFallback){setPreviewFallback(true);void conversationsApi.attachmentUrl(path).then(setUrl).catch(()=>{setPreviewLoading(false);setError('Prévia indisponível. O original continua disponível para download.')})}else{setPreviewLoading(false);setUrl('');setError('Não foi possível renderizar a imagem neste dispositivo. Tente baixar o original.')}}} />}
     {url && kind === 'image' && !error && <button type="button" className="block text-xs underline" onClick={()=>setExpanded(true)}>Ampliar imagem</button>}
     {expanded && url && kind === 'image' && <div role="dialog" aria-modal="true" aria-label="Visualização ampliada" className="fixed inset-0 z-[100] bg-black/95 flex flex-col p-4">
       <div className="flex justify-between gap-3 items-center"><span className="truncate text-sm">{message.attachment_name}</span><button type="button" className="rounded-lg bg-white/20 px-4 py-3" onClick={()=>setExpanded(false)}>Fechar</button></div>
@@ -99,7 +100,7 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
       <button type="button" onClick={download} className="rounded-lg bg-white/20 px-4 py-3">Baixar original</button>
     </div>}
     {url && kind === 'video' && <video aria-label={`Vídeo: ${message.attachment_name}`} controls playsInline preload="metadata" src={url} className="max-h-48 md:max-h-56 max-w-full rounded-xl bg-black/20" onError={() => setError('Vídeo indisponível neste navegador ou link expirado. Baixe o original ou tente novamente.')} />}
-    {error && <p role="alert" className="text-xs">{error} {kind !== 'file' && <button type="button" className="underline min-h-11" onClick={() => {setUrl('');setError('');setRetry(value => value + 1)}}>Reabrir prévia</button>}</p>}
+    {error && <p role="alert" className="text-xs">{error} {kind !== 'file' && <button type="button" className="underline min-h-11" onClick={() => {setUrl('');setError('');setPreviewFallback(false);setRetry(value => value + 1)}}>Reabrir prévia</button>}</p>}
     <button type="button" onClick={download} disabled={downloading} className="min-h-9 px-2.5 rounded-lg bg-white/[.08] text-xs font-semibold disabled:opacity-50">{downloading ? 'Preparando download…' : 'Baixar original'}</button>
   </div>
 }
