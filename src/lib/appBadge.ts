@@ -40,15 +40,14 @@ function renderNotificationFavicon(){
   const count=showMessages?messages:notifications
   if(count===0){link.href='/favicon.svg';return}
   const label=count>99?'99+':String(count)
-  const symbol=showMessages
-    ? '<path d="M5 7h14v10H9l-4 3V7Z" fill="none" stroke="white" stroke-width="2" stroke-linejoin="round"/>'
-    : '<path d="M12 5v10m0 4v1" stroke="white" stroke-width="2.6" stroke-linecap="round"/>'
+  const category=showMessages?'Mensagem':'Notificação'
+  link.title='Sagamente — '+count+' '+category+(count===1?'':'s')
   const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
     +'<rect width="64" height="64" rx="14" fill="#161619"/>'
     +'<path fill="#F28C38" d="M12 17 29 8v9l-8 5 25 13v10L29 56v-9l9-6-26-14Z"/>'
     +'<path fill="#E35431" d="M31 8 49 17v10L31 17ZM12 37l17 10v9L12 47Z"/>'
     +'<circle cx="48" cy="16" r="15" fill="#D52F3C" stroke="#161619" stroke-width="3"/>'
-    +(count>9?'<text x="48" y="20" text-anchor="middle" font-size="11" font-family="Arial" font-weight="bold" fill="white">'+label+'</text>':symbol.replace(/d="/g,'d="').replace(/<path /,'<path transform="translate(36 4) scale(1)" '))
+    +'<text x="48" y="20" text-anchor="middle" font-size="'+(count>9?'11':'15')+'" font-family="Arial" font-weight="bold" fill="white">'+label+'</text>'
     +'</svg>'
   link.href='data:image/svg+xml,'+encodeURIComponent(svg)
 }
