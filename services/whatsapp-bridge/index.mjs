@@ -32,6 +32,7 @@ let retryAt=0
 let stopping=false
 let authorizedInstance=false
 let tickRunning=false
+let receiptTracker=null
 
 const wait=(milliseconds)=>new Promise(resolve=>setTimeout(resolve,milliseconds))
 function digits(value){return String(value||'').replace(/\D/g,'')}
