@@ -9,6 +9,7 @@ export type UserPreferences={
   notify_project_updates:boolean
   notify_file_updates:boolean
   notify_commercial_updates:boolean
+  wa_automatic_opt_in:boolean
   profile_contact_visible_to_team:boolean
   updated_at:string
 }
@@ -33,6 +34,12 @@ export type AppSettings={
   priority_project_completed:boolean
   priority_whatsapp_phone:string
   priority_whatsapp_mode:'manual'
+  wa_bridge_auto_enabled:boolean
+  wa_bridge_test_only:boolean
+  wa_bridge_daily_limit:number
+  wa_bridge_sender_phone:string
+  wa_bridge_test_phone:string
+  wa_bridge_auto_started_at:string|null
   wa_prepare_project_status:boolean
   wa_prepare_task_status:boolean
   wa_prepare_stage_status:boolean
