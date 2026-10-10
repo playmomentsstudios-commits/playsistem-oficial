@@ -171,10 +171,10 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false,custome
       <Button type="button" variant="ghost" className="min-h-11" onClick={() => audio.stop(true)}>Cancelar gravação</Button>
     </div>}
     {file && (isImage?<div className="space-y-3">
-      <div className="w-full h-[min(48dvh,440px)] flex items-center justify-center">
+      <div className="w-full h-[min(58dvh,540px)] flex items-center justify-center">
         {previewFailed?<p role="alert" className="text-sm text-gray-400">Não foi possível exibir a prévia. Você pode enviar o original ou cancelar.</p>:<img alt="Prévia da imagem selecionada" src={queuePreviews[selectedPreview]||preview} className="h-full w-full object-contain" onError={()=>setPreviewFailed(true)}/>}
       </div>
-      {queue.length>1&&<div className="flex justify-start gap-2 overflow-x-auto py-1" aria-label="Imagens selecionadas">{queue.map((item,index)=><button key={index} type="button" aria-label={'Selecionar imagem '+(index+1)} aria-pressed={index===selectedPreview} disabled={sending} onClick={()=>{setSelectedPreview(index);setPreviewFailed(false)}} className={'shrink-0 w-14 h-14 rounded-lg overflow-hidden '+(index===selectedPreview?'ring-2 ring-orange-400':'opacity-60')}><img alt="" src={queuePreviews[index]} className="w-full h-full object-contain"/></button>)}</div>}
+      {queue.length>1&&<div className="flex justify-start gap-2 overflow-x-auto py-1" aria-label="Imagens selecionadas">{queue.map((item,index)=><button key={index} type="button" aria-label={'Selecionar imagem '+(index+1)} aria-pressed={index===selectedPreview} disabled={sending} onClick={()=>{setSelectedPreview(index);setPreviewFailed(false)}} className={'shrink-0 w-14 h-14 rounded-lg overflow-hidden '+(index===selectedPreview?'ring-2 ring-orange-400':'opacity-60')}><img alt="" src={queuePreviews[index]} className="w-full h-full object-cover"/></button>)}</div>}
     </div>:<div className="p-3 rounded-xl bg-white/5 space-y-2">
       <p className="text-sm break-words" style={{ overflowWrap: 'anywhere' }}>{file.name} · {formatFileSize(file.size)}</p>
       {preview && previewKind(file.type) === 'audio' && <audio aria-label="Prévia do áudio" controls src={preview} className="w-full max-w-full" />}

@@ -38,7 +38,7 @@ test('customer thumbnail cards load lazily and clean up their blob URLs',()=>{
   assert.match(card,/rootMargin:'180px 0px'/)
   assert.match(card,/portalApi\.driveFileThumbnailBlobUrl\(file\.id\)/)
   assert.match(card,/URL\.revokeObjectURL/)
-  assert.match(card,/object-contain/)
+  assert.match(card,/object-cover/)
   assert.match(card,/onOpen\(file\)/)
   assert.match(card,/Prévia indisponível/)
   assert.match(api,/privateFunctionFile\('google-drive-file-thumbnail'/)

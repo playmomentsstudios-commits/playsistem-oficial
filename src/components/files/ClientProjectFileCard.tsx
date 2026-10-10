@@ -74,7 +74,7 @@ export function ClientProjectFileCard({file,onOpen,compact=false}:Props){
     className={'group min-w-0 w-full overflow-hidden rounded-xl border border-white/10 bg-[#161719] text-left hover:border-[#A65A2A]/60 hover:bg-[#1b1a19] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DFA269] transition-colors '+(compact?'':'shadow-sm')}>
     <div className={'relative w-full bg-[#0b0c0e] overflow-hidden flex items-center justify-center '+(compact?'h-48 sm:h-56':'h-64 sm:h-72')}>
       {thumbnail ? <img src={thumbnail} alt={'Prévia de '+file.name} loading="lazy"
-        className="w-full h-full object-contain"
+        className="w-full h-full object-cover"
         onError={()=>{setState('unavailable');setThumbnail(null)}}/>
         : <div className="flex flex-col items-center justify-center gap-2 text-[#797D81]">
             <span aria-hidden="true" className="text-4xl">{type.symbol}</span>
