@@ -147,6 +147,7 @@ export function AdminWhatsappCenter(){
 
   async function save(){
     if(!settings)return
+    if(settings.wa_bridge_daily_limit>=50&&!window.confirm('Você está configurando até '+settings.wa_bridge_daily_limit+' tentativas de WhatsApp por dia. Esse é apenas um teto interno da Sagamente, não um volume considerado seguro pelo WhatsApp. A integração é não oficial e pode haver bloqueios mesmo com poucos envios. Deseja salvar este limite mantendo os envios pausados?'))return
     try{
       setSaving(true)
       await settingsApi.saveAppSettings({
@@ -263,6 +264,7 @@ export function AdminWhatsappCenter(){
                 onChange={e=>setSettings({...settings,wa_bridge_daily_limit:Math.max(0,Math.min(100,Math.floor(Number(e.target.value)||0)))})}
                 className="mt-1 min-h-11 w-full rounded-xl border border-white/10 bg-black px-3 text-sm text-white"/>
               <span className="mt-1 block text-[11px] text-gray-500">Consumidas hoje: {summary.bridge_attempts_today} de {settings.wa_bridge_daily_limit}. Padrão: 30. Intervalo mínimo: 2 minutos entre tentativas e 10 por hora, independentemente deste teto. Não é limite oficial gratuito do WhatsApp.</span>
+              {settings.wa_bridge_daily_limit>=50&&<span className="mt-2 block rounded-lg border border-amber-500/25 bg-amber-500/5 p-2 text-[11px] text-amber-200">Volumes elevados aumentam a exposição a restrições de uma integração não oficial. Este valor não autoriza disparos em massa nem garante entregas. Envie apenas aos clientes que consentiram.</span>}
             </label>
             <label className="block text-xs text-gray-400">Alertas prioritários internos por dia (0–100)
               <input type="number" min={0} max={100} step={1} value={settings.priority_daily_limit}
