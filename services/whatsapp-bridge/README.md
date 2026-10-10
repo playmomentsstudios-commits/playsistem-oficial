@@ -1,5 +1,18 @@
 # Sagamente · Ponte WhatsApp via QR (piloto local)
 
+## Início rápido no Windows (sem comandos npm manuais)
+
+1. Baixe e extraia a [versão atualizada do repositório](https://github.com/playmomentsstudios-commits/playsistem-oficial/archive/refs/heads/main.zip) numa pasta **privada** do computador.
+2. Entre em `services/whatsapp-bridge` e dê dois cliques em **Iniciar WhatsApp Sagamente.cmd**.
+3. O assistente verifica o Node.js 22+, instala as dependências se necessário e solicita **uma única vez** a chave `service_role`/secret do Supabase. A entrada é ocultada e o `.env` fica acessível apenas ao seu usuário Windows. **Não envie a chave neste chat, por WhatsApp ou em prints.**
+4. Deixe a janela aberta. Na Sagamente: **Comunicação → Central WhatsApp → Solicitar conexão**.
+5. Leia o QR no celular, verifique que a conta é **+55 64 98129-4186** e escolha **Ativar piloto**.
+6. Clique em **Enviar teste para meu WhatsApp**, confira a mensagem no aplicativo e o resultado na Central.
+
+**Limitação importante:** o assistente não instala Node.js automaticamente. Se não estiver instalado, ele informa como obter a versão 22 LTS. O computador precisa permanecer ligado. A `service_role` tem privilégios amplos; use somente em computador pessoal confiável e proteja a pasta da instalação. Não existe garantia de entrega ou de disponibilidade do número: a biblioteca é não oficial.
+
+
+
 **Uso experimental com o número +55 64 98129-4186.** A biblioteca Baileys é **não oficial**. O WhatsApp pode restringir ou banir o número. Não há garantia de continuidade, entrega ou funcionamento permanente. Não substitui a API oficial.
 
 ## Arquitetura
