@@ -130,6 +130,26 @@ create or replace function public.push_queue_notification()
 returns trigger language plpgsql security definer set search_path=public
 as $$
 begin
+  -- Older operational triggers sometimes emit two records for the same file/project.
+  -- Keep those items in the in-app inbox, but collapse duplicate system PUSH alerts.
+  if new.metadata is not null and
+    ((new.metadata ? 'file_id') or (new.metadata ? 'project_id')) and
+    exists (
+      select 1 from public.notifications n join public.push_delivery_queue q on q.notification_id=n.id
+      where n.user_id=new.user_id and n.id<>new.id and n.created_at>now()-interval '8 seconds'
+        and (case
+          when n.type like 'file%' or n.type like 'client_file%' then 'file'
+          when n.type like 'project%' or n.type like 'task%' then 'project'
+          else n.type end) =
+          (case
+            when new.type like 'file%' or new.type like 'client_file%' then 'file'
+            when new.type like 'project%' or new.type like 'task%' then 'project'
+            else new.type end)
+        and (
+          (new.metadata ? 'file_id' and n.metadata->>'file_id'=new.metadata->>'file_id')
+          or (new.metadata ? 'project_id' and n.metadata->>'project_id'=new.metadata->>'project_id')
+        )
+    ) then return new; end if;
   if exists(select 1 from public.push_subscriptions s
     left join public.user_preferences p on p.user_id=s.user_id
     where s.user_id=new.user_id and s.enabled and coalesce(p.notify_push,true))
