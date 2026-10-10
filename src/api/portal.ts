@@ -778,5 +778,12 @@ export const portalApi = {
   markConversationRead: async (conversationId:string,_userId?:string) => {
     const { error }=await supabase.rpc('mark_conversation_read_v2',{p_conversation_id:conversationId})
     if(error) throw error
+    // Opening a conversation also clears the matching message alerts from the inbox.
+    // RLS restricts this update to notifications owned by the signed-in user.
+    const {error:notificationError}=await supabase.from('notifications')
+      .update({read_at:new Date().toISOString()}).eq('type','new_message')
+      .contains('metadata',{conversation_id:conversationId}).is('read_at',null)
+    if(notificationError)console.warn('Não foi possível marcar os avisos da conversa como lidos.')
+    notifyBadgeChanged()
   }
 }
