@@ -58,7 +58,7 @@ test('obsolete local bridge cannot claim messages after reactivating the panel',
   assert.match(gate,/worker_capability='registered-jid-receipts-v1'/)
   assert.match(gate,/worker_capability_at>now\(\)-interval '35 seconds'/)
   assert.match(worker,/wa_bridge_worker_capability/)
-  assert.match(worker,/if\(allowed\)await sendOne\(\)/)
+  assert.match(worker,/if\(allowed&&settingsResult\.data\.wa_bridge_auto_enabled\)await sendOne\(\)/)
 })
 test('admin blocks activation until the Windows worker reports the new revision',()=>{
   const panel=readFileSync(new URL('../src/components/admin/WhatsappQrBridgePanel.tsx',import.meta.url),'utf8')
