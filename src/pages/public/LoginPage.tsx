@@ -1,4 +1,5 @@
 import { BrandImage } from '../../components/BrandImage'
+import { SagamenteMotion } from '../../components/ui/SagamenteMotion'
 import { useState } from 'react'
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
@@ -48,6 +49,7 @@ export function LoginPage() {
       <div className="flex-1 flex flex-col items-center justify-start lg:justify-center p-4 sm:p-6">
         <div className="w-full max-w-sm">
           <LoginMobileExperience />
+          <div className="flex justify-center mb-4 lg:mb-6"><SagamenteMotion size={55} label="Símbolo animado Sagamente" /></div>
           <Link to="/" className="lg:hidden flex justify-center mb-6">
             <BrandImage variant="dark" alt="Sagamente" style={{ height: 26 }} />
           </Link>
