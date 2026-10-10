@@ -34,7 +34,7 @@ export function WhatsappQrBridgePanel(){
   const initialized=useRef(false)
   async function refresh(){
     const [status,configResult,customers,trials]=await Promise.all([
-      supabase.from('whatsapp_bridge_state').select('requested_mode,status,heartbeat_at,qr_data_url,qr_updated_at,connected_phone,last_error').eq('id',true).maybeSingle(),
+      supabase.from('whatsapp_bridge_state').select('requested_mode,status,heartbeat_at,qr_data_url,qr_updated_at,connected_phone,last_error,worker_capability,worker_capability_at').eq('id',true).maybeSingle(),
       settingsApi.appSettings(),
       supabase.rpc('wa_bridge_eligible_customers'),
       supabase.from('whatsapp_bridge_attempts').select('id',{count:'exact',head:true}).eq('status','sent').eq('test_mode',false)
