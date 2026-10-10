@@ -11,6 +11,7 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
   const [duration,setDuration] = useState(0)
   const [current,setCurrent] = useState(0)
   const audioRef=useRef<HTMLAudioElement>(null)
+  const probingDuration=useRef(false)
   const path = message.attachment_path
   const kind = previewKind(message.attachment_type || '')
   useEffect(() => {
@@ -18,6 +19,7 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
     let active = true
     setUrl('')
     setError('')
+    setDuration(0);setCurrent(0);probingDuration.current=false
     conversationsApi.attachmentUrl(path).then(async value => {
       if (kind !== 'audio') { if(active)setUrl(value); return }
       const response=await fetch(value)
@@ -30,7 +32,28 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
   }, [path, kind, retry])
 
   useEffect(()=>()=>{if(kind==='audio'&&url.startsWith('blob:'))URL.revokeObjectURL(url)},[kind,url])
-  const clock=(value:number)=>`${Math.floor(value/60)}:${String(Math.floor(value%60)).padStart(2,'0')}`
+  const clock=(value:number)=>Number.isFinite(value)&&value>=0?`${Math.floor(value/60)}:${String(Math.floor(value%60)).padStart(2,'0')}`:'0:00'
+  function syncDuration(el:HTMLAudioElement){
+    const length=el.duration
+    if(Number.isFinite(length)&&length>0){setDuration(length);return}
+    if(el.seekable.length){
+      const end=el.seekable.end(el.seekable.length-1)
+      if(Number.isFinite(end)&&end>0){setDuration(end);return}
+    }
+    // WebM recordings may report Infinity until the decoder seeks near the end.
+    if(!probingDuration.current&&el.readyState>=1){
+      probingDuration.current=true
+      try{el.currentTime=1e10}catch{probingDuration.current=false}
+    }
+  }
+  function handleSeeked(el:HTMLAudioElement){
+    if(probingDuration.current){
+      const measured=el.currentTime
+      if(Number.isFinite(measured)&&measured>0)setDuration(measured)
+      probingDuration.current=false
+      el.currentTime=0
+    }
+  }
   async function download() {
     if (!path || downloading) return
     setDownloading(true)
@@ -57,7 +80,7 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
         <span className="text-[10px] opacity-80">{clock(current)} / {clock(duration)}</span>
       </div>
     </div>
-    {url&&<audio ref={audioRef} src={url} preload="metadata" onLoadedMetadata={event=>setDuration(Number.isFinite(event.currentTarget.duration)?event.currentTarget.duration:0)} onTimeUpdate={event=>setCurrent(event.currentTarget.currentTime)} onPlay={()=>setPlaying(true)} onPause={()=>setPlaying(false)} onEnded={()=>setPlaying(false)} onError={()=>setError('Formato de áudio indisponível neste navegador.')} />}
+    {url&&<audio ref={audioRef} src={url} preload="metadata" onLoadedMetadata={event=>syncDuration(event.currentTarget)} onDurationChange={event=>syncDuration(event.currentTarget)} onSeeked={event=>handleSeeked(event.currentTarget)} onTimeUpdate={event=>{if(!probingDuration.current)setCurrent(event.currentTarget.currentTime)}} onPlay={()=>setPlaying(true)} onPause={()=>setPlaying(false)} onEnded={()=>setPlaying(false)} onError={()=>setError('Formato de áudio indisponível neste navegador.')} />}
     {!url&&!error&&<span className="text-xs opacity-70">Carregando áudio…</span>}
     {error&&<button type="button" onClick={()=>{setError('');setRetry(value=>value+1)}} className="block mt-1 text-xs underline">Tentar novamente</button>}
   </div>
