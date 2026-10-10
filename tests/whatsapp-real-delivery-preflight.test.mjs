@@ -60,6 +60,12 @@ test('obsolete local bridge cannot claim messages after reactivating the panel',
   assert.match(worker,/wa_bridge_worker_capability/)
   assert.match(worker,/if\(allowed\)await sendOne\(\)/)
 })
+test('admin blocks activation until the Windows worker reports the new revision',()=>{
+  const panel=readFileSync(new URL('../src/components/admin/WhatsappQrBridgePanel.tsx',import.meta.url),'utf8')
+  assert.match(panel,/worker_capability_at/)
+  assert.match(panel,/disabled=\{busy\|\|!correctNumber\|\|!updatedBridge/)
+  assert.match(panel,/Ponte Windows desatualizada/)
+})
 test('admin distinguishes local identifiers, server confirmation and delivery',()=>{
   assert.match(ui,/ID gerado · entrega não comprovada/)
   assert.match(ui,/Confirmação do WhatsApp/)
