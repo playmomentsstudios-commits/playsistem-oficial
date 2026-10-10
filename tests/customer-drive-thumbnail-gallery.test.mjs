@@ -54,3 +54,15 @@ test('project and file library show artwork previews without public file URLs',(
   assert.match(library,/FilePreviewModal/)
   assert.doesNotMatch(card,/https:\/\/drive\.google\.com\/file\/d\//)
 })
+
+test('customer project file gallery starts collapsed and does not hide tasks',()=>{
+  assert.match(project,/const \[filesExpanded,setFilesExpanded\]=useState\(false\)/)
+  assert.match(project,/aria-expanded=\{filesExpanded\}/)
+  assert.match(project,/aria-controls="arquivos-projeto-conteudo"/)
+  assert.match(project,/hidden=\{!filesExpanded\}/)
+  assert.match(project,/filesExpanded&&\(published\.length/)
+  assert.match(project,/onClick=\{\(\)=>setFilesExpanded\(expanded=>!expanded\)\}/)
+  assert.match(project,/href="#arquivos-projeto" onClick=\{\(\)=>setFilesExpanded\(true\)\}/)
+  assert.match(project,/Biblioteca completa ↗/)
+  assert.match(project,/aria-label="Etapas e tarefas"/)
+})
