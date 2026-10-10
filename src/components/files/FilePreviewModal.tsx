@@ -104,6 +104,10 @@ export function FilePreviewModal({ file, onClose }: Props) {
     return () => {
       disposed = true
       if (objectUrl) URL.revokeObjectURL(objectUrl)
+      if (fullResolutionUrlRef.current) {
+        URL.revokeObjectURL(fullResolutionUrlRef.current)
+        fullResolutionUrlRef.current = null
+      }
     }
   }, [file?.id, file?.drive_file_id, file?.storage_path, canPreview])
 
