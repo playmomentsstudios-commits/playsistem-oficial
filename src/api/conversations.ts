@@ -63,6 +63,15 @@ export const conversationsApi = {
     }
     return { attachment_path: path, attachment_name: file.name, attachment_type: type, attachment_size: file.size }
   },
+  async imagePreviewUrl(path:string):Promise<string> {
+    // Ask Storage's image transformation endpoint for a lightweight private preview.
+    // No additional original is stored. Some projects/plans do not support transforms.
+    const {data,error}=await supabase.storage.from(CHAT_BUCKET).createSignedUrl(path,600,{
+      transform:{width:720,height:720,resize:'contain',quality:70},
+    })
+    if(error)throw error
+    return data.signedUrl
+  },
   async attachmentUrl(path: string, downloadName?: string): Promise<string> {
     const { data, error } = await supabase.storage.from(CHAT_BUCKET).createSignedUrl(path, 600,
       downloadName ? { download: downloadName } : undefined)
