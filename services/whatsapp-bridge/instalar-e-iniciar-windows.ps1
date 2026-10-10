@@ -20,13 +20,35 @@ Write-Host ''
 if($PSVersionTable.PSVersion.Major -ge 6 -and -not $IsWindows){
   Fatal 'Execute este iniciador no Windows.'
 }
-if(-not(Get-Command node.exe -ErrorAction SilentlyContinue)){
+$nodeCommand=Get-Command node.exe -ErrorAction SilentlyContinue
+if(-not $nodeCommand){
   Fatal 'Node.js nao encontrado. Instale Node.js 22 LTS em https://nodejs.org/en/download e execute novamente.'
 }
-if(-not(Get-Command npm.cmd -ErrorAction SilentlyContinue)){
-  Fatal 'npm.cmd nao encontrado. Reinstale Node.js com npm.'
+$nodeExe=$nodeCommand.Source
+# npm.cmd nem sempre aparece no PATH, apesar de estar instalado junto ao node.exe.
+$nodeFolder=Split-Path -Parent $nodeExe
+$npmCommand=Get-Command npm.cmd -ErrorAction SilentlyContinue
+$npmExe=$null
+$npmCli=$null
+if($npmCommand){
+  $npmExe=$npmCommand.Source
+}elseif(Test-Path -LiteralPath (Join-Path $nodeFolder 'npm.cmd')){
+  $npmExe=Join-Path $nodeFolder 'npm.cmd'
+}else{
+  $npmCandidate=Join-Path $nodeFolder 'node_modules\npm\bin\npm-cli.js'
+  if(Test-Path -LiteralPath $npmCandidate){$npmCli=$npmCandidate}
 }
-$nodeVersion=(& node.exe --version).Trim()
+if(-not $npmExe -and -not $npmCli){
+  Write-Host ''
+  Write-Host 'Node.js foi encontrado, mas o gerenciador npm nao esta disponivel.' -ForegroundColor Yellow
+  Write-Host "Pasta Node.js: $nodeFolder"
+  Write-Host '1. Instale/repare Node.js LTS em https://nodejs.org/en/download'
+  Write-Host '2. Na instalacao, habilite npm package manager e Add to PATH.'
+  Write-Host '3. Feche e reabra o terminal e confira: node -v; npm -v'
+  Write-Host '4. Abra novamente Iniciar WhatsApp Sagamente.cmd.'
+  Fatal 'npm ausente. A ponte nao foi iniciada e nenhuma mensagem foi enviada.'
+}
+$nodeVersion=(& $nodeExe --version).Trim()
 $match=[regex]::Match($nodeVersion,'^v(\d+)\.')
 if(-not $match.Success -or [int]$match.Groups[1].Value -lt 22){
   Fatal "E necessario Node.js 22 ou superior. Encontrado: $nodeVersion"
@@ -40,8 +62,12 @@ if(-not(Test-Path -LiteralPath (Join-Path $root 'node_modules\@whiskeysockets\ba
     Fatal 'Dependencias ausentes e .env existente. Guarde o .env fora desta pasta antes de instalar pacotes.'
   }
   Say 'Instalando dependencias (somente na primeira execucao)...'
-  & npm.cmd install --no-audit --no-fund
-  if($LASTEXITCODE -ne 0){ Fatal 'Instalacao falhou. Verifique a internet e a versao do Node.js.' }
+  if($npmExe){
+    & $npmExe install --no-audit --no-fund
+  }else{
+    & $nodeExe $npmCli install --no-audit --no-fund
+  }
+  if($LASTEXITCODE -ne 0){ Fatal 'Instalacao falhou. Verifique a internet, a versao do Node.js e as dependencias npm.' }
 }
 
 $needsConfig=$true
@@ -107,5 +133,5 @@ Write-Host '6. Clique em Enviar teste para meu WhatsApp.'
 Write-Host 'CTRL+C encerra o processo. O computador deve permanecer ligado.'
 Write-Host ''
 Say 'Iniciando a ponte local...'
-& node.exe (Join-Path $root 'index.mjs')
+& $nodeExe (Join-Path $root 'index.mjs')
 exit $LASTEXITCODE
