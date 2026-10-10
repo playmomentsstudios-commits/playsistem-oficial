@@ -19,6 +19,7 @@ export function ProjectsPage(){
   const [project,setProject]=useState<any>(null)
   const [files,setFiles]=useState<any[]>([])
   const [previewFile,setPreviewFile]=useState<any|null>(null)
+  const [filesExpanded,setFilesExpanded]=useState(false)
   const [loading,setLoading]=useState(true)
   const [error,setError]=useState('')
   const [warning,setWarning]=useState('')
@@ -29,6 +30,7 @@ export function ProjectsPage(){
     setError('')
     setWarning('')
     setPreviewFile(null)
+    setFilesExpanded(false)
     if(id){
       // A problem loading Drive files must never hide the project's progress.
       Promise.allSettled([portalApi.project(id),portalApi.projectFiles(id)])
@@ -84,7 +86,7 @@ export function ProjectsPage(){
             <span>Prazo: <strong className="text-gray-200">{formatDate(project.due_date)}</strong></span>
             <span>Etapa: <strong className="text-gray-200">{currentStage?.name||'A definir'}</strong></span>
             <span><strong className="text-gray-200">{published.length}</strong> arquivo(s) disponíveis</span>
-            <a href="#arquivos-projeto" className="font-semibold text-[#DFA269] hover:underline">Ver artes ↘</a>
+            <a href="#arquivos-projeto" onClick={()=>setFilesExpanded(true)} className="font-semibold text-[#DFA269] hover:underline">Ver artes ↘</a>
           </div>
         </CompactPageHeader>
         <div className="flex flex-wrap items-center gap-3 border-t border-white/[.08] pt-3">
@@ -101,18 +103,28 @@ export function ProjectsPage(){
       {warning&&<p role="status" className="mt-3 rounded-xl border border-amber-400/25 bg-amber-400/10 p-3 text-xs text-amber-200">{warning}</p>}
 
       <section id="arquivos-projeto" className="mt-4 scroll-mt-20" aria-label="Arquivos do projeto">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <h2 className="pm-compact-section-title">Arquivos disponíveis do projeto</h2>
-            <span className="text-xs text-gray-500">({published.length})</span>
-          </div>
+        <div className="flex min-h-11 flex-wrap items-center justify-between gap-2 rounded-xl border border-white/[.08] bg-white/[.025] px-3 py-1.5">
+          <h2 className="min-w-0 flex-1">
+            <button type="button" aria-expanded={filesExpanded} aria-controls="arquivos-projeto-conteudo"
+              onClick={()=>setFilesExpanded(expanded=>!expanded)}
+              className="pm-compact-tap flex min-h-10 w-full min-w-0 flex-wrap items-center gap-2 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DFA269]">
+              <span className="pm-compact-section-title">Arquivos disponíveis do projeto</span>
+              <span className="text-xs text-gray-500">({published.length})</span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#DFA269]">
+                {filesExpanded?'Recolher':'Expandir'}
+                <span aria-hidden="true" className={'transition-transform '+(filesExpanded?'rotate-180':'')}>▾</span>
+              </span>
+            </button>
+          </h2>
           <Link to="/app/arquivos" className="pm-compact-tap text-xs font-semibold text-[#DFA269] hover:underline">Biblioteca completa ↗</Link>
         </div>
-        {published.length?<div className="pm-compact-card">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
-            {published.map((file:any)=><ClientProjectFileCard key={file.id} file={file} onOpen={openFile} compact/>)}
-          </div>
-        </div>:<p className="pm-compact-card text-xs text-gray-400">Nenhum arquivo liberado para visualização ainda. As novas artes aparecerão aqui após publicação pela equipe.</p>}
+        <div id="arquivos-projeto-conteudo" hidden={!filesExpanded} className="mt-2">
+          {filesExpanded&&(published.length?<div className="pm-compact-card">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+              {published.map((file:any)=><ClientProjectFileCard key={file.id} file={file} onOpen={openFile} compact/>)}
+            </div>
+          </div>:<p className="pm-compact-card text-xs text-gray-400">Nenhum arquivo liberado para visualização ainda. As novas artes aparecerão aqui após publicação pela equipe.</p>)}
+        </div>
       </section>
 
       <section className="mt-4" aria-label="Etapas e tarefas">
