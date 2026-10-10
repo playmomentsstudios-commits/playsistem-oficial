@@ -15,6 +15,7 @@ test('both daily limits allow 0..100 and default to 30 when previously unconfigu
   assert.match(sql,/when wa_bridge_daily_limit=10 then 30/)
   assert.match(sql,/when priority_daily_limit=10 then 30/)
   assert.match(center,/wa_bridge_daily_limit:settings.wa_bridge_daily_limit/)
+  assert.match(center,/wa_bridge_auto_enabled:false/)
   assert.match(center,/max=\{100\}/)
   assert.match(center,/Tentativas automáticas de WhatsApp por dia \(0–100\)/)
   assert.match(center,/Alertas prioritários internos por dia \(0–100\)/)
