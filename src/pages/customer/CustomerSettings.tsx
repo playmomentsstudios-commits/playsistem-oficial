@@ -4,6 +4,7 @@ import { settingsApi,type UserPreferences } from '../../api/settings'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { CompactPageHeader } from '../../components/ui/CompactWorkspace'
+import { PushNotificationSettings } from '../../components/ui/PushNotificationSettings'
 
 export function CustomerSettings(){
   const {user,updatePassword}=useAuth()
@@ -99,6 +100,10 @@ export function CustomerSettings(){
       <section className="pm-compact-card">
         <h2 className="font-semibold">Notificações</h2>
         <p className="text-xs text-gray-500 mt-1">Escolha quais comunicações deseja receber.</p>
+        <div className="mt-3 rounded-lg border border-white/10 bg-black/20 p-3">
+          <p className="mb-2 text-xs font-semibold">Avisos do aplicativo instalado</p>
+          <PushNotificationSettings/>
+        </div>
         <div className="space-y-2 mt-3">
           {option('Notificações no portal','Manter avisos dentro da sua conta.','notify_portal')}
           {option('Notificações por e-mail','Permitir comunicações transacionais por e-mail.','notify_email')}
