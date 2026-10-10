@@ -7,7 +7,6 @@ import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-d
 import { useAuth } from '../contexts/AuthContext'
 import { afterAuthPath } from '../lib/navigation'
 import { portalApi } from '../api/portal'
-import { FloatingCustomerChat } from '../components/chat/FloatingCustomerChat'
 import { settingsApi } from '../api/settings'
 
 type IconName='academy'|'home'|'user'|'orders'|'projects'|'services'|'quotes'|'payments'|'chat'|'files'|'community'|'notifications'|'announcements'|'settings'|'help'|'logout'|'chevron'|'globe'
@@ -75,7 +74,6 @@ export function CustomerLayoutV2() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [expanded,setExpanded]=useState(true)
   const [counts, setCounts] = useState({ messages: 0, notifications: 0 })
-  const [floatingChatEnabled,setFloatingChatEnabled]=useState(true)
   const [accountMenuOpen,setAccountMenuOpen]=useState(false)
 
   useEffect(() => {
@@ -112,7 +110,6 @@ export function CustomerLayoutV2() {
     let active=true
     settingsApi.userPreferences().then(prefs=>{
       if(!active||!prefs)return
-      setFloatingChatEnabled(prefs.floating_chat_enabled)
       try{window.localStorage.setItem('playmoments.customer.sidebar',prefs.sidebar_expanded?'expanded':'collapsed')}catch{}
     }).catch(()=>undefined)
     return()=>{active=false}
@@ -123,7 +120,6 @@ export function CustomerLayoutV2() {
       const prefs=(event as CustomEvent).detail
       if(!prefs)return
       setExpanded(Boolean(prefs.sidebar_expanded))
-      setFloatingChatEnabled(prefs.floating_chat_enabled!==false)
     }
     window.addEventListener('playmoments:preferences',apply)
     return()=>window.removeEventListener('playmoments:preferences',apply)
@@ -136,7 +132,9 @@ export function CustomerLayoutV2() {
   if (!isAuthenticated) return <Navigate to="/login" state={{ from: location }} replace />
   if (user?.role === 'admin' || user?.role === 'staff') return <Navigate to={afterAuthPath(location.pathname + location.search, user.role)} replace />
 
-  const handleLogout = async () => { await logout(); navigate(isStandaloneApp() ? '/login' : '/') }
+  const [logoutError,setLogoutError]=useState('')
+  const [loggingOut,setLoggingOut]=useState(false)
+  const handleLogout = async () => {if(loggingOut)return;setLoggingOut(true);setLogoutError('');try{await logout();navigate(isStandaloneApp() ? '/login' : '/', {replace:true})}catch{setLogoutError('Não foi possível sair. Tente novamente.')}finally{setLoggingOut(false)}}
 
   const Sidebar = ({ mobile = false }: { mobile?: boolean }) => {
     const showLabels=mobile||expanded
@@ -235,7 +233,7 @@ export function CustomerLayoutV2() {
             <Link to="/" onClick={()=>setAccountMenuOpen(false)} className="flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#aaaab4] hover:text-white hover:bg-white/[.05]"><MenuIcon name="globe" size={16}/>Ver site</Link>
             <div className="p-1"><PushNotificationSettings compact/></div>
             <div className="my-1 border-t border-white/[.06]"/>
-            <button onClick={handleLogout} className="w-full flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#DFA269] hover:bg-[#A65A2A]/10"><MenuIcon name="logout" size={16}/>Sair</button>
+            <button onClick={()=>void handleLogout()} disabled={loggingOut} className="w-full flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#DFA269] hover:bg-[#A65A2A]/10"><MenuIcon name="logout" size={16}/>Sair</button>
           </div></>}
         </div>
       </header>
@@ -254,9 +252,11 @@ export function CustomerLayoutV2() {
             {counts.messages>0&&<span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#A65A2A] px-1 text-[8px] font-bold text-white">{counts.messages>99?'99+':counts.messages}</span>}
           </Link>
           <PushNotificationSettings iconOnly/>
+          <button type="button" onClick={()=>void handleLogout()} disabled={loggingOut} aria-label="Sair da conta" title="Sair da conta" className="flex h-10 w-10 items-center justify-center rounded-lg text-[#DFA269] hover:bg-white/[.05] disabled:opacity-50"><MenuIcon name="logout" size={19}/></button>
         </div>
       </div>
 
+      {logoutError&&<div role="alert" className="mx-3 mt-2 rounded-lg bg-red-900/30 px-3 py-2 text-xs text-red-200">{logoutError}</div>}
       <main className="pm-workspace-main flex-1 overflow-auto p-3 pb-24 sm:p-4 sm:pb-24 md:pb-4 lg:p-5">
         <CustomerRouteBoundary key={location.pathname} route={location.pathname}><Outlet/></CustomerRouteBoundary>
       </main>
@@ -276,6 +276,6 @@ export function CustomerLayoutV2() {
         </Link>
       })}
     </nav>
-    {floatingChatEnabled&&<FloatingCustomerChat unread={counts.messages}/>} 
+
   </div>
 }
