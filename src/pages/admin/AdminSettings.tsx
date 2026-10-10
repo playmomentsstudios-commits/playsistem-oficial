@@ -1,4 +1,5 @@
 import { useEffect,useState } from 'react'
+import { Link } from 'react-router-dom'
 import { settingsApi,type AppSettings } from '../../api/settings'
 import { useToast } from '../../contexts/ToastContext'
 
