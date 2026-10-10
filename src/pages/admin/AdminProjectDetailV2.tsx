@@ -14,7 +14,7 @@ import { prioridade,rotulo,statusEtapa,statusProjeto,statusTarefa,tipoProjeto } 
 const projectStatuses=['planning','active','paused','review','completed','cancelled']
 const priorities=['low','medium','high','urgent']
 const taskStatuses=['pending','in_progress','review','completed','cancelled']
-const stageStatuses=['pending','in_progress','completed']
+const stageStatuses=['pending','in_progress','review','completed']
 const driveFolderOptions=[
   ['received','01 - Arquivos recebidos'],
   ['raw','02 - Brutos'],
@@ -303,7 +303,7 @@ export function AdminProjectDetailV2(){
   useEffect(()=>{
     if(fileTask&&(!selectedFileTask||['completed','cancelled'].includes(selectedFileTask.status)))setFileTask('')
   },[fileTask,selectedFileTask?.id,selectedFileTask?.status])
-  const effectiveFileStage=selectedFileTask?.stage_id||fileStage||sortedStages[0]?.id||null
+  const effectiveFileStage=selectedFileTask?.stage_id||(fileStage==='__general__'?null:fileStage||sortedStages[0]?.id||null)
 
   useEffect(()=>{
     if(project?.project_type==='internal'&&!fileStage&&sortedStages[0]?.id)setFileStage(sortedStages[0].id)
@@ -404,7 +404,7 @@ export function AdminProjectDetailV2(){
         await portalApi.uploadDriveFile({
           project_id:id,
           task_id:fileTask||null,
-          stage_id:project.project_type==='internal'?effectiveFileStage:null,
+          stage_id:effectiveFileStage,
           folder_kind:fileFolder,
           client_visible:project.project_type==='internal'?false:fileVisible,
         },file,value=>setFileProgress(Math.round(((index+(value/100))/picked.length)*100)))
@@ -431,7 +431,7 @@ export function AdminProjectDetailV2(){
       const uploaded=await portalApi.uploadDriveFile({
         project_id:id,
         task_id:previousFile.task_id||null,
-        stage_id:project.project_type==='internal'?(previousFile.stage_id||effectiveFileStage):null,
+        stage_id:previousFile.stage_id||tasks.find((task:any)=>task.id===previousFile.task_id)?.stage_id||(project.project_type==='internal'?effectiveFileStage:null),
         folder_kind:'preview',
         client_visible:project.project_type==='internal'?false:true,
       },file,setFileProgress)
@@ -730,6 +730,12 @@ export function AdminProjectDetailV2(){
               {driveFolderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
             </select>
           </label>}
+          {project.project_type!=='internal'&&<label className="text-sm text-gray-400">Etapa do arquivo
+            <select value={effectiveFileStage||'__general__'} disabled={Boolean(selectedFileTask?.stage_id)} onChange={e=>setFileStage(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10 disabled:opacity-60">
+              <option value="__general__">Arquivo geral (sem etapa)</option>
+              {sortedStages.map((stage:any)=><option key={stage.id} value={stage.id}>{stage.name}</option>)}
+            </select>
+          </label>}
           {project.project_type==='internal'?<label className="text-sm text-gray-400">Visibilidade
             <div className="mt-1 w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300">Somente equipe · projeto interno</div>
           </label>:<label className="text-sm text-gray-400">Visibilidade
@@ -792,6 +798,15 @@ export function AdminProjectDetailV2(){
                       {tasks.map((task:any)=><option key={task.id} value={task.id}>{task.title}</option>)}
                     </select>
                   </label>
+                  <label className="block text-[10px] text-gray-500 mt-2">Etapa vinculada
+                    <select value={tasks.find((task:any)=>task.id===file.task_id)?.stage_id||file.stage_id||''}
+                      disabled={Boolean(file.task_id&&tasks.find((task:any)=>task.id===file.task_id)?.stage_id)}
+                      onChange={async e=>{try{await portalApi.assignClientFileStage(file.id,e.target.value||null);setFileMenu(null);await load()}catch(error:any){toast(error?.message||'Não foi possível mudar a etapa do arquivo.','error')}}}
+                      className="mt-1 w-full px-2 py-1.5 rounded-lg bg-black border border-white/10 text-xs disabled:opacity-60">
+                      <option value="">Arquivo geral (sem etapa)</option>
+                      {sortedStages.map((stage:any)=><option key={stage.id} value={stage.id}>{stage.name}</option>)}
+                    </select>
+                  </label>
                   {file.storage_provider==='google_drive'&&<label className="block text-[10px] text-gray-500 mt-2">Pasta
                     <select defaultValue="" onChange={e=>{if(e.target.value){void moveProjectFile(file,e.target.value);setFileMenu(null)}}} className="mt-1 w-full px-2 py-1.5 rounded-lg bg-black border border-white/10 text-xs">
                       <option value="">Mover para...</option>
@@ -850,6 +865,7 @@ export function AdminProjectDetailV2(){
           <div className="px-4 pb-4 space-y-3">
             {stage.id!=='sem-etapa'&&<div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 border-b border-white/10 pb-3">
               <label>Etapa <select value={stage.status} onChange={e=>void changeStageStatus(stage.id,e.target.value)} className="ml-2 pm-control rounded-lg p-2">{stageStatuses.map(value=><option key={value} value={value}>{rotulo(statusEtapa,value)}</option>)}</select></label>
+              {stage.client_visible&&<Link to={'/admin/projetos/'+id+'/etapas/'+stage.id} className="inline-flex min-h-9 items-center text-xs font-semibold text-[#DFA269] hover:underline">Ver página da etapa ↗</Link>}
               <label className="flex items-center gap-2"><input type="checkbox" checked={stage.client_visible} onChange={async e=>{await portalApi.saveStage({client_visible:e.target.checked},stage.id);await load()}}/> Visível ao cliente</label>
               <button type="button" className="text-red-400 ml-auto" onClick={async()=>{if(window.confirm('Excluir esta etapa? As tarefas permanecem sem etapa.')){await portalApi.deleteStage(stage.id);await load()}}}>Excluir etapa</button>
             </div>}
