@@ -1,4 +1,4 @@
-import { useEffect,useMemo,useState } from 'react'
+import { useEffect,useMemo,useRef,useState } from 'react'
 import { Link,useNavigate,useParams } from 'react-router-dom'
 import { portalApi } from '../../api/portal'
 import { projectProgress as progress } from '../../lib/projectProgress'
@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
 import { FilePreviewModal } from '../../components/files/FilePreviewModal'
+import { DriveFileThumbnail } from '../../components/files/DriveFileThumbnail'
 import { exportProjectReportSpreadsheet,printProjectReportPdf } from '../../lib/projectReport'
 import { prioridade,rotulo,statusEtapa,statusProjeto,statusTarefa,tipoProjeto } from '../../lib/labels.ptBR'
 
@@ -56,6 +57,9 @@ export function AdminProjectDetailV2(){
   const [savingViewer,setSavingViewer]=useState(false)
   const [removingViewer,setRemovingViewer]=useState<string|null>(null)
   const [files,setFiles]=useState<any[]>([])
+  const [syncingFiles,setSyncingFiles]=useState(false)
+  const [syncedAt,setSyncedAt]=useState<Date|null>(null)
+  const syncLock=useRef(false)
   const [driveRootItems,setDriveRootItems]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
   const [loadError,setLoadError]=useState<string|null>(null)
@@ -123,6 +127,37 @@ export function AdminProjectDetailV2(){
       if(active)setLoadWarning('Google Drive indisponível: '+(error?.message||'não foi possível acessar a pasta')+'. As tarefas continuam disponíveis.')
     })
     return ()=>{active=false}
+  },[projectTab,id,project?.id])
+
+  // Sync on entry and while the file tab is visible: edits saved from Illustrator,
+  // Photoshop or the Drive desktop app appear without a manual site upload.
+  const syncDriveFiles=async()=>{
+    if(!id||syncLock.current)return
+    syncLock.current=true
+    setSyncingFiles(true)
+    try{
+      await portalApi.syncDriveProjectFiles(id)
+      const refreshed=await portalApi.projectFiles(id)
+      setFiles(refreshed)
+      setSyncedAt(new Date())
+    }catch(error:any){
+      setLoadWarning('Sincronização do Drive: '+(error?.message||'não foi possível atualizar os arquivos.'))
+    }finally{
+      syncLock.current=false
+      setSyncingFiles(false)
+    }
+  }
+
+  useEffect(()=>{
+    if(projectTab!=='arquivos'||!project?.id)return
+    void syncDriveFiles()
+    const onVisible=()=>{if(document.visibilityState==='visible')void syncDriveFiles()}
+    const timer=window.setInterval(onVisible,90000)
+    document.addEventListener('visibilitychange',onVisible)
+    return ()=>{
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange',onVisible)
+    }
   },[projectTab,id,project?.id])
 
   async function saveCustomerLink(){
@@ -608,7 +643,11 @@ export function AdminProjectDetailV2(){
           <h2 className="text-xl font-bold">Arquivos do projeto</h2>
           <p className="text-sm text-gray-500">Os mesmos arquivos da Central de Arquivos, vinculados diretamente a este projeto.</p>
         </div>
-        <Link to="/admin/arquivos" className="text-sm text-[#A65A2A]">Abrir Central de Arquivos →</Link>
+<div className="flex items-center flex-wrap gap-3">
+          <span className="text-[11px] text-gray-500">{syncingFiles?'Atualizando arquivos do Drive...':syncedAt?'Sincronizado às '+syncedAt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'Sincronização automática ativa'}</span>
+          <button type="button" disabled={syncingFiles} onClick={()=>void syncDriveFiles()} className="min-h-9 px-3 rounded-xl border border-white/15 text-xs text-gray-200 disabled:opacity-50">↻ Atualizar agora</button>
+          <Link to="/admin/arquivos" className="text-sm text-[#A65A2A]">Abrir Central de Arquivos →</Link>
+        </div>
       </div>
 
       {driveRootItems.length>0&&<div className="pm-surface p-4 mt-4">
@@ -670,7 +709,7 @@ export function AdminProjectDetailV2(){
             const review=reviewBadge(file)
             return <div key={file.id} className="p-3 rounded-xl bg-white/5 border border-white/10">
               <div className="flex gap-3">
-                <div className="w-12 h-12 shrink-0 rounded-xl bg-black/30 flex items-center justify-center text-2xl">{projectFileIcon(file)}</div>
+                <button type="button" onClick={()=>openFile(file)} title={'Visualizar '+file.name} className="w-12 h-12 shrink-0 rounded-xl bg-black/30 flex items-center justify-center text-2xl overflow-hidden"><DriveFileThumbnail file={file} fallback={projectFileIcon(file)} className="w-full h-full"/></button>
                 <button onClick={()=>openFile(file)} className="text-left min-w-0 flex-1">
                   <div className="flex items-center gap-2 min-w-0"><p className="text-sm font-medium truncate" title={file.name}>{file.name}</p><span className="text-[9px] text-[#A65A2A] shrink-0">v{file.version_number||1}</span></div>
                   <p className="text-xs text-gray-500 mt-1">{fileSize(file.file_size)} · {file.client_visible?'Cliente':'Equipe'}</p>
