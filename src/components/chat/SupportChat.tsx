@@ -5,7 +5,6 @@ import { useAuth } from '../../contexts/AuthContext'
 import { ChatComposer } from './ChatComposer'
 import { AttachmentView } from './AttachmentView'
 import { portalApi } from '../../api/portal'
-import { AutoAttendant } from './AutoAttendant'
 
 type InboxFilter='all'|'unread'|'mine'|'unassigned'|'urgent'
 const statusLabel:Record<string,string>={open:'Aberta',pending:'Aguardando',resolved:'Resolvida'}
@@ -35,7 +34,6 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   const [team,setTeam]=useState<ConversationTeamMember[]>([])
   const [staffPermissions,setStaffPermissions]=useState<string[]>([])
   const [transferring,setTransferring]=useState(false)
-  const [humanMode,setHumanMode]=useState(false)
   const end = useRef<HTMLDivElement>(null)
   const subject = search.get('assunto')
   const prompt = subject === 'orcamento'
@@ -127,15 +125,6 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
 
   useEffect(() => { end.current?.scrollIntoView({ block: 'end', behavior: messages.length > 1 ? 'smooth' : 'auto' }) }, [messages.length])
 
-  async function handoff(summary:string){
-    if(!user||!selected)throw new Error('Conversa indisponível.')
-    setSending(true)
-    try{
-      await send(summary,null,crypto.randomUUID())
-      setHumanMode(true)
-    }finally{setSending(false)}
-  }
-
   async function send(content: string, file: File | null, id: string) {
     if (!user || !selected) throw new Error('Selecione uma conversa.')
     const attachment = file ? await conversationsApi.upload(selected, user.id, id, file) : undefined
@@ -188,7 +177,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
       {!compact&&<div className="flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-2xl font-bold">Conversas</h1><p className="text-sm text-gray-500">{staff ? 'Central de atendimento ao cliente' : 'Chat direto com a equipe Sagamente'}</p></div>{staff&&<div className="flex items-center gap-2 text-xs text-gray-500"><span>{counts.unread} não lida(s)</span><span>•</span><span>{counts.unassigned} sem responsável</span></div>}</div>}
       {error && <div role="alert" className="p-3 rounded-xl bg-red-950/40 text-sm">{error} <button className="underline min-h-11 px-2" onClick={() => setRetry(value => value + 1)}>Tentar novamente</button></div>}
       {loading ? <p role="status">Carregando conversas…</p> : (
-        <div className={'relative flex overflow-hidden bg-[#141416] '+(compact?'rounded-none h-full':'md:rounded-2xl md:border md:border-white/10 h-[calc(100dvh-150px)] min-h-[600px]')}>
+        <div className={'relative flex overflow-hidden bg-[#141416] '+(compact?'rounded-none h-full':'md:rounded-2xl md:border md:border-white/10 h-[calc(100dvh-178px)] min-h-[420px] md:h-[calc(100dvh-150px)] md:min-h-[600px]')}>
           {staff && <aside className={'w-full md:w-[330px] xl:w-[360px] shrink-0 border-white/10 bg-[#101012] flex-col '+(mobileChat?'hidden md:flex':'flex')+' md:border-r'}>
             <div className="p-3 border-b border-white/10">
               <div className="flex items-center justify-between gap-3 mb-3">
@@ -245,14 +234,13 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
               <div className={'w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0 '+(staff?'bg-white/[.07]':'bg-[#A65A2A] text-white')}>{staff&&conversation?initials(name(conversation)):'SA'}</div>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold truncate">{staff ? (conversation ? name(conversation) : 'Selecione uma conversa') : 'Sagamente'}</p>
-                {!staff&&<p className="text-[10px] text-emerald-400">{humanMode?'Atendimento com a equipe':'Autoatendimento disponível'}</p>}
+                {!staff&&<p className="text-[10px] text-emerald-400">Conversa com a equipe</p>}
                 {staff&&conversation&&<div className="flex items-center gap-1.5 mt-0.5"><span className="text-[10px] text-gray-500 truncate">{assigneeName(conversation)}</span><span className="text-gray-700">•</span><span className="text-[10px] text-gray-500">{statusLabel[conversation.status||'open']}</span></div>}
               </div>
               {staff&&conversation&&<button onClick={()=>setInfoOpen(true)} className="min-h-10 px-3 rounded-xl border border-white/10 hover:bg-white/[.05] text-xs font-semibold">Informações</button>}
             </div>
-            {!staff&&!humanMode&&<AutoAttendant onHuman={handoff} busy={sending}/>}
-            {(!staff&&humanMode) && <div className="px-4 pt-3 flex items-center justify-between gap-3 shrink-0"><p className="text-sm" style={{ color: '#ff9ca6' }}>{prompt}</p><button type="button" onClick={()=>setHumanMode(false)} className="shrink-0 min-h-10 text-xs text-gray-400 underline">Voltar ao autoatendimento</button></div>}
-            {(staff||humanMode)&&<div role="log" aria-label="Mensagens" aria-live="polite" className="flex-1 overflow-y-auto min-h-0 px-3 md:px-5 py-3 bg-[#0f0f11]">
+            {!staff&&subject&&<p className="shrink-0 border-b border-white/10 px-4 py-2 text-xs text-[#DFA269]">{prompt}</p>}
+            <div role="log" aria-label="Mensagens" aria-live="polite" className="flex-1 overflow-y-auto min-h-0 px-3 md:px-5 py-3 bg-[#0f0f11]">
               {messagesLoading && <p role="status">Carregando mensagens…</p>}
               {!messagesLoading && selected && !messages.length && !error && <p className="text-sm text-gray-400">Nenhuma mensagem ainda. Inicie a conversa abaixo.</p>}
               {messages.map((message,index) => {
@@ -278,8 +266,8 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
                 </div>
               })}
               <div ref={end} />
-            </div>}
-            {(staff||humanMode)&&<div className="shrink-0 bg-[#141416] border-t border-white/10"><ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} compact /></div>}
+            </div>
+            <div className="shrink-0 bg-[#141416] border-t border-white/10"><ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} compact /></div>
           </div>
           {infoOpen&&staff&&conversation&&<button className="fixed inset-0 z-40 bg-black/55 md:hidden" onClick={()=>setInfoOpen(false)} aria-label="Fechar informações"/>}
           {infoOpen&&staff&&conversation&&<aside className="fixed inset-y-0 right-0 z-50 w-[88vw] max-w-sm md:static md:z-auto md:w-[300px] md:max-w-none shrink-0 border-l border-white/10 bg-[#111113] overflow-y-auto">

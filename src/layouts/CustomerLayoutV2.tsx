@@ -9,7 +9,7 @@ import { portalApi } from '../api/portal'
 import { FloatingCustomerChat } from '../components/chat/FloatingCustomerChat'
 import { settingsApi } from '../api/settings'
 
-type IconName='academy'|'home'|'user'|'orders'|'projects'|'services'|'quotes'|'payments'|'chat'|'files'|'community'|'notifications'|'announcements'|'settings'|'logout'|'chevron'
+type IconName='academy'|'home'|'user'|'orders'|'projects'|'services'|'quotes'|'payments'|'chat'|'files'|'community'|'notifications'|'announcements'|'settings'|'help'|'logout'|'chevron'
 
 const ICONS:Record<IconName,React.ReactNode>={
   academy:<><path d="M3 6.5 12 2l9 4.5-9 4.5-9-4.5Z"/><path d="M6 9v5.5c0 1.8 2.7 3.5 6 3.5s6-1.7 6-3.5V9"/><path d="M21 7v7"/></>,
@@ -24,6 +24,7 @@ const ICONS:Record<IconName,React.ReactNode>={
   files:<><path d="M4 6h6l2 2h8v10H4z"/><path d="M8 12h8"/></>,
   community:<><circle cx="9" cy="9" r="3"/><circle cx="17" cy="10" r="2.5"/><path d="M3.5 20c.6-3.7 2.7-5.5 5.5-5.5s4.9 1.8 5.5 5.5"/><path d="M14 15.5c2.9-.5 5.3 1 6.2 4.5"/></>,
   notifications:<><path d="M6 17h12l-1.5-2.5V10a4.5 4.5 0 0 0-9 0v4.5z"/><path d="M10 20h4"/></>,
+  help:<><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 2-2.5 2-2.5 4"/><path d="M12 17h.01"/></>,
   announcements:<><path d="M4 11v3h3l8 4V7l-8 4z"/><path d="M18 9c1 1 1 3 0 4"/></>,
   settings:<><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7 7 0 0 0-1.8-1L14.5 3h-5l-.3 3a7 7 0 0 0-1.8 1L5 6 3 9.5 5.1 11a7 7 0 0 0 0 2L3 14.5 5 18l2.4-1a7 7 0 0 0 1.8 1l.3 3h5l.3-3a7 7 0 0 0 1.8-1l2.4 1 2-3.5-2.1-1.5c.1-.3.1-.7.1-1Z"/></>,
   logout:<><path d="M10 4H5v16h5"/><path d="M14 8l4 4-4 4M8 12h10"/></>,
@@ -44,6 +45,7 @@ const MENU:{label:string;href:string;icon:IconName;group:string}[]=[
   { label: 'Arquivos', href: '/app/arquivos', icon: 'files', group: 'principal' },
   { label: 'Academia', href: '/app/academia', icon: 'academy', group: 'experiencia' },
   { label: 'Comunidade', href: '/comunidade', icon: 'community', group: 'experiencia' },
+  { label: 'Ajuda', href: '/app/ajuda', icon: 'help', group: 'experiencia' },
 ]
 
 
@@ -206,7 +208,10 @@ export function CustomerLayoutV2() {
 
     <div className="flex-1 flex flex-col min-w-0">
       <header className="hidden md:flex h-14 items-center justify-end gap-2 px-6 border-b border-white/5 bg-[#0b0b0d]/95">
-        <Link to="/app/conversas" className="relative w-10 h-10 rounded-xl flex items-center justify-center text-[#7d7d88] hover:text-white hover:bg-white/[.05]" title="Mensagens">
+        <Link to="/app/ajuda" aria-label="Ajuda e dúvidas frequentes" title="Central de Ajuda" className="relative flex h-10 w-10 items-center justify-center rounded-xl text-[#7d7d88] hover:bg-white/[.05] hover:text-white">
+          <MenuIcon name="help" size={18}/>
+        </Link>
+        <Link to="/app/conversas" aria-label="Abrir conversa com a equipe" className="relative w-10 h-10 rounded-xl flex items-center justify-center text-[#7d7d88] hover:text-white hover:bg-white/[.05]" title="Mensagens">
           <MenuIcon name="chat" size={18}/>{counts.messages>0&&<span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#A65A2A] text-[8px] font-bold text-white flex items-center justify-center">{counts.messages>99?'99+':counts.messages}</span>}
         </Link>
         <Link to="/app/notificacoes" className="relative w-10 h-10 rounded-xl flex items-center justify-center text-[#7d7d88] hover:text-white hover:bg-white/[.05]" title="Notificações">
@@ -232,7 +237,16 @@ export function CustomerLayoutV2() {
           <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
         </button>
         <BrandImage variant="compact" alt="Sagamente" className="h-6"/>
-        <PushNotificationSettings iconOnly/>
+        <div className="flex shrink-0 items-center gap-0.5">
+          <Link to="/app/ajuda" aria-label="Central de Ajuda" title="Ajuda e dúvidas frequentes" className="flex h-10 w-9 items-center justify-center rounded-lg text-gray-300 hover:bg-white/[.05]">
+            <MenuIcon name="help" size={18}/>
+          </Link>
+          <Link to="/app/conversas" aria-label="Abrir conversa" title="Mensagens" className="relative flex h-10 w-9 items-center justify-center rounded-lg text-gray-300 hover:bg-white/[.05]">
+            <MenuIcon name="chat" size={18}/>
+            {counts.messages>0&&<span className="absolute right-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#A65A2A] px-1 text-[8px] font-bold text-white">{counts.messages>99?'99+':counts.messages}</span>}
+          </Link>
+          <PushNotificationSettings iconOnly/>
+        </div>
       </div>
 
       <main className="pm-workspace-main flex-1 overflow-auto p-3 sm:p-4 lg:p-5">
