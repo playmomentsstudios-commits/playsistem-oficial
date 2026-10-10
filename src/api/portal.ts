@@ -406,7 +406,7 @@ export const portalApi = {
     if(file.task_id){
       const {data:task,error:taskError}=await supabase.from('tasks').select('stage_id').eq('id',file.task_id).single()
       if(taskError)throw taskError
-      if(task.stage_id)throw new Error('A etapa deste arquivo é definida pela tarefa vinculada. Altere a tarefa primeiro.')
+      if(task.stage_id&&task.stage_id!==stageId)throw new Error('A etapa deste arquivo é definida pela tarefa vinculada. Altere a tarefa primeiro.')
     }
     if(stageId){
       const {data:stage,error:stageError}=await supabase.from('project_stages').select('id,project_id').eq('id',stageId).single()
