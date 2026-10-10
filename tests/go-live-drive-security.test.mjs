@@ -21,7 +21,7 @@ test('Drive finalization is cryptographically scoped by session metadata',()=>{
 test('Drive download enforces staff, primary client or explicit additional viewer membership',()=>{
  assert.match(download,/hasPermission\(ctx, "files\.view"\)/)
  assert.match(download,/isPrimaryCustomer = ctx\.role === "customer"/)
- assert.match(download,/file\.customer_id === ctx\.userId && file\.client_visible/)
+ assert.match(download,/linkedProject\?\.customer_id === ctx\.userId/)
  assert.match(download,/project_customer_access/)
  assert.match(download,/file\.client_visible && file\.project_id/)
  assert.match(download,/if \(!staffAllowed && !isPrimaryCustomer && !isAdditionalViewer\) throw new Error\("Forbidden"\)/)

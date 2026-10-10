@@ -37,7 +37,7 @@ Deno.serve(async (req: Request) => {
         ? await ctx.db.from("projects").select("project_type").eq("id", file.project_id).maybeSingle()
         : { data: null };
       if (!file.project_id || (project && project.project_type !== "internal")) {
-        customerAllowed = file.customer_id === ctx.userId;
+        customerAllowed = file.project_id ? project?.customer_id === ctx.userId : file.customer_id === ctx.userId;
         if (!customerAllowed && file.project_id) {
           const { data: extra } = await ctx.db.from("project_customer_access")
             .select("project_id").eq("project_id", file.project_id)

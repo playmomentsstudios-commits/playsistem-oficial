@@ -43,5 +43,5 @@ test('extra viewers cannot upload files or approve deliveries',()=>{
   assert.match(download,/file\.client_visible/)
   assert.match(download,/project_customer_access/)
   assert.match(download,/file\.project_id/)
-  assert.match(download,/project\?\.project_type !== "internal"/)
+  assert.match(download,/project && project.project_type !== "internal"/)
 })

@@ -22,14 +22,17 @@ Deno.serve(async (req) => {
     const staffAllowed = ctx.role === "admin"
       || hasPermission(ctx, "files.view")
       || hasPermission(ctx, "files.manage");
-    const isPrimaryCustomer = ctx.role === "customer"
-      && file.customer_id === ctx.userId && file.client_visible;
+    const { data: linkedProject } = file.project_id
+      ? await ctx.db.from("projects").select("customer_id,project_type").eq("id",file.project_id).maybeSingle()
+      : { data: null };
+    const isPrimaryCustomer = ctx.role === "customer" && file.client_visible
+      && (file.project_id ? linkedProject?.project_type !== "internal" && linkedProject?.customer_id === ctx.userId : file.customer_id === ctx.userId);
     let isAdditionalViewer = false;
     if (ctx.role === "customer" && file.client_visible && file.project_id && !isPrimaryCustomer) {
       // Always authorize from the database. Never trust project/customer IDs sent by the client.
       const { data: project } = await ctx.db
         .from("projects").select("project_type").eq("id", file.project_id).maybeSingle();
-      if (project?.project_type !== "internal") {
+      if (project && project.project_type !== "internal") {
         const { data: access } = await ctx.db.from("project_customer_access")
           .select("project_id").eq("project_id", file.project_id)
           .eq("customer_id", ctx.userId).maybeSingle();
