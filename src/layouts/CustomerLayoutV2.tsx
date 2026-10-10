@@ -261,11 +261,12 @@ export function CustomerLayoutV2() {
         <CustomerRouteBoundary key={location.pathname} route={location.pathname}><Outlet/></CustomerRouteBoundary>
       </main>
     </div>
-    <nav aria-label="Navegação principal do cliente" className="md:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-4 border-t border-white/10 bg-[#0d0d0f]/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
+    <nav aria-label="Navegação principal do cliente" className="md:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-5 border-t border-white/10 bg-[#0d0d0f]/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
       {([
         {href:'/app/dashboard',label:'Início',icon:'home'},
         {href:'/app/projetos',label:'Projetos',icon:'projects'},
         {href:'/app/conversas',label:'Conversas',icon:'chat'},
+        {href:'/app/arquivos',label:'Arquivos',icon:'files'},
         {href:'/app/perfil',label:'Conta',icon:'user'},
       ] as {href:string,label:string,icon:IconName}[]).map(item=>{
         const active=location.pathname===item.href||location.pathname.startsWith(item.href+'/')
