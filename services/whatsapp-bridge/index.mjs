@@ -5,7 +5,8 @@ import { resolve } from 'node:path'
 import makeWASocket, { DisconnectReason, useMultiFileAuthState, Browsers } from '@whiskeysockets/baileys'
 import { createClient } from '@supabase/supabase-js'
 import QRCode from 'qrcode'
-import { resolveAuthorizedAccount } from './phone-utils.mjs'
+import { attachDeliveryReceipts } from './receipt-tracker.mjs'
+import { resolveAuthorizedAccount, registeredRecipientJid } from './phone-utils.mjs'
 import pino from 'pino'
 
 const url=process.env.SUPABASE_URL?.trim()
@@ -31,6 +32,7 @@ let retryAt=0
 let stopping=false
 let authorizedInstance=false
 let tickRunning=false
+let receiptTracker=null
 
 const wait=(milliseconds)=>new Promise(resolve=>setTimeout(resolve,milliseconds))
 function digits(value){return String(value||'').replace(/\D/g,'')}
@@ -60,6 +62,7 @@ async function closeSession(logout=false){
   socketOpen=false
   currentPhone=null
   currentPnJid=null
+  receiptTracker=null
   lastQrData=null
   retryAt=Date.now()+10000
   if(old){
@@ -92,6 +95,7 @@ async function connect(){
     })
     socket=sock
     sock.ev.on('creds.update',saveCreds)
+    receiptTracker=attachDeliveryReceipts(sock,instanceId,invoke)
     sock.ev.on('connection.update',async ({connection,qr,lastDisconnect})=>{
       if(socket!==sock||stopping)return
       try{
@@ -127,7 +131,7 @@ async function connect(){
         }
         if(connection==='close'){
           const reason=lastDisconnect?.error?.output?.statusCode
-          socket=null;socketOpen=false;currentPhone=null;currentPnJid=null;lastQrData=null
+          socket=null;socketOpen=false;currentPhone=null;currentPnJid=null;receiptTracker=null;lastQrData=null
           if(reason===DisconnectReason.loggedOut){
             await report('logged_out')
             await rm(authDir,{recursive:true,force:true}).catch(()=>{})
@@ -162,10 +166,12 @@ async function sendOne(){
       if(!socketOpen||!socket)throw new Error('Sessão desconectada antes do envio.')
       const destination=digits(job.phone)
       if(!/^55\d{10,11}$/.test(destination))throw new Error('Telefone inválido.')
-      // During self-tests, use the verified registered PN JID, which may
-      // omit the ninth digit in Brazil. Never apply this to other recipients.
       const address=job.test_only&&destination===expectedPhone&&currentPnJid
-        ? currentPnJid : destination+'@s.whatsapp.net'
+        ? currentPnJid : registeredRecipientJid(destination,await Promise.race([socket.onWhatsApp(destination),wait(15000).then(()=>{throw new Error('Consulta de destino WhatsApp excedeu 15 segundos; tentativa interrompida.')})]))
+      const verified=await invoke('wa_bridge_register_destination',{
+        p_instance:instanceId,p_attempt:job.attempt_id,p_jid:address
+      })
+      if(!verified)throw new Error('A identidade WhatsApp não corresponde ao telefone autorizado.')
       const result=await socket.sendMessage(address,{text:job.message})
       if(!result?.key?.id)throw new Error('WhatsApp não retornou identificador da mensagem.')
       msgId=String(result.key.id)
@@ -179,6 +185,8 @@ async function sendOne(){
       p_instance:instanceId,p_attempt:job.attempt_id,p_success:success,
       p_msg_id:msgId,p_error:sendError
     })
+    // A receipt can precede sendMessage() returning; persist its confirmation now.
+    if(msgId&&receiptTracker)await receiptTracker.flush(msgId)
   }catch(err){
     console.error('[bridge] Falha na fila:',err?.message||'erro inesperado')
   }finally{busy=false}
@@ -212,7 +220,12 @@ async function tick(){
     if(socketOpen&&Date.now()-lastReport>12000){
       if(!await report('connected',null,currentPhone))await closeSession()
     }
-    if(socketOpen&&settingsResult.data.wa_bridge_auto_enabled)await sendOne()
+    if(socketOpen){
+      const allowed=await invoke('wa_bridge_worker_capability',{
+        p_instance:instanceId,p_capability:'registered-jid-receipts-v1'
+      })
+      if(allowed&&settingsResult.data.wa_bridge_auto_enabled)await sendOne()
+    }
   }catch(err){
     console.error('[bridge] Falha no ciclo:',err?.message||'erro inesperado')
   }finally{tickRunning=false}

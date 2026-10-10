@@ -51,7 +51,7 @@ test('credentials stay on local host and no service role key reaches the website
 test('bridge success is not confused with provider delivery receipts',()=>{
   assert.match(sql,/provider_delivered_today',0/)
   assert.match(sql,/provider_message_id/)
-  assert.match(dashboard,/Aceitas no dispositivo hoje/)
+  assert.match(dashboard,/IDs retornados hoje/)
   assert.match(dashboard,/entrega não comprovada/)
   assert.match(script,/entrega não confirmada/)
 })

@@ -13,6 +13,8 @@ type BridgeState={
   qr_updated_at:string|null
   connected_phone:string|null
   last_error:string|null
+  worker_capability:string|null
+  worker_capability_at:string|null
 }
 const STATUS:Record<BridgeState['status'],string>={
   offline:'Ponte desligada',connecting:'Conectando dispositivo...',qr_ready:'Aguardando leitura do QR',
@@ -32,10 +34,10 @@ export function WhatsappQrBridgePanel(){
   const initialized=useRef(false)
   async function refresh(){
     const [status,configResult,customers,trials]=await Promise.all([
-      supabase.from('whatsapp_bridge_state').select('requested_mode,status,heartbeat_at,qr_data_url,qr_updated_at,connected_phone,last_error').eq('id',true).maybeSingle(),
+      supabase.from('whatsapp_bridge_state').select('requested_mode,status,heartbeat_at,qr_data_url,qr_updated_at,connected_phone,last_error,worker_capability,worker_capability_at').eq('id',true).maybeSingle(),
       settingsApi.appSettings(),
       supabase.rpc('wa_bridge_eligible_customers'),
-      supabase.from('whatsapp_bridge_attempts').select('id',{count:'exact',head:true}).eq('status','sent').eq('test_mode',false)
+      supabase.from('whatsapp_bridge_attempts').select('id',{count:'exact',head:true}).eq('status','sent').eq('test_mode',false).in('ack_status',['delivered','read'])
     ])
     if(status.error)throw status.error
     if(customers.error)throw customers.error
@@ -65,6 +67,7 @@ export function WhatsappQrBridgePanel(){
   const online=!!bridge?.heartbeat_at&&(now-new Date(bridge.heartbeat_at).getTime()<35000)
   const connected=online&&bridge?.status==='connected'
   const correctNumber=connected&&bridge.connected_phone===config?.wa_bridge_sender_phone
+  const updatedBridge=Boolean(bridge?.worker_capability==='registered-jid-receipts-v1'&&bridge.worker_capability_at&&(now-new Date(bridge.worker_capability_at).getTime()<35000))
   const enabled=Boolean(config?.wa_bridge_auto_enabled)
   async function sendTest(){
     if(!window.confirm('Enviar UM teste automático exclusivamente para +55 64 98129-4186? Conta para o teto diário de 10 tentativas.'))return
@@ -156,11 +159,12 @@ export function WhatsappQrBridgePanel(){
         <p className="text-xs text-gray-400">
           <strong>1.</strong> Mantenha o serviço Node ligado. <strong>2.</strong> Conecte o dispositivo, se necessário. <strong>3.</strong> Selecione o destino abaixo e salve. <strong>4.</strong> Ative explicitamente os envios. Só eventos novos entram na fila.
         </p>
+        {connected&&!updatedBridge&&<p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">Ponte Windows desatualizada. Para liberar envios a clientes, atualize index.mjs, phone-utils.mjs e receipt-tracker.mjs no computador e reinicie o serviço. A conexão atual não poderá disparar mensagens automaticamente.</p>}
         {bridge?.last_error&&<p className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-xs text-red-300">{bridge.last_error}</p>}
         {loadError&&<p role="alert" className="text-xs text-red-300">{loadError}</p>}
         <div className="flex flex-wrap gap-2">
           <button disabled={busy} onClick={()=>void action('connect')} className="min-h-10 rounded-xl bg-[#A65A2A] px-4 text-xs font-semibold text-white disabled:opacity-50">Solicitar conexão</button>
-          {!enabled?<button disabled={busy||!correctNumber||!canUseRealTarget} onClick={()=>void action('enable')} className="min-h-10 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-4 text-xs font-semibold text-emerald-300 disabled:opacity-40">{mode==='self_test'?'Ativar piloto':mode==='single_client'?'Ativar para este cliente':'Ativar para clientes autorizados'}</button>:
+          {!enabled?<button disabled={busy||!correctNumber||!updatedBridge||!canUseRealTarget} onClick={()=>void action('enable')} className="min-h-10 rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-4 text-xs font-semibold text-emerald-300 disabled:opacity-40">{mode==='self_test'?'Ativar piloto':mode==='single_client'?'Ativar para este cliente':'Ativar para clientes autorizados'}</button>:
           <button disabled={busy} onClick={()=>void action('disable')} className="min-h-10 rounded-xl border border-amber-500/25 px-4 text-xs text-amber-300 disabled:opacity-50">Pausar envios</button>}
           {enabled&&correctNumber&&mode==='self_test'&&<button disabled={busy} onClick={()=>void sendTest()} className="min-h-10 rounded-xl border border-[#A65A2A]/30 bg-[#A65A2A]/10 px-4 text-xs font-semibold text-[#DFA269] disabled:opacity-50">Enviar teste para meu WhatsApp</button>}
           <button disabled={busy} onClick={()=>void action('disconnect')} className="min-h-10 rounded-xl border border-white/15 px-4 text-xs text-gray-300 disabled:opacity-50">Desconectar aparelho</button>
@@ -192,7 +196,7 @@ export function WhatsappQrBridgePanel(){
           </p>}
           {mode==='single_client'&&!target&&<p className="text-xs text-red-300">O cliente selecionado perdeu a autorização ou mudou de número. O sistema impedirá novas tentativas reais para ele.</p>}
           <p className="text-[11px] text-gray-500">Modo salvo: {mode==='self_test'?'Teste no número da empresa':mode==='single_client'?'Somente um cliente':'Todos os clientes autorizados'}.
-          {trialAccepted?' Teste individual aceito pela biblioteca; confirme com o destinatário antes de ampliar.':' Ainda não houve teste individual aceito.'}</p>
+          {trialAccepted?' Entrega individual observada; confirme também diretamente com o destinatário antes de ampliar.':' Nenhuma entrega individual foi confirmada.'}</p>
           <button type="button" onClick={()=>void configureMode()}
             disabled={busy||enabled||(choiceMode==='single_client'&&!choiceCustomer)||(choiceMode==='consented_clients'&&!trialAccepted)}
             className="min-h-10 rounded-xl border border-[#A65A2A]/30 bg-[#A65A2A]/10 px-4 text-xs font-semibold text-[#DFA269] disabled:opacity-40">

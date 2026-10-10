@@ -27,3 +27,21 @@ export function resolveAuthorizedAccount(expected,...jidCandidates){
   }
   return null
 }
+
+/**
+ * Resolve exactly one WhatsApp-registered individual for the consented phone.
+ * The returned PN JID must match the registered number; do not guess one.
+ */
+export function registeredRecipientJid(expectedPhone,lookupRows){
+  if(!/^55\d{2}9\d{8}$/.test(expectedPhone))throw new Error('Telefone brasileiro do cliente inválido para o envio automático.')
+  const registered=(Array.isArray(lookupRows)?lookupRows:[])
+    .filter(row=>row?.exists===true && typeof row.jid==='string')
+    .map(row=>row.jid)
+    .filter(jid=>matchesAuthorizedBrazilPhone(pnFromJid(jid),expectedPhone))
+    .map(jid=>pnFromJid(jid)+'@s.whatsapp.net')
+  const distinct=[...new Set(registered)]
+  if(distinct.length!==1)throw new Error(distinct.length===0
+    ?'Número não confirmado como conta WhatsApp pela consulta de destinatário. Nenhuma mensagem enviada.'
+    :'WhatsApp retornou mais de uma conta possível. Envio bloqueado para evitar destinatário incorreto.')
+  return distinct[0]
+}

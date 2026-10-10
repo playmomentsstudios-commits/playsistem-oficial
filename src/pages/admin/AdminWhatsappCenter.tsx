@@ -9,7 +9,8 @@ type WAState='ready_manual'|'missing_phone'|'historical'|'opened_manual'|'report
 type WAAttempt={
   id:string;outbox_id:string;destination_phone:string;test_mode:boolean;
   status:'claimed'|'sent'|'failed';provider_message_id:string|null;
-  error_reason:string|null;claimed_at:string;completed_at:string|null
+  error_reason:string|null;claimed_at:string;completed_at:string|null;
+  ack_status:'unconfirmed'|'server_ack'|'delivered'|'read'|'rejected';ack_at:string|null;destination_jid:string|null
 }
 type WARecord={
   id:string
@@ -58,7 +59,7 @@ const STATUS:Record<WAState,{label:string;tone:string}>={
   opened_manual:{label:'WhatsApp aberto',tone:'text-blue-200 bg-blue-500/10'},
   reported_sent:{label:'Envio declarado · não verificado',tone:'text-emerald-200 bg-emerald-500/10'},
   sending_auto:{label:'Tentativa em curso / incerta',tone:'text-blue-200 bg-blue-500/10'},
-  sent_auto:{label:'Aceito pelo dispositivo · entrega não verificada',tone:'text-emerald-200 bg-emerald-500/10'},
+  sent_auto:{label:'ID gerado · entrega não comprovada',tone:'text-amber-200 bg-amber-500/10'},
   failed_auto:{label:'Falha no envio automático',tone:'text-red-200 bg-red-500/10'},
 }
 const EVENT:Record<string,string>={
@@ -99,6 +100,7 @@ export function AdminWhatsappCenter(){
   const [rows,setRows]=useState<WARecord[]>([])
   const [attempts,setAttempts]=useState<WAAttempt[]>([])
   const [summary,setSummary]=useState<Summary>(EMPTY)
+  const [receiptStats,setReceiptStats]=useState({server_acked_today:0,delivered_today:0,read_today:0,unconfirmed_today:0,rejected_today:0})
   const [loading,setLoading]=useState(true)
   const [saving,setSaving]=useState(false)
   const [busy,setBusy]=useState<string|null>(null)
@@ -110,19 +112,22 @@ export function AdminWhatsappCenter(){
   async function load(){
     setError('')
     try{
-      const [cfg,list,daily,attemptRows]=await Promise.all([
+      const [cfg,list,daily,attemptRows,receiptDaily]=await Promise.all([
         settingsApi.appSettings(),
         supabase.from('whatsapp_message_outbox')
           .select('id,notification_id,recipient_name,destination_phone,recipient_user_id,event_type,title,message_body,target_link,status,source,created_at,opened_at,reported_at')
           .order('created_at',{ascending:false}).limit(300),
         supabase.rpc('wa_daily_dashboard'),
         supabase.from('whatsapp_bridge_attempts')
-          .select('id,outbox_id,destination_phone,test_mode,status,provider_message_id,error_reason,claimed_at,completed_at')
+          .select('id,outbox_id,destination_phone,test_mode,status,provider_message_id,error_reason,claimed_at,completed_at,ack_status,ack_at,destination_jid')
           .order('claimed_at',{ascending:false}).limit(300),
+        supabase.rpc('wa_bridge_receipt_summary'),
       ])
       if(list.error)throw list.error
       if(daily.error)throw daily.error
       if(attemptRows.error)throw attemptRows.error
+      if(receiptDaily.error)throw receiptDaily.error
+      setReceiptStats({server_acked_today:0,delivered_today:0,read_today:0,unconfirmed_today:0,rejected_today:0,...(receiptDaily.data||{})})
       setAttempts((attemptRows.data||[]) as WAAttempt[])
       setSettings(cfg)
       setRows((list.data||[]) as WARecord[])
@@ -215,7 +220,7 @@ export function AdminWhatsappCenter(){
       <Metric label="Avisos preparados hoje" value={summary.prepared_today} description="Criados na fila manual, não enviados"/>
       <Metric label="Conversas abertas hoje" value={summary.opened_today} description="Abertura registrada, envio desconhecido"/>
       <Metric label="Enviados informados hoje" value={summary.reported_today} description="Declaração manual, sem verificação"/>
-      <Metric label="Aceitas no dispositivo hoje" value={summary.bridge_sent_today} description="Resposta da biblioteca · entrega não comprovada"/>
+      <Metric label="IDs retornados hoje" value={summary.bridge_sent_today} description="Somente aceite local · entrega não comprovada"/>
     </div>
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-white/10 bg-white/[.02] p-3 text-xs text-gray-400">
       <span><b className="text-white">{summary.missing_phone_today}</b> sem número hoje</span>
@@ -223,6 +228,10 @@ export function AdminWhatsappCenter(){
       <span><b className="text-white">{summary.total_records}</b> registros totais</span>
       <span><b className="text-white">{summary.bridge_attempts_today}</b> tentativas automáticas hoje</span>
       <span><b className="text-white">{summary.bridge_failed_today}</b> falhas automáticas hoje</span>
+      <span><b className="text-white">{receiptStats.server_acked_today}</b> confirmações do servidor WhatsApp hoje</span>
+      <span><b className="text-white">{receiptStats.delivered_today+receiptStats.read_today}</b> entregas/leitura observadas hoje</span>
+      <span><b className="text-white">{receiptStats.unconfirmed_today}</b> sem confirmação de servidor/entrega</span>
+      <span><b className="text-white">{receiptStats.rejected_today}</b> rejeições registradas</span>
       <span><b className="text-white">{summary.provider_delivered_today}</b> entregas comprovadas hoje</span>
     </div>
 
@@ -309,7 +318,12 @@ export function AdminWhatsappCenter(){
                 {attemptByOutbox.get(item.id)!.test_mode&&<span className="ml-2 text-amber-200">(PILOTO · não enviado ao número do cliente)</span>}
               </p>
               <p className="mt-1">Número original da notificação: {item.destination_phone?'+'+item.destination_phone:'indisponível'}</p>
-              <p className="mt-1">Situação: {attemptByOutbox.get(item.id)!.status==='sent'?'Aceita pela biblioteca (sem confirmação de entrega)':attemptByOutbox.get(item.id)!.status==='failed'?'Falhou':'Em andamento ou resultado incerto'}</p>
+              <p className="mt-1">Resultado local: {attemptByOutbox.get(item.id)!.status==='sent'?'Biblioteca devolveu um ID; envio real ainda não comprovado':attemptByOutbox.get(item.id)!.status==='failed'?'Falha registrada':'Tentativa pendente ou incerta'}</p>
+              <p className={'mt-1 font-semibold '+(['delivered','read'].includes(attemptByOutbox.get(item.id)!.ack_status)?'text-emerald-300':'text-amber-200')}>
+                Confirmação do WhatsApp: {attemptByOutbox.get(item.id)!.ack_status==='read'?'Leitura observada':attemptByOutbox.get(item.id)!.ack_status==='delivered'?'Entrega observada':attemptByOutbox.get(item.id)!.ack_status==='server_ack'?'Servidor confirmou, destinatário não confirmou':attemptByOutbox.get(item.id)!.ack_status==='rejected'?'Servidor rejeitou a mensagem':'Nenhuma confirmação recebida'}
+              </p>
+              {attemptByOutbox.get(item.id)!.ack_at&&<p className="text-[11px] text-gray-500">Última confirmação: {localDate(attemptByOutbox.get(item.id)!.ack_at!)}</p>}
+              {attemptByOutbox.get(item.id)!.destination_jid&&<p className="mt-1 text-[11px] text-gray-500">Destino reconhecido: {attemptByOutbox.get(item.id)!.destination_jid}</p>}
               {attemptByOutbox.get(item.id)!.provider_message_id&&<p className="mt-1 break-all text-gray-500">ID da mensagem: {attemptByOutbox.get(item.id)!.provider_message_id}</p>}
               {attemptByOutbox.get(item.id)!.error_reason&&<p className="mt-1 text-red-300">Erro: {attemptByOutbox.get(item.id)!.error_reason}</p>}
               <p className="mt-1 text-gray-500">Iniciada em {localDate(attemptByOutbox.get(item.id)!.claimed_at)}</p>
