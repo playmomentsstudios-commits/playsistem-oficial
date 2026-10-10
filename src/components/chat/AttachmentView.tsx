@@ -37,6 +37,7 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
     finally { setDownloading(false) }
   }
   if (!path) return null
+  if (kind === 'audio') return <div className="min-w-[190px] max-w-[280px] py-1" aria-label="Mensagem de voz">{url ? <audio aria-label="Reproduzir mensagem de voz" controls preload="metadata" src={url} className="w-full h-10" onError={() => setError('Áudio indisponível. Tente novamente.')} /> : <span className="text-xs opacity-70">Carregando áudio…</span>}{error&&<button type="button" onClick={()=>setRetry(value=>value+1)} className="block mt-1 text-xs underline">Tentar novamente</button>}</div>
   return <div className="space-y-2 mb-2 min-w-0">
     <p className="font-semibold break-words" style={{ overflowWrap: 'anywhere' }}>{message.attachment_name}</p>
     <p className="text-xs opacity-75">{formatFileSize(message.attachment_size || 0)} · Arquivo original</p>
