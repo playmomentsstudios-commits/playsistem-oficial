@@ -62,6 +62,7 @@ async function closeSession(logout=false){
   socketOpen=false
   currentPhone=null
   currentPnJid=null
+  receiptTracker=null
   lastQrData=null
   retryAt=Date.now()+10000
   if(old){
@@ -130,7 +131,7 @@ async function connect(){
         }
         if(connection==='close'){
           const reason=lastDisconnect?.error?.output?.statusCode
-          socket=null;socketOpen=false;currentPhone=null;currentPnJid=null;lastQrData=null
+          socket=null;socketOpen=false;currentPhone=null;currentPnJid=null;receiptTracker=null;lastQrData=null
           if(reason===DisconnectReason.loggedOut){
             await report('logged_out')
             await rm(authDir,{recursive:true,force:true}).catch(()=>{})
