@@ -3,6 +3,7 @@ import { Button } from '../ui/Button'
 import { formatFileSize, previewKind, validateAttachment } from '../../lib/attachments'
 import { useAudioRecorder } from './useAudioRecorder'
 import { portalApi } from '../../api/portal'
+import { supabase } from '../../lib/supabase'
 
 interface Props {
   disabled: boolean
@@ -54,9 +55,16 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false,custome
     if(!customerId)return
     setPickerBusy(true);setError('');setPickerOpen(true)
     try{
-      const [files,projects]=await Promise.all([portalApi.files(),portalApi.projects()])
-      const permitted=new Set(projects.filter((project:any)=>project.customer_id===customerId).map((project:any)=>project.id))
-      setProjectFiles(files.filter((item:any)=>item.client_visible&&permitted.has(item.project_id)&&item.storage_provider==='google_drive'))
+      const [files,projects,linked]=await Promise.all([
+        portalApi.files(),
+        supabase.from('projects').select('id,customer_id,project_type').eq('customer_id',customerId),
+        supabase.from('project_customer_access').select('project_id').eq('customer_id',customerId),
+      ])
+      if(projects.error)throw projects.error
+      if(linked.error)throw linked.error
+      const permitted=new Set([...(projects.data||[]).map(item=>item.id),...(linked.data||[]).map(item=>item.project_id)])
+      setProjectFiles(files.filter((item:any)=>permitted.has(item.project_id)&&item.project?.project_type!=='internal'&&item.storage_provider==='google_drive'))
+
     }catch{setError('Não foi possível consultar os arquivos do projeto.')}
     finally{setPickerBusy(false)}
   }
@@ -126,7 +134,7 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false,custome
       <div className="flex items-center justify-between"><strong className="text-sm">Arquivos do projeto</strong><button type="button" onClick={()=>setPickerOpen(false)} aria-label="Fechar arquivos">✕</button></div>
       <input value={pickerSearch} onChange={event=>setPickerSearch(event.target.value)} placeholder="Buscar arquivo…" aria-label="Buscar arquivo do projeto" className="w-full min-h-10 rounded-lg bg-black/30 px-3 text-sm"/>
       <div className="max-h-52 overflow-y-auto space-y-1">{pickerBusy?<p className="text-xs">Preparando arquivo…</p>:projectFiles.filter(item=>item.name?.toLowerCase().includes(pickerSearch.toLowerCase())).map(item=><button key={item.id} type="button" onClick={()=>void selectProjectFile(item)} className="w-full text-left rounded-lg p-2 hover:bg-white/10 text-xs truncate">📎 {item.name}</button>)}</div>
-      {!pickerBusy&&!projectFiles.length&&<p className="text-xs text-gray-400">Nenhum arquivo compartilhável encontrado para o cliente.</p>}
+      {!pickerBusy&&!projectFiles.length&&<p className="text-xs text-gray-400">Nenhum arquivo do projeto encontrado. Verifique se o cliente está vinculado ao projeto.</p>}
     </div>}
     {audio.recording && <div className="flex flex-wrap items-center gap-2 rounded-xl bg-red-950/40 p-3">
       <p role="status" className="text-sm">Gravando {Math.floor(audio.seconds / 60)}:{String(audio.seconds % 60).padStart(2, '0')} / 5:00</p>
