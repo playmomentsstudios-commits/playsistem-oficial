@@ -30,6 +30,8 @@ const DEFAULTS:AppSettings={
   wa_bridge_sender_phone:'5564981294186',
   wa_bridge_test_phone:'5564981294186',
   wa_bridge_auto_started_at:null,
+  wa_bridge_delivery_mode:'self_test',
+  wa_bridge_single_customer_id:null,
   wa_prepare_project_status:true,
   wa_prepare_task_status:true,
   wa_prepare_stage_status:false,
