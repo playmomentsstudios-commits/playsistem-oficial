@@ -211,10 +211,26 @@ export function AdminLayout() {
           </div>
         </div>
 
-        <main className="pm-workspace-main flex-1 overflow-auto p-3 sm:p-4 lg:p-5">
+        <main className="pm-workspace-main flex-1 overflow-auto p-3 pb-24 sm:p-4 sm:pb-24 md:pb-4 lg:p-5">
           <Outlet />
         </main>
       </div>
+      <nav aria-label="Navegação principal administrativa" className="md:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-5 border-t border-white/10 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl" style={{background:collaboratorMode?staffBrand.staff_surface_color:'#0a0a0bf2',borderColor:collaboratorMode?'#e1e4e8':undefined}}>
+        {([
+          {label:'Painel',href:'/admin',icon:'dashboard'},
+          {label:'Projetos',href:'/admin/projetos',icon:'projects',permission:['projects.view','projects.manage']},
+          {label:'Tarefas',href:'/admin/produtividade',icon:'productivity',permission:['projects.view','projects.manage']},
+          {label:'Conversas',href:'/admin/conversas',icon:'conversations',permission:['conversations.access','conversations.view_all']},
+          {label:'Menu',href:null,icon:'management'},
+        ] as {label:string;href:string|null;icon:string;permission?:string[]}[]).map(item=>{
+          const allowed=!item.permission||hasStaffPermission(user?.role,staffPermissions,item.permission)
+          const active=item.href?isActive(item.href,item.href==='/admin'):sidebarOpen
+          const className='relative flex min-h-[60px] flex-col items-center justify-center gap-1 text-[10px] font-medium focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#DFA269]'
+          const contents=<><MenuIcon name={item.icon} size={20}/><span>{item.label}</span>{item.href==='/admin/conversas'&&counts.messages>0&&<span className="absolute top-1 left-[calc(50%+8px)] min-w-4 rounded-full bg-[#A65A2A] px-1 text-[9px] text-white">{counts.messages>99?'99+':counts.messages}</span>}</>
+          if(!allowed)return null
+          return item.href?<Link key={item.label} to={item.href} aria-current={active?'page':undefined} className={className} style={{color:active?'#A65A2A':collaboratorMode?'#667085':'#a1a1aa'}}>{contents}</Link>:<button key={item.label} type="button" aria-label="Abrir menu completo" aria-expanded={sidebarOpen} onClick={()=>setSidebarOpen(true)} className={className} style={{color:active?'#A65A2A':collaboratorMode?'#667085':'#a1a1aa'}}>{contents}</button>
+        })}
+      </nav>
     </div>
   )
 }
