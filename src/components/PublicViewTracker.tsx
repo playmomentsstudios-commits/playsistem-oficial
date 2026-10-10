@@ -12,7 +12,7 @@ function normalizePath(pathname:string){
 function classify(pathname:string):{content_type:ContentType;content_key:string;path:string}|null{
   const path=normalizePath(pathname)
 
-  if(/^\/(admin|app|login|cadastro|email-confirmado|esqueci-senha|redefinir-senha|carrinho|certificados|comunidade)(\/|$)/.test(path)){
+  if(/^\/(admin|app|abrir-app|login|cadastro|email-confirmado|esqueci-senha|redefinir-senha|carrinho|certificados|comunidade)(\/|$)/.test(path)){
     return null
   }
 

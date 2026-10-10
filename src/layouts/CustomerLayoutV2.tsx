@@ -1,6 +1,7 @@
 import { BrandImage } from '../components/BrandImage'
 import { PushNotificationSettings } from '../components/ui/PushNotificationSettings'
 import { BADGE_REFRESH_EVENT, setUnreadAppBadge } from '../lib/appBadge'
+import { isStandaloneApp } from '../lib/pwa'
 import { Component, type ErrorInfo, type ReactNode, useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -9,7 +10,7 @@ import { portalApi } from '../api/portal'
 import { FloatingCustomerChat } from '../components/chat/FloatingCustomerChat'
 import { settingsApi } from '../api/settings'
 
-type IconName='academy'|'home'|'user'|'orders'|'projects'|'services'|'quotes'|'payments'|'chat'|'files'|'community'|'notifications'|'announcements'|'settings'|'help'|'logout'|'chevron'
+type IconName='academy'|'home'|'user'|'orders'|'projects'|'services'|'quotes'|'payments'|'chat'|'files'|'community'|'notifications'|'announcements'|'settings'|'help'|'logout'|'chevron'|'globe'
 
 const ICONS:Record<IconName,React.ReactNode>={
   academy:<><path d="M3 6.5 12 2l9 4.5-9 4.5-9-4.5Z"/><path d="M6 9v5.5c0 1.8 2.7 3.5 6 3.5s6-1.7 6-3.5V9"/><path d="M21 7v7"/></>,
@@ -29,6 +30,7 @@ const ICONS:Record<IconName,React.ReactNode>={
   settings:<><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7 7 0 0 0-1.8-1L14.5 3h-5l-.3 3a7 7 0 0 0-1.8 1L5 6 3 9.5 5.1 11a7 7 0 0 0 0 2L3 14.5 5 18l2.4-1a7 7 0 0 0 1.8 1l.3 3h5l.3-3a7 7 0 0 0 1.8-1l2.4 1 2-3.5-2.1-1.5c.1-.3.1-.7.1-1Z"/></>,
   logout:<><path d="M10 4H5v16h5"/><path d="M14 8l4 4-4 4M8 12h10"/></>,
   chevron:<path d="m9 6 6 6-6 6"/>,
+  globe:<><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c-4 4-4 14 0 18M12 3c4 4 4 14 0 18"/></>,
 }
 
 function MenuIcon({name,size=20}:{name:IconName,size?:number}){
@@ -134,7 +136,7 @@ export function CustomerLayoutV2() {
   if (!isAuthenticated) return <Navigate to="/login" state={{ from: location }} replace />
   if (user?.role === 'admin' || user?.role === 'staff') return <Navigate to={afterAuthPath(location.pathname + location.search, user.role)} replace />
 
-  const handleLogout = async () => { await logout(); navigate('/') }
+  const handleLogout = async () => { await logout(); navigate(isStandaloneApp() ? '/login' : '/') }
 
   const Sidebar = ({ mobile = false }: { mobile?: boolean }) => {
     const showLabels=mobile||expanded
@@ -143,7 +145,7 @@ export function CustomerLayoutV2() {
       style={{width:mobile?248:expanded?228:76}}
     >
       <div className={'h-20 flex items-center border-b border-white/5 relative '+(showLabels?'px-4 justify-start':'justify-center')}>
-        <Link to="/" className="flex items-center justify-center">
+        <Link to="/app/dashboard" className="flex items-center justify-center">
           <BrandImage variant={showLabels?'dark':'symbol'} alt="Sagamente" className={showLabels?'h-8 w-auto':'h-9 w-9 object-contain'} />
         </Link>
         {mobile&&<button aria-label="Fechar menu" onClick={()=>setSidebarOpen(false)} className="absolute right-3 w-11 h-11 flex items-center justify-center text-gray-500 hover:text-white">✕</button>}
@@ -184,6 +186,9 @@ export function CustomerLayoutV2() {
       </nav>
 
       <div className="p-2 border-t border-white/5 space-y-1">
+        <Link to="/" onClick={()=>setSidebarOpen(false)} aria-label="Ver site" title={!showLabels?'Ver site':undefined} className={'flex items-center h-11 rounded-xl text-[#b7b7c2] hover:text-white hover:bg-white/[.05] '+(showLabels?'gap-3 px-3':'justify-center')}>
+          <MenuIcon name="globe" size={18}/>{showLabels&&<span className="text-sm font-medium">Ver site</span>}
+        </Link>
         {!mobile&&<button
           type="button"
           onClick={()=>setExpanded(value=>!value)}
@@ -208,6 +213,7 @@ export function CustomerLayoutV2() {
 
     <div className="flex-1 flex flex-col min-w-0">
       <header className="hidden md:flex h-14 items-center justify-end gap-2 px-6 border-b border-white/5 bg-[#0b0b0d]/95">
+        <Link to="/" aria-label="Ver site" title="Ver site" className="flex items-center gap-2 h-10 px-3 rounded-xl text-[#a1a1ad] hover:text-[#DFA269] hover:bg-white/[.05]"><MenuIcon name="globe" size={18}/><span className="hidden lg:inline text-xs font-semibold">Ver site</span></Link>
         <Link to="/app/ajuda" aria-label="Ajuda e dúvidas frequentes" title="Central de Ajuda" className="relative flex h-10 w-10 items-center justify-center rounded-xl text-[#7d7d88] hover:bg-white/[.05] hover:text-white">
           <MenuIcon name="help" size={18}/>
         </Link>
@@ -226,6 +232,7 @@ export function CustomerLayoutV2() {
           {accountMenuOpen&&<><button aria-label="Fechar menu" className="fixed inset-0 z-30 cursor-default" onClick={()=>setAccountMenuOpen(false)}/><div role="menu" className="absolute right-0 top-12 z-40 w-52 p-1.5 rounded-2xl border border-white/[.08] bg-[#111114] shadow-2xl">
             <Link to="/app/perfil" onClick={()=>setAccountMenuOpen(false)} className="flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#aaaab4] hover:text-white hover:bg-white/[.05]"><MenuIcon name="user" size={16}/>Perfil</Link>
             <Link to="/app/configuracoes" onClick={()=>setAccountMenuOpen(false)} className="flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#aaaab4] hover:text-white hover:bg-white/[.05]"><MenuIcon name="settings" size={16}/>Configurações</Link>
+            <Link to="/" onClick={()=>setAccountMenuOpen(false)} className="flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#aaaab4] hover:text-white hover:bg-white/[.05]"><MenuIcon name="globe" size={16}/>Ver site</Link>
             <div className="p-1"><PushNotificationSettings compact/></div>
             <div className="my-1 border-t border-white/[.06]"/>
             <button onClick={handleLogout} className="w-full flex items-center gap-3 h-10 px-3 rounded-xl text-xs text-[#DFA269] hover:bg-[#A65A2A]/10"><MenuIcon name="logout" size={16}/>Sair</button>
@@ -238,6 +245,7 @@ export function CustomerLayoutV2() {
         </button>
         <BrandImage variant="compact" alt="Sagamente" className="h-6"/>
         <div className="flex shrink-0 items-center gap-0.5">
+          <Link to="/" aria-label="Ver site" title="Ver site" className="flex h-10 w-9 items-center justify-center rounded-lg text-gray-300 hover:bg-white/[.05]"><MenuIcon name="globe" size={18}/></Link>
           <Link to="/app/ajuda" aria-label="Central de Ajuda" title="Ajuda e dúvidas frequentes" className="flex h-10 w-9 items-center justify-center rounded-lg text-gray-300 hover:bg-white/[.05]">
             <MenuIcon name="help" size={18}/>
           </Link>

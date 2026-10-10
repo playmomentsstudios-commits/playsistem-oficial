@@ -1,6 +1,7 @@
 import { BrandImage } from '../components/BrandImage'
 import { PushNotificationSettings } from '../components/ui/PushNotificationSettings'
 import { BADGE_REFRESH_EVENT, setUnreadAppBadge } from '../lib/appBadge'
+import { isStandaloneApp } from '../lib/pwa'
 import { useEffect, useState, type CSSProperties } from 'react'
 import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -101,7 +102,7 @@ export function AdminLayout() {
   if (!isAuthenticated) return <Navigate to="/login" state={{ from: location }} replace />
   if (!user || !['admin', 'staff'].includes(user.role)) return <Navigate to="/app/dashboard" replace />
 
-  const handleLogout = async () => { await logout(); navigate('/') }
+  const handleLogout = async () => { await logout(); navigate(isStandaloneApp() ? '/login' : '/') }
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? location.pathname === href : location.pathname === href || location.pathname.startsWith(href + '/')
@@ -150,8 +151,9 @@ export function AdminLayout() {
           </div>
         })}
       </nav>
-
-
+      <div className="p-3 border-t border-white/5">
+        <Link to="/" onClick={()=>setSidebarOpen(false)} className="flex items-center gap-3 min-h-11 rounded-xl px-3 text-sm text-[#DFA269] hover:bg-white/[.06]"><MenuIcon name="site" size={17}/>Ver site</Link>
+      </div>
     </aside>
   )
 
@@ -181,6 +183,7 @@ export function AdminLayout() {
             <span className="text-sm font-semibold" style={{ color: collaboratorMode?'#17171a':'#f0f0f2' }}>{collaboratorMode?staffBrand.staff_platform_name:'Sagamente'}</span>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
+            <Link to="/" aria-label="Ver site" title="Ver site" className="hidden sm:flex items-center gap-2 min-h-10 px-2 rounded-xl border border-white/[0.07] text-gray-400 hover:text-[#DFA269]"><MenuIcon name="site" size={17}/><span className="hidden xl:inline text-xs">Ver site</span></Link>
             <Link to="/admin/conversas" aria-label="Mensagens" title="Mensagens" className="relative w-10 h-10 rounded-xl border border-white/[0.07] bg-white/[0.025] text-gray-400 transition-colors flex items-center justify-center">
               <MenuIcon name="conversations" size={17}/>
               {counts.messages>0&&<span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-[#A65A2A] text-white text-[9px] font-bold flex items-center justify-center ring-2 ring-[var(--staff-surface,#0a0a0b)]">{counts.messages>99?'99+':counts.messages}</span>}
@@ -199,6 +202,7 @@ export function AdminLayout() {
               {accountOpen&&<><button aria-label="Fechar menu" onClick={()=>setAccountOpen(false)} className="fixed inset-0 z-40 cursor-default"/><div role="menu" className="absolute right-0 top-[calc(100%+8px)] z-50 w-56 rounded-xl border border-white/10 bg-[#111113] p-1.5 shadow-2xl">
                 <Link to="/app/perfil" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="about" size={15}/><span>Perfil</span></Link>
                 {user?.role==='admin'&&<Link to="/admin/configuracoes" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[0.05]"><MenuIcon name="settings" size={15}/><span>Configurações</span></Link>}
+                <Link to="/" onClick={()=>setAccountOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-gray-300 hover:bg-white/[.05]"><MenuIcon name="site" size={15}/>Ver site</Link>
                 <div className="p-1"><PushNotificationSettings compact/></div>
                 <div className="my-1 border-t border-white/[0.07]"/>
                 <button onClick={()=>{setAccountOpen(false);void handleLogout()}} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs text-[#DFA269] hover:bg-[#A65A2A]/10"><span>↩</span><span>Sair</span></button>

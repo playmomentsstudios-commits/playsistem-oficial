@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AppLaunchRoute, LegacyStandaloneLanding } from './components/AppLaunchRoute'
 import { AuthProvider } from './contexts/AuthContext'
 import { CartProvider } from './contexts/CartContext'
 import { ToastProvider } from './contexts/ToastContext'
@@ -114,8 +115,9 @@ export default function AppV2() {
             <Suspense fallback={<RouteFallback />}>
             <Routes>
               {/* Public */}
-              <Route path="/" element={<HomePage />} />
-              <Route path="/instalar" element={<InstallPage />} />
+              <Route path="/" element={<LegacyStandaloneLanding><HomePage /></LegacyStandaloneLanding>} />
+              <Route path="/instalar" element={<LegacyStandaloneLanding><InstallPage /></LegacyStandaloneLanding>} />
+              <Route path="/abrir-app" element={<AppLaunchRoute />} />
               <Route path="/academia" element={<PublicAcademyPage />} />
               <Route path="/curso/letramento-digital" element={<PublicDigitalLiteracyPage />} />
               <Route path="/login" element={<LoginPage />} />
