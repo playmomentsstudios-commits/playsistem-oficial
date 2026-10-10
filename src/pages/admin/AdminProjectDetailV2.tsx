@@ -401,13 +401,18 @@ export function AdminProjectDetailV2(){
       for(let index=0;index<picked.length;index+=1){
         const file=picked[index]
         setFileProgressName(file.name)
-        await portalApi.uploadDriveFile({
+        const uploaded=await portalApi.uploadDriveFile({
           project_id:id,
           task_id:fileTask||null,
           stage_id:effectiveFileStage,
           folder_kind:fileFolder,
           client_visible:project.project_type==='internal'?false:fileVisible,
         },file,value=>setFileProgress(Math.round(((index+(value/100))/picked.length)*100)))
+        // Existing deployed finalize functions can omit stage_id on customer projects.
+        // Keep the stage association in Postgres even before the Edge rollout.
+        if(project.project_type!=='internal'&&effectiveFileStage&&uploaded?.id){
+          await portalApi.assignClientFileStage(uploaded.id,effectiveFileStage)
+        }
       }
       toast(picked.length===1?'Arquivo enviado ao Google Drive e adicionado ao projeto.':picked.length+' arquivos enviados ao projeto.','success')
       setFileProgress(0)
@@ -436,6 +441,10 @@ export function AdminProjectDetailV2(){
         client_visible:project.project_type==='internal'?false:true,
       },file,setFileProgress)
       await portalApi.linkFileVersion(uploaded.id,previousFile.id)
+      if(project.project_type!=='internal'&&uploaded?.id){
+        const stageId=previousFile.stage_id||tasks.find((task:any)=>task.id===previousFile.task_id)?.stage_id||null
+        if(stageId)await portalApi.assignClientFileStage(uploaded.id,stageId)
+      }
       toast(project.project_type==='internal'?'Nova versão adicionada ao projeto interno.':'Nova versão adicionada. Agora você pode solicitar a aprovação do cliente.','success')
       setFileMenu(null);setFileProgress(0);setFileProgressName('')
       await load()
