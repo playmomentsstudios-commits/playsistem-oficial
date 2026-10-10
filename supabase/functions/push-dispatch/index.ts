@@ -24,7 +24,7 @@ function safeLink(value:unknown,role:string) {
     /^\/admin\/[a-zA-Z0-9/_-]*(?:\?[a-zA-Z0-9=&_-]*)?$/;
   return allowed.test(path) ? path : role==="customer"?"/app/notificacoes":"/admin/notificacoes";
 }
-function safeNotice(kind:string,role:string,path:string) {
+function safeNotice(kind:string,role:string,path:string,unreadCount:number) {
   const texts:Record<string,[string,string]> = {
     messages:["Nova mensagem na Sagamente","Você recebeu uma nova mensagem."],
     projects:["Projeto atualizado","Há novidades no acompanhamento de um projeto."],
@@ -34,7 +34,7 @@ function safeNotice(kind:string,role:string,path:string) {
   };
   const [title,body] = texts[kind] || texts.projects;
   return {title,body,url:path,tag:"sagamente-"+kind,icon:"/pwa/icon-192.png",
-    badge:"/pwa/icon-192.png",category:kind,role};
+    badge:"/pwa/icon-192.png",category:kind,role,unreadCount};
 }
 type Entry = {queue_id:string;notification_id:string;user_id:string;type:string;link:string;metadata?:Record<string,any>};
 async function deliver(db:any,item:Entry) {
@@ -77,7 +77,13 @@ async function deliver(db:any,item:Entry) {
   const filtered=(subscriptions.data||[]).filter((sub:any)=>sub.categories?.[kind]!==false);
   if (!filtered.length) return {success:true,sent:0};
   const link=safeLink(item.link,role);
-  const pushData=JSON.stringify(safeNotice(kind,role,link));
+  // The badge represents the actual unread inbox, not just one incoming Push.
+  // Never transmit user IDs, notification bodies or message contents to the device.
+  const unread=await db.from("notifications").select("id",{count:"exact",head:true})
+    .eq("user_id",item.user_id).is("read_at",null);
+  if(unread.error) throw new Error("Unable to count unread notifications");
+  const unreadCount=Math.max(0,Number(unread.count||0));
+  const pushData=JSON.stringify(safeNotice(kind,role,link,unreadCount));
   let sent=0,transient=false;
   for(const sub of filtered) {
     try {

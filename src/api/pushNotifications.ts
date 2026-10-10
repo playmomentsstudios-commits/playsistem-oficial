@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { setUnreadAppBadge } from '../lib/appBadge'
 
 export type PushCategories = {
   messages:boolean; projects:boolean; files:boolean; commercial:boolean; deadlines:boolean
@@ -84,9 +85,11 @@ export const pushNotificationApi={
   },
   async disable() {
     const sub=await getExisting()
-    if(!sub)return
-    await call('unsubscribe',{endpoint:sub.endpoint})
-    await sub.unsubscribe()
+    if(sub) {
+      await call('unsubscribe',{endpoint:sub.endpoint})
+      await sub.unsubscribe()
+    }
+    await setUnreadAppBadge(0)
   },
   async unregisterCurrentDevice() {
     // Explicit sign-out must stop alerts for the previous account on shared devices.

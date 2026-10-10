@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { notifyBadgeChanged } from '../lib/appBadge'
 
 export const portalApi = {
   customers: async () => {
@@ -533,10 +534,12 @@ export const portalApi = {
   markNotification: async (id:string) => {
     const { error }=await supabase.from('notifications').update({read_at:new Date().toISOString()}).eq('id',id)
     if(error) throw error
+    notifyBadgeChanged()
   },
   markAllNotifications: async () => {
     const { error }=await supabase.from('notifications').update({read_at:new Date().toISOString()}).is('read_at',null)
     if(error) throw error
+    notifyBadgeChanged()
   },
   files: async () => {
     const { data,error }=await supabase.from('client_files')
@@ -768,11 +771,19 @@ export const portalApi = {
       supabase.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',userId).is('read_at',null),
       supabase.rpc('unread_message_count')
     ])
+    if(n.error) throw n.error
     if(m.error) throw m.error
     return {notifications:n.count??0,messages:Number(m.data||0)}
   },
   markConversationRead: async (conversationId:string,_userId?:string) => {
     const { error }=await supabase.rpc('mark_conversation_read_v2',{p_conversation_id:conversationId})
     if(error) throw error
+    // Opening a conversation also clears the matching message alerts from the inbox.
+    // RLS restricts this update to notifications owned by the signed-in user.
+    const {error:notificationError}=await supabase.from('notifications')
+      .update({read_at:new Date().toISOString()}).eq('type','new_message')
+      .contains('metadata',{conversation_id:conversationId}).is('read_at',null)
+    if(notificationError)console.warn('Não foi possível marcar os avisos da conversa como lidos.')
+    notifyBadgeChanged()
   }
 }

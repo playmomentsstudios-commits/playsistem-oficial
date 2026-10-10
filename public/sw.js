@@ -60,6 +60,20 @@ self.addEventListener('push', event => {
       body,tag,icon:'/pwa/icon-192.png',badge:'/pwa/icon-192.png',data:{url},
       renotify:false
     })
+    // This number comes from the authenticated recipient's unread inbox on the server.
+    // iOS Home Screen apps update the red icon count even while closed.
+    const unread = payload.unreadCount
+    if (Number.isSafeInteger(unread) && unread >= 0) {
+      try {
+        if (unread === 0 && typeof self.navigator.clearAppBadge === 'function') {
+          await self.navigator.clearAppBadge()
+        } else if (typeof self.navigator.setAppBadge === 'function') {
+          await self.navigator.setAppBadge(unread)
+        }
+      } catch {
+        // Badge permission or API support can vary. Keep showing the Push banner.
+      }
+    }
   })())
 })
 self.addEventListener('notificationclick', event => {
