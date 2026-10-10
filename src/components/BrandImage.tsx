@@ -15,9 +15,9 @@ const KEYS:Record<BrandVariant,AssetKey>={
 export const BRAND_DEFAULTS:Record<BrandVariant,string>={
   dark:'/sagamente-logo-dark.svg',
   light:'/sagamente-logo-light.svg',
-  compact:'/sagamente-logo-dark.svg',
+  compact:'/sagamente-logo-compact.svg',
   symbol:'/sagamente-mark.svg',
-  staff:'/sagamente-logo-light.svg',
+  staff:'/sagamente-logo-staff.svg',
   favicon:'/favicon.svg',
   social:'',
 }
