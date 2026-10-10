@@ -70,7 +70,7 @@ export function WhatsappQrBridgePanel(){
   const updatedBridge=Boolean(bridge?.worker_capability==='registered-jid-receipts-v1'&&bridge.worker_capability_at&&(now-new Date(bridge.worker_capability_at).getTime()<35000))
   const enabled=Boolean(config?.wa_bridge_auto_enabled)
   async function sendTest(){
-    if(!window.confirm('Enviar UM teste automático exclusivamente para +55 64 98129-4186? Conta para o teto diário de 10 tentativas.'))return
+    if(!window.confirm('Enviar UM teste automático exclusivamente para +55 64 98129-4186? Conta para o teto diário configurado na Central WhatsApp.'))return
     try{
       setBusy(true)
       const {error}=await supabase.rpc('wa_bridge_prepare_test')
@@ -108,7 +108,7 @@ export function WhatsappQrBridgePanel(){
       const desc=mode==='self_test'?'somente o número de teste +55 64 98129-4186':
         mode==='single_client'?('apenas '+(target?.customer_name||'cliente selecionado')+' no número +'+(target?.phone||'')):
         'TODOS os clientes que registraram consentimento válido'
-      if(!window.confirm('ATENÇÃO: enviar automaticamente para '+desc+'? Até 10 tentativas por dia, apenas para eventos NOVOS após ativar. Biblioteca NÃO OFICIAL com risco de bloqueio do número comercial.'))return
+      if(!window.confirm('ATENÇÃO: enviar automaticamente para '+desc+'? Até '+(config?.wa_bridge_daily_limit??30)+' tentativas por dia, além do controle de 2 minutos entre tentativas e 10 por hora, apenas para eventos NOVOS após ativar. Biblioteca NÃO OFICIAL com risco de bloqueio do número comercial.'))return
     }
     if(value==='disconnect'&&!window.confirm('Desconectar o dispositivo e revogar a sessão local do WhatsApp?'))return
     try{
@@ -150,7 +150,7 @@ export function WhatsappQrBridgePanel(){
             <p className="text-[11px] text-gray-500">Número vinculado</p><p className="mt-1 text-sm text-white">{connected?('+'+bridge?.connected_phone):'Nenhum'}</p>
           </div>
           <div className="rounded-xl bg-black/30 p-3 border border-white/10">
-            <p className="text-[11px] text-gray-500">Tentativas diárias</p><p className="mt-1 text-sm text-white">{config?.wa_bridge_daily_limit??10} no máximo</p>
+            <p className="text-[11px] text-gray-500">Teto de tentativas por dia (ajustável na aba Configurações do canal)</p><p className="mt-1 text-sm text-white">{config?.wa_bridge_daily_limit??30} no máximo</p>
           </div>
           <div className="rounded-xl bg-black/30 p-3 border border-white/10">
             <p className="text-[11px] text-gray-500">Destino do piloto</p><p className="mt-1 text-sm text-white">{mode==='self_test'?'Somente +'+config?.wa_bridge_test_phone:mode==='single_client'?target?(target.customer_name+' · +'+target.phone):'Cliente selecionado sem aceite válido':'Todos os clientes com aceite válido'}</p>
@@ -189,7 +189,7 @@ export function WhatsappQrBridgePanel(){
             </select>
           </label>}
           {eligible.length===0&&<p className="rounded-lg border border-amber-500/15 p-3 text-xs text-amber-200">
-            Nenhum cliente autorizou o WhatsApp ainda. Cada cliente precisa entrar no próprio portal, conferir o número do perfil e aceitar em Configurações → Notificações; não é possível forçar o aceite pelo administrador.
+            Nenhum cliente autorizou o WhatsApp ainda. Cada cliente precisa entrar no próprio portal, conferir o número do perfil e aceitar em Configurações → WhatsApp — Avisos dos meus projetos; não é possível forçar o aceite pelo administrador.
           </p>}
           {choiceMode==='consented_clients'&&<p className="text-xs text-amber-200">
             Etapa avançada: só habilite depois de confirmar com o primeiro cliente que a mensagem realmente chegou. As mensagens continuarão sujeitas ao limite diário.
