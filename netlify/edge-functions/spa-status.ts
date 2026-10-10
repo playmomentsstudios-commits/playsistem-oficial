@@ -7,6 +7,7 @@ const exactPublicRoutes=new Set([
 ])
 
 const dynamicPublicRoutes=[
+  /^\/n\/[A-Za-z0-9_-]{22}\/?$/,
   /^\/produtos\/[^/]+\/?$/,
   /^\/servicos\/[^/]+\/?$/,
   /^\/portfolio\/[^/]+\/?$/,
