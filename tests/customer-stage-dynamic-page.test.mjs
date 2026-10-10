@@ -29,9 +29,9 @@ test('dynamic stage route is protected by customer and admin layouts',()=>{
 test('stage page filters everything to the authorized project and published stage',()=>{
   assert.match(customer,/item\.id===stageId&&item\.project_id===id&&item\.client_visible/)
   assert.match(customer,/task\.client_visible&&task\.project_id===id&&task\.stage_id===stageId/)
-  assert.match(customer,/!file\.client_visible\|\|file\.project_id!==id/)
-  assert.match(customer,/linkedTasks\.get\(file\.task_id\)===stageId/)
-  assert.match(customer,/file\.stage_id===stageId/)
+  assert.match(customer,/customerProjectFileGroups\(files,/)
+  assert.match(customer,/group\.stageId===stageId/)
+  assert.match(customer,/\.filter\(\(file:any\)=>file\.project_id===id\)/)
   assert.match(customer,/link\.client_visible/)
   assert.match(customer,/Esta etapa não existe, não está liberada/)
   assert.doesNotMatch(customer,/drive\.google\.com\/file\/d/)
