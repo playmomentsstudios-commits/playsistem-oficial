@@ -1,7 +1,5 @@
--- WhatsApp QR: include the full authenticated stage URL in automatic project
--- notifications, without exposing private files or changing sending opt-ins.
--- Keeps test-only routing, the daily limit, freshness guards and user consent.
-
+-- WhatsApp QR: append a safe clickable URL for dynamic project stages.
+-- Preserve consent, test routing and cap as-is.
 create or replace function public.wa_bridge_claim(p_instance uuid)
 returns jsonb language plpgsql security invoker set search_path='' as $$
 declare cfg public.app_settings%rowtype; bridge public.whatsapp_bridge_state%rowtype;
@@ -35,13 +33,7 @@ begin
  -- Only valid internal project-stage links are expanded to the canonical
  -- HTTPS app origin. The outgoing URL never comes from a user-provided host.
  if v_row.event_type in ('project_task','project_stage')
-   and v_row.target_link ~ '^/app/projetos/[0-9a-fA-F-]{36}(/etapas/[0-9a-fA-F-]{36})?
- update public.whatsapp_message_outbox set status='sending_auto' where id=v_row.id;
- insert into public.whatsapp_bridge_attempts(outbox_id,instance_id,destination_phone,test_mode)
- values(v_row.id,p_instance,v_target,cfg.wa_bridge_test_only) returning id into v_attempt;
- return jsonb_build_object('attempt_id',v_attempt,'outbox_id',v_row.id,
-  'phone',v_target,'message',v_body,'test_only',cfg.wa_bridge_test_only);
-end $$; then
+   and v_row.target_link ~ '^/app/projetos/[0-9a-fA-F-]{36}(/etapas/[0-9a-fA-F-]{36})?$' then
    v_body:=v_body||E'\n\n'||
     case when v_row.target_link like '%/etapas/%' then 'Abrir etapa: '
          else 'Acompanhar projeto: ' end||
