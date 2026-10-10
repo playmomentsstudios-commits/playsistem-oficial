@@ -185,6 +185,8 @@ async function sendOne(){
       p_instance:instanceId,p_attempt:job.attempt_id,p_success:success,
       p_msg_id:msgId,p_error:sendError
     })
+    // A receipt can precede sendMessage() returning; persist its confirmation now.
+    if(msgId&&receiptTracker)await receiptTracker.flush(msgId)
   }catch(err){
     console.error('[bridge] Falha na fila:',err?.message||'erro inesperado')
   }finally{busy=false}
