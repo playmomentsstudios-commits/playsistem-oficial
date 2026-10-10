@@ -15,6 +15,8 @@ test('auto WhatsApp includes a full, clickable HTTPS link to dynamic stage',()=>
   assert.match(sql,/Abrir etapa:/)
   assert.match(sql,/Acompanhar projeto:/)
   assert.match(sql,/v_body:=v_body\|\|E'/)
+  assert.ok(sql.includes("})?$' then"),'the SQL path validation must have its closing quote and THEN')
+  assert.doesNotMatch(sql,/end \$\$; then/,'a SQL function must not be truncated')
   assert.match(events,/\'\/app\/projetos\/\'\|\|new\.project_id::text\|\|\'\/etapas\/\'\|\|new\.id::text/)
   assert.match(events,/new\.stage_id::text/)
 })
