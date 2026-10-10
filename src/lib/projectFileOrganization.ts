@@ -10,31 +10,32 @@ export const standardProjectFolders=[
 ] as const
 
 type Row=Record<string,any>
+type FolderGroup={key:string;name:string;kind:string;files:Row[];parent?:string}
 
 export function adminProjectFolderGroups(
   files:Row[], standard:Row[], custom:Row[], stageFolders:Row[],
   projectRootId?:string|null,
 ){
-  const byId=new Map<string,{key:string;name:string;kind:string;parent?:string}>()
-  const groups:{key:string;name:string;kind:string;files:Row[];parent?:string}[]=[]
+  const byId=new Map<string,FolderGroup>()
+  const groups:FolderGroup[]=[]
   for(const folder of standardProjectFolders){
-    const item={key:'standard:'+folder.kind,name:folder.label,kind:folder.kind,files:[] as Row[]}
+    const item:FolderGroup={key:'standard:'+folder.kind,name:folder.label,kind:folder.kind,files:[]}
     groups.push(item)
     const registered=standard.find((row:Row)=>row.folder_kind===folder.kind)
     if(registered?.drive_folder_id)byId.set(registered.drive_folder_id,item)
   }
   for(const folder of custom){
-    const item={key:'custom:'+folder.id,name:folder.name,kind:'custom',parent:standardProjectFolders.find(row=>row.kind===folder.parent_kind)?.label||'Pasta personalizada',files:[] as Row[]}
+    const item:FolderGroup={key:'custom:'+folder.id,name:folder.name,kind:'custom',parent:standardProjectFolders.find(row=>row.kind===folder.parent_kind)?.label||'Pasta personalizada',files:[]}
     groups.push(item)
     if(folder.drive_folder_id)byId.set(folder.drive_folder_id,item)
   }
   for(const folder of stageFolders){
-    const item={key:'stage:'+folder.stage_id,name:folder.folder_name||'Pasta da etapa',kind:'stage',files:[] as Row[]}
+    const item:FolderGroup={key:'stage:'+folder.stage_id,name:folder.folder_name||'Pasta da etapa',kind:'stage',files:[]}
     groups.push(item)
     if(folder.drive_folder_id)byId.set(folder.drive_folder_id,item)
   }
-  const root={key:'root',name:'Raiz do projeto',kind:'root',files:[] as Row[]}
-  const unknown={key:'other',name:'Outras subpastas do Drive',kind:'other',files:[] as Row[]}
+  const root:FolderGroup={key:'root',name:'Raiz do projeto',kind:'root',files:[]}
+  const unknown:FolderGroup={key:'other',name:'Outras subpastas do Drive',kind:'other',files:[]}
   for(const file of files){
     const group=file.drive_folder_id?byId.get(file.drive_folder_id):null
     if(group)group.files.push(file)
