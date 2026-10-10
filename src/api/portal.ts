@@ -377,6 +377,15 @@ export const portalApi = {
     if(!data?.ok)throw new Error(data?.error||'Não foi possível sincronizar os arquivos do Google Drive.')
     return data as {ok:true;added:number;updated:number;scanned:number;folders:number;unconfigured?:boolean}
   },
+  projectDriveFolderDirectory: async (projectId:string) => {
+    const [standard,custom,stages]=await Promise.all([
+      supabase.from('project_drive_folders').select('drive_folder_id,folder_kind,folder_name').eq('project_id',projectId),
+      supabase.from('project_custom_folders').select('id,name,parent_kind,drive_folder_id').eq('project_id',projectId).order('name'),
+      supabase.from('project_stage_drive_folders').select('stage_id,folder_name,drive_folder_id').eq('project_id',projectId),
+    ])
+    for(const result of [standard,custom,stages])if(result.error)throw result.error
+    return {standard:standard.data||[],custom:custom.data||[],stages:stages.data||[]}
+  },
   projectFiles: async (projectId:string) => {
     const { data,error }=await supabase.from('client_files')
       .select('*,stage:project_stages(id,name,position),custom_folder:project_custom_folders(id,name,parent_kind,client_visible)').eq('project_id',projectId).order('created_at',{ascending:false})
