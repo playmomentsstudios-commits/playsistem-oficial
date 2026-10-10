@@ -1,6 +1,6 @@
 import { BrandImage } from '../components/BrandImage'
 import { PushNotificationSettings } from '../components/ui/PushNotificationSettings'
-import { BADGE_REFRESH_EVENT, setUnreadAppBadge } from '../lib/appBadge'
+import { BADGE_REFRESH_EVENT, setUnreadAppBadge, updateNotificationFavicon } from '../lib/appBadge'
 import { isStandaloneApp } from '../lib/pwa'
 import { useEffect, useState, type CSSProperties } from 'react'
 import { Link, useLocation, useNavigate, Outlet, Navigate } from 'react-router-dom'
@@ -57,6 +57,7 @@ export function AdminLayout() {
         if (!active) return
         setCounts(counts)
         void setUnreadAppBadge(counts.notifications)
+        updateNotificationFavicon(counts.messages, counts.notifications)
       }).catch(() => undefined)
     }
     const onVisible = () => { if (document.visibilityState === 'visible') load() }
