@@ -104,12 +104,17 @@ Deno.serve(async (req) => {
       throw new Error("Drive file is outside this project");
     }
 
-    const fileStageId = project.project_type === "internal"
-      ? (taskStageId || requestedStageId || file.appProperties?.playMomentsStageId || null)
-      : null;
+    const fileStageId = taskStageId || (staff ? requestedStageId : null)
+      || (project.project_type === "internal" ? file.appProperties?.playMomentsStageId || null : null);
 
-    if (fileStageId && !(folders.stageFolders || []).some((row:any) => row.stage_id === fileStageId)) {
-      throw new Error("Stage folder does not belong to this project");
+    if (fileStageId) {
+      const { data: stage, error: stageError } = await ctx.db.from("project_stages")
+        .select("id,project_id").eq("id",fileStageId).maybeSingle();
+      if (stageError || stage?.project_id !== projectId) throw new Error("Stage does not belong to project");
+      if (project.project_type === "internal"
+        && !(folders.stageFolders || []).some((row:any) => row.stage_id === fileStageId)) {
+        throw new Error("Stage folder does not belong to this project");
+      }
     }
 
     // Drive objects stay private. Visibility is enforced by Play Moments and

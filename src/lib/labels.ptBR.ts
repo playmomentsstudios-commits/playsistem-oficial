@@ -52,6 +52,7 @@ export const statusProjeto: Record<string,string> = {
 export const statusEtapa: Record<string,string> = {
   pending:'Pendente',
   in_progress:'Em andamento',
+  review:'Em revisão',
   completed:'Concluída',
 }
 
