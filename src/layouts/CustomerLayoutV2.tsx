@@ -47,6 +47,7 @@ const MENU:{label:string;href:string;icon:IconName;group:string}[]=[
   { label: 'Academia', href: '/app/academia', icon: 'academy', group: 'experiencia' },
   { label: 'Comunidade', href: '/comunidade', icon: 'community', group: 'experiencia' },
   { label: 'Ajuda', href: '/app/ajuda', icon: 'help', group: 'experiencia' },
+  { label: 'Configurações', href: '/app/configuracoes', icon: 'settings', group: 'experiencia' },
 ]
 
 
