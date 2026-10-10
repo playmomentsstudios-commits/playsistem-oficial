@@ -27,6 +27,21 @@
 - Para uma futura liberação a clientes reais, há consentimento individual (`wa_automatic_opt_in`); nenhuma conta começa optada.
 - `sent_auto` significa que a biblioteca retornou um ID de mensagem, **não** que o telefone recebeu ou leu.
 
+## Solução de problemas no Windows
+
+**Aparece `ERRO: npm.cmd nao encontrado`?** O Node.js pode estar instalado de forma incompleta, ou o `npm.cmd` não está no `PATH`. O iniciador agora verifica também a pasta do `node.exe` e o CLI local do npm antes de emitir o erro.
+
+Se o problema continuar, instale/repare o [Node.js LTS para Windows](https://nodejs.org/en/download) com **npm package manager** e **Add to PATH** habilitados. Feche o terminal antigo, abra um PowerShell novo e confira:
+
+```powershell
+where.exe node
+where.exe npm
+node -v
+npm -v
+```
+
+É necessário que **ambas** as versões apareçam. Depois, dê dois cliques em `Iniciar WhatsApp Sagamente.cmd` novamente. O programa não precisa de chave secreta para esse diagnóstico e ainda não envia mensagens.
+
 ## Instalação no Windows (Node 22)
 
 1. Abra um terminal na cópia atualizada do repositório e entre em `services/whatsapp-bridge`.
