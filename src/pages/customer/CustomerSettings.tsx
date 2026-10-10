@@ -111,7 +111,7 @@ export function CustomerSettings(){
           {option('Atualizações de projetos','Avisos relacionados ao andamento dos seus projetos.','notify_project_updates')}
           {option('Atualizações de arquivos','Avisos sobre novos arquivos, versões e aprovações.','notify_file_updates')}
           {option('Orçamentos e pedidos','Avisos relacionados a orçamento, pedido e fluxo comercial.','notify_commercial_updates')}
-          {option('Aceito notificações automáticas pelo WhatsApp','Opcional. A automação de testes não envia para clientes. Ao ativar, você autoriza o recebimento de avisos importantes pelo WhatsApp cadastrado, caso esse canal seja liberado futuramente. Pode desativar a qualquer momento.','wa_automatic_opt_in')}
+          {option('Aceito receber avisos dos meus projetos pelo WhatsApp','Opcional: autorizo a Sagamente a enviar atualizações dos projetos para o número cadastrado em meu perfil. A conexão é experimental e não oficial. Posso retirar o aceite a qualquer momento; se meu número mudar, preciso renovar a autorização.','wa_automatic_opt_in')}
         </div>
       </section>
 
