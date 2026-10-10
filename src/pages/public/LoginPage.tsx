@@ -1,5 +1,4 @@
 import { BrandImage } from '../../components/BrandImage'
-import { SagamenteMotion } from '../../components/ui/SagamenteMotion'
 import { useState } from 'react'
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
@@ -49,13 +48,12 @@ export function LoginPage() {
       <div className="flex-1 flex flex-col items-center justify-start lg:justify-center p-4 sm:p-6">
         <div className="w-full max-w-sm">
           <LoginMobileExperience />
-          <div className="flex justify-center mb-4 lg:mb-6"><SagamenteMotion size={55} label="Símbolo animado Sagamente" /></div>
           <Link to="/" className="lg:hidden flex justify-center mb-6">
             <BrandImage variant="dark" alt="Sagamente" style={{ height: 26 }} />
           </Link>
 
-          <p className="text-[10px] sm:text-xs uppercase tracking-[.18em] font-bold mb-2 sm:mb-3" style={{color:'#A65A2A'}}>Área pessoal</p><h1 className="text-[1.85rem] sm:text-3xl font-extrabold mb-2" style={{ color: '#f0f0f2' }}>Acesse sua conta</h1>
-          <p className="text-sm mb-6 sm:mb-7 leading-relaxed" style={{ color: '#777784' }}>Continue de onde parou na Sagamente. Ainda não tem conta? <Link to={authLink('/cadastro', from)} className="font-semibold" style={{ color: '#DFA269' }}>Criar gratuitamente</Link>.</p>
+<h1 className="text-[1.85rem] sm:text-3xl font-extrabold mb-2" style={{ color: '#f0f0f2' }}>Acesse sua conta</h1>
+          <p className="text-sm mb-6 sm:mb-7 leading-relaxed" style={{ color: '#777784' }}>Entre para continuar seus projetos e cursos.</p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 sm:gap-4">
             <Input label="E-mail" type="email" placeholder="seu@email.com"
@@ -73,7 +71,7 @@ export function LoginPage() {
               Entrar
             </Button>
           </form>
-          <div className="mt-5 sm:mt-6 pt-4 sm:pt-5 border-t border-white/[.06] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3"><span className="text-xs text-gray-600">Quer apenas conhecer os cursos?</span><Link to="/academia" className="text-xs font-bold text-[#DFA269]">Ver Academia →</Link></div>
+          <p className="mt-5 text-center text-xs text-gray-500">Ainda não tem conta? <Link to={authLink('/cadastro', from)} className="font-semibold text-[#DFA269]">Criar gratuitamente</Link></p>
         </div>
       </div>
     </div>
