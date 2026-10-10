@@ -885,6 +885,7 @@ export function AdminProjectDetailV2(){
         return <details key={task.id} className={'rounded-xl border p-3 transition-colors '+(task.status==='completed'?'border-emerald-500/35 bg-emerald-500/[.07]':task.status==='in_progress'?'border-amber-400/35 bg-amber-400/[.07]':task.status==='review'?'border-sky-400/35 bg-sky-400/[.07]':task.status==='cancelled'?'border-white/10 bg-black/10 opacity-60':'border-white/15 bg-white/[.025]')}>
           <summary className={'cursor-pointer font-semibold text-sm select-none '+(task.status==='completed'?'text-emerald-300':task.status==='in_progress'?'text-amber-300':task.status==='review'?'text-sky-300':task.status==='cancelled'?'text-gray-500 line-through':'text-gray-200')}>{task.title} <span className="ml-2 text-xs font-normal opacity-80">· {rotulo(statusTarefa,task.status)}</span></summary>
           <div className="mt-3">
+          {stage?.client_visible&&task.client_visible&&<Link to={'/admin/projetos/'+id+'/etapas/'+stage.id+'/tarefas/'+task.id} className="mb-3 inline-flex min-h-10 items-center rounded-lg border border-[#A65A2A]/30 px-3 text-xs font-semibold text-[#DFA269] hover:bg-white/5">Prévia da tarefa para o cliente ↗</Link>}
           <div className="flex flex-wrap justify-between gap-3">
             <div>
               <b>{task.title}</b>
