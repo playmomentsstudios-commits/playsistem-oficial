@@ -176,7 +176,8 @@ export function AdminWhatsappCenter(){
       toast('Número do destinatário inválido. Atualize o cadastro.','error')
       return
     }
-    const prepared=item.message_body+(safeUrl(item.target_link)?'\n\nAcompanhar: '+safeUrl(item.target_link):'')
+    const destinationUrl=safeUrl(item.target_link)
+    const prepared=item.message_body+(destinationUrl&&!item.message_body.includes(destinationUrl)?'\n\nAcompanhar: '+destinationUrl:'')
     const popup=window.open('https://wa.me/'+destination+'?text='+encodeURIComponent(prepared),'_blank')
     if(popup)popup.opener=null
     // "opened_manual" identifica apenas a ação de abrir. Não comprova envio.
