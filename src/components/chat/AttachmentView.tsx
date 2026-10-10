@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { conversationsApi, type SupportMessage } from '../../api/conversations'
+import { ImageViewer } from '../files/ImageViewer'
 import { formatFileSize, previewKind } from '../../lib/attachments'
 
 export function AttachmentView({ message }: { message: SupportMessage }) {
@@ -10,6 +11,7 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
   const [previewLoading,setPreviewLoading]=useState(false)
   const [expanded,setExpanded]=useState(false)
   const [expandedUrl,setExpandedUrl]=useState('')
+  const [expandedRetry,setExpandedRetry]=useState(0)
   const [expandedError,setExpandedError]=useState('')
   const [playing,setPlaying] = useState(false)
   const [duration,setDuration] = useState(0)
@@ -47,7 +49,7 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
     const close=(event:KeyboardEvent)=>{if(event.key==='Escape')setExpanded(false)}
     window.addEventListener('keydown',close)
     return()=>{active=false;window.removeEventListener('keydown',close);if(objectUrl.startsWith('blob:'))URL.revokeObjectURL(objectUrl)}
-  },[expanded,message.id,path])
+  },[expanded,message.id,path,expandedRetry])
 
   const clock=(value:number)=>Number.isFinite(value)&&value>=0?`${Math.floor(value/60)}:${String(Math.floor(value%60)).padStart(2,'0')}`:'0:00'
   function syncDuration(el:HTMLAudioElement){
@@ -104,19 +106,14 @@ export function AttachmentView({ message }: { message: SupportMessage }) {
     {!url&&!error&&<span className="text-xs opacity-70">Carregando áudio…</span>}
     {error&&<button type="button" onClick={()=>{setError('');setRetry(value=>value+1)}} className="block mt-1 text-xs underline">Tentar novamente</button>}
   </div>
-  return <div className="space-y-2 mb-2 min-w-0">
-    <p className="font-semibold break-words" style={{ overflowWrap: 'anywhere' }}>{message.attachment_name}</p>
-    <p className="text-xs opacity-75">{formatFileSize(message.attachment_size || 0)} · Arquivo original</p>
+  return <div className={kind==='image'?'min-w-0':'space-y-2 mb-2 min-w-0'}>
+    {kind!=='image'&&<p className="font-semibold break-words" style={{ overflowWrap: 'anywhere' }}>{message.attachment_name}</p>}
+    {kind!=='image'&&<p className="text-xs opacity-75">{formatFileSize(message.attachment_size || 0)} · Arquivo original</p>}
     {kind==='image'&&previewLoading&&!error&&<div role="status" className="text-xs opacity-70">Carregando imagem…</div>}
-    {url && kind === 'image' && !error && <img key={retry} src={url} alt={message.attachment_name || 'Imagem enviada'} loading="eager" decoding="async" className="max-h-48 md:max-h-56 max-w-full rounded-xl object-contain bg-black/20" onLoad={()=>setPreviewLoading(false)} onError={() => {setPreviewLoading(false);setUrl('');setError('Imagem corrompida ou incompatível. Tente novamente ou baixe o original.')}} />}
-    {url && kind === 'image' && !error && <button type="button" className="block text-xs underline" onClick={()=>setExpanded(true)}>Ampliar imagem</button>}
-    {expanded && url && kind === 'image' && <div role="dialog" aria-modal="true" aria-label="Visualização ampliada" className="fixed inset-0 z-[100] bg-black/95 flex flex-col p-4">
-      <div className="flex justify-between gap-3 items-center"><span className="truncate text-sm">{message.attachment_name}</span><button type="button" className="rounded-lg bg-white/20 px-4 py-3" onClick={()=>setExpanded(false)}>Fechar</button></div>
-      {expandedUrl?<img src={expandedUrl} alt={message.attachment_name||'Imagem'} className="flex-1 min-h-0 w-full object-contain" onError={()=>{setExpandedUrl('');setExpandedError('Imagem incompatível ou corrompida. Baixe o original.')}}/>:<div className="flex-1 flex items-center justify-center" role="status">{expandedError||'Carregando imagem…'}</div>}
-      <button type="button" onClick={download} className="rounded-lg bg-white/20 px-4 py-3">Baixar original</button>
-    </div>}
+    {url && kind === 'image' && !error && <button type="button" className="block w-full cursor-zoom-in rounded-lg overflow-hidden focus-visible:outline-2 focus-visible:outline-white" aria-label="Abrir imagem" onClick={()=>setExpanded(true)}><img key={retry} src={url} alt={message.attachment_name || 'Imagem enviada'} loading="eager" decoding="async" className="max-h-[65dvh] md:max-h-[560px] w-full object-contain" onLoad={()=>setPreviewLoading(false)} onError={() => {setPreviewLoading(false);setUrl('');setError('Imagem corrompida ou incompatível. Tente novamente ou baixe o original.')}} /></button>}
+    {expanded && kind === 'image' && <ImageViewer url={expandedUrl} name={message.attachment_name||'Imagem'} onClose={()=>setExpanded(false)} onDownload={()=>void download()} downloading={downloading} loading={!expandedUrl} error={expandedError} onRetry={()=>setExpandedRetry(value=>value+1)}/>}
     {url && kind === 'video' && <video aria-label={`Vídeo: ${message.attachment_name}`} controls playsInline preload="metadata" src={url} className="max-h-48 md:max-h-56 max-w-full rounded-xl bg-black/20" onError={() => setError('Vídeo indisponível neste navegador ou link expirado. Baixe o original ou tente novamente.')} />}
     {error && <p role="alert" className="text-xs">{error} {kind !== 'file' && <button type="button" className="underline min-h-11" onClick={() => {setUrl('');setError('');setRetry(value => value + 1)}}>Reabrir prévia</button>}</p>}
-    <button type="button" onClick={download} disabled={downloading} className="min-h-9 px-2.5 rounded-lg bg-white/[.08] text-xs font-semibold disabled:opacity-50">{downloading ? 'Preparando download…' : 'Baixar original'}</button>
+    {(kind!=='image'||!!error)&&<button type="button" onClick={download} disabled={downloading} className="min-h-9 px-2.5 rounded-lg bg-white/[.08] text-xs font-semibold disabled:opacity-50">{downloading ? 'Preparando download…' : 'Baixar original'}</button>}
   </div>
 }

@@ -16,6 +16,10 @@ interface Props {
 export function ChatComposer({ disabled, onBusy, onSend, compact = false,customerId,staff = false }: Props) {
   const [text, setText] = useState('')
   const [file, setFile] = useState<File | null>(null)
+  const [queue,setQueue]=useState<File[]>([])
+  const [selectedPreview,setSelectedPreview]=useState(0)
+  const [queuePreviews,setQueuePreviews]=useState<string[]>([])
+  const [previewFailed,setPreviewFailed]=useState(false)
   const [preview, setPreview] = useState('')
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
@@ -36,10 +40,26 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false,custome
       const invalid = validateAttachment(next)
       if (invalid) { setError(invalid); return }
     }
+    setQueue(next?[next]:[])
+    setSelectedPreview(0)
+    setPreviewFailed(false)
     setFile(next)
     setError('')
     pendingId.current = null
   }
+  function chooseImages(files:FileList|null){
+    const selected=Array.from(files||[])
+    if(selected.length<2){choose(selected[0]||null);return}
+    if(selected.some(item=>previewKind(item.type)!=='image')){setError('Para selecionar vários arquivos de uma vez, escolha somente imagens.');return}
+    const invalid=selected.map(validateAttachment).find(Boolean)
+    if(invalid){setError(invalid);return}
+    setQueue(selected);setFile(selected[0]);setSelectedPreview(0);setPreviewFailed(false);setError('');pendingId.current=null
+  }
+  useEffect(()=>{
+    const urls=queue.map(item=>URL.createObjectURL(item));setQueuePreviews(urls)
+    return()=>urls.forEach(url=>URL.revokeObjectURL(url))
+  },[queue])
+  const isImage=!!file&&previewKind(file.type)==='image'
   const audio = useAudioRecorder(choose)
   const busy = sending || audio.recording || audio.requesting
   useEffect(() => { onBusy(busy); return () => onBusy(false) }, [busy, onBusy])
@@ -102,8 +122,17 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false,custome
     setError('')
     pendingId.current ??= crypto.randomUUID()
     try {
-      await onSend(text.trim(), file, pendingId.current)
-      if (mounted.current) { setText(''); setFile(null); pendingId.current = null; if(textarea.current)textarea.current.style.height='auto' }
+      // Keep the existing one-file message API. Successful files leave the queue;
+      // a failed send retains its message ID and the remaining selection for retry.
+      const remaining=queue.length?[...queue]:[file]
+      while(remaining.length){
+        const next=remaining[0]
+        await onSend(text.trim(),next,pendingId.current!)
+        remaining.shift();pendingId.current=null
+        if(mounted.current){setQueue(remaining.filter((item):item is File=>!!item));setFile(remaining[0]||null);setSelectedPreview(0)}
+        if(remaining.length)pendingId.current=crypto.randomUUID()
+      }
+      if (mounted.current) { setText(''); setFile(null); setQueue([]); pendingId.current = null; if(textarea.current)textarea.current.style.height='auto' }
     } catch (cause) {
       if (mounted.current) setError(`Envio não confirmado. Seu texto e arquivo foram mantidos. ${cause instanceof Error ? cause.message : 'Tente novamente.'}`)
     } finally {
@@ -113,9 +142,9 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false,custome
   }
   return <form onSubmit={submit} className={compact?'p-2.5 space-y-2':'p-3 border-t border-white/10 space-y-3'}>
     <input ref={input} type="file" className="hidden" aria-label="Selecionar arquivo original" disabled={disabled || busy} onChange={event => { choose(event.target.files?.[0] || null); event.target.value = '' }} />
-    <input ref={photos} type="file" accept="image/*,video/*" className="hidden" aria-label="Selecionar foto ou vídeo" disabled={disabled || busy} onChange={event => { choose(event.target.files?.[0] || null); event.target.value = '' }} />
+    <input ref={photos} multiple type="file" accept="image/*,video/*" className="hidden" aria-label="Selecionar foto ou vídeo" disabled={disabled || busy} onChange={event => { chooseImages(event.target.files); event.target.value = '' }} />
     <input ref={camera} type="file" accept="image/*" capture="environment" className="hidden" aria-label="Abrir câmera" disabled={disabled || busy} onChange={event => { choose(event.target.files?.[0] || null); event.target.value = '' }} />
-    <div className={(compact&&!toolsOpen?'hidden ':'flex ')+'flex-wrap gap-1.5'+(compact?' px-1 pt-1':'')}>
+    <div className={(isImage?'hidden ':compact&&!toolsOpen?'hidden ':'flex ')+'flex-wrap gap-1.5'+(compact?' px-1 pt-1':'')}>
       <button type="button" className="w-10 h-10 rounded-full bg-white/[0.06] hover:bg-white/[0.1] flex items-center justify-center text-gray-300" disabled={disabled || busy} onClick={() => input.current?.click()} title="Anexar arquivo" aria-label="Anexar arquivo">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.4 11.6 12 21a6 6 0 0 1-8.5-8.5l10-10a4 4 0 0 1 5.7 5.7l-10 10a2 2 0 1 1-2.8-2.8l9.2-9.2"/></svg>
       </button>
@@ -141,21 +170,26 @@ export function ChatComposer({ disabled, onBusy, onSend, compact = false,custome
       <Button type="button" className="min-h-11" onClick={() => audio.stop()}>Parar e ouvir</Button>
       <Button type="button" variant="ghost" className="min-h-11" onClick={() => audio.stop(true)}>Cancelar gravação</Button>
     </div>}
-    {file && <div className="p-3 rounded-xl bg-white/5 space-y-2">
+    {file && (isImage?<div className="space-y-3">
+      <div className="w-full h-[min(48dvh,440px)] flex items-center justify-center">
+        {previewFailed?<p role="alert" className="text-sm text-gray-400">Não foi possível exibir a prévia. Você pode enviar o original ou cancelar.</p>:<img alt="Prévia da imagem selecionada" src={queuePreviews[selectedPreview]||preview} className="h-full w-full object-contain" onError={()=>setPreviewFailed(true)}/>}
+      </div>
+      {queue.length>1&&<div className="flex justify-start gap-2 overflow-x-auto py-1" aria-label="Imagens selecionadas">{queue.map((item,index)=><button key={index} type="button" aria-label={'Selecionar imagem '+(index+1)} aria-pressed={index===selectedPreview} disabled={sending} onClick={()=>{setSelectedPreview(index);setPreviewFailed(false)}} className={'shrink-0 w-14 h-14 rounded-lg overflow-hidden '+(index===selectedPreview?'ring-2 ring-orange-400':'opacity-60')}><img alt="" src={queuePreviews[index]} className="w-full h-full object-contain"/></button>)}</div>}
+    </div>:<div className="p-3 rounded-xl bg-white/5 space-y-2">
       <p className="text-sm break-words" style={{ overflowWrap: 'anywhere' }}>{file.name} · {formatFileSize(file.size)}</p>
       {preview && previewKind(file.type) === 'audio' && <audio aria-label="Prévia do áudio" controls src={preview} className="w-full max-w-full" />}
-      {preview && previewKind(file.type) === 'image' && <img alt="Prévia do arquivo selecionado" src={preview} className="max-h-32 max-w-full rounded-lg" />}
       <button type="button" className="min-h-11 text-sm underline" disabled={sending} onClick={() => choose(null)}>Remover arquivo</button>
-    </div>}
+    </div>)}
     {(error || audio.error) && <p role="alert" className="text-sm text-red-300">{error || audio.error}</p>}
     {sending && <p role="status" className="text-sm">{file ? 'Enviando arquivo e mensagem…' : 'Enviando mensagem…'}</p>}
     <div className="flex items-end gap-2">
-      {compact&&<button type="button" onClick={()=>setToolsOpen(value=>!value)} className="w-11 h-11 shrink-0 rounded-full bg-white/[0.06] hover:bg-white/[0.1] text-xl text-gray-300" aria-label="Mais opções" title="Mais opções">＋</button>}
-      <textarea ref={textarea} aria-label="Mensagem" placeholder={file ? 'Adicione uma mensagem…' : 'Mensagem'} value={text} maxLength={5000} rows={compact?1:2} disabled={disabled || busy} onKeyDown={keyDown} onChange={event => { setText(event.target.value); pendingId.current = null; resizeTextarea() }} className={"flex-1 min-w-0 rounded-[22px] text-sm bg-white/[.065] border border-white/[.07] resize-none outline-none focus:border-white/15 "+(compact?"min-h-11 max-h-28 px-4 py-[11px] leading-5":"p-3")} />
+      {compact&&!isImage&&<button type="button" onClick={()=>setToolsOpen(value=>!value)} className="w-11 h-11 shrink-0 rounded-full bg-white/[0.06] hover:bg-white/[0.1] text-xl text-gray-300" aria-label="Mais opções" title="Mais opções">＋</button>}
+      <textarea ref={textarea} aria-label={isImage?'Legenda opcional':'Mensagem'} placeholder={isImage?'Adicione uma legenda…':file ? 'Adicione uma mensagem…' : 'Mensagem'} value={text} maxLength={5000} rows={compact?1:2} disabled={disabled || busy} onKeyDown={keyDown} onChange={event => { setText(event.target.value); pendingId.current = null; resizeTextarea() }} className={"flex-1 min-w-0 rounded-[22px] text-sm bg-white/[.065] border border-white/[.07] resize-none outline-none focus:border-white/15 "+(compact?"min-h-11 max-h-28 px-4 py-[11px] leading-5":"p-3")} />
+      {isImage&&<button type="button" disabled={sending} onClick={()=>choose(null)} className="min-h-11 px-2 text-xs text-gray-400">Cancelar</button>}
       <button type="submit" aria-label="Enviar mensagem" title="Enviar mensagem" className="w-11 h-11 shrink-0 rounded-full bg-[#A65A2A] text-white flex items-center justify-center disabled:opacity-35 transition-opacity" disabled={disabled || busy || (!text.trim() && !file)}>
         {sending?<span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"/>:<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>}
       </button>
     </div>
-    {!compact&&<p className="text-xs text-gray-400">Um arquivo por envio, até 50 MB. Enviado sem reduzir ou converter o original.</p>}
+    {!compact&&!isImage&&<p className="text-xs text-gray-400">Um arquivo por envio, até 50 MB. Enviado sem reduzir ou converter o original.</p>}
   </form>
 }

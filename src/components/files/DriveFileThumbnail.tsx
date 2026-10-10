@@ -13,6 +13,7 @@ export function DriveFileThumbnail({ file, fallback = '🖼️', className = '' 
     && filePreviewType(file) === 'image'
 
   useEffect(() => {
+    setUrl(null)
     if (!eligible) return
     let active = true
     let objectUrl: string | null = null
