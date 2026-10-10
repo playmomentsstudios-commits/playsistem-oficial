@@ -26,6 +26,13 @@ export type AppSettings={
   orders_default_filter:'all'|'awaiting_payment'|'paid'|'in_production'|'completed'|'cancelled'
   internal_operation_notifications:boolean
   commercial_notifications:boolean
+  priority_alerts_enabled:boolean
+  priority_daily_limit:number
+  priority_payment_confirmed:boolean
+  priority_project_created:boolean
+  priority_project_completed:boolean
+  priority_whatsapp_phone:string
+  priority_whatsapp_mode:'manual'
   favicon_url:string|null
   staff_logo_url:string|null
   staff_platform_name:string
