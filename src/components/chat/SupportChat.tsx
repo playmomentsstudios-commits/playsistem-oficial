@@ -42,7 +42,6 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
   const [lastReadAt,setLastReadAt]=useState<string|null>(null)
   const [staffPermissions,setStaffPermissions]=useState<string[]>([])
   const [transferring,setTransferring]=useState(false)
-  const end = useRef<HTMLDivElement>(null)
   const subject = search.get('assunto')
   const prompt = subject === 'orcamento'
     ? 'Conte o que você precisa para prepararmos seu orçamento.'
@@ -310,7 +309,7 @@ export function SupportChat({ staff = false, compact = false }: { staff?: boolea
                   </div>
                 </div>
               })}
-              <div ref={end} />
+
             </div>
             <div className="shrink-0 bg-[#141416] border-t border-white/10"><ChatComposer key={selected} disabled={!selected || messagesLoading} onBusy={setSending} onSend={send} compact staff={staff} customerId={conversation?.customer_id} /></div>
           </div>
