@@ -26,7 +26,7 @@ create table public.project_stages(id uuid primary key, name text, project_id uu
 create table public.project_drive_folders(project_id uuid, drive_folder_id text, folder_kind text);
 create table public.client_files(
  id uuid primary key, project_id uuid, task_id uuid, stage_id uuid, client_visible boolean,
- storage_provider text, drive_file_id text, drive_folder_id text, name text, external_url text,
+ storage_provider text, drive_file_id text, drive_folder_id text, drive_folder_kind text, name text, external_url text,
  version_group_id uuid, version_number integer, created_at timestamptz default now(),
  supersedes_file_id uuid
 );
@@ -45,11 +45,11 @@ insert into public.project_drive_folders values
  ('${projectId}','${folderIds.preview}','preview'),
  ('${projectId}','${folderIds.approved}','approved');
 insert into public.client_files
- (id,project_id,task_id,stage_id,client_visible,storage_provider,drive_file_id,drive_folder_id,name)
+ (id,project_id,task_id,stage_id,client_visible,storage_provider,drive_file_id,drive_folder_id,drive_folder_kind,name)
 values
- ('55555555-5555-4555-8555-555555555555','${projectId}','${taskId}','${stageId}',true,'google_drive','${fileIds.received}','${folderIds.received}','Arquivo recebido'),
- ('66666666-6666-4666-8666-666666666666','${projectId}','${taskId}','${stageId}',true,'google_drive','${fileIds.preview}','${folderIds.preview}','Arquivo para revisão'),
- ('77777777-7777-4777-8777-777777777777','${projectId}','${taskId}','${stageId}',true,'google_drive','${fileIds.approved}','${folderIds.approved}','Arquivo aprovado');
+ ('55555555-5555-4555-8555-555555555555','${projectId}','${taskId}','${stageId}',true,'google_drive','${fileIds.received}','${folderIds.received}-nested','received','Arquivo recebido'),
+ ('66666666-6666-4666-8666-666666666666','${projectId}','${taskId}','${stageId}',true,'google_drive','${fileIds.preview}','${folderIds.preview}-nested','preview','Arquivo para revisão'),
+ ('77777777-7777-4777-8777-777777777777','${projectId}','${taskId}','${stageId}',true,'google_drive','${fileIds.approved}','${folderIds.approved}-nested','approved','Arquivo aprovado');
 `
 
 async function makeDatabase(){
