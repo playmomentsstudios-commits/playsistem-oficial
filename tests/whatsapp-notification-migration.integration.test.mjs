@@ -4,7 +4,7 @@ import test from 'node:test'
 import {PGlite} from '@electric-sql/pglite'
 
 const migration=readFileSync(new URL('../supabase/migrations/20261011160000_whatsapp_project_notification_copy.sql',import.meta.url),'utf8')
-const editableMigration=readFileSync(new URL('../supabase/migrations/20261011220000_whatsapp_editable_templates_and_archive.sql',import.meta.url),'utf8')
+const editableMigration=readFileSync(new URL('../supabase/migrations/20261011215447_whatsapp_editable_templates_and_archive.sql',import.meta.url),'utf8')
 const restoreBuilder=readFileSync(new URL('../docs/rollbacks/whatsapp-pr396-restore-message-builder.sql',import.meta.url),'utf8')
 const projectId='11111111-1111-4111-8111-111111111111'
 const customerId='22222222-2222-4222-8222-222222222222'
