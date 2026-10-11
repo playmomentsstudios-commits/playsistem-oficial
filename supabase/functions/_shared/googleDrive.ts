@@ -312,14 +312,20 @@ export async function ensureClientFolder(
   return { customerFolderId: folder.id };
 }
 
+// Only four physical folders are provisioned for new customer projects.
+// Legacy raw/approved folders remain discoverable through existing DB records.
 export const projectFolderKinds = [
-  ["received", "01 - Arquivos recebidos"],
-  ["raw", "02 - Brutos"],
-  ["production", "03 - Produção"],
-  ["preview", "04 - Prévia"],
-  ["approved", "05 - Aprovados"],
-  ["delivery", "06 - Entrega final"],
+  ["received", "01 - Recebidos"],
+  ["production", "02 - Produção"],
+  ["preview", "03 - Revisão"],
+  ["delivery", "04 - Entregas"],
 ] as const;
+
+export const uploadFolderAliases: Record<string, string> = {
+  raw: "production",
+  approved: "delivery",
+  revision: "preview",
+};
 
 export async function ensureProjectFolder(
   db: SupabaseClient,
