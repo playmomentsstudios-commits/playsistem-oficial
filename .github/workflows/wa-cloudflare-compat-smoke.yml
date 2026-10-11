@@ -1,0 +1,24 @@
+name: WhatsApp Cloudflare compatibility (no deploy)
+on:
+  pull_request:
+    paths:
+      - 'experiments/cloudflare-wa-free/**'
+      - '.github/workflows/wa-cloudflare-compat-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  baileys-bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: experiments/cloudflare-wa-free/compat
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - name: Bundle Baileys inside Cloudflare Workers runtime target
+        run: npm run build:check
