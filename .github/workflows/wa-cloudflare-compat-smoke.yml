@@ -77,7 +77,7 @@ jobs:
           printf "EXPERIMENTAL_PAIRING_ENABLED=true\n" >> .dev.vars
           chmod 600 .dev.vars
           TEST_TOKEN="$(sed -n 's/^PROBE_ACCESS_TOKEN=//p' .dev.vars)"
-          ./node_modules/.bin/wrangler dev --local --ip 127.0.0.1 --port 8800 > /tmp/sagamente-wa-live-probe.log 2>&1 &
+          ./node_modules/.bin/wrangler dev --local --ip 127.0.0.1 --port 8800 --persist-to /tmp/sagamente-wa-isolated-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT} > /tmp/sagamente-wa-live-probe.log 2>&1 &
           PID=$!
           trap 'kill "$PID" 2>/dev/null || true; rm -f .dev.vars' EXIT
           READY=0
