@@ -1,0 +1,80 @@
+name: Sagamente WA Experimental Deployment Launcher
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type DEPLOY_ISOLATED_PROBE to deploy only the experimental Worker'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: sagamente-wa-experimental-launcher
+  cancel-in-progress: false
+jobs:
+  isolated-deploy:
+    if: ${{ inputs.confirmation == 'DEPLOY_ISOLATED_PROBE' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: 'cloudflare whatsistem'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: spike/cloudflare-free-whatsapp-feasibility-20261011
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check isolated deployment inputs
+        shell: bash
+        working-directory: experiments/cloudflare-wa-free/compat
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PROBE_AES_KEY_B64: ${{ secrets.PROBE_AES_KEY_B64 }}
+          PROBE_ACCESS_TOKEN: ${{ secrets.PROBE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || { echo "::error::Missing isolated CLOUDFLARE_API_TOKEN"; exit 1; }
+          node - <<'NODE'
+          const x=process.env.PROBE_AES_KEY_B64||"";
+          const y=process.env.PROBE_ACCESS_TOKEN||"";
+          if(!/^[A-Za-z0-9+/]{43}=$/.test(x)||Buffer.from(x,"base64").length!==32||y.length<32){
+            throw Error("Invalid/missing isolated secrets");
+          }
+          console.log("Isolated secret formats validated");
+          NODE
+          node - <<'NODE'
+          const fs=require("node:fs");
+          const cfg=JSON.parse(fs.readFileSync("wrangler.remote.jsonc","utf8"));
+          if(cfg.name!=="sagamente-wa-baileys-remote-probe"||cfg.vars?.EXPERIMENTAL_PAIRING_ENABLED!=="false"){
+            throw Error("Worker target is not the isolated, fail-closed probe");
+          }
+          console.log("Target verified:",cfg.name);
+          NODE
+      - name: Install and compile
+        working-directory: experiments/cloudflare-wa-free/compat
+        run: |
+          npm install --no-audit --no-fund
+          npx wrangler deploy --dry-run --config wrangler.remote.jsonc
+      - name: Deploy isolated Worker only
+        working-directory: experiments/cloudflare-wa-free/compat
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: c266e6cfc3a50abf60cc8c0e299bf467
+          PROBE_AES_KEY_B64: ${{ secrets.PROBE_AES_KEY_B64 }}
+          PROBE_ACCESS_TOKEN: ${{ secrets.PROBE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          printf %s "$PROBE_AES_KEY_B64" | npx wrangler secret put PROBE_AES_KEY_B64 --config wrangler.remote.jsonc
+          printf %s "$PROBE_ACCESS_TOKEN" | npx wrangler secret put PROBE_ACCESS_TOKEN --config wrangler.remote.jsonc
+          npx wrangler deploy --config wrangler.remote.jsonc
+      - name: Verify remote worker private and disabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL=https://sagamente-wa-baileys-remote-probe.playmomentsstudios.workers.dev
+          curl --fail --silent --show-error --retry 5 --retry-delay 2 "$URL/health" > health.json
+          node -e 'const h=require("./health.json");if(h.service!=="baileys-isolated-probe"||h.ready!==false||h.noWhatsAppSocket!==true)process.exit(1)'
+          [ "$(curl -s -o /dev/null -w '%{http_code}' "$URL/start")" = 401 ]
+          [ "$(curl -s -o /dev/null -w '%{http_code}' "$URL/qr")" = 401 ]
+          echo "Experimental Worker deployed, unauthenticated access blocked, real pairing remains disabled."
