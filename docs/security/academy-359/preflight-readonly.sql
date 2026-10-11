@@ -35,7 +35,7 @@ select function_name, exists_on_server, signature_matches,
 from inspected order by function_name;
 
 -- Independently check if the exact PR #359 version is already recorded.
--- The historical 39 remote versions are not globally reconciled.
+-- Read-only inventory on 2026-10-11 found 45 remote versions; local/remote histories remain unreconciled by content.
 select exists (
   select 1 from supabase_migrations.schema_migrations
   where version='20261011060000'
