@@ -26,7 +26,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.12.0"
+          node-version: "22.22.0"
       - name: Count local migrations and expose timestamp collisions
         run: node scripts/migration-inventory.mjs
 
@@ -71,13 +71,15 @@ jobs:
           supabase db start
           pg_isready -h 127.0.0.1 -p 54322 -U postgres
 
-      - name: Fetch exact migration from existing security PR #355
+      - name: Fetch exact migration from immutable PR #355 commit
         shell: bash
         run: |
           set -euo pipefail
-          git fetch --no-tags --depth=1 origin refs/heads/audit100/sec01-backup-grants
-          echo "PR #355 commit tested: $(git rev-parse FETCH_HEAD)" >> "$GITHUB_STEP_SUMMARY"
-          git show FETCH_HEAD:supabase/migrations/20261011033800_restrict_project_backup_table_grants.sql > "${RUNNER_TEMP}/sagamente-backup-security-migration.sql"
+          migration_source_sha="fdbf26ad0f093502cfe0d98a77bad8a9da111d52"
+          git fetch --no-tags --depth=1 origin "$migration_source_sha"
+          test "$(git rev-parse FETCH_HEAD)" = "$migration_source_sha"
+          echo "PR #355 immutable commit tested: $migration_source_sha" >> "$GITHUB_STEP_SUMMARY"
+          git show "${migration_source_sha}:supabase/migrations/20261011033800_restrict_project_backup_table_grants.sql" > "${RUNNER_TEMP}/sagamente-backup-security-migration.sql"
           test -s "${RUNNER_TEMP}/sagamente-backup-security-migration.sql"
 
       - name: Execute real migration and verify PostgreSQL ACLs
