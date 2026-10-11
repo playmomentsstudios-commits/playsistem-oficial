@@ -102,6 +102,7 @@ export class EncryptedAuthProbe {
       });
     }catch(error){return Response.json({failed:true,noSessionStarted:true,errorType:error?.name||"Error"},{status:500});}
   }
+  async alarm(){if(this.controller)await this.controller.alarm();else await this.ctx.storage.deleteAlarm();}
   async webSocketMessage(ws,message){ if(typeof message==="string"&&message==="probe:ping")ws.send("probe:pong");else ws.close(1008,"test-only"); }
   async webSocketClose(ws){try{ws.close()}catch{}}
 }
