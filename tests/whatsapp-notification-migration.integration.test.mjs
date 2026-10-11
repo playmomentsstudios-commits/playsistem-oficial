@@ -4,6 +4,7 @@ import test from 'node:test'
 import {PGlite} from '@electric-sql/pglite'
 
 const migration=readFileSync(new URL('../supabase/migrations/20261011160000_whatsapp_project_notification_copy.sql',import.meta.url),'utf8')
+const editableMigration=readFileSync(new URL('../supabase/migrations/20261011220000_whatsapp_editable_templates_and_archive.sql',import.meta.url),'utf8')
 const projectId='11111111-1111-4111-8111-111111111111'
 const customerId='22222222-2222-4222-8222-222222222222'
 const taskId='33333333-3333-4333-8333-333333333333'
@@ -17,6 +18,10 @@ const schema=`
 create role anon;
 create role authenticated;
 create schema app_private;
+create schema auth;
+create table auth.users(id uuid primary key);
+create function auth.uid() returns uuid language sql stable as $ select null::uuid $;
+create function public.current_user_is_admin() returns boolean language sql stable as $ select true $;
 create table public.profiles(id uuid primary key, role text, status text);
 create table public.projects(id uuid primary key, title text, project_type text, customer_id uuid);
 create table public.project_customer_access(project_id uuid, customer_id uuid);
@@ -32,7 +37,7 @@ create table public.client_files(
 create table public.file_reviews(file_id uuid, action text);
 create table public.whatsapp_message_outbox(
  id uuid primary key, source text, status text, event_type text, notification_id uuid,
- recipient_user_id uuid, target_link text, message_body text
+ recipient_user_id uuid, recipient_name text default 'Cliente', target_link text, message_body text, created_at timestamptz default now()
 );
 insert into public.profiles values ('${customerId}','customer','active');
 insert into public.projects values ('${projectId}','Projeto Aurora','service','${customerId}');
@@ -118,4 +123,29 @@ test('completed project event generates final-delivery copy',async()=>{
 test('ineligible event status stays unchanged, preserving the existing queue gate',async()=>{
  const body=await emit({type:'project_status',status:'active',eventType:'internal_audit'})
  assert.equal(body,'')
+})
+
+test('editable migration compiles in Postgres and substitutes approved project copy, retaining secure links',async()=>{
+ await db.exec(editableMigration)
+ const before=await emit({type:'project_status',status:'active'})
+ assert.match(before,/Seu projeto começou/)
+ const customized='*Boas notícias*\\n\\nO projeto {{project_name}} avançou.\\n\\n{{link}}'
+ await db.query('select public.wa_save_template($1,$2)',[
+  'project_started',customized.replaceAll('\\n','\n')
+ ])
+ const after=await emit({type:'project_status',status:'active'})
+ assert.match(after,/Boas notícias/)
+ assert.match(after,/projeto Projeto Aurora avançou/)
+ assert.match(after,/https:\/\/playsistem-oficial\.playmomentsstudios\.workers\.dev\/n\/abcdefghijklmnopqrstuv/)
+ assert.equal((await db.query('select count(*)::int as n from public.wa_message_templates')).rows[0].n,6)
+ assert.match(before,/Seu projeto começou/)
+ const one=await db.query('select id,status from public.whatsapp_message_outbox order by created_at desc, id desc limit 1')
+ const outboxId=one.rows[0].id
+ await db.query('select public.wa_set_archive($1,$2)',[outboxId,true])
+ const archived=await db.query('select archived_at,status from public.whatsapp_message_outbox where id=$1',[outboxId])
+ assert.ok(archived.rows[0].archived_at)
+ assert.equal(archived.rows[0].status,one.rows[0].status)
+ await db.query('select public.wa_set_archive($1,$2)',[outboxId,false])
+ const restored=await db.query('select archived_at from public.whatsapp_message_outbox where id=$1',[outboxId])
+ assert.equal(restored.rows[0].archived_at,null)
 })
