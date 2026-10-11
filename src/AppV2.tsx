@@ -17,6 +17,7 @@ const InstallPage = lazy(() => import('./pages/public/InstallPage').then(m => ({
 const PublicAcademyPage = lazy(() => import('./pages/public/PublicAcademyPage').then(m => ({ default:m.PublicAcademyPage })))
 const PublicDigitalLiteracyPage = lazy(() => import('./pages/public/PublicDigitalLiteracyPage').then(m => ({ default:m.PublicDigitalLiteracyPage })))
 const LoginPage = lazy(() => import('./pages/public/LoginPage').then(m => ({ default:m.LoginPage })))
+const WhatsappConsentPage = lazy(() => import('./pages/public/WhatsappConsentPage').then(m => ({ default:m.WhatsappConsentPage })))
 const NotificationLinkPage = lazy(() => import('./pages/public/NotificationLinkPage').then(m => ({ default:m.NotificationLinkPage })))
 const RegisterPage = lazy(() => import('./pages/public/RegisterPage').then(m => ({ default:m.RegisterPage })))
 const EmailConfirmedPage = lazy(() => import('./pages/public/EmailConfirmedPage').then(m => ({ default:m.EmailConfirmedPage })))
@@ -125,6 +126,7 @@ export default function AppV2() {
               <Route path="/academia" element={<PublicAcademyPage />} />
               <Route path="/curso/letramento-digital" element={<PublicDigitalLiteracyPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/whatsapp" element={<WhatsappConsentPage />} />
               <Route path="/n/:code" element={<NotificationLinkPage />} />
               <Route path="/cadastro" element={<RegisterPage />} />
               <Route path="/email-confirmado" element={<EmailConfirmedPage />} />

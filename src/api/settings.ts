@@ -89,9 +89,10 @@ export const settingsApi={
     if(error)throw error
     return data as UserPreferences|null
   },
-  saveUserPreferences:async(values:PreferenceChanges)=>{
+  saveUserPreferences:async(values:PreferenceChanges,expectedUserId?:string)=>{
     const {data:{user}}=await supabase.auth.getUser()
     if(!user)throw new Error('Sessão não encontrada.')
+    if(expectedUserId&&user.id!==expectedUserId)throw new Error('A conta conectada mudou. Recarregue a página antes de autorizar.')
     const {data,error}=await supabase.from('user_preferences').upsert({user_id:user.id,...values},{onConflict:'user_id'}).select().single()
     if(error)throw error
     return data as UserPreferences
