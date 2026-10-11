@@ -38,7 +38,7 @@ Deno.serve(async (req: Request) => {
     const addFolder = (id: string | null, customId: string | null, stageId: string | null, folderKind: string | null, depth: number) => {
       if (!id || seenFolders.has(id)) return;
       seenFolders.add(id);
-      queue.push({ id, customId, stageId, depth });
+      queue.push({ id, customId, stageId, folderKind, depth });
     };
     addFolder(project.drive_folder_id, null, null, null, 0);
     for (const row of standard.data || []) addFolder(row.drive_folder_id, null, null, row.folder_kind, 1);
