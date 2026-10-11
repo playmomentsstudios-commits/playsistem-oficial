@@ -4,6 +4,12 @@ const fromB64 = value => Uint8Array.from(atob(value), c => c.charCodeAt(0));
 export class BridgeProbe {
   constructor(state, env) { this.state = state; this.env = env; }
   async fetch(request) {
+    if(new URL(request.url).pathname==="/ws-echo"){
+      if(request.headers.get("Upgrade")!=="websocket")return new Response("Upgrade required",{status:426});
+      const pair=new WebSocketPair();
+      this.state.acceptWebSocket(pair[1]);
+      return new Response(null,{status:101,webSocket:pair[0]});
+    }
     const path = new URL(request.url).pathname;
     if (path === "/probe") {
       const old = (await this.state.storage.get("boots")) || 0;
@@ -60,11 +66,13 @@ export class BridgeProbe {
     }
     return new Response("Not found",{status:404});
   }
+  async webSocketMessage(ws,message){ if(typeof message==="string"&&message.startsWith("sagamente-probe:"))ws.send(message);else ws.close(1008,"probe only"); }
+  async webSocketClose(ws){try{ws.close()}catch{}}
 }
 export default {
   async fetch(request,env) {
     const path = new URL(request.url).pathname;
-    if (!["/probe","/session-probe","/crypto-probe","/auth-shape-probe"].includes(path)) return new Response("Not found",{status:404});
+    if (!["/probe","/session-probe","/crypto-probe","/auth-shape-probe","/ws-echo"].includes(path)) return new Response("Not found",{status:404});
     return env.BRIDGE_PROBE.get(env.BRIDGE_PROBE.idFromName("isolated-probe")).fetch(request);
   }
 };
