@@ -1,0 +1,68 @@
+name: Sagamente WA Cloud Auth Safety Check
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/sagamente-wa-cloud-auth-check.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: sagamente-wa-cloud-private-check
+  cancel-in-progress: false
+jobs:
+  remote-private-auth:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    environment: 'cloudflare whatsistem'
+    env:
+      PROBE_ACCESS_TOKEN: ${{ secrets.PROBE_ACCESS_TOKEN }}
+    steps:
+      - name: Verify authenticated controller stays disabled
+        shell: bash
+        run: |
+          set -euo pipefail
+          [ "${#PROBE_ACCESS_TOKEN}" -ge 32 ] || { echo "::error::Missing experimental access secret"; exit 1; }
+          URL="https://sagamente-wa-baileys-remote-probe.playmomentsstudios.workers.dev"
+          AUTH=(-H "Authorization: Bearer $PROBE_ACCESS_TOKEN")
+          for n in $(seq 1 8); do
+            if curl --fail --silent --show-error --max-time 12 "${AUTH[@]}" "$URL/controller-status" > /tmp/sagamente-private-status.json; then break; fi
+            sleep 3
+          done
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const s=JSON.parse(fs.readFileSync('/tmp/sagamente-private-status.json','utf8'));
+          if(s.enabled!==false||s.active!==false||s.qrAvailable!==false||s.productionMessagesEnabled!==false){
+            throw Error('Experimental controller is not safely disabled');
+          }
+          console.log('Authenticated controller verified; pairing and sends disabled');
+          NODE
+          UNAUTH_CODE="$(curl --silent --show-error --max-time 10 --output /dev/null --write-out '%{http_code}' "$URL/controller-status")"
+          [ "$UNAUTH_CODE" = 401 ] || { echo "::error::Controller missing bearer protection ($UNAUTH_CODE)"; exit 1; }
+          START_CODE="$(curl --silent --show-error --max-time 10 --output /dev/null --write-out '%{http_code}' -X POST "${AUTH[@]}" "$URL/start")"
+          QR_CODE="$(curl --silent --show-error --max-time 10 --output /dev/null --write-out '%{http_code}' "${AUTH[@]}" "$URL/qr")"
+          [ "$START_CODE" = 503 ] || { echo "::error::Experimental start is not disabled ($START_CODE)"; exit 1; }
+          [ "$QR_CODE" = 503 ] || { echo "::error::Experimental QR is not disabled ($QR_CODE)"; exit 1; }
+          echo "Private controller access: HTTP 200; public access: 401; gated start/QR: 503"
+      - name: Verify remote encrypted Baileys credentials (no pairing)
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://sagamente-wa-baileys-remote-probe.playmomentsstudios.workers.dev"
+          for attempt in 1 2; do
+            curl --fail --silent --show-error --max-time 15 \
+              -H "Authorization: Bearer $PROBE_ACCESS_TOKEN" \
+              "$URL/auth-adapter-test" > "/tmp/sagamente-wa-auth-$attempt.json"
+            node - "/tmp/sagamente-wa-auth-$attempt.json" <<'NODE'
+          const fs=require('node:fs');
+          const v=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+          if(v.authAdapter!==true||v.credsValid!==true||v.keyValid!==true||
+             v.deleted!==true||v.secretSeparated!==true||v.noWhatsAppSocket!==true){
+            throw Error('Encrypted remote credentials failed integrity test');
+          }
+          console.log('Encrypted credentials round-trip passed; no WhatsApp socket opened');
+          NODE
+          done
+          echo "Remote encrypted authentication persisted across requests and no pairing occurred."
