@@ -30,6 +30,7 @@ test('matching migration names are candidates, never verified SQL equivalence',(
   assert.equal(r.summary.equivalence_verified,false)
   assert.equal(r.summary.ready_for_full_replay,false)
   assert.match(renderReport(r),/NOT reconciled/)
+  assert.match(renderReport(r),/Compare actual SQL\\/DDL semantics for 1 same-name candidates/)
 })
 
 test('rejects malformed remote records and duplicated versions',()=>{
