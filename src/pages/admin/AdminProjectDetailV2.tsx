@@ -66,6 +66,7 @@ export function AdminProjectDetailV2(){
   const [fileTask,setFileTask]=useState('')
   const [fileStage,setFileStage]=useState('')
   const [fileFolder,setFileFolder]=useState('received')
+  const [taskUploadingId,setTaskUploadingId]=useState<string|null>(null)
   const [uploading,setUploading]=useState(false)
   const [fileProgress,setFileProgress]=useState(0)
   const [fileProgressName,setFileProgressName]=useState('')
@@ -418,6 +419,41 @@ export function AdminProjectDetailV2(){
       await load()
     }catch(error:any){toast(error.message,'error')}
     finally{setUploading(false)}
+  }
+
+  async function uploadTaskFile(event:React.ChangeEvent<HTMLInputElement>,task:any){
+    const picked=Array.from(event.target.files||[])
+    event.target.value=''
+    if(!picked.length||!user||taskUploadingId)return
+    if(project.project_type==='internal'&&!task.stage_id){
+      toast('Vincule uma etapa à tarefa antes de enviar arquivos neste projeto interno.','error')
+      return
+    }
+    if(picked.some(file=>file.size>50*1024*1024*1024)){
+      toast('Cada arquivo do Google Drive pode ter até 50 GB.','error')
+      return
+    }
+    setTaskUploadingId(task.id)
+    try{
+      await portalApi.ensureProjectDriveFolder(id)
+      for(const file of picked){
+        const uploaded=await portalApi.uploadDriveFile({
+          project_id:id,
+          task_id:task.id,
+          stage_id:task.stage_id||null,
+          // New material for client projects starts in Review; internal
+          // projects use their existing stage-based Drive folder structure.
+          folder_kind:project.project_type==='internal'?'production':'preview',
+          client_visible:false,
+        },file)
+        if(project.project_type!=='internal'&&task.stage_id&&uploaded?.id){
+          await portalApi.assignClientFileStage(uploaded.id,task.stage_id)
+        }
+      }
+      toast(picked.length===1?'Arquivo salvo nesta tarefa, somente para a equipe.':picked.length+' arquivos vinculados a esta tarefa, somente para a equipe.','success')
+      await load()
+    }catch(error:any){toast(error?.message||'Não foi possível enviar os arquivos desta tarefa.','error')}
+    finally{setTaskUploadingId(null)}
   }
 
   async function uploadNewVersion(event:React.ChangeEvent<HTMLInputElement>,previousFile:any){
@@ -925,6 +961,13 @@ export function AdminProjectDetailV2(){
             </div>
           </div>
 
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <label className={'inline-flex min-h-9 items-center gap-2 rounded-lg border border-[#A65A2A]/40 px-3 py-2 text-xs font-semibold '+(taskUploadingId?'cursor-not-allowed opacity-50':'cursor-pointer hover:bg-[#A65A2A]/10')}>
+              {taskUploadingId===task.id?'Enviando arquivos...':'+ Adicionar arquivos'}
+              <input type="file" multiple className="sr-only" disabled={Boolean(taskUploadingId)} onChange={e=>void uploadTaskFile(e,task)}/>
+            </label>
+            <span className="text-[11px] text-gray-500">Vinculado automaticamente · somente equipe · {project.project_type==='internal'?'pasta da etapa':'03 — Revisão'}</span>
+          </div>
           {(files.filter((file:any)=>file.task_id===task.id).length>0)&&<div className="mt-4">
             <p className="text-sm font-semibold mb-2">Arquivos desta tarefa</p>
             <div className="flex flex-wrap gap-2">{files.filter((file:any)=>file.task_id===task.id).map((file:any)=><button key={file.id} onClick={()=>openFile(file)} className="px-3 py-2 rounded-lg bg-white/5 text-xs">{file.name} ↗</button>)}</div>
