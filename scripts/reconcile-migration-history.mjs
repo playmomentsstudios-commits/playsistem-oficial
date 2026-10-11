@@ -107,7 +107,7 @@ export function renderReport(report, observedAt = 'unknown') {
   lines.push('', '## Duplicate local versions')
   for(const x of report.collisions) lines.push('- '+q+x.version+q+': '+x.files.join(', '))
   lines.push('', '### Next gate',
-    'Compare actual SQL/DDL semantics for the 26 same-name candidates, resolve remote-only versions,',
+    'Compare actual SQL/DDL semantics for '+s.same_name_different_version+' same-name candidates, resolve remote-only versions,',
     'document the local timestamp problems and prepare a separately reviewed local baseline.',
     'Never run reconciliation writes against production without approval.', '')
   return lines.join('\n')
