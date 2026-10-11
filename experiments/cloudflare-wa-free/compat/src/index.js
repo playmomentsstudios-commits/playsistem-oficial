@@ -69,6 +69,7 @@ export class EncryptedAuthProbe {
         await put("session:test",{chainKey:new Uint8Array([12,34,56]),counter:17});
       }
       const creds=await get("creds"),session=await get("session:test");
+      const leakedTestKey=await storage.get("local-test-key");
       return Response.json({
         bundled:typeof makeWASocket==="function",browserApi:typeof Browsers==="object",noSessionStarted:true,
         offlineKeyGeneration:Boolean(creds.noiseKey?.private?.length),
@@ -76,7 +77,7 @@ export class EncryptedAuthProbe {
         keyStoreRoundTrip:session?.counter===17&&session.chainKey[1]===34,
         encryptionAuthenticated:true,keyExtractable:false,
         persistentStorage:true,recordExistedBeforeRequest:existing,noStorageOfKeys:false,
-        testKeyStoredAlongsideCiphertext:false,
+        testKeyStoredAlongsideCiphertext:leakedTestKey!==undefined,
         secretConfigured:true,
         isProductionSecure:false
       });
