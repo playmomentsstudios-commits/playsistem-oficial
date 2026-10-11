@@ -1,15 +1,15 @@
 // Experimental Baileys connection controller. NEVER route production messages here.
 // Requires private bearer protection at Worker entry and explicit opt-in via secret flag.
 // WhatsApp QR is sensitive: never log it or include in public diagnostics.
-import makeWASocket, { Browsers, DisconnectReason } from "@whiskeysockets/baileys";
+import makeWASocket, { Browsers } from "@whiskeysockets/baileys";
 import { createEncryptedAuthState } from "./auth-store.js";
 export class ExperimentalSessionController {
-  constructor(ctx,env){this.ctx=ctx;this.env=env;this.socket=null;this.qr=null;this.status="idle";this.deadline=0;this.stopTimer=null;}
+  constructor(ctx,env){this.ctx=ctx;this.env=env;this.socket=null;this.qr=null;this.status="idle";this.deadline=0;this.stopTimer=null;this.lastProbe={};}
   async fetch(request){
     const route=new URL(request.url).pathname;
     const headers={"Cache-Control":"no-store","Content-Type":"application/json"};
     if(route==="/controller-status"){
-      return new Response(JSON.stringify({enabled:this.env.EXPERIMENTAL_PAIRING_ENABLED==="true",status:this.status,active:!!this.socket,qrAvailable:!!this.qr,productionMessagesEnabled:false}),{headers});
+      return new Response(JSON.stringify({enabled:this.env.EXPERIMENTAL_PAIRING_ENABLED==="true",status:this.status,active:!!this.socket,qrAvailable:!!this.qr,probe:this.lastProbe,productionMessagesEnabled:false}),{headers});
     }
     if(this.env.EXPERIMENTAL_PAIRING_ENABLED!=="true")return new Response(JSON.stringify({error:"experiment_disabled"}),{status:503,headers});
     if(route==="/qr"){
@@ -24,14 +24,14 @@ export class ExperimentalSessionController {
       if(this.socket)return new Response(JSON.stringify({error:"already_active"}),{status:409,headers});
       try{
         const {state,saveCreds}=await createEncryptedAuthState(this.ctx.storage,this.env.PROBE_AES_KEY_B64);
-        this.qr=null;this.status="connecting";this.deadline=Date.now()+60000;
+        this.qr=null;this.status="connecting";this.lastProbe={socketInitiated:false,qrObserved:false,connectionOpened:false};this.deadline=Date.now()+60000;
         const socket=makeWASocket({auth:state,printQRInTerminal:false,browser:Browsers.ubuntu("Sagamente Isolated Probe"),syncFullHistory:false,markOnlineOnConnect:false,logger:{level:"silent",child(){return this},trace(){},debug(){},info(){},warn(){},error(){},fatal(){}}});
-        this.socket=socket;
+        this.socket=socket;this.lastProbe.socketInitiated=true;
         socket.ev.on("creds.update",()=>{void saveCreds().catch(()=>{this.status="storage-error";void this.stop();});});
         socket.ev.on("connection.update",update=>{
           if(this.socket!==socket)return;
-          if(update.qr){this.qr=update.qr;this.status="awaiting-pairing";}
-          if(update.connection==="open"){this.status="connected";this.qr=null;void this.stop();} // test-only: deliberately disconnect after pairing
+          if(update.qr){this.qr=update.qr;this.status="awaiting-pairing";this.lastProbe.qrObserved=true;}
+          if(update.connection==="open"){this.status="connected";this.lastProbe.connectionOpened=true;this.qr=null;void this.stop();} // test-only: deliberately disconnect after pairing
           if(update.connection==="close"){this.status="disconnected";this.qr=null;void this.stop();}
         });
         this.stopTimer=setTimeout(()=>{void this.stop()},60000);
