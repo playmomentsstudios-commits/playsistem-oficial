@@ -5,6 +5,12 @@ const enc=new TextEncoder(),dec=new TextDecoder();
 export class EncryptedAuthProbe {
   constructor(ctx,env){this.ctx=ctx;this.env=env;}
   async fetch(request){
+    if(new URL(request.url).pathname==="/ws-test"){
+      if(request.headers.get("Upgrade")!=="websocket")return new Response("Upgrade required",{status:426});
+      const pair=new WebSocketPair();
+      this.ctx.acceptWebSocket(pair[1]);
+      return new Response(null,{status:101,webSocket:pair[0]});
+    }
     const requested=new URL(request.url).pathname;
     if(requested==="/lifecycle"){
       // Deterministic bounded offline socket-lifecycle probe; no WhatsApp network/socket.
@@ -52,5 +58,7 @@ export class EncryptedAuthProbe {
       });
     }catch(error){return Response.json({failed:true,noSessionStarted:true,errorType:error?.name||"Error"},{status:500});}
   }
+  async webSocketMessage(ws,message){ if(typeof message==="string"&&message==="probe:ping")ws.send("probe:pong");else ws.close(1008,"test-only"); }
+  async webSocketClose(ws){try{ws.close()}catch{}}
 }
 export default {async fetch(request,env){return env.AUTH_TEST.get(env.AUTH_TEST.idFromName("offline-auth")).fetch(request);}};
