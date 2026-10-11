@@ -46,11 +46,11 @@ export class EncryptedAuthProbe {
       return Response.json({bounded:true,closed,events,noWhatsAppSocket:true,productionQueueUntouched:true,credentialFree:true});
     }
     try{
-      // Ephemeral test encryption key exists only for this local runtime; not production.
-      // Test uses a generated key persisted in DO to check read/write mechanics ONLY.
-      let raw=await this.ctx.storage.get("local-test-key");
-      if(!raw){raw=Array.from(crypto.getRandomValues(new Uint8Array(32)));await this.ctx.storage.put("local-test-key",raw);}
-      const key=await crypto.subtle.importKey("raw",new Uint8Array(raw),"AES-GCM",false,["encrypt","decrypt"]);
+      // Secret supplied by runtime environment: never stored in the Durable Object.
+      if(typeof this.env.PROBE_AES_KEY_B64!=="string")throw new Error("Missing encryption secret");
+      const raw=Uint8Array.from(atob(this.env.PROBE_AES_KEY_B64),v=>v.charCodeAt(0));
+      if(raw.length!==32)throw new Error("Invalid secret length");
+      const key=await crypto.subtle.importKey("raw",raw,"AES-GCM",false,["encrypt","decrypt"]);
       const storage=this.ctx.storage;
       async function put(id,value){
         const iv=crypto.getRandomValues(new Uint8Array(12));
@@ -76,7 +76,8 @@ export class EncryptedAuthProbe {
         keyStoreRoundTrip:session?.counter===17&&session.chainKey[1]===34,
         encryptionAuthenticated:true,keyExtractable:false,
         persistentStorage:true,recordExistedBeforeRequest:existing,noStorageOfKeys:false,
-        testKeyStoredAlongsideCiphertext:true,
+        testKeyStoredAlongsideCiphertext:false,
+        secretConfigured:true,
         isProductionSecure:false
       });
     }catch(error){return Response.json({failed:true,noSessionStarted:true,errorType:error?.name||"Error"},{status:500});}
