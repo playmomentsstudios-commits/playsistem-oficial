@@ -1,0 +1,7 @@
+{
+  "name": "sagamente-wa-cloudflare-probe",
+  "main": "./src/index.js",
+  "compatibility_date": "2026-10-11",
+  "durable_objects": {"bindings": [{"name":"BRIDGE_PROBE","class_name":"BridgeProbe"}]},
+  "migrations": [{"tag":"v1","new_sqlite_classes":["BridgeProbe"]}]
+}
