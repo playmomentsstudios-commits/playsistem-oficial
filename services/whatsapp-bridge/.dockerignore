@@ -1,0 +1,11 @@
+# Never include private credentials, existing WhatsApp session, or developer machine files.
+.env
+.env.*
+!.env.example
+.local
+node_modules
+npm-debug.log
+.git
+*.zip
+*.tar
+*.tgz
