@@ -91,14 +91,21 @@ export function WhatsappQrBridgePanel(){
       toast('É obrigatório testar com um cliente real primeiro.','error')
       return
     }
-    if(!window.confirm('Salvar este modo de destinatários? Todos os envios automáticos serão pausados até uma nova ativação. Nenhuma mensagem antiga será reenviada.'))return
+    const keepEnabled=enabled
+    const destination=choiceMode==='self_test'?'somente seu número de teste':choiceMode==='single_client'
+      ?'somente o cliente '+(eligible.find(person=>person.user_id===choiceCustomer)?.customer_name||'selecionado')
+      :'TODOS os clientes com autorização válida'
+    const message=keepEnabled
+      ?'Alterar o modo para '+destination+' e MANTER OS ENVIOS ATIVOS? A alteração será aplicada imediatamente a novas notificações, respeitando consentimento e limites. Não reenvia mensagens antigas.'
+      :'Salvar o modo para '+destination+' e MANTER OS ENVIOS PAUSADOS? Para começar a enviar, será necessária uma ativação separada.'
+    if(!window.confirm(message))return
     try{
       setBusy(true)
-      const {data,error}=await supabase.rpc('wa_bridge_set_delivery_mode',{
-        p_mode:choiceMode,p_customer_id:choiceMode==='single_client'?choiceCustomer:null
+      const {data,error}=await supabase.rpc('wa_bridge_save_delivery_mode',{
+        p_mode:choiceMode,p_customer_id:choiceMode==='single_client'?choiceCustomer:null,p_keep_enabled:keepEnabled
       })
       if(error)throw error
-      toast(String(data||'Modo selecionado. Envios pausados.'),'success')
+      toast(String(data||'Modo de entrega atualizado.'),'success')
       await refresh()
     }catch(error:any){toast(error?.message||'Não foi possível salvar o modo de entrega.','error')}
     finally{setBusy(false)}
@@ -171,7 +178,7 @@ export function WhatsappQrBridgePanel(){
         </div>
         <div className="rounded-xl border border-white/10 bg-black/30 p-4 space-y-3">
           <h3 className="text-sm font-semibold text-white">Destinatários do envio automático</h3>
-          <p className="text-xs text-gray-400">A mudança de modo nunca dispara mensagens: ela pausa o serviço até você ativá-lo novamente. Os clientes precisam aceitar os avisos em suas próprias contas, em Configurações.</p>
+          <p className="text-xs text-gray-400">Alterar o modo não reenvia notificações antigas. Se os envios estiverem ativos, você pode manter a operação ligada com confirmação explícita. Clientes precisam ter aceite válido.</p>
           <label className="block text-xs text-gray-400">Modo de entrega
             <select aria-label="Modo de entrega WhatsApp" value={choiceMode} onChange={e=>setChoiceMode(e.target.value as DeliveryMode)}
               className="mt-1 w-full min-h-11 rounded-xl border border-white/10 bg-[#171719] text-sm px-3 text-white">
@@ -198,11 +205,11 @@ export function WhatsappQrBridgePanel(){
           <p className="text-[11px] text-gray-500">Modo salvo: {mode==='self_test'?'Teste no número da empresa':mode==='single_client'?'Somente um cliente':'Todos os clientes autorizados'}.
           {trialAccepted?' Entrega individual observada; confirme também diretamente com o destinatário antes de ampliar.':' Nenhuma entrega individual foi confirmada.'}</p>
           <button type="button" onClick={()=>void configureMode()}
-            disabled={busy||enabled||(choiceMode==='single_client'&&!choiceCustomer)||(choiceMode==='consented_clients'&&!trialAccepted)}
+            disabled={busy||(choiceMode==='single_client'&&!choiceCustomer)||(choiceMode==='consented_clients'&&!trialAccepted)}
             className="min-h-10 rounded-xl border border-[#A65A2A]/30 bg-[#A65A2A]/10 px-4 text-xs font-semibold text-[#DFA269] disabled:opacity-40">
-            Salvar modo e manter envios pausados
+            {enabled?'Salvar modo e manter envios ativos':'Salvar modo e manter envios pausados'}
           </button>
-          {enabled&&<p className="text-xs text-amber-200">Para alterar destinatários, clique primeiro em “Pausar envios”.</p>}
+          {enabled&&<p className="text-xs text-amber-200">Alterar de um cliente para todos amplia os destinatários imediatamente após confirmar. Os limites e o consentimento continuam obrigatórios.</p>}
         </div>
         <p className="text-[11px] text-gray-500">Envios automáticos: <strong className={enabled?'text-emerald-300':'text-gray-300'}>{enabled?'ATIVADOS ('+(mode==='self_test'?'piloto':'clientes reais')+')':'desativados'}</strong>. {online?'Serviço detectado.':'O QR real só aparece quando o serviço local estiver funcionando.'}</p>
       </div>
