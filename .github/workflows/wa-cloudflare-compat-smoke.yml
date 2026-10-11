@@ -41,4 +41,4 @@ jobs:
             tail -100 /tmp/sagamente-wa-runtime.log
             exit 1
           fi
-          node -e 'const fs=require("fs");const x=JSON.parse(fs.readFileSync("/tmp/sagamente-wa-runtime.json","utf8"));if(x.bundled!==true||x.browserApi!==true||x.noSessionStarted!==true)process.exit(1);console.log("Baileys loaded in local Workers runtime without WhatsApp session.")'
+          node -e 'const fs=require("fs");const x=JSON.parse(fs.readFileSync("/tmp/sagamente-wa-runtime.json","utf8"));if(x.bundled!==true||x.browserApi!==true||x.noSessionStarted!==true||x.offlineKeyGeneration!==true||x.credentialRoundTrip!==true||x.noStorageOfKeys!==true)process.exit(1);console.log("Baileys loaded; offline key generation and serialization passed.")'
