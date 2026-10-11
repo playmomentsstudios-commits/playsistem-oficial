@@ -14,3 +14,13 @@
 - GitHub Actions verde = compilação/testes locais, não implantação remota.
 - A criação de workflow `workflow_dispatch` somente na branch spike não garante que o botão Run workflow apareça; isso é um bloqueio operacional e não justificativa para mesclar código não validado na main.
 - Não foi confirmada a existência nem a configuração do secret GitHub `CLOUDFLARE_API_TOKEN`. Sem isso não afirmar deploy.
+
+
+## Atualização efetiva 2026-10-11: infraestrutura de destino implantada
+
+- Worker isolado `sagamente-wa-baileys-remote-probe` criado pela API Cloudflare, confirmado GET HTTP 200.
+- Subdomínio workers.dev habilitado, confirmado GET HTTP 200 e `enabled:true`; `previews_enabled:false`.
+- O script remoto é SOMENTE bootstrap de segurança/saúde; retorna `baileysLoaded:false`, `pairingEnabled:false`, `productionMessagesEnabled:false`.
+- Rotas privadas `/start`, `/qr`, `/stop`, `/controller-status` devolvem 503 enquanto o Baileys não estiver implantado.
+- **Não afirmar Baileys remoto validado, QR real ou credenciais remotas configuradas.** O bundle existe no artefato Actions #38153992392, mas o deploy desse bundle continua bloqueado pelo canal credenciado GitHub→Cloudflare.
+- Próxima ação para operação: configurar token com escopo restrito no ambiente GitHub para rodar o workflow experimental ou realizar deploy restrito através de operador autenticado, então instalar secrets separados, validar segurança antes de habilitar login.
