@@ -11,6 +11,29 @@ export class EncryptedAuthProbe {
       this.ctx.acceptWebSocket(pair[1]);
       return new Response(null,{status:101,webSocket:pair[0]});
     }
+    if(new URL(request.url).pathname==="/outbound-ws-test"){
+      // Network-only probe against a public echo service. Never uses WhatsApp credentials.
+      // This endpoint is intentionally only in the local compat Worker, not deployed.
+      const started=Date.now();
+      try {
+        const response=await fetch("https://echo.websocket.events",{
+          headers:{Upgrade:"websocket"},
+          signal:AbortSignal.timeout(5000)
+        });
+        const ws=response.webSocket;
+        if(!ws)return Response.json({outboundEstablished:false,status:response.status,elapsedMs:Date.now()-started,noWhatsAppSocket:true});
+        ws.accept();
+        const message=await new Promise(resolve=>{
+          const timer=setTimeout(()=>resolve({echoReceived:false,timeout:true}),3000);
+          ws.addEventListener("message",event=>{clearTimeout(timer);resolve({echoReceived:true,messageType:typeof event.data})},{once:true});
+          ws.send("sagamente-cloudflare-offline-probe");
+        });
+        try{ws.close(1000,"done")}catch{}
+        return Response.json({outboundEstablished:true,...message,closed:true,elapsedMs:Date.now()-started,noWhatsAppSocket:true});
+      }catch(error){
+        return Response.json({outboundEstablished:false,errorType:error?.name||"Error",elapsedMs:Date.now()-started,noWhatsAppSocket:true});
+      }
+    }
     const requested=new URL(request.url).pathname;
     if(requested==="/lifecycle"){
       // Deterministic bounded offline socket-lifecycle probe; no WhatsApp network/socket.
