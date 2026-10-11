@@ -42,4 +42,6 @@ jobs:
             exit 1
           fi
           curl --fail --silent --show-error --max-time 5 http://127.0.0.1:8799/ -o /tmp/sagamente-wa-runtime-again.json
+          curl --fail --silent --show-error --max-time 5 http://127.0.0.1:8799/lifecycle -o /tmp/sagamente-wa-lifecycle.json
+          node -e 'const x=require("/tmp/sagamente-wa-lifecycle.json");if(x.bounded!==true||x.closed!==true||x.noWhatsAppSocket!==true||x.productionQueueUntouched!==true||x.credentialFree!==true)process.exit(1);console.log("Offline bounded lifecycle passed.")'
           node -e 'const fs=require("fs");const a=JSON.parse(fs.readFileSync("/tmp/sagamente-wa-runtime.json","utf8"));const b=JSON.parse(fs.readFileSync("/tmp/sagamente-wa-runtime-again.json","utf8"));if(a.bundled!==true||a.offlineKeyGeneration!==true||a.credentialRoundTrip!==true||a.keyStoreRoundTrip!==true||a.persistentStorage!==true||a.recordExistedBeforeRequest!==false||b.recordExistedBeforeRequest!==true||b.credentialRoundTrip!==true||b.keyStoreRoundTrip!==true||a.noSessionStarted!==true||a.isProductionSecure!==false)process.exit(1);console.log("Durable Object persisted real-format Baileys credentials between requests; still offline-only.")'
