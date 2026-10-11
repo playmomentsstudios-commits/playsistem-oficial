@@ -10,8 +10,8 @@ const customerId='22222222-2222-4222-8222-222222222222'
 const taskId='33333333-3333-4333-8333-333333333333'
 const stageId='44444444-4444-4444-8444-444444444444'
 const compactPath='/n/abcdefghijklmnopqrstuv'
-const folderIds={received:'received-folder-123',preview:'preview-folder-123',approved:'approved-folder-123'}
-const fileIds={received:'received-file-123456',preview:'preview-file-123456',approved:'approved-file-123456'}
+const folderIds={received:'received-folder-123',preview:'preview-folder-123',approved:'approved-folder-123',delivery:'delivery-folder-123'}
+const fileIds={received:'received-file-123456',preview:'preview-file-123456',approved:'approved-file-123456',delivery:'delivery-file-123456'}
 
 const schema=`
 create role anon;
@@ -24,6 +24,7 @@ create table public.notifications(id uuid primary key, user_id uuid, type text, 
 create table public.tasks(id uuid primary key, title text, stage_id uuid, project_id uuid, client_visible boolean);
 create table public.project_stages(id uuid primary key, name text, project_id uuid, client_visible boolean);
 create table public.project_drive_folders(project_id uuid, drive_folder_id text, folder_kind text);
+create table public.project_custom_folders(id uuid, project_id uuid, drive_folder_id text, parent_kind text);
 create table public.client_files(
  id uuid primary key, project_id uuid, task_id uuid, stage_id uuid, client_visible boolean,
  storage_provider text, drive_file_id text, drive_folder_id text, drive_folder_kind text, name text, external_url text,
@@ -43,13 +44,18 @@ insert into public.project_stages values ('${stageId}','Identidade visual','${pr
 insert into public.project_drive_folders values
  ('${projectId}','${folderIds.received}','received'),
  ('${projectId}','${folderIds.preview}','preview'),
- ('${projectId}','${folderIds.approved}','approved');
+ ('${projectId}','${folderIds.approved}','approved'),
+ ('${projectId}','${folderIds.delivery}','delivery');
 insert into public.client_files
  (id,project_id,task_id,stage_id,client_visible,storage_provider,drive_file_id,drive_folder_id,drive_folder_kind,name)
 values
  ('55555555-5555-4555-8555-555555555555','${projectId}','${taskId}','${stageId}',true,'google_drive','${fileIds.received}','${folderIds.received}-nested','received','Arquivo recebido'),
  ('66666666-6666-4666-8666-666666666666','${projectId}','${taskId}','${stageId}',true,'google_drive','${fileIds.preview}','${folderIds.preview}-nested','preview','Arquivo para revisão'),
- ('77777777-7777-4777-8777-777777777777','${projectId}','${taskId}','${stageId}',true,'google_drive','${fileIds.approved}','${folderIds.approved}-nested','approved','Arquivo aprovado');
+ ('77777777-7777-4777-8777-777777777777','${projectId}','${taskId}','${stageId}',true,'google_drive','${fileIds.approved}','${folderIds.approved}-nested','approved','Arquivo aprovado'),
+ ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','${projectId}','${taskId}','${stageId}',true,'google_drive','${fileIds.delivery}','${folderIds.delivery}-nested','delivery','Material final');
+insert into public.project_custom_folders values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','${projectId}','custom-preview-folder-123','preview');
+insert into public.client_files (id,project_id,task_id,stage_id,client_visible,storage_provider,drive_file_id,drive_folder_id,name)
+values ('cccccccc-cccc-4ccc-8ccc-cccccccccccc','${projectId}','${taskId}','${stageId}',true,'google_drive','custom-preview-file-123','custom-preview-folder-123','Prévia em pasta personalizada');
 `
 
 async function makeDatabase(){
@@ -91,7 +97,8 @@ function includesOnly(body,allowed,excluded){
 
 test('review task update includes only preview-folder files',async()=>{
  const body=await emit({type:'project_task',status:'review',metadata:{task_id:taskId}})
- includesOnly(body,fileIds.preview,[fileIds.received,fileIds.approved])
+ includesOnly(body,fileIds.preview,[fileIds.received,fileIds.approved,fileIds.delivery])
+ assert.ok(body.includes('custom-preview-file-123'),'Expected custom preview folder file')
 })
 
 test('in-progress stage update includes only received-folder files',async()=>{
@@ -99,9 +106,14 @@ test('in-progress stage update includes only received-folder files',async()=>{
  includesOnly(body,fileIds.received,[fileIds.preview,fileIds.approved])
 })
 
-test('completed project event includes only approved-folder files',async()=>{
+test('completed task update includes approved-folder files only',async()=>{
+ const body=await emit({type:'project_task',status:'completed',metadata:{task_id:taskId}})
+ includesOnly(body,fileIds.approved,[fileIds.received,fileIds.preview,fileIds.delivery])
+})
+
+test('completed project event includes final delivery-folder files only',async()=>{
  const body=await emit({type:'project_status',status:'completed'})
- includesOnly(body,fileIds.approved,[fileIds.received,fileIds.preview])
+ includesOnly(body,fileIds.delivery,[fileIds.received,fileIds.preview,fileIds.approved])
 })
 
 test('requested adjustments do not attach files from any operational folder',async()=>{
