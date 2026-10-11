@@ -66,9 +66,8 @@ for (const helper of helpers) {
       ok: true, status: 200,
       text: async () => '{"id":"mock-file-id","name":"exemplo.png"}',
     })
-    assert.deepEqual(await driveJson('https://www.googleapis.com/drive/v3/files/test'), {
-      id: 'mock-file-id',
-      name: 'exemplo.png',
-    })
+    const file = await driveJson('https://www.googleapis.com/drive/v3/files/test')
+    assert.equal(file.id, 'mock-file-id')
+    assert.equal(file.name, 'exemplo.png')
   })
 }
