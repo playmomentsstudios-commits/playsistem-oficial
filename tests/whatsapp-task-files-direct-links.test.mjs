@@ -1,0 +1,52 @@
+import assert from 'node:assert/strict'
+import {readFileSync} from 'node:fs'
+import test from 'node:test'
+
+const sql=readFileSync(new URL('../supabase/migrations/20261011003000_wa_secure_task_file_links.sql',import.meta.url),'utf8')
+const endpoint=readFileSync(new URL('../supabase/functions/whatsapp-file-open/index.ts',import.meta.url),'utf8')
+
+test('task WhatsApp messages show direct file link first, task deep link below',()=>{
+  assert.match(sql,/n\.type='project_task'/)
+  assert.match(sql,/candidate\.task_id=v_task/)
+  assert.match(sql,/candidate\.client_visible/)
+  assert.match(sql,/candidate\.drive_file_id is not null/)
+  assert.match(sql,/candidate\.created_at desc/)
+  assert.match(sql,/📎 Arquivo desta /)
+  assert.match(sql,/v_file_url\|\|/)
+  assert.match(sql,/Ver tarefa e detalhes:/)
+  assert.match(sql,/o\.target_link/)
+  assert.match(sql,/after insert on public\.whatsapp_message_outbox/)
+})
+test('stage and review events cannot include files from an unrelated project or invisible task',()=>{
+  assert.match(sql,/candidate\.stage_id=v_stage/)
+  assert.match(sql,/candidate\.project_id=v_project/)
+  assert.match(sql,/candidate\.task_id is null or exists/)
+  assert.match(sql,/t\.client_visible/)
+  assert.match(sql,/s\.client_visible/)
+  assert.match(sql,/n\.type in \('file_available','file_received','file_review_requested'\)/)
+  assert.match(sql,/n\.metadata->>'file_id'/)
+})
+test('download tokens are hashed, expire after 48h and cannot bypass client project access',()=>{
+  assert.match(sql,/sha256\(convert_to\(v_token,'UTF8'\)\)/)
+  assert.match(sql,/sha256\(convert_to\(p_token,'UTF8'\)\)/)
+  assert.match(sql,/48 hours/)
+  assert.match(sql,/l\.expires_at>now\(\)/)
+  assert.match(sql,/l\.revoked_at is null/)
+  assert.match(sql,/p\.project_type<>'internal'/)
+  assert.match(sql,/project_customer_access/)
+  assert.match(sql,/f\.client_visible/)
+  assert.match(sql,/u\.status='active'/)
+  assert.match(sql,/revoke all on function public\.wa_resolve_file_link\(text\) from public,anon,authenticated/)
+  assert.match(sql,/grant execute on function public\.wa_resolve_file_link\(text\) to service_role/)
+})
+test('an unauthenticated recipient opens only the scoped file, not the Sagamente platform or Drive folder',()=>{
+  assert.match(endpoint,/^[\s\S]*\/\^\[0-9a-f\]\{64\}\$\/.test\(token\)/)
+  assert.match(endpoint,/db\.rpc\("wa_resolve_file_link"/)
+  assert.match(endpoint,/SUPABASE_SERVICE_ROLE_KEY/)
+  assert.match(endpoint,/GOOGLE_DRIVE_REFRESH_TOKEN/)
+  assert.match(endpoint,/alt=media/)
+  assert.match(endpoint,/Content-Disposition/)
+  assert.match(endpoint,/no-store/)
+  assert.match(endpoint,/X-Robots-Tag/)
+  assert.doesNotMatch(endpoint,/permissions\.create|anyoneWithLink|webViewLink|sharingPermissions/)
+})
