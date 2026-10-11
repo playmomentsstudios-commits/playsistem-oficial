@@ -26,5 +26,8 @@ test('generated external project copy contains no task wording and preserves com
  assert.match(migration,/on conflict|new\.source<>'live'/)
  assert.match(migration,/\*Revisão disponível\*/)
  assert.match(migration,/\*Etapa concluída\*/)
+ assert.match(migration,/v_status='active'/)
+ assert.match(migration,/v_status='completed'/)
+ assert.match(migration,/review.action='changes_requested'/)
  assert.doesNotMatch(migration,/Links dos arquivos válidos por 48 horas/)
 })

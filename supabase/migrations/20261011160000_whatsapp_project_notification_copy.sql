@@ -7,6 +7,7 @@ declare
   f record;
   v_project uuid;
   v_project_name text;
+  v_adjustments_done boolean:=false;
   v_task uuid;
   v_stage uuid;
   v_task_name text;
@@ -25,7 +26,7 @@ declare
   v_count integer:=0;
 begin
   if new.source<>'live' or new.status not in ('ready_manual','missing_phone')
-    or new.event_type not in ('project_task','project_stage','file_available','file_received','file_review_requested')
+    or new.event_type not in ('project_task','project_stage','project_status','project_updated','file_available','file_received','file_review_requested')
     then return new; end if;
 
   select * into n from public.notifications where id=new.notification_id;
@@ -88,15 +89,39 @@ begin
     end||E'\n\n'||'Etapa: *'||v_stage_name||'*'||E'\n'||
       'Projeto: *'||v_project_name||'*.';
     v_label:='🔗 *Acompanhe:*';
+  elsif n.type in ('project_status','project_updated') then
+    v_body:=case
+      when n.type='project_updated' then '📌 *Atualização do projeto*'||E'\n\n'||
+        'O projeto *'||v_project_name||'* teve uma atualização de prazo.'
+      when v_status='active' then '🚀 *Projeto iniciado*'||E'\n\n'||
+        'O projeto *'||v_project_name||'* já está em andamento.'
+      when v_status='completed' then '🎉 *Entrega final disponível*'||E'\n\n'||
+        'Concluímos o projeto *'||v_project_name||'*. Os materiais finais estão disponíveis.'
+      when v_status='review' then '🔎 *Revisão disponível*'||E'\n\n'||
+        'O projeto *'||v_project_name||'* está pronto para sua análise.'
+      else '📌 *Seu projeto tem uma novidade*'||E'\n\n'||
+        'O projeto *'||v_project_name||'* teve uma atualização.'
+    end;
+    v_label:='🔗 *Acompanhe:*';
   else
     if coalesce(n.metadata->>'file_id','') !~ '^[0-9a-fA-F-]{36}$' then return new; end if;
     select left(regexp_replace(c.name,'[\r\n\t*]',' ','g'),110) into v_file_name
       from public.client_files c where c.id=(n.metadata->>'file_id')::uuid and c.project_id=v_project;
-    v_body:=case when n.type='file_review_requested'
-      then '🔎 *Revisão disponível*'
-      else '📎 *Novo material disponível*' end||E'\n\n'||
+    select exists(
+      select 1
+      from public.client_files current_file
+      join public.client_files previous_file on previous_file.id=current_file.supersedes_file_id
+      join public.file_reviews review on review.file_id=previous_file.id
+      where current_file.id=(n.metadata->>'file_id')::uuid
+        and review.action='changes_requested'
+    ) into v_adjustments_done;
+    v_body:=case
+      when n.type='file_review_requested' then '🔎 *Revisão disponível*'
+      when v_adjustments_done then '🛠️ *Ajustes concluídos*'
+      else '📎 *Novo material disponível*'
+    end||E'\n\n'||
       'Material: *'||coalesce(v_file_name,'arquivo')||'*'||E'\n'||
-      'Projeto: *'||v_project_name||'*.';
+      'Projeto: *'||v_project_name||'*'||case when v_adjustments_done then ' recebeu uma nova versão.' else '.' end;
     v_label:='🔗 *Acompanhe:*';
   end if;
 
@@ -143,6 +168,7 @@ begin
           ))
           or (n.type in ('file_available','file_received','file_review_requested')
               and c.id=(n.metadata->>'file_id')::uuid)
+          or (n.type in ('project_status','project_updated') and c.project_id=v_project)
         )
     ), versions as (
       select e.*,
@@ -164,7 +190,7 @@ begin
 
     if v_count=1 then
       v_body:=v_body||E'\n\n'||'📂 *Arquivos desta '||
-        case when n.type='project_stage' then 'etapa' else 'entrega' end||':*';
+        case when n.type='project_stage' then 'etapa' when n.type='project_status' and v_status='completed' then 'entrega final' else 'entrega' end||':*';
     end if;
     v_group:=case when f.is_support then '📄 Apoio: ' else '🖼️ ' end;
     v_file_name:=left(regexp_replace(f.name,'[\r\n\t*]',' ','g'),110);
