@@ -83,6 +83,7 @@ jobs:
           printf "PROBE_AES_KEY_B64=%s\n" "$(openssl rand -base64 32 | tr -d '\n')" > .dev.vars
           printf "PROBE_ACCESS_TOKEN=%s\n" "$(openssl rand -hex 32)" >> .dev.vars
           printf "EXPERIMENTAL_PAIRING_ENABLED=true\n" >> .dev.vars
+          printf "EXPERIMENTAL_PAIRING_EXPIRES_AT=%s\n" "$(($(date +%s%3N)+120000))" >> .dev.vars
           chmod 600 .dev.vars
           TEST_TOKEN="$(sed -n 's/^PROBE_ACCESS_TOKEN=//p' .dev.vars)"
           ./node_modules/.bin/wrangler dev --local --ip 127.0.0.1 --port 8800 --persist-to /tmp/sagamente-wa-isolated-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT} > /tmp/sagamente-wa-live-probe.log 2>&1 &
