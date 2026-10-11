@@ -23,4 +23,7 @@ test('productivity board lets an operator assign an orphan and blocks ownerless 
   assert.match(page, /assignTask\(task\.id,e\.target\.value\)/);
   assert.match(page, /Atribua um responsável antes de iniciar/);
   assert.match(page, /role="alert"/);
+  assert.match(page, /async function changeStatus\(id:string,status:string\):Promise<boolean>/);
+  assert.match(page, /if\(await changeStatus\(selectedTask\.id,nextStatus\)\)/);
+  assert.match(page, /return false/);
 });
