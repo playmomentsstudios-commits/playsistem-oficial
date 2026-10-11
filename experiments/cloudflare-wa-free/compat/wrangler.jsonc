@@ -2,5 +2,21 @@
   "name": "sagamente-baileys-compat-smoke",
   "main": "./src/index.js",
   "compatibility_date": "2026-10-11",
-  "workers_dev": false
+  "workers_dev": false,
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "AUTH_TEST",
+        "class_name": "EncryptedAuthProbe"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "EncryptedAuthProbe"
+      ]
+    }
+  ]
 }
