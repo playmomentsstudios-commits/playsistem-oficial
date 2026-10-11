@@ -1,6 +1,6 @@
 # SAGAMENTE — Liberação dos modelos editáveis de WhatsApp
 
-**PR:** #396 · **Migration proposta:** `20261011220000_whatsapp_editable_templates_and_archive.sql`
+**PR:** #396 · **Migration proposta:** `20261011215447_whatsapp_editable_templates_and_archive.sql`
 
 ## Situação verificada (11/10/2026)
 
