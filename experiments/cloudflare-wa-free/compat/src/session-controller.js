@@ -22,9 +22,11 @@ export class ExperimentalSessionController {
     }
     if(route==="/start"&&request.method==="POST"){
       if(this.socket)return new Response(JSON.stringify({error:"already_active"}),{status:409,headers});
+      let stage="auth-store";
       try{
         const {state,saveCreds}=await createEncryptedAuthState(this.ctx.storage,this.env.PROBE_AES_KEY_B64);
         this.qr=null;this.status="connecting";this.lastProbe={socketInitiated:false,qrObserved:false,connectionOpened:false};this.deadline=Date.now()+60000;
+        stage="socket-init";
         const socket=makeWASocket({auth:state,printQRInTerminal:false,browser:Browsers.ubuntu("Sagamente Isolated Probe"),syncFullHistory:false,markOnlineOnConnect:false,logger:{level:"silent",child(){return this},trace(){},debug(){},info(){},warn(){},error(){},fatal(){}}});
         this.socket=socket;this.lastProbe.socketInitiated=true;
         socket.ev.on("creds.update",()=>{void saveCreds().catch(()=>{this.status="storage-error";void this.stop();});});
@@ -36,7 +38,7 @@ export class ExperimentalSessionController {
         });
         this.stopTimer=setTimeout(()=>{void this.stop()},60000);
         return new Response(JSON.stringify({started:true,deadline:this.deadline,productionMessagesEnabled:false}),{headers});
-      }catch(error){await this.stop();return new Response(JSON.stringify({error:"start_failed",errorType:error?.name||"Error"}),{status:500,headers});}
+      }catch(error){await this.stop();return new Response(JSON.stringify({error:"start_failed",errorType:error?.name||"Error",stage}),{status:500,headers});}
     }
     return new Response(JSON.stringify({error:"not_found"}),{status:404,headers});
   }
