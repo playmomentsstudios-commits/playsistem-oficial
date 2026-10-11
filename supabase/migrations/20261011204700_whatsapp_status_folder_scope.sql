@@ -165,19 +165,34 @@ begin
                   c.drive_folder_kind=case
                     when v_status in ('in_progress','active') then 'received'
                     when v_status='review' then 'preview'
+                    when n.type='project_status' and v_status='completed' then 'delivery'
                     when v_status='completed' then 'approved'
                   end
                   or (
                     c.drive_folder_kind is null
-                    and exists (
-                      select 1 from public.project_drive_folders legacy_pdf
-                      where legacy_pdf.project_id=v_project
-                        and legacy_pdf.drive_folder_id=c.drive_folder_id
-                        and legacy_pdf.folder_kind=case
-                          when v_status in ('in_progress','active') then 'received'
-                          when v_status='review' then 'preview'
-                          when v_status='completed' then 'approved'
-                        end
+                    and (
+                      exists (
+                        select 1 from public.project_drive_folders legacy_pdf
+                        where legacy_pdf.project_id=v_project
+                          and legacy_pdf.drive_folder_id=c.drive_folder_id
+                          and legacy_pdf.folder_kind=case
+                            when v_status in ('in_progress','active') then 'received'
+                            when v_status='review' then 'preview'
+                            when n.type='project_status' and v_status='completed' then 'delivery'
+                            when v_status='completed' then 'approved'
+                          end
+                      )
+                      or exists (
+                        select 1 from public.project_custom_folders legacy_custom
+                        where legacy_custom.project_id=v_project
+                          and legacy_custom.drive_folder_id=c.drive_folder_id
+                          and legacy_custom.parent_kind=case
+                            when v_status in ('in_progress','active') then 'received'
+                            when v_status='review' then 'preview'
+                            when n.type='project_status' and v_status='completed' then 'delivery'
+                            when v_status='completed' then 'approved'
+                          end
+                      )
                     )
                   )
                 )
