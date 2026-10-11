@@ -177,6 +177,7 @@ Deno.serve(async (req) => {
           customer_id: targetProject.customer_id,
           task_id: file.project_id===targetProjectId ? undefined : null,
           drive_folder_id: target.drive_folder_id,
+          drive_folder_kind: target.folder_kind,
           custom_folder_id: customFolderId,
         })
         .eq("id", fileId);
