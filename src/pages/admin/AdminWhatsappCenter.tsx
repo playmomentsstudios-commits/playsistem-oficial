@@ -6,6 +6,7 @@ import { useToast } from '../../contexts/ToastContext'
 import { WhatsappQrBridgePanel } from '../../components/admin/WhatsappQrBridgePanel'
 import { PriorityAlertHistory } from '../../components/admin/PriorityAlertHistory'
 import { WHATSAPP_CONSENT_PATH } from '../../lib/whatsappConsent'
+import { WhatsappMessageTemplates } from '../../components/admin/WhatsappMessageTemplates'
 
 type WAState='ready_manual'|'missing_phone'|'historical'|'opened_manual'|'reported_sent'|'sending_auto'|'sent_auto'|'failed_auto'
 type WAAttempt={
@@ -30,6 +31,7 @@ type WARecord={
   created_at:string
   opened_at:string|null
   reported_at:string|null
+  archived_at:string|null
 }
 type Summary={
   prepared_today:number
@@ -110,16 +112,19 @@ export function AdminWhatsappCenter(){
   const [error,setError]=useState('')
   const [search,setSearch]=useState('')
   const [filter,setFilter]=useState('all')
-  const [view,setView]=useState<'history'|'settings'>('history')
+  const [showArchived,setShowArchived]=useState(false)
+  const [view,setView]=useState<'history'|'settings'|'templates'>('history')
 
   async function load(){
     setError('')
     try{
+      const historyQuery=supabase.from('whatsapp_message_outbox')
+        .select('id,notification_id,recipient_name,destination_phone,recipient_user_id,event_type,title,message_body,target_link,status,source,created_at,opened_at,reported_at,archived_at')
+        .order('created_at',{ascending:false}).limit(300)
+      const historyPromise=showArchived?historyQuery.not('archived_at','is',null):historyQuery.is('archived_at',null)
       const [cfg,list,daily,attemptRows,receiptDaily]=await Promise.all([
         settingsApi.appSettings(),
-        supabase.from('whatsapp_message_outbox')
-          .select('id,notification_id,recipient_name,destination_phone,recipient_user_id,event_type,title,message_body,target_link,status,source,created_at,opened_at,reported_at')
-          .order('created_at',{ascending:false}).limit(300),
+        historyPromise,
         supabase.rpc('wa_daily_dashboard'),
         supabase.from('whatsapp_bridge_attempts')
           .select('id,outbox_id,destination_phone,test_mode,status,provider_message_id,error_reason,claimed_at,completed_at,ack_status,ack_at,destination_jid,media_planned_count,media_submitted_count,media_fallback_count')
@@ -139,7 +144,7 @@ export function AdminWhatsappCenter(){
       setError(err?.message||'Não foi possível carregar a auditoria do WhatsApp.')
     }finally{setLoading(false)}
   }
-  useEffect(()=>{void load()},[])
+  useEffect(()=>{void load()},[showArchived])
   const attemptByOutbox=useMemo(()=>new Map(attempts.map(a=>[a.outbox_id,a])),[attempts])
   const filtered=useMemo(()=>rows.filter(r=>{
     if(filter!=='all'&&r.status!==filter)return false
@@ -173,6 +178,18 @@ export function AdminWhatsappCenter(){
     }catch(err:any){toast(err?.message||'Não foi possível salvar as configurações.','error')}
     finally{setSaving(false)}
   }
+  async function archiveRecord(item:WARecord){
+    const archive=!item.archived_at
+    if(archive&&!window.confirm('Arquivar apenas nesta central? O registro continuará no banco e o envio automático não será cancelado.'))return
+    try{
+      setBusy(item.id)
+      const {error:archiveError}=await supabase.rpc('wa_set_archive',{p_outbox_id:item.id,p_archive:archive})
+      if(archiveError)throw archiveError
+      toast(archive?'Registro arquivado.':'Registro restaurado.','success')
+      await load()
+    }catch(err:any){toast(err?.message||'Não foi possível alterar o arquivo.','error')}
+    finally{setBusy(null)}
+  }
   async function mark(id:string,action:'opened'|'reported_sent'){
     const {error:rpcError}=await supabase.rpc('wa_mark_manual_action',{
       p_outbox_id:id,p_action:action,
@@ -188,7 +205,8 @@ export function AdminWhatsappCenter(){
       return
     }
     const destinationUrl=safeUrl(item.target_link)
-    const prepared=item.message_body+(destinationUrl&&!item.message_body.includes(destinationUrl)?'\n\nAcompanhar: '+destinationUrl:'')
+    const alreadyHasTarget=Boolean(item.target_link&&item.message_body.includes(item.target_link))
+    const prepared=item.message_body+(destinationUrl&&!alreadyHasTarget&&!item.message_body.includes(destinationUrl)?'\n\nAcompanhar: '+destinationUrl:'')
     const popup=window.open('https://wa.me/'+destination+'?text='+encodeURIComponent(prepared),'_blank')
     if(popup)popup.opener=null
     // "opened_manual" identifica apenas a ação de abrir. Não comprova envio.
@@ -207,37 +225,37 @@ export function AdminWhatsappCenter(){
     catch(err:any){toast(err?.message||'Não foi possível registrar a declaração.','error')}
     finally{setBusy(null)}
   }
-  return <div className="max-w-7xl space-y-5">
+  return <div className="mx-auto max-w-6xl space-y-5 pb-8">
     <header className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <p className="text-[11px] uppercase tracking-[.18em] text-[#A65A2A] font-semibold">Comunicação · Auditoria</p>
-        <h1 className="mt-1 text-2xl font-bold text-white">Central de WhatsApp</h1>
-        <p className="mt-1 text-sm text-gray-400">Acompanhe cada destinatário, mensagem e ação manual com rastreabilidade.</p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">Central de WhatsApp</h1>
+        <p className="mt-1 text-sm text-gray-400">Gerencie sua conexão, os avisos e o histórico de comunicação.</p>
       </div>
       <button type="button" onClick={()=>{setLoading(true);void load()}} className="min-h-10 rounded-xl border border-white/10 bg-white/5 px-4 text-xs">Atualizar dados</button>
     </header>
 
-    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[.04] p-4 text-sm text-amber-100">
-      <strong>Piloto experimental por QR Code · sem tarifa de API.</strong>
-      <p className="mt-1 text-xs text-amber-100/80">A ponte local é não oficial e pode causar bloqueio da conta. Sem provedor conectado à API oficial da Meta. Uma tentativa aceita pelo dispositivo não comprova entrega nem leitura. Nada é enviado automaticamente antes da conexão e da ativação explícita.</p>
+    <div className="rounded-xl border border-amber-500/15 bg-amber-500/[.035] px-4 py-3 text-sm text-amber-100">
+      <strong>Piloto por QR Code · integração não oficial</strong>
+      <details className="mt-1 text-xs text-amber-100/80"><summary className="cursor-pointer py-1">Entenda os riscos e as condições de envio</summary><p className="mt-2 leading-relaxed">A ponte local é não oficial e pode causar bloqueio da conta. Sem provedor conectado à API oficial da Meta. Uma tentativa aceita pelo dispositivo não comprova entrega nem leitura. Nada é enviado automaticamente antes da conexão e da ativação explícita.</p></details>
     </div>
-    <section className="rounded-2xl border border-white/10 bg-[#141416] p-5">
-      <h2 className="font-semibold text-white">Link de autorização para clientes</h2>
+    <details className="rounded-2xl border border-white/10 bg-[#141416] p-4 sm:p-5">
+      <summary className="cursor-pointer text-sm font-semibold text-white">Compartilhar link de autorização com clientes</summary>
       <p className="mt-1 text-sm text-gray-400">Envie este link para o cliente ler o termo e ativar os avisos pelo WhatsApp.</p>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
         <input aria-label="Link de autorização do WhatsApp" readOnly value={window.location.origin + WHATSAPP_CONSENT_PATH} onFocus={e=>e.target.select()} className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-black/30 px-3 text-sm text-gray-300"/>
         <button onClick={async()=>{try{await navigator.clipboard.writeText(window.location.origin + WHATSAPP_CONSENT_PATH);toast('Link copiado.','success')}catch{toast('Selecione e copie o link acima.','error')}}} className="min-h-11 rounded-xl bg-[#A65A2A] px-4 text-sm font-semibold text-white">Copiar link</button>
         <Link to={WHATSAPP_CONSENT_PATH} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center justify-center rounded-xl border border-white/10 px-4 text-sm">Ver página</Link>
       </div>
-    </section>
+    </details>
     <WhatsappQrBridgePanel/>
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4" aria-label="Resumo de mensagens de hoje">
       <Metric label="Avisos preparados hoje" value={summary.prepared_today} description="Criados na fila manual, não enviados"/>
       <Metric label="Conversas abertas hoje" value={summary.opened_today} description="Abertura registrada, envio desconhecido"/>
       <Metric label="Enviados informados hoje" value={summary.reported_today} description="Declaração manual, sem verificação"/>
       <Metric label="IDs retornados hoje" value={summary.bridge_sent_today} description="Somente aceite local · entrega não comprovada"/>
     </div>
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-white/10 bg-white/[.02] p-3 text-xs text-gray-400">
+    <details className="rounded-xl border border-white/10 bg-white/[.02] p-3 text-xs text-gray-400"><summary className="cursor-pointer font-medium text-gray-300">Ver indicadores detalhados de envio e entrega</summary><div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-3">
       <span><b className="text-white">{summary.missing_phone_today}</b> sem número hoje</span>
       <span><b className="text-white">{summary.historical_total}</b> eventos antigos identificados</span>
       <span><b className="text-white">{summary.total_records}</b> registros totais</span>
@@ -248,14 +266,16 @@ export function AdminWhatsappCenter(){
       <span><b className="text-white">{receiptStats.unconfirmed_today}</b> sem confirmação de servidor/entrega</span>
       <span><b className="text-white">{receiptStats.rejected_today}</b> rejeições registradas</span>
       <span><b className="text-white">{summary.provider_delivered_today}</b> entregas comprovadas hoje</span>
-    </div>
+    </div></details>
 
-    <div className="flex flex-wrap items-center gap-2 border-b border-white/10">
-      <button onClick={()=>setView('history')} className={'px-4 py-3 text-sm '+(view==='history'?'border-b-2 border-[#A65A2A] text-white':'text-gray-500')}>Mensagens e destinatários</button>
-      <button onClick={()=>setView('settings')} className={'px-4 py-3 text-sm '+(view==='settings'?'border-b-2 border-[#A65A2A] text-white':'text-gray-500')}>Configurações do canal</button>
-    </div>
+    <nav aria-label="Seções da Central de WhatsApp" className="flex flex-wrap items-center gap-2 border-b border-white/10">
+      <button onClick={()=>setView('history')} className={'px-4 py-3 text-sm '+(view==='history'?'border-b-2 border-[#A65A2A] text-white':'text-gray-500')}>Mensagens</button>
+      <button onClick={()=>setView('settings')} className={'px-4 py-3 text-sm '+(view==='settings'?'border-b-2 border-[#A65A2A] text-white':'text-gray-500')}>Configurações</button>
+      <button onClick={()=>setView('templates')} className={'px-4 py-3 text-sm '+(view==='templates'?'border-b-2 border-[#A65A2A] text-white':'text-gray-500')}>Modelos</button>
+    </nav>
     {error&&<p role="alert" className="rounded-xl border border-red-500/20 p-4 text-sm text-red-300">{error}</p>}
     {loading?<p className="py-12 text-center text-sm text-gray-400">Carregando a central...</p>:
+      view==='templates'?<WhatsappMessageTemplates/>:
       view==='settings'&&settings?<div className="space-y-5">
         <section className="rounded-2xl border border-white/10 bg-[#141416] p-5">
           <h2 className="font-semibold">Canal e custo</h2>
@@ -330,27 +350,34 @@ export function AdminWhatsappCenter(){
             <option value="all">Todas as situações</option>
             {(Object.keys(STATUS) as WAState[]).map(key=><option key={key} value={key}>{STATUS[key].label}</option>)}
           </select>
+          <button onClick={()=>setShowArchived(value=>!value)} className={'min-h-11 rounded-xl border px-4 text-xs '+(showArchived?'border-[#A65A2A] text-white':'border-white/10 text-gray-300')}>{showArchived?'Ver recentes':'Arquivadas'}</button>
           <button onClick={()=>exportCsv(filtered)} disabled={!filtered.length} className="min-h-11 rounded-xl border border-white/10 px-4 text-xs disabled:opacity-40">Exportar CSV</button>
         </div>
-        <p className="text-[11px] text-gray-500">Exibindo {filtered.length} registros dentre os últimos 300. Indicadores incluem todos os registros do banco. Eventos históricos não representam tentativas de envio.</p>
+        <p className="text-[11px] text-gray-500">{showArchived?'Arquivadas':'Recentes'} · {filtered.length} de até 300 registros. Arquivar não exclui auditorias, altera status ou cancela envios.</p>
         {!filtered.length?<div className="rounded-2xl border border-white/10 p-8 text-center text-sm text-gray-500">Nenhuma mensagem corresponde aos filtros.</div>:
-        <div className="space-y-3">
-          {filtered.map(item=><article key={item.id} className="rounded-2xl border border-white/10 bg-[#141416] p-4">
+        <div className="overflow-hidden rounded-xl border border-white/10 bg-[#141416] divide-y divide-white/10">
+          {filtered.map(item=><article key={item.id} className="px-3 py-3 sm:px-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <strong className="text-sm text-white">{item.recipient_name}</strong>
                   <span className={'rounded-md px-2 py-1 text-[10px] '+STATUS[item.status].tone}>{STATUS[item.status].label}</span>
                 </div>
-                <p className="mt-1 text-xs text-gray-400">{item.destination_phone?('+'+item.destination_phone):'Telefone não cadastrado ou inválido'} · {EVENT[item.event_type]||item.event_type}</p>
-                <p className="mt-1 text-[11px] text-gray-600">{localDate(item.created_at)} · {item.source==='historical'?'Importado para auditoria':'Gerado pelo sistema'}</p>
+                <p className="mt-1 text-xs text-gray-400">{EVENT[item.event_type]||item.event_type} · {localDate(item.created_at)}</p>
               </div>
-              {!['historical','missing_phone','sending_auto','sent_auto'].includes(item.status)&&<div className="flex flex-wrap gap-2">
-                <button onClick={()=>openWhatsApp(item)} disabled={busy===item.id} className="min-h-9 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 text-xs text-emerald-200 disabled:opacity-50">Abrir WhatsApp</button>
-                {item.status==='opened_manual'&&<button onClick={()=>void reportSent(item)} disabled={busy===item.id} className="min-h-9 rounded-lg border border-white/15 px-3 text-xs text-gray-200 disabled:opacity-50">Informar envio manual</button>}
-              </div>}
+              <div className="flex flex-wrap items-center gap-2">
+              {!showArchived&&!['historical','missing_phone','sending_auto','sent_auto'].includes(item.status)&&
+                <button onClick={()=>openWhatsApp(item)} disabled={busy===item.id} className="min-h-9 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 text-xs text-emerald-200 disabled:opacity-50">Abrir WhatsApp</button>}
+              {!showArchived&&item.status==='opened_manual'&&<button onClick={()=>void reportSent(item)} disabled={busy===item.id} className="min-h-9 rounded-lg border border-white/15 px-3 text-xs text-gray-200 disabled:opacity-50">Informar envio manual</button>}
+              <button disabled={busy===item.id} type="button" onClick={()=>void archiveRecord(item)}
+                className="min-h-9 rounded-lg px-3 text-xs text-gray-400 hover:bg-white/5 hover:text-white disabled:opacity-40">{showArchived?'Restaurar':'Arquivar'}</button>
+              </div>
             </div>
-            {attemptByOutbox.get(item.id)&&<div className="mt-3 rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-gray-300">
+            <details className="mt-2 rounded-lg border border-white/5 bg-black/15 px-3 py-2 text-xs text-gray-400">
+              <summary className="cursor-pointer font-medium text-gray-300">Ver mensagem e detalhes</summary>
+              <p className="mt-3 whitespace-pre-wrap break-words leading-relaxed text-gray-300">{item.message_body}</p>
+              {safeUrl(item.target_link)&&<p className="mt-2 break-all text-[11px] text-gray-500">{safeUrl(item.target_link)}</p>}
+              {attemptByOutbox.get(item.id)&&<details className="mt-3 rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-gray-300"><summary className="cursor-pointer font-semibold">Detalhes técnicos do envio automático</summary><div className="mt-3">
               <p className="font-semibold">Registro da tentativa automática</p>
               <p className="mt-1">Número de envio real: <strong className="text-white">+{attemptByOutbox.get(item.id)!.destination_phone}</strong>
                 {attemptByOutbox.get(item.id)!.test_mode&&<span className="ml-2 text-amber-200">(PILOTO · não enviado ao número do cliente)</span>}
@@ -370,16 +397,9 @@ export function AdminWhatsappCenter(){
               {attemptByOutbox.get(item.id)!.provider_message_id&&<p className="mt-1 break-all text-gray-500">ID da mensagem: {attemptByOutbox.get(item.id)!.provider_message_id}</p>}
               {attemptByOutbox.get(item.id)!.error_reason&&<p className="mt-1 text-red-300">Erro: {attemptByOutbox.get(item.id)!.error_reason}</p>}
               <p className="mt-1 text-gray-500">Iniciada em {localDate(attemptByOutbox.get(item.id)!.claimed_at)}</p>
-            </div>}
-            <details className="mt-3 rounded-xl border border-white/5 bg-black/30 p-3">
-              <summary className="cursor-pointer text-xs font-semibold text-gray-300">Ver mensagem preparada</summary>
-              <p className="mt-3 whitespace-pre-wrap break-words text-xs leading-relaxed text-gray-400">{item.message_body}</p>
-              {safeUrl(item.target_link)&&<p className="mt-2 break-all text-[11px] text-gray-600">{safeUrl(item.target_link)}</p>}
+            </div></details>}
             </details>
-            {(item.opened_at||item.reported_at)&&<p className="mt-2 text-[11px] text-gray-500">
-              {item.opened_at?'Abertura registrada: '+localDate(item.opened_at):''}
-              {item.reported_at?' · Declaração manual: '+localDate(item.reported_at):''}
-            </p>}
+
           </article>)}
         </div>}
       </>:null}

@@ -20,12 +20,15 @@ jobs:
       - name: Validate installer script syntax
         shell: pwsh
         run: |
-          $path = 'services/whatsapp-bridge/instalar-e-iniciar-windows.ps1'
+          $paths = @('services/whatsapp-bridge/instalar-e-iniciar-windows.ps1', 'services/whatsapp-bridge/instalar-inicio-automatico.ps1', 'services/whatsapp-bridge/ponte-background.ps1', 'services/whatsapp-bridge/desinstalar-inicio-automatico.ps1')
           $tokens = $null
           $errors = $null
-          [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors) | Out-Null
-          if ($errors.Count -ne 0) {
-            $errors | ForEach-Object { Write-Error $_.Message }
-            exit 1
+          foreach ($path in $paths) {
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count -ne 0) {
+              $errors | ForEach-Object { Write-Error "$path : $($_.Message)" }
+              exit 1
+            }
           }
           Write-Host 'Installer parsed successfully. No account linked and no keys used.'
