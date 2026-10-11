@@ -1,0 +1,59 @@
+name: Academy P0 Release Readiness
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/academy-p0-release-readiness.yml'
+      - 'docs/security/academy-359/**'
+      - 'tests/academy-359-release-readonly.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-preparation:
+    name: Academy P0 Preflight (NO DEPLOY)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+      - name: Verify release documents and read-only SQL
+        run: node --test tests/academy-359-release-readonly.test.mjs
+      - name: Verify reviewed PR #359 migration has not changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="3bb14f4423d492ed4b2e1fed4e2a945024174351"
+          git fetch --no-tags --depth=1 origin refs/heads/audit100/sec02-academy-refresh-enrollment
+          actual="$(git rev-parse FETCH_HEAD)"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::PR #359 SHA changed: new security review required"
+            exit 1
+          fi
+          git show FETCH_HEAD:supabase/migrations/20261011060000_restrict_academy_refresh_enrollment.sql > "${RUNNER_TEMP}/academy-pr359.sql"
+          test -s "${RUNNER_TEMP}/academy-pr359.sql"
+          export P0_MIGRATION="${RUNNER_TEMP}/academy-pr359.sql"
+          node --input-type=module -e '
+            import fs from "node:fs"
+            import assert from "node:assert/strict"
+            const sql = fs.readFileSync(process.env.P0_MIGRATION,"utf8")
+            assert.match(sql,/revoke execute on function public\.academy_refresh_enrollment\(uuid\) from public, anon/i)
+            assert.match(sql,/if auth\.uid\(\) is null then/)
+            assert.match(sql,/auth\.uid\(\) <> e\.user_id and not public\.is_active_admin\(\)/)
+            assert.match(sql,/insert into public\.academy_events/)
+            assert.match(sql,/insert into public\.notifications/)
+            assert.doesNotMatch(sql,/grant execute on function public\.academy_refresh_enrollment.*to anon/i)
+          '
+          echo "SHA reviewed: $expected" >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish explicit production block
+        run: |
+          echo "### Academy P0 readiness: documentation and pinned SQL verified" >> "$GITHUB_STEP_SUMMARY"
+          echo "PRODUCTION WRITE AUTHORIZATION: **NOT GRANTED**" >> "$GITHUB_STEP_SUMMARY"
+          echo "Backup/restoration remains unverified; NO migrations have been applied." >> "$GITHUB_STEP_SUMMARY"

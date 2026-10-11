@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-10-11",
+  "objective": "controlled readiness package for PR359; never apply SQL from CI",
+  "target_pull_request": 359,
+  "expected_pr_head_sha": "3bb14f4423d492ed4b2e1fed4e2a945024174351",
+  "migration_path": "supabase/migrations/20261011060000_restrict_academy_refresh_enrollment.sql",
+  "migration_version": "20261011060000",
+  "production_snapshot": {
+    "source": "Supabase pg_catalog and migration history: SELECT only",
+    "baseline_body_normalized_md5": "2cde6ea773130830e6ee8d93ca81f181",
+    "anonymous_execute_allowed_before": true,
+    "migration_recorded_before": false,
+    "signature": "public.academy_refresh_enrollment(uuid)"
+  },
+  "evidence": {
+    "isolated_integration_pr": 371,
+    "isolated_integration_run": "38122354744",
+    "quality_gate_run": "38122354663",
+    "historical_source_parity": "confirmed for three academy functions after whitespace normalization",
+    "staging_supabase_branch_exists": false,
+    "backup_restoration_verified": false,
+    "release_window_approved": false,
+    "incident_response_owner_confirmed": false
+  },
+  "release_gate": {
+    "approval_to_apply_in_production": false,
+    "required_before_release": [
+      "Verify recent recoverable database backup in official Supabase dashboard",
+      "Confirm backup restore procedure and acceptable recovery point",
+      "Re-run read-only SQL preflight and compare all functions",
+      "Verify no migration timestamp/version collision in deployed migration ledger",
+      "Approve release window, operator, and recovery decision",
+      "Verify real user academy flows in a safe staging-equivalent environment"
+    ]
+  }
+}
