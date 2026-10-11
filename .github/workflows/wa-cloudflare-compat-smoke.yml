@@ -48,13 +48,15 @@ jobs:
             exit 1
           fi
           curl --fail --silent --show-error --max-time 5 "${AUTH[@]}" http://127.0.0.1:8799/ -o /tmp/sagamente-wa-runtime-again.json
+          curl --fail --silent --show-error --max-time 5 "${AUTH[@]}" http://127.0.0.1:8799/controller-status -o /tmp/sagamente-wa-controller.json
+          node -e 'const x=require("/tmp/sagamente-wa-controller.json");if(x.enabled!==false||x.active!==false||x.productionMessagesEnabled!==false)process.exit(1);console.log("Controller safely disabled by default.")'
           curl --fail --silent --show-error --max-time 5 "${AUTH[@]}" http://127.0.0.1:8799/auth-adapter-test -o /tmp/sagamente-wa-adapter.json
           node -e 'const x=require("/tmp/sagamente-wa-adapter.json");console.log("Encrypted auth adapter check:",JSON.stringify(x));if(x.authAdapter!==true||x.credsValid!==true||x.keyValid!==true||x.deleted!==true||x.secretSeparated!==true||x.noWhatsAppSocket!==true)process.exit(1)'
           curl --fail --silent --show-error --max-time 5 "${AUTH[@]}" http://127.0.0.1:8799/lifecycle -o /tmp/sagamente-wa-lifecycle.json
           node -e 'const x=require("/tmp/sagamente-wa-lifecycle.json");if(x.bounded!==true||x.closed!==true||x.noWhatsAppSocket!==true||x.productionQueueUntouched!==true||x.credentialFree!==true)process.exit(1);console.log("Offline bounded lifecycle passed.")'
           [ "$(curl --silent -o /dev/null -w '%{http_code}' http://127.0.0.1:8799/qr)" = 401 ]
-          [ "$(curl --silent -o /dev/null -w '%{http_code}' "${AUTH[@]}" http://127.0.0.1:8799/qr)" = 501 ]
-          echo "Private QR endpoints fail closed."
+          [ "$(curl --silent -o /dev/null -w '%{http_code}' "${AUTH[@]}" http://127.0.0.1:8799/qr)" = 503 ]
+          echo "Private QR endpoints fail closed while pairing feature is disabled."
           # Separate direct edge connectivity from Workers-runtime outbound WebSocket compatibility.
           node --input-type=module -e 'const ws=new WebSocket("wss://sagamente-wa-cloudflare-probe.playmomentsstudios.workers.dev/ws-echo");const timer=setTimeout(()=>{console.error("Remote edge WS timeout");process.exit(1)},8000);ws.onopen=()=>ws.send("sagamente-probe:direct");ws.onmessage=e=>{if(e.data!=="sagamente-probe:direct")process.exit(1);console.log("Direct Cloudflare edge WebSocket passed.");ws.close();clearTimeout(timer);process.exit(0)};ws.onerror=()=>{console.error("Direct Cloudflare edge WebSocket failed");process.exit(1)}'
           # External echo services may be temporarily unavailable: capture result, do not treat it as WhatsApp viability.
