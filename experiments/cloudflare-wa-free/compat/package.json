@@ -1,0 +1,14 @@
+{
+  "name": "sagamente-baileys-compat-smoke",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:check": "wrangler deploy --dry-run --outdir=./.wrangler-smoke"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "6.7.18"
+  },
+  "devDependencies": {
+    "wrangler": "^4.40.0"
+  }
+}
