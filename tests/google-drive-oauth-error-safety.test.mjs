@@ -64,6 +64,29 @@ for (const path of modules) {
       /temporariamente indisponível/i.test(error.message))
   })
 
+  test(`OAuth safety: ${path} handles empty JSON on successful HTTP status`, async () => {
+    const oauth = await loadOAuthFunction(path, async () => ({
+      ok: true, status: 200,
+      json: async () => { throw new SyntaxError('empty upstream payload') },
+    }))
+    await assert.rejects(oauth(), error =>
+      /Google/.test(error.message) && !/TypeError/.test(error.message))
+  })
+
+  test(`OAuth safety: ${path} classifies error codes even when descriptions are generic`, async () => {
+    const revoked = await loadOAuthFunction(path, async () => ({
+      ok: false, status: 400,
+      json: async () => ({ error: 'invalid_grant', error_description: 'Bad Request' }),
+    }))
+    await assert.rejects(revoked(), error => error.message.includes('expirou ou foi revogada'))
+
+    const misconfigured = await loadOAuthFunction(path, async () => ({
+      ok: false, status: 400,
+      json: async () => ({ error: 'invalid_client', error_description: 'Bad Request' }),
+    }))
+    await assert.rejects(misconfigured(), error => error.message.includes('configuração OAuth'))
+  })
+
   test(`OAuth safety: ${path} preserves valid OAuth login`, async () => {
     const oauth = await loadOAuthFunction(path, async () => ({
       ok: true, status: 200,
