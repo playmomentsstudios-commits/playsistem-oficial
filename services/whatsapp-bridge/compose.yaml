@@ -1,0 +1,27 @@
+# Execute on a persistent Linux host with Docker Compose.
+# Keep the existing Windows bridge running until a real cutover is approved.
+name: sagamente-whatsapp
+services:
+  bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      SAGAMENTE_WHATSAPP_AUTH_DIR: /app/.local/session
+    volumes:
+      - session:/app/.local/session
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 40s
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=32m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # No public HTTP ports. The process talks outbound to WhatsApp and Supabase.
+volumes:
+  session:
