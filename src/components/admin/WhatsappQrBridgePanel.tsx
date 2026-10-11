@@ -162,7 +162,6 @@ export function WhatsappQrBridgePanel(){
           <div className="rounded-xl bg-black/30 p-3 border border-white/10">
             <p className="text-[11px] text-gray-500">Destino do piloto</p><p className="mt-1 text-sm text-white">{mode==='self_test'?'Somente +'+config?.wa_bridge_test_phone:mode==='single_client'?target?(target.customer_name+' · +'+target.phone):'Cliente selecionado sem aceite válido':'Todos os clientes com aceite válido'}</p>
           </div>
-        </div>
         </div></details>
         <details className="text-xs text-gray-400"><summary className="cursor-pointer py-1">Como configurar a conexão e os envios</summary><p className="mt-2 leading-relaxed"><strong>1.</strong> Mantenha o serviço Node ligado. <strong>2.</strong> Conecte o dispositivo, se necessário. <strong>3.</strong> Selecione o destino abaixo e salve. <strong>4.</strong> Ative explicitamente os envios. Só eventos novos entram na fila.</p></details>
         {connected&&!updatedBridge&&<p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">Ponte Windows desatualizada. Para liberar envios a clientes, atualize index.mjs, phone-utils.mjs e receipt-tracker.mjs no computador e reinicie o serviço. A conexão atual não poderá disparar mensagens automaticamente.</p>}
