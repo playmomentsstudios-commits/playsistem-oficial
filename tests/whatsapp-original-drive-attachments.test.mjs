@@ -84,7 +84,7 @@ test('keep direct links for expired file or failed WhatsApp upload, without rese
  const out=await sendAttachmentsForNotification({text:sample,supabaseUrl:root,address:'jid',socket,fetchImpl})
  assert.equal(out.attached,1)
  assert.equal(out.failed,2)
- assert.equal(events.length,3)
+ assert.equal(events.length,2) // Only first and second files reached WhatsApp; expired third never uploaded
  assert.ok(!out.text.includes(url('a')))
  assert.ok(out.text.includes(url('b')))
  assert.ok(out.text.includes(url('c')))
