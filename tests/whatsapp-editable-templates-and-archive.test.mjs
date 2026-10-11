@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import test from 'node:test'
-const migration=readFileSync(new URL('../supabase/migrations/20261011220000_whatsapp_editable_templates_and_archive.sql',import.meta.url),'utf8')
+const migration=readFileSync(new URL('../supabase/migrations/20261011215447_whatsapp_editable_templates_and_archive.sql',import.meta.url),'utf8')
 const editor=readFileSync(new URL('../src/components/admin/WhatsappMessageTemplates.tsx',import.meta.url),'utf8')
 const center=readFileSync(new URL('../src/pages/admin/AdminWhatsappCenter.tsx',import.meta.url),'utf8')
 
