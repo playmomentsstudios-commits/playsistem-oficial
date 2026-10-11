@@ -2,7 +2,7 @@ import { corsHeaders, getDriveAccessToken, hasPermission, json, requireUser } fr
 
 // Read-only Drive inventory reconciliation: never deletes a Drive object or publishes files.
 // Every discovered file is recorded against the authoritative Google Drive ID.
-type Folder = { id: string; customId: string | null; stageId: string | null; depth: number };
+type Folder = { id: string; customId: string | null; stageId: string | null; folderKind: string | null; depth: number };
 type DriveEntry = { id: string; name: string; mimeType: string; size?: string; webViewLink?: string; createdTime?: string };
 const DRIVE_FOLDER = "application/vnd.google-apps.folder";
 const MAX_ITEMS = 2500;
@@ -26,8 +26,8 @@ Deno.serve(async (req: Request) => {
     if (!project.drive_folder_id) return json({ ok: true, added: 0, updated: 0, scanned: 0, folders: 0, unconfigured: true });
 
     const [standard, custom, stages, existing] = await Promise.all([
-      ctx.db.from("project_drive_folders").select("drive_folder_id").eq("project_id", projectId),
-      ctx.db.from("project_custom_folders").select("id,drive_folder_id").eq("project_id", projectId),
+      ctx.db.from("project_drive_folders").select("drive_folder_id,folder_kind").eq("project_id", projectId),
+      ctx.db.from("project_custom_folders").select("id,drive_folder_id,parent_kind").eq("project_id", projectId),
       ctx.db.from("project_stage_drive_folders").select("stage_id,drive_folder_id").eq("project_id", projectId),
       ctx.db.from("client_files").select("id,name,drive_file_id,project_id,customer_id,drive_folder_id,mime_type,file_size,custom_folder_id,stage_id").eq("project_id", projectId).eq("storage_provider", "google_drive"),
     ]);
@@ -35,15 +35,15 @@ Deno.serve(async (req: Request) => {
 
     const queue: Folder[] = [];
     const seenFolders = new Set<string>();
-    const addFolder = (id: string | null, customId: string | null, stageId: string | null, depth: number) => {
+    const addFolder = (id: string | null, customId: string | null, stageId: string | null, folderKind: string | null, depth: number) => {
       if (!id || seenFolders.has(id)) return;
       seenFolders.add(id);
-      queue.push({ id, customId, stageId, depth });
+      queue.push({ id, customId, stageId, folderKind, depth });
     };
-    addFolder(project.drive_folder_id, null, null, 0);
-    for (const row of standard.data || []) addFolder(row.drive_folder_id, null, null, 1);
-    for (const row of custom.data || []) addFolder(row.drive_folder_id, row.id, null, 2);
-    for (const row of stages.data || []) addFolder(row.drive_folder_id, null, row.stage_id, 1);
+    addFolder(project.drive_folder_id, null, null, null, 0);
+    for (const row of standard.data || []) addFolder(row.drive_folder_id, null, null, row.folder_kind, 1);
+    for (const row of custom.data || []) addFolder(row.drive_folder_id, row.id, null, row.parent_kind, 2);
+    for (const row of stages.data || []) addFolder(row.drive_folder_id, null, row.stage_id, null, 1);
 
     const known = new Map<string, any>((existing.data || []).filter((row: any) => row.drive_file_id).map((row: any) => [row.drive_file_id, row]));
     const token = await getDriveAccessToken();
@@ -80,7 +80,7 @@ Deno.serve(async (req: Request) => {
       const entries = await getEntries(folder.id);
       for (const entry of entries) {
         if (entry.mimeType === DRIVE_FOLDER) {
-          if (folder.depth < MAX_DEPTH) addFolder(entry.id, folder.customId, folder.stageId, folder.depth + 1);
+          if (folder.depth < MAX_DEPTH) addFolder(entry.id, folder.customId, folder.stageId, folder.folderKind, folder.depth + 1);
           continue;
         }
         if (scannedIds.has(entry.id)) continue;
@@ -91,6 +91,7 @@ Deno.serve(async (req: Request) => {
         const metadata = {
           name: entry.name,
           drive_folder_id: folder.id,
+          drive_folder_kind: folder.folderKind,
           mime_type: entry.mimeType || "application/octet-stream",
           file_type: entry.mimeType || "application/octet-stream",
           file_size: size,
