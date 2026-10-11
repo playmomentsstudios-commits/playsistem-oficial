@@ -6,11 +6,16 @@ import { createEncryptedAuthState } from "./auth-store.js";
 export class ExperimentalSessionController {
   constructor(ctx,env){this.ctx=ctx;this.env=env;this.socket=null;this.qr=null;this.status="idle";this.deadline=0;this.stopTimer=null;this.lastProbe={};}
   isPairingEnabled(){const until=Number(this.env.EXPERIMENTAL_PAIRING_EXPIRES_AT);const now=Date.now();return this.env.EXPERIMENTAL_PAIRING_ENABLED==="true"&&Number.isSafeInteger(until)&&until>now&&until<=now+120000;}
+  async recordProbe(){try{await this.ctx.storage.put("wa:diagnostic:v1",{...this.lastProbe})}catch{}}
   async fetch(request){
     const route=new URL(request.url).pathname;
     const headers={"Cache-Control":"no-store","Content-Type":"application/json"};
     if(route==="/controller-status"){
-      return new Response(JSON.stringify({enabled:this.isPairingEnabled(),status:this.status,active:!!this.socket,qrAvailable:!!this.qr,probe:this.lastProbe,productionMessagesEnabled:false}),{headers});
+      const probe=(await this.ctx.storage.get("wa:diagnostic:v1"))||this.lastProbe;
+      return new Response(JSON.stringify({enabled:this.isPairingEnabled(),status:this.status,active:!!this.socket,qrAvailable:!!this.qr,probe,productionMessagesEnabled:false}),{headers});
+    }
+    if(route==="/stop"&&request.method==="POST"){
+      await this.stop();return new Response(JSON.stringify({stopped:true}),{headers});
     }
     if(!this.isPairingEnabled())return new Response(JSON.stringify({error:"experiment_disabled"}),{status:503,headers});
     if(route==="/qr"){
@@ -18,24 +23,33 @@ export class ExperimentalSessionController {
       if(request.method!=="GET")return new Response(null,{status:405});
       return new Response(JSON.stringify({status:this.status,qr:this.qr,expiresAt:this.deadline||null}),{headers});
     }
-    if(route==="/stop"&&request.method==="POST"){
-      await this.stop();return new Response(JSON.stringify({stopped:true}),{headers});
-    }
     if(route==="/start"&&request.method==="POST"){
       if(this.socket)return new Response(JSON.stringify({error:"already_active"}),{status:409,headers});
       let stage="auth-store";
       try{
         const {state,saveCreds}=await createEncryptedAuthState(this.ctx.storage,this.env.PROBE_AES_KEY_B64);
-        this.qr=null;this.status="connecting";this.lastProbe={socketInitiated:false,qrObserved:false,connectionOpened:false};this.deadline=Date.now()+60000;
+        this.qr=null;this.status="connecting";this.lastProbe={socketInitiated:false,qrObserved:false,connectionOpened:false,connectionUpdates:0,lastPhase:"initializing",connectionClosed:false,disconnectCode:null,errorType:null};this.deadline=Date.now()+60000;
+        await this.recordProbe();
         stage="socket-init";
         const socket=makeWASocket({auth:state,printQRInTerminal:false,browser:Browsers.ubuntu("Sagamente Isolated Probe"),syncFullHistory:false,markOnlineOnConnect:false,logger:{level:"silent",child(){return this},trace(){},debug(){},info(){},warn(){},error(){},fatal(){}}});
-        this.socket=socket;this.lastProbe.socketInitiated=true;
+        this.socket=socket;this.lastProbe.socketInitiated=true;this.lastProbe.lastPhase="socket-created";
+        await this.recordProbe();
         socket.ev.on("creds.update",()=>{void saveCreds().catch(()=>{this.status="storage-error";void this.stop();});});
         socket.ev.on("connection.update",update=>{
           if(this.socket!==socket)return;
+          this.lastProbe.connectionUpdates++;
+          this.lastProbe.lastPhase=update.connection|| (update.qr?"qr":"update");
+          if(update.lastDisconnect?.error){
+            const error=update.lastDisconnect.error;
+            const status=Number(error?.output?.statusCode);
+            this.lastProbe.disconnectCode=Number.isSafeInteger(status)?status:null;
+            this.lastProbe.errorType=String(error?.name||"Error").slice(0,40);
+          }
           if(update.qr){this.qr=update.qr;this.status="awaiting-pairing";this.lastProbe.qrObserved=true;}
-          if(update.connection==="open"){this.status="connected";this.lastProbe.connectionOpened=true;this.qr=null;void this.stop();} // test-only: deliberately disconnect after pairing
-          if(update.connection==="close"){this.status="disconnected";this.qr=null;void this.stop();}
+          if(update.connection==="open"){this.status="connected";this.lastProbe.connectionOpened=true;this.qr=null;}
+          if(update.connection==="close"){this.status="disconnected";this.qr=null;this.lastProbe.connectionClosed=true;}
+          void this.recordProbe();
+          if(update.connection==="open"||update.connection==="close")void this.stop(); // diagnostic only: no lasting session
         });
         await this.ctx.storage.setAlarm(this.deadline);
         this.stopTimer=setTimeout(()=>{void this.stop()},60000);
