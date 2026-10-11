@@ -52,8 +52,8 @@ async function makeDatabase(){
  return db
 }
 let db
-test.before(async()=>{db=await makeDatabase()})
-test.after(async()=>{await db?.close()})
+test.beforeEach(async()=>{db=await makeDatabase()})
+test.afterEach(async()=>{await db?.close()})
 
 let seq=0
 async function emit({type,status,eventType=type,metadata={}}){
