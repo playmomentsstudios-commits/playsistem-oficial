@@ -16,7 +16,7 @@ export class EncryptedAuthProbe {
       // This endpoint is intentionally only in the local compat Worker, not deployed.
       const started=Date.now();
       try {
-        const response=await fetch("https://echo.websocket.events",{
+        const response=await fetch("https://sagamente-wa-cloudflare-probe.playmomentsstudios.workers.dev/ws-echo",{
           headers:{Upgrade:"websocket"},
           signal:AbortSignal.timeout(5000)
         });
@@ -25,8 +25,8 @@ export class EncryptedAuthProbe {
         ws.accept();
         const message=await new Promise(resolve=>{
           const timer=setTimeout(()=>resolve({echoReceived:false,timeout:true}),3000);
-          ws.addEventListener("message",event=>{clearTimeout(timer);resolve({echoReceived:true,messageType:typeof event.data})},{once:true});
-          ws.send("sagamente-cloudflare-offline-probe");
+          ws.addEventListener("message",event=>{clearTimeout(timer);resolve({echoReceived:event.data==="sagamente-probe:outbound",messageType:typeof event.data})},{once:true});
+          ws.send("sagamente-probe:outbound");
         });
         try{ws.close(1000,"done")}catch{}
         return Response.json({outboundEstablished:true,...message,closed:true,elapsedMs:Date.now()-started,noWhatsAppSocket:true});
