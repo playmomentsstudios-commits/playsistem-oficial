@@ -1,12 +1,17 @@
 // A Drive folder is a physical location; stages and tasks are logical
 // delivery associations. Neither representation should overwrite the other.
 export const standardProjectFolders=[
-  {kind:'received',label:'01 - Arquivos recebidos'},
-  {kind:'raw',label:'02 - Brutos'},
-  {kind:'production',label:'03 - Produção'},
-  {kind:'preview',label:'04 - Prévia'},
-  {kind:'approved',label:'05 - Aprovados'},
-  {kind:'delivery',label:'06 - Entrega final'},
+  {kind:'received',label:'01 - Recebidos'},
+  {kind:'production',label:'02 - Produção'},
+  {kind:'preview',label:'03 - Revisão'},
+  {kind:'delivery',label:'04 - Entregas'},
+] as const
+
+// Existing folders remain visible in project inventories until migrated.
+// They are intentionally not offered as new upload destinations.
+const legacyProjectFolders=[
+  {kind:'raw',label:'Legado · Brutos'},
+  {kind:'approved',label:'Legado · Aprovados'},
 ] as const
 
 type Row=Record<string,any>
@@ -24,8 +29,17 @@ export function adminProjectFolderGroups(
     const registered=standard.find((row:Row)=>row.folder_kind===folder.kind)
     if(registered?.drive_folder_id)byId.set(registered.drive_folder_id,item)
   }
+  // Do not hide any existing physical folder or its file references.
+  for(const folder of legacyProjectFolders){
+    const registered=standard.find((row:Row)=>row.folder_kind===folder.kind)
+    if(!registered)continue
+    const item:FolderGroup={key:'legacy:'+folder.kind,name:folder.label,kind:folder.kind,files:[]}
+    groups.push(item)
+    if(registered.drive_folder_id)byId.set(registered.drive_folder_id,item)
+  }
   for(const folder of custom){
-    const item:FolderGroup={key:'custom:'+folder.id,name:folder.name,kind:'custom',parent:standardProjectFolders.find(row=>row.kind===folder.parent_kind)?.label||'Pasta personalizada',files:[]}
+    const parent=[...standardProjectFolders,...legacyProjectFolders].find(row=>row.kind===folder.parent_kind)?.label||'Pasta personalizada'
+    const item:FolderGroup={key:'custom:'+folder.id,name:folder.name,kind:'custom',parent,files:[]}
     groups.push(item)
     if(folder.drive_folder_id)byId.set(folder.drive_folder_id,item)
   }
