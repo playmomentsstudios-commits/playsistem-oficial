@@ -16,7 +16,7 @@ Pacote de testes já integrado: [#371](https://github.com/playmomentsstudios-com
 - Pré-check real executado em modo **read-only**: três resultados `CATALOG_PRECHECK_OK`.
 - CI do PR #371 e testes de integração no PostgreSQL isolado aprovados, com fixtures de aluno, admin ativo/inativo, progresso, frequência e certificado.
 - `academy_refresh_my_enrollments` e `academy_issue_my_certificate` invocam `academy_refresh_enrollment` preservando a sessão do usuário nos fluxos testados. Chamadas automáticas sem `auth.uid()` não estão homologadas globalmente.
-- O histórico Supabase (39 versões) difere do conjunto de 138 arquivos SQL do GitHub. **Nunca** tentar `supabase db push` de todo o repositório para aplicar este PR.
+- Consulta somente leitura em 2026-10-11 encontrou 45 versões no ledger remoto; os arquivos locais e o ledger remoto divergem e exigem reconciliação por conteúdo. **Nunca** aplicar o repositório inteiro com `supabase db push` para este PR.
 - A disponibilidade de um backup restaurável **NÃO** pôde ser confirmada por estas ferramentas. `ACTIVE_HEALTHY` não equivale a backup.
 
 ## 2. Critérios bloqueantes — precisam estar 100% cumpridos
