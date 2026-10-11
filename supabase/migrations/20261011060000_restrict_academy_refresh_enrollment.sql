@@ -23,13 +23,15 @@ declare
   v_min_attendance numeric;
   v_attendance numeric;
 begin
+  -- Reject missing identity before looking up an enrollment.
+  if auth.uid() is null then
+    raise exception 'Acesso negado' using errcode='42501';
+  end if;
+
   select * into e from public.course_enrollments where id=p_enrollment_id;
   if not found then raise exception 'Matrícula não encontrada'; end if;
 
-  -- auth.uid() is NULL for anon. An IF condition evaluating to NULL does not
-  -- enter the branch, so make the unauthenticated case explicit.
-  if auth.uid() is null
-     or (auth.uid() <> e.user_id and not public.is_active_admin()) then
+  if auth.uid() <> e.user_id and not public.is_active_admin() then
     raise exception 'Acesso negado' using errcode='42501';
   end if;
 

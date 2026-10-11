@@ -21,6 +21,7 @@ test('academy enrollment refresh enforces caller scope and keeps internal comple
   const assessment = '60000000-0000-4000-8000-000000000001'
   const enrollment = '70000000-0000-4000-8000-000000000001'
   const otherEnrollment = '70000000-0000-4000-8000-000000000002'
+  const missingEnrollment = '70000000-0000-4000-8000-000000000099'
   const call = id => db.query(
     'select status,progress_percent,attendance_percent,final_grade from public.academy_refresh_enrollment($1::uuid)',
     [id],
@@ -153,6 +154,7 @@ test('academy enrollment refresh enforces caller scope and keeps internal comple
         assert.rejects(call(id), error => error.code === '42501'))
     await denied('anon', null, enrollment)
     await denied('service_role', null, enrollment)
+    await denied('service_role', null, missingEnrollment)
     await denied('authenticated', other, enrollment)
     await denied('authenticated', inactiveAdmin, otherEnrollment)
     const unchanged = (await db.query(
