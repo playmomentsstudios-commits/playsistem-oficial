@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 3f32a74b82c0a159119234b9ff79a0d98d59d9c3
+          ref: 37293d0cc3389330a24f5e4565bca55de1416444
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -68,13 +68,30 @@ jobs:
           printf %s "$PROBE_AES_KEY_B64" | npx wrangler secret put PROBE_AES_KEY_B64 --config wrangler.remote.jsonc
           printf %s "$PROBE_ACCESS_TOKEN" | npx wrangler secret put PROBE_ACCESS_TOKEN --config wrangler.remote.jsonc
           npx wrangler deploy --config wrangler.remote.jsonc
-      - name: Verify remote worker private and disabled
+      - name: Verify remote health and fail-closed access after propagation
         shell: bash
         run: |
           set -euo pipefail
-          URL=https://sagamente-wa-baileys-remote-probe.playmomentsstudios.workers.dev
-          curl --fail --silent --show-error --retry 5 --retry-delay 2 "$URL/health" > health.json
-          node -e 'const h=require("./health.json");if(h.service!=="baileys-isolated-probe"||h.ready!==false||h.noWhatsAppSocket!==true)process.exit(1)'
-          [ "$(curl -s -o /dev/null -w '%{http_code}' "$URL/start")" = 401 ]
-          [ "$(curl -s -o /dev/null -w '%{http_code}' "$URL/qr")" = 401 ]
-          echo "Experimental Worker deployed, unauthenticated access blocked, real pairing remains disabled."
+          URL="https://sagamente-wa-baileys-remote-probe.playmomentsstudios.workers.dev"
+          HEALTH_OK=false
+          STATUS_OK=false
+          for attempt in $(seq 1 20); do
+            H_CODE="$(curl --silent --show-error --max-time 10 -o /tmp/wa-remote-health.json -w '%{http_code}' "$URL/health" || true)"
+            if [ "$H_CODE" = "200" ] && node - <<'NODE'
+          const fs=require("node:fs");
+          let h;
+          try { h=JSON.parse(fs.readFileSync("/tmp/wa-remote-health.json","utf8")); } catch { process.exit(1); }
+          if(h.service!=="baileys-isolated-probe"||h.ready!==false||h.noWhatsAppSocket!==true)process.exit(1);
+          NODE
+            then HEALTH_OK=true; fi
+            START_CODE="$(curl --silent --show-error --max-time 10 -o /dev/null -w '%{http_code}' "$URL/start" || true)"
+            QR_CODE="$(curl --silent --show-error --max-time 10 -o /dev/null -w '%{http_code}' "$URL/qr" || true)"
+            echo "Remote readiness attempt $attempt: health=$H_CODE start=$START_CODE qr=$QR_CODE"
+            if [ "$HEALTH_OK" = true ] && [ "$START_CODE" = "401" ] && [ "$QR_CODE" = "401" ]; then
+              STATUS_OK=true
+              break
+            fi
+            sleep 3
+          done
+          [ "$STATUS_OK" = true ] || { echo "::error::Remote verification failed after retries"; exit 1; }
+          echo "Isolated Baileys bundle deployed. Unauthorized access blocked. Pairing disabled."
