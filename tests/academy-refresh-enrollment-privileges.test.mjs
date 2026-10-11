@@ -12,7 +12,9 @@ test('academy enrollment refresh explicitly rejects anonymous access', () => {
     migration,
     /revoke execute on function public\.academy_refresh_enrollment\(uuid\) from public, anon/i,
   )
-  assert.match(migration, /if auth\.uid\(\) is null\s+or\s+\(auth\.uid\(\) <> e\.user_id and not public\.is_active_admin\(\)\)/i)
+  assert.match(migration, /if auth\\.uid\\(\\) is null then[\\s\\S]*?using errcode='42501'/i)
+  assert.match(migration, /if auth\\.uid\\(\\) <> e\\.user_id and not public\\.is_active_admin\\(\\)/i)
+  assert.ok(migration.indexOf('if auth.uid() is null then') < migration.indexOf('select * into e'))
   assert.doesNotMatch(migration, /grant execute .* to anon|grant execute .* to public/i)
 })
 
