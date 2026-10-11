@@ -6,6 +6,7 @@ import makeWASocket, { DisconnectReason, useMultiFileAuthState, Browsers } from 
 import { createClient } from '@supabase/supabase-js'
 import QRCode from 'qrcode'
 import { attachDeliveryReceipts } from './receipt-tracker.mjs'
+import { sendAttachmentsForNotification } from './media-attachments.mjs'
 import { resolveAuthorizedAccount, registeredRecipientJid } from './phone-utils.mjs'
 import pino from 'pino'
 
@@ -172,7 +173,23 @@ async function sendOne(){
         p_instance:instanceId,p_attempt:job.attempt_id,p_jid:address
       })
       if(!verified)throw new Error('A identidade WhatsApp não corresponde ao telefone autorizado.')
-      const result=await socket.sendMessage(address,{text:job.message})
+      // Media delivery is opt-in by installing this updated Windows worker.
+      // The DB has already approved this recipient, job and file visibility.
+      // Each document is an individual WhatsApp message (max 3 per notice).
+      // Keep the temporary link only if attachment download/upload fails.
+      const media=await sendAttachmentsForNotification({
+        text:job.message,supabaseUrl:url,address,socket
+      })
+      if(media.candidates){
+        const {error:auditError}=await db.from('whatsapp_bridge_attempts').update({
+          media_submitted_count:media.attached,
+          media_fallback_count:media.failed,
+          media_planned_count:media.candidates
+        }).eq('id',job.attempt_id).eq('instance_id',instanceId)
+        if(auditError)console.warn('[bridge] Não foi possível salvar métricas dos anexos:',auditError.message.slice(0,120))
+        console.log('[bridge] Anexos preparados:',media.candidates,'documentos aceitos:',media.attached,'alternativas em link:',media.failed)
+      }
+      const result=await socket.sendMessage(address,{text:media.text})
       if(!result?.key?.id)throw new Error('WhatsApp não retornou identificador da mensagem.')
       msgId=String(result.key.id)
       success=true
