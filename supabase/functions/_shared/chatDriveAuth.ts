@@ -122,20 +122,38 @@ export async function driveJson(
   init: RequestInit = {},
 ) {
   const token = await getDriveAccessToken();
+  // Protect caller-facing handlers from leaking raw Google error descriptions.
   const response = await fetch(url, {
     ...init,
     headers: {
       Authorization: `Bearer ${token}`,
       ...(init.headers || {}),
     },
+  }).catch(() => {
+    throw new Error("Falha de conexão com o Google Drive. Tente novamente.");
   });
 
-  const text = await response.text();
-  const payload = text ? JSON.parse(text) : null;
-  if (!response.ok) {
-    throw new Error(payload?.error?.message || `Google Drive error ${response.status}`);
+  const raw = await response.text().catch(() => "");
+  let payload: any = null;
+  if (raw) {
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      if (response.ok) throw new Error("O Google Drive retornou uma resposta inválida.");
+    }
   }
-
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      throw new Error("O Google Drive recusou o acesso. Verifique a conta institucional e as permissões.");
+    }
+    if (response.status === 404) {
+      throw new Error("Arquivo ou pasta não encontrado no Google Drive.");
+    }
+    if (response.status === 429 || response.status >= 500) {
+      throw new Error("O Google Drive está temporariamente indisponível. Tente novamente.");
+    }
+    throw new Error(`A operação no Google Drive falhou (HTTP ${response.status}).`);
+  }
   return payload;
 }
 
