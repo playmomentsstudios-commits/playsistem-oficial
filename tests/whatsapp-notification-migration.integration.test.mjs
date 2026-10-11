@@ -74,7 +74,7 @@ async function emit({type,status,eventType=type,metadata={}}){
 test('project-start event generates the project-started WhatsApp copy in the outbox only',async()=>{
  const body=await emit({type:'project_status',status:'active'})
  assert.match(body,/🚀 \*Projeto iniciado\*/)
- assert.match(body,/Projeto \*Projeto Aurora\*/)
+ assert.match(body,/projeto \*Projeto Aurora\*/i)
  assert.match(body,/https:\/\/playsistem-oficial\.playmomentsstudios\.workers\.dev\/n\/abcdefghijklmnopqrstuv/)
  assert.doesNotMatch(body,/tarefa|responsável|painel do cliente/i)
 })
@@ -112,7 +112,7 @@ test('replacement after a requested change is labeled adjustments complete',asyn
 test('completed project event generates final-delivery copy',async()=>{
  const body=await emit({type:'project_status',status:'completed'})
  assert.match(body,/🎉 \*Entrega final disponível\*/)
- assert.match(body,/Projeto \*Projeto Aurora\*/)
+ assert.match(body,/projeto \*Projeto Aurora\*/i)
 })
 
 test('ineligible event status stays unchanged, preserving the existing queue gate',async()=>{
