@@ -37,9 +37,13 @@ test('preflight proves baseline; postflight verifies authentication guard',async
   assert.match(before,/1f616a95576e00b167fc01b815f8b659/)
   assert.match(before,/116309ee0123f96ccbd9b6a8d9f386c4/)
   assert.match(before,/CATALOG_PRECHECK_OK/)
-  assert.match(after,/TARGET_ACL_AND_GUARD_OK/)
+  assert.match(after,/TARGET_ACL_AND_BODY_OK/)
   assert.match(after,/if auth\.uid\(\) is null then/)
   assert.match(after,/has_function_privilege\('anon'/)
+  assert.match(after,/body_fingerprint=expected_body_md5/)
+  assert.match(after,/left join pg_proc/)
+  assert.match(after,/d8f10ef24cba1890fcbec63c15a95809/)
+  assert.doesNotMatch(after,/body_fingerprint <>/)
 })
 
 test('runbook requires backup, approval and security-preserving rollback',async()=>{
