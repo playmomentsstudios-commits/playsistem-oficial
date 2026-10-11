@@ -7,10 +7,10 @@ const migration = await readFile(
   'utf8',
 );
 
-test('backup table keeps RLS enabled and revokes every direct client privilege', () => {
+test('backup table keeps RLS enabled and revokes direct and inherited client privileges', () => {
   assert.match(migration, /enable row level security/i);
   assert.match(migration, /to_regclass\('public\.project_restructure_backups'\) is not null/i);
-  assert.match(migration, /revoke all privileges on table public\.project_restructure_backups from anon, authenticated/i);
+  assert.match(migration, /revoke all privileges on table public\.project_restructure_backups from public, anon, authenticated/i);
   assert.doesNotMatch(migration, /using\s*\(\s*true\s*\)/i);
   assert.doesNotMatch(migration, /grant .* to anon|grant .* to authenticated/i);
 });
