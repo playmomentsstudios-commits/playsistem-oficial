@@ -31,7 +31,7 @@ export class EncryptedAuthProbe {
         try{ws.close(1000,"done")}catch{}
         return Response.json({outboundEstablished:true,...message,closed:true,elapsedMs:Date.now()-started,noWhatsAppSocket:true});
       }catch(error){
-        return Response.json({outboundEstablished:false,errorType:error?.name||"Error",elapsedMs:Date.now()-started,noWhatsAppSocket:true});
+        return Response.json({outboundEstablished:false,errorType:error?.name||"Error",diagnosticCode:String(error?.message||"unknown").slice(0,140),elapsedMs:Date.now()-started,noWhatsAppSocket:true});
       }
     }
     const requested=new URL(request.url).pathname;
