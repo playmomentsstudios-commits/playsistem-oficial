@@ -1,4 +1,4 @@
-import { corsHeaders, ensureProjectFolder, getDriveAccessToken, hasPermission, json, requireUser } from "../_shared/googleDrive.ts";
+import { corsHeaders, ensureProjectFolder, getDriveAccessToken, hasPermission, json, requireUser, uploadFolderAliases } from "../_shared/googleDrive.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -10,7 +10,11 @@ Deno.serve(async (req) => {
     const fileName = String(body.file_name || "").trim();
     const mimeType = String(body.mime_type || "application/octet-stream");
     const fileSize = Number(body.file_size || 0);
-    const folderKind = String(body.folder_kind || "received");
+    const requestedFolderKind = String(body.folder_kind || "received");
+    const folderKind = uploadFolderAliases[requestedFolderKind] || requestedFolderKind;
+    if (!["received", "production", "preview", "delivery"].includes(folderKind)) {
+      throw new Error("Invalid upload destination");
+    }
     const customFolderId = body.custom_folder_id ? String(body.custom_folder_id) : null;
     const requestedStageId = body.stage_id ? String(body.stage_id) : null;
 
