@@ -65,7 +65,6 @@ export function AdminProjectDetailV2(){
   const [showTaskForm,setShowTaskForm]=useState(false)
   const [fileTask,setFileTask]=useState('')
   const [fileStage,setFileStage]=useState('')
-  const [fileVisible,setFileVisible]=useState(false)
   const [fileFolder,setFileFolder]=useState('received')
   const [uploading,setUploading]=useState(false)
   const [fileProgress,setFileProgress]=useState(0)
@@ -405,7 +404,7 @@ export function AdminProjectDetailV2(){
           task_id:fileTask||null,
           stage_id:effectiveFileStage,
           folder_kind:fileFolder,
-          client_visible:project.project_type==='internal'?false:fileVisible,
+          client_visible:false, // Keep file internal until explicit publication.
         },file,value=>setFileProgress(Math.round(((index+(value/100))/picked.length)*100)))
         // Existing deployed finalize functions can omit stage_id on customer projects.
         // Keep the stage association in Postgres even before the Edge rollout.
@@ -758,14 +757,9 @@ export function AdminProjectDetailV2(){
               {sortedStages.map((stage:any)=><option key={stage.id} value={stage.id}>{stage.name}</option>)}
             </select>
           </label>}
-          {project.project_type==='internal'?<label className="text-sm text-gray-400">Visibilidade
-            <div className="mt-1 w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300">Somente equipe · projeto interno</div>
-          </label>:<label className="text-sm text-gray-400">Visibilidade
-            <select value={fileVisible?'cliente':'interno'} onChange={e=>setFileVisible(e.target.value==='cliente')} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
-              <option value="interno">Somente equipe</option>
-              <option value="cliente">Cliente pode visualizar</option>
-            </select>
-          </label>}
+          <div className="text-sm text-gray-400">Disponibilização
+            <div className="mt-1 w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10 text-gray-300">Rascunho interno · publique após conferir</div>
+          </div>
           <label className={'px-4 py-2.5 rounded-xl text-center '+(uploading?'bg-white/10 text-gray-500 cursor-not-allowed':'bg-[#A65A2A] text-white cursor-pointer')}>
             {uploading?'Enviando...':'Adicionar arquivos'}
             <input type="file" multiple disabled={uploading} onChange={uploadProjectFile} className="hidden"/>
