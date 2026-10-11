@@ -121,6 +121,20 @@ export default {
       // Fail closed until a real Baileys socket/controller is implemented and reviewed.
       return Response.json({error:"pairing_not_implemented",noWhatsAppSocket:true},{status:501,headers:{"Cache-Control":"no-store"}});
     }
+    // Derive the short-lived gate at the Worker entry, using fresh request-time bindings.
+    // Durable Object instances may outlive binding changes; never trust a stale DO env.
+    if(["/controller-status","/qr","/start","/stop"].includes(path)){
+      const now=Date.now();
+      const expiry=Number(env.EXPERIMENTAL_PAIRING_EXPIRES_AT);
+      const configured=env.EXPERIMENTAL_PAIRING_ENABLED==="true";
+      const validExpiry=Number.isSafeInteger(expiry)&&expiry>now&&expiry<=now+120000;
+      const headers=new Headers(request.headers);
+      // Always overwrite caller-supplied diagnostics/gate headers, including when disabled.
+      headers.set("x-wa-internal-gate",configured&&validExpiry?"1":"0");
+      headers.set("x-wa-internal-configured",configured?"1":"0");
+      headers.set("x-wa-internal-expiry-valid",validExpiry?"1":"0");
+      request=new Request(request,{headers});
+    }
     return env.AUTH_TEST.get(env.AUTH_TEST.idFromName("offline-auth")).fetch(request);
   }
 };
