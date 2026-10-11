@@ -1,0 +1,49 @@
+name: Sagamente WhatsApp isolated Cloudflare remote deployment
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type DEPLOY_ISOLATED_PROBE (never the commercial worker)'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: sagamente-wa-remote-experiment
+  cancel-in-progress: false
+jobs:
+  deploy-experiment:
+    if: ${{ github.ref_name == 'spike/cloudflare-free-whatsapp-feasibility-20261011' && inputs.confirmation == 'DEPLOY_ISOLATED_PROBE' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: whatsapp-experimental
+    defaults:
+      run:
+        working-directory: experiments/cloudflare-wa-free/compat
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Cloudflare deployment token
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || { echo "::error::Missing CLOUDFLARE_API_TOKEN secret"; exit 1; }
+      - run: npm install --no-audit --no-fund
+      - name: Compile isolated Worker
+        run: npx wrangler deploy --dry-run --config wrangler.remote.jsonc
+      - name: Deploy only isolated Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: c266e6cfc3a50abf60cc8c0e299bf467
+        run: npx wrangler deploy --config wrangler.remote.jsonc
+      - name: Probe health and fail-closed behavior
+        run: |
+          set -euo pipefail
+          URL="https://sagamente-wa-baileys-remote-probe.playmomentsstudios.workers.dev"
+          curl --retry 5 --retry-delay 3 --fail --silent --show-error "$URL/health" -o /tmp/sagamente-wa-remote-health.json
+          node -e 'const x=require("/tmp/sagamente-wa-remote-health.json");if(x.noWhatsAppSocket!==true||x.ready!==false)process.exit(1)'
+          [ "$(curl -s -o /dev/null -w '%{http_code}' "$URL/start")" = 401 ]
+          [ "$(curl -s -o /dev/null -w '%{http_code}' "$URL/qr")" = 401 ]
