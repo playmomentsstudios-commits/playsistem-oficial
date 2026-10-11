@@ -87,7 +87,7 @@ jobs:
           done
           [ "$READY" -eq 1 ]
           curl --silent --show-error --max-time 8 -X POST -H "Authorization: Bearer $TEST_TOKEN" http://127.0.0.1:8800/start -o /tmp/sagamente-wa-start.json
-          node -e 'const x=require("/tmp/sagamente-wa-start.json");if(x.started!==true){console.error("Socket start failed:",x.error||"unknown",x.errorType||"unknown");process.exit(1)}'
+          node -e 'const x=require("/tmp/sagamente-wa-start.json");if(x.started!==true){console.error("Socket start failed:",x.error||"unknown",x.errorType||"unknown","stage:",x.stage||"unknown");process.exit(1)}'
           node -e 'const x=require("/tmp/sagamente-wa-start.json");if(x.started!==true||x.productionMessagesEnabled!==false)process.exit(1);console.log("Baileys socket start requested; no pairing performed.")'
           sleep 8
           curl --fail --silent --show-error --max-time 5 -H "Authorization: Bearer $TEST_TOKEN" http://127.0.0.1:8800/controller-status -o /tmp/sagamente-wa-start-status.json
