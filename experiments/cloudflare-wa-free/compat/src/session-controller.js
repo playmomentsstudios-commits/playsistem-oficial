@@ -5,13 +5,14 @@ import makeWASocket, { Browsers } from "@whiskeysockets/baileys";
 import { createEncryptedAuthState } from "./auth-store.js";
 export class ExperimentalSessionController {
   constructor(ctx,env){this.ctx=ctx;this.env=env;this.socket=null;this.qr=null;this.status="idle";this.deadline=0;this.stopTimer=null;this.lastProbe={};}
+  isPairingEnabled(){const until=Number(this.env.EXPERIMENTAL_PAIRING_EXPIRES_AT);const now=Date.now();return this.env.EXPERIMENTAL_PAIRING_ENABLED==="true"&&Number.isSafeInteger(until)&&until>now&&until<=now+120000;}
   async fetch(request){
     const route=new URL(request.url).pathname;
     const headers={"Cache-Control":"no-store","Content-Type":"application/json"};
     if(route==="/controller-status"){
-      return new Response(JSON.stringify({enabled:this.env.EXPERIMENTAL_PAIRING_ENABLED==="true",status:this.status,active:!!this.socket,qrAvailable:!!this.qr,probe:this.lastProbe,productionMessagesEnabled:false}),{headers});
+      return new Response(JSON.stringify({enabled:this.isPairingEnabled(),status:this.status,active:!!this.socket,qrAvailable:!!this.qr,probe:this.lastProbe,productionMessagesEnabled:false}),{headers});
     }
-    if(this.env.EXPERIMENTAL_PAIRING_ENABLED!=="true")return new Response(JSON.stringify({error:"experiment_disabled"}),{status:503,headers});
+    if(!this.isPairingEnabled())return new Response(JSON.stringify({error:"experiment_disabled"}),{status:503,headers});
     if(route==="/qr"){
       if(this.deadline && Date.now()>=this.deadline){await this.stop();}
       if(request.method!=="GET")return new Response(null,{status:405});
