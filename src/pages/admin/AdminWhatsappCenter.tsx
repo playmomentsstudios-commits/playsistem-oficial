@@ -367,9 +367,8 @@ export function AdminWhatsappCenter(){
               </div>
               <div className="flex flex-wrap items-center gap-2">
               {!showArchived&&!['historical','missing_phone','sending_auto','sent_auto'].includes(item.status)&&
-                <button onClick={()=>openWhatsApp(item)} disabled={busy===item.id} className="min-h-9 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 text-xs text-emerald-200 disabled:opacity-50">Abrir WhatsApp</button>
-                {item.status==='opened_manual'&&<button onClick={()=>void reportSent(item)} disabled={busy===item.id} className="min-h-9 rounded-lg border border-white/15 px-3 text-xs text-gray-200 disabled:opacity-50">Informar envio manual</button>}
-              }
+                <button onClick={()=>openWhatsApp(item)} disabled={busy===item.id} className="min-h-9 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 text-xs text-emerald-200 disabled:opacity-50">Abrir WhatsApp</button>}
+              {!showArchived&&item.status==='opened_manual'&&<button onClick={()=>void reportSent(item)} disabled={busy===item.id} className="min-h-9 rounded-lg border border-white/15 px-3 text-xs text-gray-200 disabled:opacity-50">Informar envio manual</button>}
               <button disabled={busy===item.id} type="button" onClick={()=>void archiveRecord(item)}
                 className="min-h-9 rounded-lg px-3 text-xs text-gray-400 hover:bg-white/5 hover:text-white disabled:opacity-40">{showArchived?'Restaurar':'Arquivar'}</button>
               </div>
