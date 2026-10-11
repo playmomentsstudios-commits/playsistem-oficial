@@ -24,6 +24,8 @@ export type RequestContext = {
   userId: string;
   role: string;
   permissions: string[];
+  // Inactive collaborators must never qualify for staff-only operations.
+  staffActive?: boolean;
 };
 
 export async function requireUser(req: Request): Promise<RequestContext> {
@@ -51,20 +53,25 @@ export async function requireUser(req: Request): Promise<RequestContext> {
   }
 
   let permissions: string[] = [];
+  let staffActive = false;
   if (profile.role === "staff") {
-    const { data: staff } = await db
+    const { data: staff, error: staffError } = await db
       .from("staff_profiles")
       .select("permissions,active")
       .eq("user_id", authData.user.id)
       .maybeSingle();
-    if (staff?.active) permissions = Array.isArray(staff.permissions) ? staff.permissions : [];
+    if (staffError) throw new Error("Unable to verify collaborator access");
+    if (staff?.active === true) {
+      staffActive = true;
+      permissions = Array.isArray(staff.permissions) ? staff.permissions : [];
+    }
   }
 
-  return { db, userId: authData.user.id, role: profile.role, permissions };
+  return { db, userId: authData.user.id, role: profile.role, permissions, staffActive };
 }
 
 export function requireStaff(ctx: RequestContext) {
-  if (!["admin", "staff"].includes(ctx.role)) {
+  if (ctx.role !== "admin" && !(ctx.role === "staff" && ctx.staffActive === true)) {
     throw new Error("Staff access required");
   }
 }
