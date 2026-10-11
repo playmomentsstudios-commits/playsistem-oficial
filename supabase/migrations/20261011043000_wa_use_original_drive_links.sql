@@ -1,7 +1,5 @@
--- WhatsApp: use original Google Drive browser links already stored in client_files.external_url.
--- Preserve original notification text, task/file eligibility, ordering, and compact task link.
--- No temporary preview links or media attachments; no Drive permission changes.
--- Original Drive URLs honor Google Drive sharing permissions. No automatic sharing.
+-- WhatsApp client notifications now link directly to the original Google Drive URLs.
+-- Permissions remain under Google Drive; preserve previously working text and selection.
 -- Human, status-specific WhatsApp updates with all relevant deliverables first.
 -- Supersedes the single-newest-file trigger. Existing notifications are unchanged.
 -- No Drive public-sharing, no increase in message frequency, no auto replay.
@@ -166,53 +164,14 @@ begin
     end if;
     v_group:=case when f.is_support then '📄 Apoio: ' else '🖼️ ' end;
     v_file_name:=left(regexp_replace(f.name,'[\r\n\t*]',' ','g'),110);
-    -- Send the real Google Drive browser URL, not a temporary Sagamente
-    -- file preview. Never build an unrelated or untrusted external URL.
-    if f.drive_file_id !~ '^[A-Za-z0-9_-]{10,128}
-  end loop;
-
-  if v_count=0 then
-    v_body:=v_body||E'\n\n'||
-      'Os materiais liberados para você podem ser consultados na tarefa.';
-  elsif v_other>0 then
-    v_body:=v_body||E'\n\n'||'+'||v_other::text||
-      ' outro(s) arquivo(s) disponível(is) nos detalhes da tarefa ou etapa.';
-  end if;
-  v_body:=v_body||E'\n\n'||v_label||E'\n'||v_link;
-
-  update public.whatsapp_message_outbox
-  set message_body=v_body where id=new.id;
-  return new;
-end $$;
-revoke all on function app_private.wa_add_file_link_to_outbox()
- from public,anon,authenticated;
--- Existing AFTER INSERT trigger keeps invoking this replacement.
- then
+    -- Only the original Drive file URL with the same verified file id
+    -- (or its canonical Google Drive fallback) is emitted. No public share.
+    if f.drive_file_id !~ '^[A-Za-z0-9_-]{10,128}$' then
       v_other:=v_other+1;
       continue;
     end if;
     if f.external_url ~ ('^https://drive[.]google[.]com/file/d/'||
-          f.drive_file_id||'/view([?][A-Za-z0-9_=&%-]*)?
-  end loop;
-
-  if v_count=0 then
-    v_body:=v_body||E'\n\n'||
-      'Os materiais liberados para você podem ser consultados na tarefa.';
-  elsif v_other>0 then
-    v_body:=v_body||E'\n\n'||'+'||v_other::text||
-      ' outro(s) arquivo(s) disponível(is) nos detalhes da tarefa ou etapa.';
-  end if;
-  v_body:=v_body||E'\n\n'||v_label||E'\n'||v_link||
-    E'\n\n'||'_Links dos arquivos válidos por 48 horas. Não compartilhe._';
-
-  update public.whatsapp_message_outbox
-  set message_body=v_body where id=new.id;
-  return new;
-end $$;
-revoke all on function app_private.wa_add_file_link_to_outbox()
- from public,anon,authenticated;
--- Existing AFTER INSERT trigger keeps invoking this replacement.
-) then
+         f.drive_file_id||'/view([?][A-Za-z0-9_=&%-]*)?$') then
       v_file_url:=f.external_url;
     else
       v_file_url:='https://drive.google.com/file/d/'||f.drive_file_id||'/view';
@@ -228,8 +187,7 @@ revoke all on function app_private.wa_add_file_link_to_outbox()
     v_body:=v_body||E'\n\n'||'+'||v_other::text||
       ' outro(s) arquivo(s) disponível(is) nos detalhes da tarefa ou etapa.';
   end if;
-  v_body:=v_body||E'\n\n'||v_label||E'\n'||v_link||
-    E'\n\n'||'_Links dos arquivos válidos por 48 horas. Não compartilhe._';
+  v_body:=v_body||E'\n\n'||v_label||E'\n'||v_link;
 
   update public.whatsapp_message_outbox
   set message_body=v_body where id=new.id;
