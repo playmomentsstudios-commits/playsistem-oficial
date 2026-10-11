@@ -31,6 +31,27 @@ A versão anterior podia retornar ID de `sendMessage()` sem a mensagem aparecer 
 
 As tentativas antigas seguem classificadas como **sem confirmação**, não serão reenviadas automaticamente. Uma consulta sem confirmação de cadastro ou JID ambíguo será bloqueada; não há fallback cego para outros números. Desligue o piloto se o aparelho não mostrar a mensagem ou se aparecerem erros de consulta.
 
+## Anexar os arquivos do Drive no WhatsApp (versão experimental)
+
+Quando uma nova notificação da tarefa/etapa contiver links temporários de arquivos do Drive, **a ponte atualizada no Windows** pode baixar os arquivos autorizados e enviar **até três arquivos como documentos originais**, sem compactação de foto. Em seguida envia o texto da tarefa e o link de acompanhamento. O texto não repete os links dos arquivos que foram submetidos como documentos. Se um arquivo expirou, estiver indisponível ou falhar o upload, seu link é mantido como alternativa.
+
+- Limites locais: **3 arquivos por notificação, 12 MB por arquivo, 30 MB por notificação**. Excesso continua com links, sem baixar os demais.
+- Cada anexo é uma mensagem distinta do WhatsApp: uma notificação com três anexos pode gerar **quatro mensagens** (três documentos mais resumo). Portanto o teto diário de *tentativas de notificação* não equivale ao número físico de mensagens.
+- A ponte só aceita links do endpoint exato do Supabase da Sagamente (`whatsapp-file-open`), com token de 64 caracteres. Não faz downloads arbitrários.
+- As checagens do banco/Edge Function continuam exigindo acesso do cliente ao projeto, tarefa/etapa e arquivo. Não são criadas permissões públicas no Google Drive.
+- Sem reenvio automático de operações parcialmente concluídas; resposta da biblioteca não comprova entrega. A Central mostra quantos documentos foram submetidos e quantos ficaram com link alternativo.
+- As notificações **já enviadas** não são reenviadas. Nenhuma alteração de status é produzida pela instalação.
+
+**Atualizar a instalação Windows existente (sem trocar chave ou sessão):**
+
+1. No painel, clique **Pausar envios**; no terminal, **Ctrl+C**.
+2. No ZIP mais recente do repositório, abra `services/whatsapp-bridge`.
+3. Copie para sua pasta instalada `index.mjs` (substituir) e o **novo** `media-attachments.mjs`.
+4. Preserve o `.env`, `.local/session`, `phone-utils.mjs` e `receipt-tracker.mjs`. Não copie/mande as chaves secretas.
+5. Reinicie `Iniciar WhatsApp Sagamente.cmd`, verifique **Conectado** e ative apenas **um cliente autorizado** para o primeiro teste com uma nova notificação.
+
+Biblioteca QR não oficial, com risco de restrição do número comercial. Não são cobradas tarifas por mensagem pela biblioteca, mas há custo de tráfego/infraestrutura e riscos operacionais.
+
 ## Arquitetura
 
 - A aplicação web e o Cloudflare **não** executam o WhatsApp.
