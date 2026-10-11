@@ -41,4 +41,5 @@ jobs:
             tail -100 /tmp/sagamente-wa-runtime.log
             exit 1
           fi
-          node -e 'const fs=require("fs");const x=JSON.parse(fs.readFileSync("/tmp/sagamente-wa-runtime.json","utf8"));if(x.bundled!==true||x.browserApi!==true||x.noSessionStarted!==true||x.offlineKeyGeneration!==true||x.credentialRoundTrip!==true||x.keyStoreRoundTrip!==true||x.encryptionAuthenticated!==true||x.keyExtractable!==false||x.persistentStorage!==false||x.noStorageOfKeys!==true)process.exit(1);console.log("Baileys loaded; offline key generation and serialization passed.")'
+          curl --fail --silent --show-error --max-time 5 http://127.0.0.1:8799/ -o /tmp/sagamente-wa-runtime-again.json
+          node -e 'const fs=require("fs");const a=JSON.parse(fs.readFileSync("/tmp/sagamente-wa-runtime.json","utf8"));const b=JSON.parse(fs.readFileSync("/tmp/sagamente-wa-runtime-again.json","utf8"));if(a.bundled!==true||a.offlineKeyGeneration!==true||a.credentialRoundTrip!==true||a.keyStoreRoundTrip!==true||a.persistentStorage!==true||a.recordExistedBeforeRequest!==false||b.recordExistedBeforeRequest!==true||b.credentialRoundTrip!==true||b.keyStoreRoundTrip!==true||a.noSessionStarted!==true||a.isProductionSecure!==false)process.exit(1);console.log("Durable Object persisted real-format Baileys credentials between requests; still offline-only.")'
