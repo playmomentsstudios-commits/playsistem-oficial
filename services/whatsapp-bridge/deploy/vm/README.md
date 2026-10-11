@@ -20,7 +20,7 @@ Tambem serve qualquer servidor Ubuntu/Debian persistente ja contratado ou dispon
 
 1. Em uma VM Ubuntu/Debian, confirmar no console do provedor que o tamanho, disco e rede estao nas cotas gratuitas ANTES de criar recursos. Restringir SSH por chave e IP; nao abrir portas para a ponte.
 2. Instalar git, Node.js 22+ e npm pelos meios oficiais; conferir versoes com node -v e npm -v.
-3. Baixar o codigo, executar o instalador (ele instala somente arquivos/unidade; **NAO inicia ou habilita**):
+3. **Somente depois de revisar e integrar esta PR na branch main**, baixar o codigo e executar o instalador (ele instala somente arquivos/unidade; **NAO inicia ou habilita**):
 
        git clone --depth 1 https://github.com/playmomentsstudios-commits/playsistem-oficial.git
        cd playsistem-oficial
