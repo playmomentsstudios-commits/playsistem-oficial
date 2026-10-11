@@ -27,6 +27,8 @@ jobs:
         with:
           name: sagamente-wa-isolated-worker-bundle
           path: experiments/cloudflare-wa-free/compat/.wrangler-smoke/
+          include-hidden-files: true
+          if-no-files-found: error
           retention-days: 3
       - name: Test Baileys module loading inside local Workers runtime
         shell: bash
