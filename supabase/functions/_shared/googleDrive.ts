@@ -87,20 +87,31 @@ export async function getDriveAccessToken() {
     grant_type: "refresh_token",
   });
 
+  // Bound the OAuth request so Drive-dependent screens never hang indefinitely.
+  // Never forward raw Google error descriptions to client-facing Edge Functions.
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
+    signal: AbortSignal.timeout(10000),
+  }).catch(() => {
+    throw new Error("Serviço de autenticação do Google Drive indisponível. Tente novamente.");
   });
 
-  const payload = await response.json();
+  const payload = await response.json().catch(() => null);
   if (!response.ok || !payload.access_token) {
     const raw = String(payload?.error_description || payload?.error || "Google OAuth token refresh failed");
     const normalized = raw.toLowerCase();
     if (normalized.includes("expired") || normalized.includes("revoked") || normalized.includes("invalid_grant")) {
       throw new Error("A conexão do Google Drive expirou ou foi revogada. Atualize o segredo GOOGLE_DRIVE_REFRESH_TOKEN no Supabase e tente novamente.");
     }
-    throw new Error(raw);
+    if (normalized.includes("invalid_client") || normalized.includes("unauthorized_client")) {
+      throw new Error("O Google recusou a configuração OAuth institucional. Solicite uma verificação ao administrador.");
+    }
+    if (response.status === 429 || response.status >= 500) {
+      throw new Error("Serviço de autenticação do Google Drive temporariamente indisponível. Tente novamente.");
+    }
+    throw new Error("O Google recusou a autenticação do Drive. Solicite uma verificação da conexão institucional.");
   }
 
   return payload.access_token as string;
