@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 37293d0cc3389330a24f5e4565bca55de1416444
+          ref: 15f140335093dd2a009fb5440c9d825e6e2c5f84
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -104,7 +104,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 37293d0cc3389330a24f5e4565bca55de1416444
+          ref: 15f140335093dd2a009fb5440c9d825e6e2c5f84
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -126,6 +126,7 @@ jobs:
           const cfg=JSON.parse(fs.readFileSync("wrangler.remote.jsonc","utf8"));
           if(cfg.name!=="sagamente-wa-baileys-remote-probe"||cfg.vars?.EXPERIMENTAL_PAIRING_ENABLED!=="false"||cfg.preview_urls!==false)throw Error("Unsafe Worker target");
           cfg.vars.EXPERIMENTAL_PAIRING_ENABLED="true";
+          cfg.vars.EXPERIMENTAL_PAIRING_EXPIRES_AT=String(Date.now()+120000);
           fs.writeFileSync("wrangler.qr.temp.jsonc",JSON.stringify(cfg,null,2));
           console.log("QR-only test configuration prepared for isolated Worker.");
           NODE
