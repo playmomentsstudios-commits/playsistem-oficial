@@ -67,3 +67,29 @@ jobs:
           curl --fail --silent --show-error --max-time 15 "${AUTH[@]}" http://127.0.0.1:8799/outbound-ws-test -o /tmp/sagamente-wa-outbound.json
           node -e 'const x=require("/tmp/sagamente-wa-outbound.json");console.log("Bounded outbound WebSocket probe:",JSON.stringify(x));if(x.noWhatsAppSocket!==true||x.outboundEstablished!==true||x.echoReceived!==true||x.closed!==true)process.exit(1)'
           node -e 'const fs=require("fs");const a=JSON.parse(fs.readFileSync("/tmp/sagamente-wa-runtime.json","utf8"));const b=JSON.parse(fs.readFileSync("/tmp/sagamente-wa-runtime-again.json","utf8"));if(a.bundled!==true||a.offlineKeyGeneration!==true||a.credentialRoundTrip!==true||a.keyStoreRoundTrip!==true||a.persistentStorage!==true||a.recordExistedBeforeRequest!==false||b.recordExistedBeforeRequest!==true||b.credentialRoundTrip!==true||b.keyStoreRoundTrip!==true||a.noSessionStarted!==true||a.isProductionSecure!==false||a.testKeyStoredAlongsideCiphertext!==false||a.secretConfigured!==true)process.exit(1);console.log("Durable Object persisted real-format Baileys credentials between requests; still offline-only.")'
+
+      - name: Probe Baileys first contact without pairing or production access
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf "PROBE_AES_KEY_B64=%s\n" "$(openssl rand -base64 32 | tr -d '\n')" > .dev.vars
+          printf "PROBE_ACCESS_TOKEN=%s\n" "$(openssl rand -hex 32)" >> .dev.vars
+          printf "EXPERIMENTAL_PAIRING_ENABLED=true\n" >> .dev.vars
+          chmod 600 .dev.vars
+          TEST_TOKEN="$(sed -n 's/^PROBE_ACCESS_TOKEN=//p' .dev.vars)"
+          ./node_modules/.bin/wrangler dev --local --ip 127.0.0.1 --port 8800 > /tmp/sagamente-wa-live-probe.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true; rm -f .dev.vars' EXIT
+          READY=0
+          for i in $(seq 1 20); do
+            if curl --fail --silent --max-time 2 http://127.0.0.1:8800/health > /dev/null; then READY=1; break; fi
+            sleep 1
+          done
+          [ "$READY" -eq 1 ]
+          curl --fail --silent --show-error --max-time 8 -X POST -H "Authorization: Bearer $TEST_TOKEN" http://127.0.0.1:8800/start -o /tmp/sagamente-wa-start.json
+          node -e 'const x=require("/tmp/sagamente-wa-start.json");if(x.started!==true||x.productionMessagesEnabled!==false)process.exit(1);console.log("Baileys socket start requested; no pairing performed.")'
+          sleep 8
+          curl --fail --silent --show-error --max-time 5 -H "Authorization: Bearer $TEST_TOKEN" http://127.0.0.1:8800/controller-status -o /tmp/sagamente-wa-start-status.json
+          node -e 'const x=require("/tmp/sagamente-wa-start-status.json");if(x.probe?.socketInitiated!==true||x.productionMessagesEnabled!==false)process.exit(1);console.log("Socket initiated:",x.probe.socketInitiated,"QR observed:",x.probe.qrObserved,"state:",x.status)'
+          curl --fail --silent --show-error --max-time 5 -X POST -H "Authorization: Bearer $TEST_TOKEN" http://127.0.0.1:8800/stop -o /tmp/sagamente-wa-stop.json
+          node -e 'const x=require("/tmp/sagamente-wa-stop.json");if(x.stopped!==true)process.exit(1);console.log("Baileys socket explicitly closed.")'
