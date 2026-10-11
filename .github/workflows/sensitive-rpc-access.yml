@@ -1,0 +1,91 @@
+name: Sensitive RPC Access Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/sensitive-rpc-access.yml'
+      - 'tests/db-isolation/prepare-sensitive-rpcs.sql'
+      - 'tests/db-isolation/assert-sensitive-rpc-acls.sql'
+      - 'docs/security/rpc-access-readonly.sql'
+      - 'docs/security/rpc-acl-parity.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sensitive-rpc-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sensitive-rpc-postgres:
+    name: Isolated PostgreSQL - Sensitive RPC ACLs
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout (no persisted credentials)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Supabase CLI (pinned)
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.81.3
+      - name: Initialize LOCAL database project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/sagamente-rpc-parity"
+          cd "${RUNNER_TEMP}/sagamente-rpc-parity"
+          supabase init
+          test -f supabase/config.toml
+          test ! -f supabase/.temp/project-ref
+      - name: Start isolated PostgreSQL in Docker
+        shell: bash
+        working-directory: ${{ runner.temp }}/sagamente-rpc-parity
+        run: |
+          set -euo pipefail
+          supabase db start
+          pg_isready -h 127.0.0.1 -p 54322 -U postgres
+      - name: Fetch exact SQL from PR #356 and PR #361
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin refs/heads/audit100/sec02-order-stock-rpc
+          test "$(git rev-parse FETCH_HEAD)" = "6f41cfdfbeff22263601db14e9c9b82c015253d3" || {
+            echo "::error::PR #356 has changed; review and update SHA before testing"
+            exit 1
+          }
+          git show FETCH_HEAD:supabase/migrations/20261011040000_restrict_order_stock_release_rpc.sql > "${RUNNER_TEMP}/stock_acl.sql"
+          git fetch --no-tags --depth=1 origin refs/heads/audit101/secure-file-review-rpcs
+          test "$(git rev-parse FETCH_HEAD)" = "19e75bc6750ff84be68624124d10448f4831a2e1" || {
+            echo "::error::PR #361 has changed; review and update SHA before testing"
+            exit 1
+          }
+          git show FETCH_HEAD:supabase/migrations/20261011050000_secure_file_review_rpc_grants.sql > "${RUNNER_TEMP}/file_review_acl.sql"
+          test -s "${RUNNER_TEMP}/stock_acl.sql"
+          test -s "${RUNNER_TEMP}/file_review_acl.sql"
+          echo "Pinned PR #356 SHA: 6f41cfdfbeff22263601db14e9c9b82c015253d3" >> "$GITHUB_STEP_SUMMARY"
+          echo "Pinned PR #361 SHA: 19e75bc6750ff84be68624124d10448f4831a2e1" >> "$GITHUB_STEP_SUMMARY"
+      - name: Execute migrations against synthetic RPCs and verify access
+        shell: bash
+        env:
+          LOCAL_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          set -euo pipefail
+          export PGCONNECT_TIMEOUT=8
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f tests/db-isolation/prepare-sensitive-rpcs.sql
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f "${RUNNER_TEMP}/stock_acl.sql"
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f "${RUNNER_TEMP}/file_review_acl.sql"
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f tests/db-isolation/assert-sensitive-rpc-acls.sql
+          # ACL migrations must be safe to reapply.
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f "${RUNNER_TEMP}/stock_acl.sql"
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f "${RUNNER_TEMP}/file_review_acl.sql"
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f tests/db-isolation/assert-sensitive-rpc-acls.sql
+          echo "PASS: targeted ACL changes preserve service access and revoke unauthorized roles; repeatable." >> "$GITHUB_STEP_SUMMARY"
+      - name: Stop test database without backup
+        if: always()
+        continue-on-error: true
+        working-directory: ${{ runner.temp }}/sagamente-rpc-parity
+        run: supabase stop --no-backup
