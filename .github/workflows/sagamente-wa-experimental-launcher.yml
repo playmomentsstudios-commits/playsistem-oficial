@@ -120,6 +120,7 @@ jobs:
           set -euo pipefail
           [ -n "$CLOUDFLARE_API_TOKEN" ] && [ "${#PROBE_ACCESS_TOKEN}" -ge 32 ]
           URL="https://sagamente-wa-baileys-remote-probe.playmomentsstudios.workers.dev"
+          [ "$(git rev-parse HEAD)" = "c0c72269720689809c4abf54effe1dbace429024" ] || { echo "::error::Wrong QR diagnostic source commit"; exit 1; }
           npm install --no-audit --no-fund
           node - <<'NODE'
           const fs=require("node:fs");
