@@ -26,9 +26,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          printf "PROBE_AES_KEY_B64=%s\n" "$(openssl rand -base64 32 | tr -d '\n')" > .dev.vars
+          chmod 600 .dev.vars
           ./node_modules/.bin/wrangler dev --local --ip 127.0.0.1 --port 8799 > /tmp/sagamente-wa-runtime.log 2>&1 &
           echo $! > /tmp/sagamente-wa-runtime.pid
-          trap 'kill "$(cat /tmp/sagamente-wa-runtime.pid)" 2>/dev/null || true' EXIT
+          trap 'kill "$(cat /tmp/sagamente-wa-runtime.pid)" 2>/dev/null || true; rm -f .dev.vars' EXIT
           OK=0
           for i in $(seq 1 25); do
             if curl --fail --silent --show-error --max-time 3 http://127.0.0.1:8799/ -o /tmp/sagamente-wa-runtime.json; then
@@ -50,4 +52,4 @@ jobs:
           # External echo services may be temporarily unavailable: capture result, do not treat it as WhatsApp viability.
           curl --fail --silent --show-error --max-time 15 http://127.0.0.1:8799/outbound-ws-test -o /tmp/sagamente-wa-outbound.json
           node -e 'const x=require("/tmp/sagamente-wa-outbound.json");console.log("Bounded outbound WebSocket probe:",JSON.stringify(x));if(x.noWhatsAppSocket!==true||x.outboundEstablished!==true||x.echoReceived!==true||x.closed!==true)process.exit(1)'
-          node -e 'const fs=require("fs");const a=JSON.parse(fs.readFileSync("/tmp/sagamente-wa-runtime.json","utf8"));const b=JSON.parse(fs.readFileSync("/tmp/sagamente-wa-runtime-again.json","utf8"));if(a.bundled!==true||a.offlineKeyGeneration!==true||a.credentialRoundTrip!==true||a.keyStoreRoundTrip!==true||a.persistentStorage!==true||a.recordExistedBeforeRequest!==false||b.recordExistedBeforeRequest!==true||b.credentialRoundTrip!==true||b.keyStoreRoundTrip!==true||a.noSessionStarted!==true||a.isProductionSecure!==false)process.exit(1);console.log("Durable Object persisted real-format Baileys credentials between requests; still offline-only.")'
+          node -e 'const fs=require("fs");const a=JSON.parse(fs.readFileSync("/tmp/sagamente-wa-runtime.json","utf8"));const b=JSON.parse(fs.readFileSync("/tmp/sagamente-wa-runtime-again.json","utf8"));if(a.bundled!==true||a.offlineKeyGeneration!==true||a.credentialRoundTrip!==true||a.keyStoreRoundTrip!==true||a.persistentStorage!==true||a.recordExistedBeforeRequest!==false||b.recordExistedBeforeRequest!==true||b.credentialRoundTrip!==true||b.keyStoreRoundTrip!==true||a.noSessionStarted!==true||a.isProductionSecure!==false||a.testKeyStoredAlongsideCiphertext!==false||a.secretConfigured!==true)process.exit(1);console.log("Durable Object persisted real-format Baileys credentials between requests; still offline-only.")'
