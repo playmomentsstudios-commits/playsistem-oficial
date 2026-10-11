@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: c6ce58210dd4623e79db93554504bdca48678c27
+          ref: c0c72269720689809c4abf54effe1dbace429024
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -203,13 +203,18 @@ jobs:
           console.log("Real cloud Baileys start acknowledged; no messages permitted.");
           NODE
           OBSERVED=false
-          for n in $(seq 1 20); do
+          CLOSED_EARLY=false
+          for n in $(seq 1 18); do
             sleep 2
             curl --silent --show-error --max-time 8 \
               -H "Authorization: Bearer $PROBE_ACCESS_TOKEN" \
               "$URL/controller-status" -o /tmp/wa-qr-status.json || true
             if node -e 'const fs=require("fs");let s;try{s=JSON.parse(fs.readFileSync("/tmp/wa-qr-status.json"))}catch{process.exit(1)};process.exit(s.probe?.qrObserved===true&&s.productionMessagesEnabled===false?0:1)'; then
               OBSERVED=true
+              break
+            fi
+            if node -e 'const fs=require("fs");let s;try{s=JSON.parse(fs.readFileSync("/tmp/wa-qr-status.json"))}catch{process.exit(1)};process.exit(s.probe?.connectionClosed===true?0:1)'; then
+              CLOSED_EARLY=true
               break
             fi
           done
@@ -233,5 +238,5 @@ jobs:
           };
           console.log("Sanitized cloud Baileys diagnostic:",JSON.stringify(safe));
           NODE
-          [ "$OBSERVED" = true ] || { echo "::error::Baileys did not emit QR within bounded cloud probe"; exit 1; }
+          [ "$OBSERVED" = true ] || { echo "::error::QR not observed; disconnectedEarly=$CLOSED_EARLY. Use sanitized diagnostic above to determine if WebSocket/Baileys is viable."; exit 1; }
           echo "Cloud Baileys QR event observed securely; QR content never fetched, no phone paired."
