@@ -51,6 +51,7 @@ export function AdminProductivity(){
   const [showTaskDetails,setShowTaskDetails]=useState(false)
   const [savingTask,setSavingTask]=useState(false)
   const [selectedTask,setSelectedTask]=useState<any>(null)
+  const [taskActionError,setTaskActionError]=useState('')
   const [taskActivity,setTaskActivity]=useState<any[]>([])
   const [loadingActivity,setLoadingActivity]=useState(false)
 
@@ -92,9 +93,22 @@ export function AdminProductivity(){
 
   async function openTaskDetails(task:any){setSelectedTask(task);setLoadingActivity(true);try{setTaskActivity(await portalApi.taskActivity(task.id))}catch{setTaskActivity([])}finally{setLoadingActivity(false)}}
 
+  async function assignTask(id:string,userId:string){
+    if(!userId)return
+    setTaskActionError('')
+    try{await portalApi.saveTask({assigned_to:userId},id);await load()}
+    catch(err:any){setTaskActionError(err?.message||'Não foi possível atribuir a tarefa.')}
+  }
+
   async function changeStatus(id:string,status:string){
-    await portalApi.saveTask({status,completed_at:status==='completed'?new Date().toISOString():null},id)
-    await load()
+    const task=tasks.find((item:any)=>item.id===id)
+    if((status==='in_progress'||status==='review')&&!task?.assigned_to){
+      setTaskActionError('Atribua um responsável antes de iniciar ou enviar a tarefa para revisão.')
+      return
+    }
+    setTaskActionError('')
+    try{await portalApi.saveTask({status,completed_at:status==='completed'?new Date().toISOString():null},id);await load()}
+    catch(err:any){setTaskActionError(err?.message||'Não foi possível atualizar a tarefa.')}
   }
 
   function assigneeName(id?:string|null){
@@ -121,6 +135,7 @@ export function AdminProductivity(){
       <div className="px-4 py-3 rounded-xl bg-[#121214] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Em revisão</p><b className="text-xl mt-2 block text-violet-300">{review}</b></div><div className="px-4 py-3 rounded-xl bg-[#121214] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">Concluídas</p><b className="text-xl mt-2 block text-green-300">{completed}</b></div><div className="px-4 py-3 rounded-xl bg-[#121214] border border-white/10"><p className="text-[10px] uppercase tracking-[.12em] text-gray-500">No prazo</p><b className="text-xl mt-2 block text-emerald-300">{onTimeRate===null?'—':onTimeRate+'%'}</b></div>
     </div>
 
+    {taskActionError&&<p role="alert" className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">{taskActionError}</p>}
     <div className="px-3 py-2.5 rounded-xl bg-[#111113] border border-white/8 flex flex-wrap gap-2 mb-4">
       <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar tarefa ou projeto..." className="min-h-10 flex-1 min-w-[220px] px-3 py-2 rounded-lg bg-white/[.04] border border-white/10 text-sm"/>
       <select value={projectFilter} onChange={e=>setProjectFilter(e.target.value)} className="min-h-10 px-3 py-2 rounded-lg bg-black border border-white/10 text-sm"><option value="todos">Todos os projetos</option>{projects.map(project=><option key={project.id} value={project.id}>{project.title}</option>)}</select>
@@ -136,6 +151,7 @@ export function AdminProductivity(){
         <button type="button" onClick={()=>void openTaskDetails(task)} className="font-semibold text-sm text-left hover:text-[#ff6573]">{task.title}</button>
         <p className="text-xs text-gray-500 mt-1">{task.projectTitle}</p>
         <p className="text-xs text-gray-500 mt-1">{assigneeName(task.assigned_to)} · {rotulo(prioridade,task.priority)}</p>
+        {!task.assigned_to&&task.status!=='completed'&&<label className="mt-2 block text-[11px] text-amber-200">Atribuir responsável<select aria-label={'Responsável da tarefa '+task.title} defaultValue="" onChange={e=>void assignTask(task.id,e.target.value)} className="mt-1 min-h-9 w-full rounded-lg border border-white/10 bg-black px-2 text-xs text-white"><option value="" disabled>Selecione uma pessoa</option>{team.map(member=><option key={member.id} value={member.id}>{member.first_name} {member.last_name}</option>)}</select></label>}
         {task.due_date&&<p className={'text-xs mt-1 '+(task.due_date<today&&task.status!=='completed'?'text-red-300':'text-gray-500')}>Prazo: {new Date(task.due_date+'T12:00').toLocaleDateString('pt-BR')}</p>}
         <select value={task.status} onChange={e=>changeStatus(task.id,e.target.value)} className={"pm-select-status mt-3 w-full px-2 py-1.5 rounded-lg text-xs "+(task.status==="pending"?"pm-state-pending":task.status==="in_progress"?"pm-state-progress":task.status==="review"?"pm-state-review":"pm-state-success")}>{columns.map(option=><option key={option.key} value={option.key}>{option.label}</option>)}</select>
       </div>)}</div>
