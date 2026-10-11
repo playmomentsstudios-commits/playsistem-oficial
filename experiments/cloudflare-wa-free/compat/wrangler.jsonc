@@ -1,0 +1,6 @@
+{
+  "name": "sagamente-baileys-compat-smoke",
+  "main": "./src/index.js",
+  "compatibility_date": "2026-10-11",
+  "workers_dev": false
+}
