@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: spike/cloudflare-free-whatsapp-feasibility-20261011
+          ref: 3f32a74b82c0a159119234b9ff79a0d98d59d9c3
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
