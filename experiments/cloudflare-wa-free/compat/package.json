@@ -6,7 +6,9 @@
     "build:check": "wrangler deploy --dry-run --outdir=./.wrangler-smoke"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "6.7.18"
+    "@whiskeysockets/baileys": "6.7.22",
+    "jimp": "^1.6.0",
+    "link-preview-js": "^3.0.0"
   },
   "devDependencies": {
     "wrangler": "^4.40.0"
