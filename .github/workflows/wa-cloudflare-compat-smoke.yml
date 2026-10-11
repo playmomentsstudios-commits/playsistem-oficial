@@ -22,6 +22,12 @@ jobs:
       - run: npm install --no-audit --no-fund
       - name: Bundle Baileys inside Cloudflare Workers runtime target
         run: npm run build:check
+      - name: Archive isolated Cloudflare Worker bundle (no deployment)
+        uses: actions/upload-artifact@v4
+        with:
+          name: sagamente-wa-isolated-worker-bundle
+          path: experiments/cloudflare-wa-free/compat/.wrangler-smoke/
+          retention-days: 3
       - name: Test Baileys module loading inside local Workers runtime
         shell: bash
         run: |
