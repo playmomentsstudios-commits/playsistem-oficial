@@ -1,0 +1,30 @@
+name: WhatsApp Remote Health Diagnostics (read-only)
+on:
+  pull_request:
+    paths:
+      - .github/workflows/wa-cloudflare-remote-health.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnose-remote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect remote public health and unauthenticated routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://sagamente-wa-baileys-remote-probe.playmomentsstudios.workers.dev"
+          for i in 1 2 3; do
+            for route in health start qr; do
+              status="$(curl --silent --show-error --max-time 10 --output "/tmp/sagamente-wa-${route}.json" --write-out '%{http_code}' "$URL/$route" || true)"
+              echo "Attempt $i route /$route: HTTP $status"
+              if [ "$route" = health ]; then
+                node -e 'const fs=require("fs");let p;try{p=JSON.parse(fs.readFileSync(process.argv[1],"utf8"))}catch{p={}};console.log("Health response:",JSON.stringify({service:p.service,ready:p.ready,noWhatsAppSocket:p.noWhatsAppSocket,code:p.code,error:p.error}))' /tmp/sagamente-wa-health.json
+              fi
+              if [ "$status" = 401 ] || [ "$status" = 200 ]; then echo "Expected HTTP category observed"; fi
+            done
+            sleep 2
+          done
+          echo "Read-only diagnosis completed (no secret used and no pairing)."
