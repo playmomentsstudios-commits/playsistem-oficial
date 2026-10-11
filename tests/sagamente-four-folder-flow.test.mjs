@@ -11,10 +11,10 @@ const central = read('src/pages/admin/AdminFilesV2.tsx')
 test('new customer projects provision four destinations only', () => {
   const definition = drive.split('export const projectFolderKinds =')[1].split('] as const')[0]
   for (const kind of ['received', 'production', 'preview', 'delivery']) {
-    assert.match(definition, new RegExp('["\\\']' + kind + '["\\\']'))
+    assert.match(definition, new RegExp('"' + kind + '"'))
   }
   for (const kind of ['raw', 'approved']) {
-    assert.doesNotMatch(definition, new RegExp('["\\\']' + kind + '["\\\']'))
+    assert.doesNotMatch(definition, new RegExp('"' + kind + '"'))
   }
 })
 
