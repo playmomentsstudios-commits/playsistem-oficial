@@ -56,6 +56,10 @@ jobs:
           node -e 'const x=require("/tmp/sagamente-wa-lifecycle.json");if(x.bounded!==true||x.closed!==true||x.noWhatsAppSocket!==true||x.productionQueueUntouched!==true||x.credentialFree!==true)process.exit(1);console.log("Offline bounded lifecycle passed.")'
           [ "$(curl --silent -o /dev/null -w '%{http_code}' http://127.0.0.1:8799/qr)" = 401 ]
           [ "$(curl --silent -o /dev/null -w '%{http_code}' "${AUTH[@]}" http://127.0.0.1:8799/qr)" = 503 ]
+          [ "$(curl --silent -o /dev/null -w '%{http_code}' -X POST "${AUTH[@]}" http://127.0.0.1:8799/start)" = 503 ]
+          [ "$(curl --silent -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8799/start)" = 401 ]
+          curl --silent -D /tmp/sagamente-wa-qr-headers -o /dev/null "${AUTH[@]}" http://127.0.0.1:8799/qr
+          grep -iq 'cache-control: no-store' /tmp/sagamente-wa-qr-headers
           echo "Private QR endpoints fail closed while pairing feature is disabled."
           # Separate direct edge connectivity from Workers-runtime outbound WebSocket compatibility.
           node --input-type=module -e 'const ws=new WebSocket("wss://sagamente-wa-cloudflare-probe.playmomentsstudios.workers.dev/ws-echo");const timer=setTimeout(()=>{console.error("Remote edge WS timeout");process.exit(1)},8000);ws.onopen=()=>ws.send("sagamente-probe:direct");ws.onmessage=e=>{if(e.data!=="sagamente-probe:direct")process.exit(1);console.log("Direct Cloudflare edge WebSocket passed.");ws.close();clearTimeout(timer);process.exit(0)};ws.onerror=()=>{console.error("Direct Cloudflare edge WebSocket failed");process.exit(1)}'
