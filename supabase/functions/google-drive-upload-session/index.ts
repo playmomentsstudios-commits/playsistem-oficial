@@ -1,4 +1,4 @@
-import { corsHeaders, ensureProjectFolder, getDriveAccessToken, hasPermission, json, requireUser } from "../_shared/googleDrive.ts";
+import { corsHeaders, ensureProjectFolder, getDriveAccessToken, hasPermission, json, requireUser, uploadFolderAliases } from "../_shared/googleDrive.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -10,7 +10,11 @@ Deno.serve(async (req) => {
     const fileName = String(body.file_name || "").trim();
     const mimeType = String(body.mime_type || "application/octet-stream");
     const fileSize = Number(body.file_size || 0);
-    const folderKind = String(body.folder_kind || "received");
+    const requestedFolderKind = String(body.folder_kind || "received");
+    const folderKind = uploadFolderAliases[requestedFolderKind] || requestedFolderKind;
+    if (!["received", "production", "preview", "delivery"].includes(folderKind)) {
+      throw new Error("Invalid upload destination");
+    }
     const customFolderId = body.custom_folder_id ? String(body.custom_folder_id) : null;
     const requestedStageId = body.stage_id ? String(body.stage_id) : null;
 
@@ -94,6 +98,8 @@ Deno.serve(async (req) => {
       };
     }
 
+    if (!target?.drive_folder_id) throw new Error("Drive target folder ID is missing");
+
     const token = await getDriveAccessToken();
     const metadata = {
       name: fileName,
@@ -124,6 +130,7 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       const payload = await response.text();
+      console.error("google-drive-upload-session: Google API rejected upload session", { status: response.status, projectId, folderKind, hasCustomFolder: Boolean(customFolderId), hasStage: Boolean(effectiveStageId), details: payload.slice(0, 1200) });
       throw new Error(`Could not create Drive upload session: ${response.status} ${payload}`);
     }
 
@@ -151,6 +158,8 @@ Deno.serve(async (req) => {
       stage_id: project.project_type === "internal" ? (internalStageId || target.stage_id || null) : (staffAllowed ? effectiveStageId : null),
     });
   } catch (error) {
-    return json({ ok: false, error: error instanceof Error ? error.message : "Unknown error" }, 400);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("google-drive-upload-session: request failed", { message });
+    return json({ ok: false, error: message }, 400);
   }
 });

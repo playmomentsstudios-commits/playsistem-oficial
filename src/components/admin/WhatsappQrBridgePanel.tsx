@@ -55,6 +55,10 @@ export function WhatsappQrBridgePanel(){
     setLoadError('')
   }
   useEffect(()=>{
+    const id=window.setInterval(()=>setNow(Date.now()),1000)
+    return()=>window.clearInterval(id)
+  },[])
+  useEffect(()=>{
     let alive=true
     async function poll(){
       try{if(alive)await refresh()}
@@ -64,7 +68,8 @@ export function WhatsappQrBridgePanel(){
     const id=window.setInterval(()=>{void poll()},5000)
     return()=>{alive=false;window.clearInterval(id)}
   },[])
-  const online=!!bridge?.heartbeat_at&&(now-new Date(bridge.heartbeat_at).getTime()<35000)
+  const heartbeatAgeMs=bridge?.heartbeat_at?now-Date.parse(bridge.heartbeat_at):Number.NaN
+  const online=Number.isFinite(heartbeatAgeMs)&&heartbeatAgeMs>=0&&heartbeatAgeMs<35000
   const connected=online&&bridge?.status==='connected'
   const correctNumber=connected&&bridge.connected_phone===config?.wa_bridge_sender_phone
   const updatedBridge=Boolean(bridge?.worker_capability==='registered-jid-receipts-v1'&&bridge.worker_capability_at&&(now-new Date(bridge.worker_capability_at).getTime()<35000))
@@ -91,14 +96,21 @@ export function WhatsappQrBridgePanel(){
       toast('É obrigatório testar com um cliente real primeiro.','error')
       return
     }
-    if(!window.confirm('Salvar este modo de destinatários? Todos os envios automáticos serão pausados até uma nova ativação. Nenhuma mensagem antiga será reenviada.'))return
+    const keepEnabled=enabled
+    const destination=choiceMode==='self_test'?'somente seu número de teste':choiceMode==='single_client'
+      ?'somente o cliente '+(eligible.find(person=>person.user_id===choiceCustomer)?.customer_name||'selecionado')
+      :'TODOS os clientes com autorização válida'
+    const message=keepEnabled
+      ?'Alterar o modo para '+destination+' e MANTER OS ENVIOS ATIVOS? A alteração será aplicada imediatamente a novas notificações, respeitando consentimento e limites. Não reenvia mensagens antigas.'
+      :'Salvar o modo para '+destination+' e MANTER OS ENVIOS PAUSADOS? Para começar a enviar, será necessária uma ativação separada.'
+    if(!window.confirm(message))return
     try{
       setBusy(true)
-      const {data,error}=await supabase.rpc('wa_bridge_set_delivery_mode',{
-        p_mode:choiceMode,p_customer_id:choiceMode==='single_client'?choiceCustomer:null
+      const {data,error}=await supabase.rpc('wa_bridge_save_delivery_mode',{
+        p_mode:choiceMode,p_customer_id:choiceMode==='single_client'?choiceCustomer:null,p_keep_enabled:keepEnabled
       })
       if(error)throw error
-      toast(String(data||'Modo selecionado. Envios pausados.'),'success')
+      toast(String(data||'Modo de entrega atualizado.'),'success')
       await refresh()
     }catch(error:any){toast(error?.message||'Não foi possível salvar o modo de entrega.','error')}
     finally{setBusy(false)}
@@ -123,26 +135,30 @@ export function WhatsappQrBridgePanel(){
   return <section className="rounded-2xl border border-white/10 bg-[#141416] p-4 sm:p-5">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h2 className="text-base font-semibold text-white">Conexão do WhatsApp por QR Code</h2>
-        <p className="mt-1 text-xs text-gray-400">Piloto local para o número comercial +55 64 98129-4186. É necessário manter o serviço Node ligado.</p>
+        <h2 className="text-base font-semibold text-white">Conexão do WhatsApp</h2>
+        <p className="mt-1 text-xs text-gray-400">Gerencie o dispositivo conectado e o envio automático.</p>
       </div>
       <span className={'rounded-lg px-3 py-2 text-xs '+(connected?'bg-emerald-500/10 text-emerald-300':'bg-amber-500/10 text-amber-200')}>
         {connected?'● Conectado':online?'● '+STATUS[bridge!.status]:'● Serviço offline'}
       </span>
     </div>
-    <p className="mt-3 text-xs text-amber-200">Conexão por biblioteca não oficial: risco de bloqueio do número. Sem tarifa por mensagem da biblioteca, mas computador e internet devem permanecer ativos.</p>
-    <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,300px)_1fr]">
-      <div className="min-h-[280px] rounded-2xl border border-white/10 bg-black/35 p-4 flex flex-col items-center justify-center gap-3">
+    <details className="mt-3 text-xs text-amber-200"><summary className="cursor-pointer py-1">Condições da conexão local</summary><p className="mt-2 leading-relaxed">Conexão por biblioteca não oficial: risco de bloqueio do número. Sem tarifa por mensagem da biblioteca, mas computador e internet devem permanecer ativos.</p></details>
+    {bridge?.requested_mode==='connect'&&!online&&<p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
+      {!bridge.heartbeat_at?'Nenhum heartbeat recebido.':!Number.isFinite(heartbeatAgeMs)?'Timestamp do heartbeat inválido.':heartbeatAgeMs<0?'Timestamp do heartbeat no futuro; estado tratado como offline.':`Heartbeat vencido há ${Math.floor(heartbeatAgeMs/1000)} s.`}
+      {' '}Verifique se o processo Node está ativo, se o computador tem energia e rede e se o RPC do Supabase autentica. O painel não consegue distinguir essas causas sem diagnóstico da máquina.
+    </p>}
+    <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,240px)_1fr]">
+      <div className={"rounded-xl border border-white/10 bg-black/25 p-4 flex flex-col items-center justify-center gap-3 "+(connected?"min-h-[140px]":"min-h-[240px]")}>
         {online&&bridge?.status==='qr_ready'&&bridge.qr_data_url?
           <img src={bridge.qr_data_url} alt="QR Code temporário para vincular a Sagamente como dispositivo no WhatsApp Business" className="h-56 w-56 rounded-xl bg-white p-2" />:
-          <div className="flex h-48 w-48 flex-col items-center justify-center rounded-xl border border-dashed border-white/15 text-center">
-            <span className="text-4xl">{connected?'✓':'▦'}</span>
+          <div className={"flex flex-col items-center justify-center rounded-xl border border-dashed border-white/15 text-center "+(connected?"h-24 w-full":"h-48 w-48")}>
+            <span className={connected?"text-2xl text-emerald-300":"text-4xl"}>{connected?'✓':'▦'}</span>
             <span className="mt-3 px-3 text-xs text-gray-400">{connected?'WhatsApp vinculado':bridge?.requested_mode==='connect'?'Aguardando QR do serviço local':'Inicie o serviço e solicite a conexão'}</span>
           </div>}
-        <p className="text-center text-[11px] text-gray-500">{bridge?.status==='qr_ready'&&online?'WhatsApp no celular → Dispositivos conectados → Conectar dispositivo':'O QR não é gerado pelo navegador; vem do serviço local conectado.'}</p>
+        {!connected&&<p className="text-center text-[11px] text-gray-500">{bridge?.status==='qr_ready'&&online?'WhatsApp no celular → Dispositivos conectados → Conectar dispositivo':'O QR não é gerado pelo navegador; vem do serviço local conectado.'}</p>}
       </div>
       <div className="space-y-4">
-        <div className="grid gap-2 sm:grid-cols-2">
+        <details className="rounded-xl border border-white/10 p-3"><summary className="cursor-pointer text-xs font-medium text-gray-300">Informações do dispositivo e limites</summary><div className="mt-3 grid gap-2 sm:grid-cols-2">
           <div className="rounded-xl bg-black/30 p-3 border border-white/10">
             <p className="text-[11px] text-gray-500">Conta esperada</p><p className="mt-1 text-sm text-white">+55 64 98129-4186</p>
           </div>
@@ -155,10 +171,8 @@ export function WhatsappQrBridgePanel(){
           <div className="rounded-xl bg-black/30 p-3 border border-white/10">
             <p className="text-[11px] text-gray-500">Destino do piloto</p><p className="mt-1 text-sm text-white">{mode==='self_test'?'Somente +'+config?.wa_bridge_test_phone:mode==='single_client'?target?(target.customer_name+' · +'+target.phone):'Cliente selecionado sem aceite válido':'Todos os clientes com aceite válido'}</p>
           </div>
-        </div>
-        <p className="text-xs text-gray-400">
-          <strong>1.</strong> Mantenha o serviço Node ligado. <strong>2.</strong> Conecte o dispositivo, se necessário. <strong>3.</strong> Selecione o destino abaixo e salve. <strong>4.</strong> Ative explicitamente os envios. Só eventos novos entram na fila.
-        </p>
+        </div></details>
+        <details className="text-xs text-gray-400"><summary className="cursor-pointer py-1">Como configurar a conexão e os envios</summary><p className="mt-2 leading-relaxed"><strong>1.</strong> Mantenha o serviço Node ligado. <strong>2.</strong> Conecte o dispositivo, se necessário. <strong>3.</strong> Selecione o destino abaixo e salve. <strong>4.</strong> Ative explicitamente os envios. Só eventos novos entram na fila.</p></details>
         {connected&&!updatedBridge&&<p className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">Ponte Windows desatualizada. Para liberar envios a clientes, atualize index.mjs, phone-utils.mjs e receipt-tracker.mjs no computador e reinicie o serviço. A conexão atual não poderá disparar mensagens automaticamente.</p>}
         {bridge?.last_error&&<p className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-xs text-red-300">{bridge.last_error}</p>}
         {loadError&&<p role="alert" className="text-xs text-red-300">{loadError}</p>}
@@ -169,9 +183,8 @@ export function WhatsappQrBridgePanel(){
           {enabled&&correctNumber&&mode==='self_test'&&<button disabled={busy} onClick={()=>void sendTest()} className="min-h-10 rounded-xl border border-[#A65A2A]/30 bg-[#A65A2A]/10 px-4 text-xs font-semibold text-[#DFA269] disabled:opacity-50">Enviar teste para meu WhatsApp</button>}
           <button disabled={busy} onClick={()=>void action('disconnect')} className="min-h-10 rounded-xl border border-white/15 px-4 text-xs text-gray-300 disabled:opacity-50">Desconectar aparelho</button>
         </div>
-        <div className="rounded-xl border border-white/10 bg-black/30 p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-white">Destinatários do envio automático</h3>
-          <p className="text-xs text-gray-400">A mudança de modo nunca dispara mensagens: ela pausa o serviço até você ativá-lo novamente. Os clientes precisam aceitar os avisos em suas próprias contas, em Configurações.</p>
+        <details className="rounded-xl border border-white/10 bg-black/30 p-4 space-y-3"><summary className="cursor-pointer text-sm font-semibold text-white">Configurar destinatários do envio automático</summary><div className="mt-3 space-y-3">
+          <p className="text-xs text-gray-400">Alterar o modo não reenvia notificações antigas. Se os envios estiverem ativos, você pode manter a operação ligada com confirmação explícita. Clientes precisam ter aceite válido.</p>
           <label className="block text-xs text-gray-400">Modo de entrega
             <select aria-label="Modo de entrega WhatsApp" value={choiceMode} onChange={e=>setChoiceMode(e.target.value as DeliveryMode)}
               className="mt-1 w-full min-h-11 rounded-xl border border-white/10 bg-[#171719] text-sm px-3 text-white">
@@ -198,12 +211,12 @@ export function WhatsappQrBridgePanel(){
           <p className="text-[11px] text-gray-500">Modo salvo: {mode==='self_test'?'Teste no número da empresa':mode==='single_client'?'Somente um cliente':'Todos os clientes autorizados'}.
           {trialAccepted?' Entrega individual observada; confirme também diretamente com o destinatário antes de ampliar.':' Nenhuma entrega individual foi confirmada.'}</p>
           <button type="button" onClick={()=>void configureMode()}
-            disabled={busy||enabled||(choiceMode==='single_client'&&!choiceCustomer)||(choiceMode==='consented_clients'&&!trialAccepted)}
+            disabled={busy||(choiceMode==='single_client'&&!choiceCustomer)||(choiceMode==='consented_clients'&&!trialAccepted)}
             className="min-h-10 rounded-xl border border-[#A65A2A]/30 bg-[#A65A2A]/10 px-4 text-xs font-semibold text-[#DFA269] disabled:opacity-40">
-            Salvar modo e manter envios pausados
+            {enabled?'Salvar modo e manter envios ativos':'Salvar modo e manter envios pausados'}
           </button>
-          {enabled&&<p className="text-xs text-amber-200">Para alterar destinatários, clique primeiro em “Pausar envios”.</p>}
-        </div>
+          {enabled&&<p className="text-xs text-amber-200">Alterar de um cliente para todos amplia os destinatários imediatamente após confirmar. Os limites e o consentimento continuam obrigatórios.</p>}
+        </div></details>
         <p className="text-[11px] text-gray-500">Envios automáticos: <strong className={enabled?'text-emerald-300':'text-gray-300'}>{enabled?'ATIVADOS ('+(mode==='self_test'?'piloto':'clientes reais')+')':'desativados'}</strong>. {online?'Serviço detectado.':'O QR real só aparece quando o serviço local estiver funcionando.'}</p>
       </div>
     </div>
