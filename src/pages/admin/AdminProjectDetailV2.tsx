@@ -425,6 +425,10 @@ export function AdminProjectDetailV2(){
     const picked=Array.from(event.target.files||[])
     event.target.value=''
     if(!picked.length||!user||taskUploadingId)return
+    if(project.project_type==='internal'&&!task.stage_id){
+      toast('Vincule uma etapa à tarefa antes de enviar arquivos neste projeto interno.','error')
+      return
+    }
     if(picked.some(file=>file.size>50*1024*1024*1024)){
       toast('Cada arquivo do Google Drive pode ter até 50 GB.','error')
       return
