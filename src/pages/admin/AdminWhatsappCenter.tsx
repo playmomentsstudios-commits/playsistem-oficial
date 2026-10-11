@@ -11,7 +11,8 @@ type WAAttempt={
   id:string;outbox_id:string;destination_phone:string;test_mode:boolean;
   status:'claimed'|'sent'|'failed';provider_message_id:string|null;
   error_reason:string|null;claimed_at:string;completed_at:string|null;
-  ack_status:'unconfirmed'|'server_ack'|'delivered'|'read'|'rejected';ack_at:string|null;destination_jid:string|null
+  ack_status:'unconfirmed'|'server_ack'|'delivered'|'read'|'rejected';ack_at:string|null;destination_jid:string|null;
+  media_planned_count:number;media_submitted_count:number;media_fallback_count:number
 }
 type WARecord={
   id:string
@@ -120,7 +121,7 @@ export function AdminWhatsappCenter(){
           .order('created_at',{ascending:false}).limit(300),
         supabase.rpc('wa_daily_dashboard'),
         supabase.from('whatsapp_bridge_attempts')
-          .select('id,outbox_id,destination_phone,test_mode,status,provider_message_id,error_reason,claimed_at,completed_at,ack_status,ack_at,destination_jid')
+          .select('id,outbox_id,destination_phone,test_mode,status,provider_message_id,error_reason,claimed_at,completed_at,ack_status,ack_at,destination_jid,media_planned_count,media_submitted_count,media_fallback_count')
           .order('claimed_at',{ascending:false}).limit(300),
         supabase.rpc('wa_bridge_receipt_summary'),
       ])
@@ -349,6 +350,11 @@ export function AdminWhatsappCenter(){
               <p className={'mt-1 font-semibold '+(['delivered','read'].includes(attemptByOutbox.get(item.id)!.ack_status)?'text-emerald-300':'text-amber-200')}>
                 Confirmação do WhatsApp: {attemptByOutbox.get(item.id)!.ack_status==='read'?'Leitura observada':attemptByOutbox.get(item.id)!.ack_status==='delivered'?'Entrega observada':attemptByOutbox.get(item.id)!.ack_status==='server_ack'?'Servidor confirmou, destinatário não confirmou':attemptByOutbox.get(item.id)!.ack_status==='rejected'?'Servidor rejeitou a mensagem':'Nenhuma confirmação recebida'}
               </p>
+              {(attemptByOutbox.get(item.id)!.media_planned_count??0)>0&&<p className="mt-2 text-amber-100">
+                Arquivos WhatsApp: {attemptByOutbox.get(item.id)!.media_submitted_count} anexo(s) submetido(s) como documento de {attemptByOutbox.get(item.id)!.media_planned_count} preparado(s).
+                {attemptByOutbox.get(item.id)!.media_fallback_count>0&&(' '+attemptByOutbox.get(item.id)!.media_fallback_count+' ficaram com link temporário como alternativa.')}
+                <span className="block text-[11px] text-gray-500">Aceite do arquivo pela biblioteca não comprova entrega.</span>
+              </p>}
               {attemptByOutbox.get(item.id)!.ack_at&&<p className="text-[11px] text-gray-500">Última confirmação: {localDate(attemptByOutbox.get(item.id)!.ack_at!)}</p>}
               {attemptByOutbox.get(item.id)!.destination_jid&&<p className="mt-1 text-[11px] text-gray-500">Destino reconhecido: {attemptByOutbox.get(item.id)!.destination_jid}</p>}
               {attemptByOutbox.get(item.id)!.provider_message_id&&<p className="mt-1 break-all text-gray-500">ID da mensagem: {attemptByOutbox.get(item.id)!.provider_message_id}</p>}
