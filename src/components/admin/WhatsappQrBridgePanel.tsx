@@ -68,7 +68,7 @@ export function WhatsappQrBridgePanel(){
     const id=window.setInterval(()=>{void poll()},5000)
     return()=>{alive=false;window.clearInterval(id)}
   },[])
-  const heartbeatAgeMs=bridge?.heartbeat_at?now-Date.parse(bridge.heartbeat_at):null
+  const heartbeatAgeMs=bridge?.heartbeat_at?now-Date.parse(bridge.heartbeat_at):Number.NaN
   const online=heartbeatAgeMs!==null&&Number.isFinite(heartbeatAgeMs)&&heartbeatAgeMs>=0&&heartbeatAgeMs<35000
   const connected=online&&bridge?.status==='connected'
   const correctNumber=connected&&bridge.connected_phone===config?.wa_bridge_sender_phone
