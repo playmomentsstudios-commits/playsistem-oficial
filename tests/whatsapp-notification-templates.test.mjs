@@ -11,7 +11,7 @@ test('the admin preview presents six concise customer-facing WhatsApp models wit
  assert.equal((templates.match(/\{\{link_compacto_autenticado\}\}/g)||[]).length,6)
  assert.match(templates,/Prévia com dados de exemplo/)
  assert.doesNotMatch(templates,/tarefa|painel do cliente|responsável interno/i)
- assert.match(center,/Prévia das mensagens/)
+ assert.match(center,/>Modelos<\/button>/)
 })
 
 test('manual opening does not append the same compact notification destination twice',()=>{

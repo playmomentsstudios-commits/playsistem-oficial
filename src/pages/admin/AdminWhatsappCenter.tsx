@@ -209,37 +209,37 @@ export function AdminWhatsappCenter(){
     catch(err:any){toast(err?.message||'Não foi possível registrar a declaração.','error')}
     finally{setBusy(null)}
   }
-  return <div className="max-w-7xl space-y-5">
+  return <div className="mx-auto max-w-6xl space-y-5 pb-8">
     <header className="flex flex-wrap items-start justify-between gap-3">
       <div>
         <p className="text-[11px] uppercase tracking-[.18em] text-[#A65A2A] font-semibold">Comunicação · Auditoria</p>
-        <h1 className="mt-1 text-2xl font-bold text-white">Central de WhatsApp</h1>
-        <p className="mt-1 text-sm text-gray-400">Acompanhe cada destinatário, mensagem e ação manual com rastreabilidade.</p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">Central de WhatsApp</h1>
+        <p className="mt-1 text-sm text-gray-400">Gerencie sua conexão, os avisos e o histórico de comunicação.</p>
       </div>
       <button type="button" onClick={()=>{setLoading(true);void load()}} className="min-h-10 rounded-xl border border-white/10 bg-white/5 px-4 text-xs">Atualizar dados</button>
     </header>
 
-    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[.04] p-4 text-sm text-amber-100">
-      <strong>Piloto experimental por QR Code · sem tarifa de API.</strong>
-      <p className="mt-1 text-xs text-amber-100/80">A ponte local é não oficial e pode causar bloqueio da conta. Sem provedor conectado à API oficial da Meta. Uma tentativa aceita pelo dispositivo não comprova entrega nem leitura. Nada é enviado automaticamente antes da conexão e da ativação explícita.</p>
+    <div className="rounded-xl border border-amber-500/15 bg-amber-500/[.035] px-4 py-3 text-sm text-amber-100">
+      <strong>Piloto por QR Code · integração não oficial</strong>
+      <details className="mt-1 text-xs text-amber-100/80"><summary className="cursor-pointer py-1">Entenda os riscos e as condições de envio</summary><p className="mt-2 leading-relaxed">A ponte local é não oficial e pode causar bloqueio da conta. Sem provedor conectado à API oficial da Meta. Uma tentativa aceita pelo dispositivo não comprova entrega nem leitura. Nada é enviado automaticamente antes da conexão e da ativação explícita.</p></details>
     </div>
-    <section className="rounded-2xl border border-white/10 bg-[#141416] p-5">
-      <h2 className="font-semibold text-white">Link de autorização para clientes</h2>
+    <details className="rounded-2xl border border-white/10 bg-[#141416] p-4 sm:p-5">
+      <summary className="cursor-pointer text-sm font-semibold text-white">Compartilhar link de autorização com clientes</summary>
       <p className="mt-1 text-sm text-gray-400">Envie este link para o cliente ler o termo e ativar os avisos pelo WhatsApp.</p>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
         <input aria-label="Link de autorização do WhatsApp" readOnly value={window.location.origin + WHATSAPP_CONSENT_PATH} onFocus={e=>e.target.select()} className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-black/30 px-3 text-sm text-gray-300"/>
         <button onClick={async()=>{try{await navigator.clipboard.writeText(window.location.origin + WHATSAPP_CONSENT_PATH);toast('Link copiado.','success')}catch{toast('Selecione e copie o link acima.','error')}}} className="min-h-11 rounded-xl bg-[#A65A2A] px-4 text-sm font-semibold text-white">Copiar link</button>
         <Link to={WHATSAPP_CONSENT_PATH} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center justify-center rounded-xl border border-white/10 px-4 text-sm">Ver página</Link>
       </div>
-    </section>
+    </details>
     <WhatsappQrBridgePanel/>
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4" aria-label="Resumo de mensagens de hoje">
       <Metric label="Avisos preparados hoje" value={summary.prepared_today} description="Criados na fila manual, não enviados"/>
       <Metric label="Conversas abertas hoje" value={summary.opened_today} description="Abertura registrada, envio desconhecido"/>
       <Metric label="Enviados informados hoje" value={summary.reported_today} description="Declaração manual, sem verificação"/>
       <Metric label="IDs retornados hoje" value={summary.bridge_sent_today} description="Somente aceite local · entrega não comprovada"/>
     </div>
-    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-white/10 bg-white/[.02] p-3 text-xs text-gray-400">
+    <details className="rounded-xl border border-white/10 bg-white/[.02] p-3 text-xs text-gray-400"><summary className="cursor-pointer font-medium text-gray-300">Ver indicadores detalhados de envio e entrega</summary><div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-3">
       <span><b className="text-white">{summary.missing_phone_today}</b> sem número hoje</span>
       <span><b className="text-white">{summary.historical_total}</b> eventos antigos identificados</span>
       <span><b className="text-white">{summary.total_records}</b> registros totais</span>
@@ -250,13 +250,13 @@ export function AdminWhatsappCenter(){
       <span><b className="text-white">{receiptStats.unconfirmed_today}</b> sem confirmação de servidor/entrega</span>
       <span><b className="text-white">{receiptStats.rejected_today}</b> rejeições registradas</span>
       <span><b className="text-white">{summary.provider_delivered_today}</b> entregas comprovadas hoje</span>
-    </div>
+    </div></details>
 
-    <div className="flex flex-wrap items-center gap-2 border-b border-white/10">
-      <button onClick={()=>setView('history')} className={'px-4 py-3 text-sm '+(view==='history'?'border-b-2 border-[#A65A2A] text-white':'text-gray-500')}>Mensagens e destinatários</button>
-      <button onClick={()=>setView('settings')} className={'px-4 py-3 text-sm '+(view==='settings'?'border-b-2 border-[#A65A2A] text-white':'text-gray-500')}>Configurações do canal</button>
-      <button onClick={()=>setView('templates')} className={'px-4 py-3 text-sm '+(view==='templates'?'border-b-2 border-[#A65A2A] text-white':'text-gray-500')}>Prévia das mensagens</button>
-    </div>
+    <nav aria-label="Seções da Central de WhatsApp" className="flex flex-wrap items-center gap-2 border-b border-white/10">
+      <button onClick={()=>setView('history')} className={'px-4 py-3 text-sm '+(view==='history'?'border-b-2 border-[#A65A2A] text-white':'text-gray-500')}>Mensagens</button>
+      <button onClick={()=>setView('settings')} className={'px-4 py-3 text-sm '+(view==='settings'?'border-b-2 border-[#A65A2A] text-white':'text-gray-500')}>Configurações</button>
+      <button onClick={()=>setView('templates')} className={'px-4 py-3 text-sm '+(view==='templates'?'border-b-2 border-[#A65A2A] text-white':'text-gray-500')}>Modelos</button>
+    </nav>
     {error&&<p role="alert" className="rounded-xl border border-red-500/20 p-4 text-sm text-red-300">{error}</p>}
     {loading?<p className="py-12 text-center text-sm text-gray-400">Carregando a central...</p>:
       view==='templates'?<WhatsappMessageTemplates/>:
@@ -339,7 +339,7 @@ export function AdminWhatsappCenter(){
         <p className="text-[11px] text-gray-500">Exibindo {filtered.length} registros dentre os últimos 300. Indicadores incluem todos os registros do banco. Eventos históricos não representam tentativas de envio.</p>
         {!filtered.length?<div className="rounded-2xl border border-white/10 p-8 text-center text-sm text-gray-500">Nenhuma mensagem corresponde aos filtros.</div>:
         <div className="space-y-3">
-          {filtered.map(item=><article key={item.id} className="rounded-2xl border border-white/10 bg-[#141416] p-4">
+          {filtered.map(item=><article key={item.id} className="rounded-xl border border-white/10 bg-[#141416] p-3 sm:p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -354,7 +354,7 @@ export function AdminWhatsappCenter(){
                 {item.status==='opened_manual'&&<button onClick={()=>void reportSent(item)} disabled={busy===item.id} className="min-h-9 rounded-lg border border-white/15 px-3 text-xs text-gray-200 disabled:opacity-50">Informar envio manual</button>}
               </div>}
             </div>
-            {attemptByOutbox.get(item.id)&&<div className="mt-3 rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-gray-300">
+            {attemptByOutbox.get(item.id)&&<details className="mt-3 rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-gray-300"><summary className="cursor-pointer font-semibold">Detalhes técnicos do envio automático</summary><div className="mt-3">
               <p className="font-semibold">Registro da tentativa automática</p>
               <p className="mt-1">Número de envio real: <strong className="text-white">+{attemptByOutbox.get(item.id)!.destination_phone}</strong>
                 {attemptByOutbox.get(item.id)!.test_mode&&<span className="ml-2 text-amber-200">(PILOTO · não enviado ao número do cliente)</span>}
@@ -374,7 +374,7 @@ export function AdminWhatsappCenter(){
               {attemptByOutbox.get(item.id)!.provider_message_id&&<p className="mt-1 break-all text-gray-500">ID da mensagem: {attemptByOutbox.get(item.id)!.provider_message_id}</p>}
               {attemptByOutbox.get(item.id)!.error_reason&&<p className="mt-1 text-red-300">Erro: {attemptByOutbox.get(item.id)!.error_reason}</p>}
               <p className="mt-1 text-gray-500">Iniciada em {localDate(attemptByOutbox.get(item.id)!.claimed_at)}</p>
-            </div>}
+            </div></details>}
             <details className="mt-3 rounded-xl border border-white/5 bg-black/30 p-3">
               <summary className="cursor-pointer text-xs font-semibold text-gray-300">Ver mensagem preparada</summary>
               <p className="mt-3 whitespace-pre-wrap break-words text-xs leading-relaxed text-gray-400">{item.message_body}</p>
