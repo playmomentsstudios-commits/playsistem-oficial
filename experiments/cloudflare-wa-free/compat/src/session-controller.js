@@ -13,6 +13,7 @@ export class ExperimentalSessionController {
     }
     if(this.env.EXPERIMENTAL_PAIRING_ENABLED!=="true")return new Response(JSON.stringify({error:"experiment_disabled"}),{status:503,headers});
     if(route==="/qr"){
+      if(this.deadline && Date.now()>=this.deadline){await this.stop();}
       if(request.method!=="GET")return new Response(null,{status:405});
       return new Response(JSON.stringify({status:this.status,qr:this.qr,expiresAt:this.deadline||null}),{headers});
     }
@@ -30,7 +31,7 @@ export class ExperimentalSessionController {
         socket.ev.on("connection.update",update=>{
           if(this.socket!==socket)return;
           if(update.qr){this.qr=update.qr;this.status="awaiting-pairing";}
-          if(update.connection==="open"){this.status="connected";this.qr=null;void this.stop();}
+          if(update.connection==="open"){this.status="connected";this.qr=null;void this.stop();} // test-only: deliberately disconnect after pairing
           if(update.connection==="close"){this.status="disconnected";this.qr=null;void this.stop();}
         });
         this.stopTimer=setTimeout(()=>{void this.stop()},60000);
