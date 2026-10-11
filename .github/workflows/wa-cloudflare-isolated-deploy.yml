@@ -16,7 +16,7 @@ jobs:
     if: ${{ github.ref_name == 'spike/cloudflare-free-whatsapp-feasibility-20261011' && inputs.confirmation == 'DEPLOY_ISOLATED_PROBE' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    environment: whatsapp-experimental
+    environment: 'cloudflare whatsistem'
     defaults:
       run:
         working-directory: experiments/cloudflare-wa-free/compat
