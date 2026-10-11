@@ -157,7 +157,7 @@ export function rewriteSeoHtml(response,row,request){
 }
 
 export function isPrivateSeoRoute(path){
- return /^\/(admin|app|abrir-app|n)(\/|$)/.test(path)
+ return /^\/(admin|app|abrir-app|n|whatsapp)(\/|$)/.test(path)
   || /^\/(login|cadastro|email-confirmado|esqueci-senha|redefinir-senha|carrinho)(\/|$)/.test(path)
 }
 export function preventIndexing(response){

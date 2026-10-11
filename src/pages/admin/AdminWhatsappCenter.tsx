@@ -5,6 +5,7 @@ import { settingsApi, type AppSettings } from '../../api/settings'
 import { useToast } from '../../contexts/ToastContext'
 import { WhatsappQrBridgePanel } from '../../components/admin/WhatsappQrBridgePanel'
 import { PriorityAlertHistory } from '../../components/admin/PriorityAlertHistory'
+import { WHATSAPP_CONSENT_PATH } from '../../lib/whatsappConsent'
 
 type WAState='ready_manual'|'missing_phone'|'historical'|'opened_manual'|'reported_sent'|'sending_auto'|'sent_auto'|'failed_auto'
 type WAAttempt={
@@ -219,6 +220,15 @@ export function AdminWhatsappCenter(){
       <strong>Piloto experimental por QR Code · sem tarifa de API.</strong>
       <p className="mt-1 text-xs text-amber-100/80">A ponte local é não oficial e pode causar bloqueio da conta. Sem provedor conectado à API oficial da Meta. Uma tentativa aceita pelo dispositivo não comprova entrega nem leitura. Nada é enviado automaticamente antes da conexão e da ativação explícita.</p>
     </div>
+    <section className="rounded-2xl border border-white/10 bg-[#141416] p-5">
+      <h2 className="font-semibold text-white">Link de autorização para clientes</h2>
+      <p className="mt-1 text-sm text-gray-400">Envie este link para o cliente ler o termo e ativar os avisos pelo WhatsApp.</p>
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+        <input aria-label="Link de autorização do WhatsApp" readOnly value={window.location.origin + WHATSAPP_CONSENT_PATH} onFocus={e=>e.target.select()} className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-black/30 px-3 text-sm text-gray-300"/>
+        <button onClick={async()=>{try{await navigator.clipboard.writeText(window.location.origin + WHATSAPP_CONSENT_PATH);toast('Link copiado.','success')}catch{toast('Selecione e copie o link acima.','error')}}} className="min-h-11 rounded-xl bg-[#A65A2A] px-4 text-sm font-semibold text-white">Copiar link</button>
+        <Link to={WHATSAPP_CONSENT_PATH} target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center justify-center rounded-xl border border-white/10 px-4 text-sm">Ver página</Link>
+      </div>
+    </section>
     <WhatsappQrBridgePanel/>
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <Metric label="Avisos preparados hoje" value={summary.prepared_today} description="Criados na fila manual, não enviados"/>
