@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 15f140335093dd2a009fb5440c9d825e6e2c5f84
+          ref: c6ce58210dd4623e79db93554504bdca48678c27
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -126,7 +126,7 @@ jobs:
           const cfg=JSON.parse(fs.readFileSync("wrangler.remote.jsonc","utf8"));
           if(cfg.name!=="sagamente-wa-baileys-remote-probe"||cfg.vars?.EXPERIMENTAL_PAIRING_ENABLED!=="false"||cfg.preview_urls!==false)throw Error("Unsafe Worker target");
           cfg.vars.EXPERIMENTAL_PAIRING_ENABLED="true";
-          cfg.vars.EXPERIMENTAL_PAIRING_EXPIRES_AT=String(Date.now()+120000);
+          cfg.vars.EXPERIMENTAL_PAIRING_EXPIRES_AT=String(Date.now()+90000);
           fs.writeFileSync("wrangler.qr.temp.jsonc",JSON.stringify(cfg,null,2));
           console.log("QR-only test configuration prepared for isolated Worker.");
           NODE
@@ -141,15 +141,36 @@ jobs:
                 echo "::error::URGENT: isolated QR test rollback failed; disable Worker in Cloudflare dashboard"
                 rc=1
               else
+                # Verify actual account settings, not only edge state immediately after deployment.
+                SETTINGS_CODE="$(curl --silent --show-error --max-time 12 \
+                  -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                  "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/sagamente-wa-baileys-remote-probe/settings" \
+                  -o /tmp/wa-qr-restored-settings.json -w '%{http_code}' || true)"
+                if [ "$SETTINGS_CODE" != 200 ] || ! node - <<'NODE'
+          const fs=require("node:fs");
+          let x;try{x=JSON.parse(fs.readFileSync("/tmp/wa-qr-restored-settings.json","utf8"))}catch{process.exit(1)}
+          const b=x.result?.bindings||[];
+          if(!x.success||b.find(v=>v.name==="EXPERIMENTAL_PAIRING_ENABLED")?.text!=="false"||
+             b.some(v=>v.name==="EXPERIMENTAL_PAIRING_EXPIRES_AT"))process.exit(1);
+          NODE
+                then
+                  echo "::error::URGENT: Cloudflare account configuration did not confirm disabled pairing"
+                  rc=1
+                else
+                  echo "Cloudflare account confirms experimental pairing disabled."
+                fi
                 SAFE=false
-                for n in $(seq 1 12); do
+                for n in $(seq 1 24); do
                   code="$(curl --silent --show-error --max-time 8 -X POST -H "Authorization: Bearer $PROBE_ACCESS_TOKEN" "$URL/start" -o /dev/null -w '%{http_code}' || true)"
                   if [ "$code" = 503 ]; then SAFE=true; break; fi
-                  sleep 2
+                  echo "Edge rollback propagation attempt $n: /start=$code"
+                  sleep 3
                 done
                 if [ "$SAFE" != true ]; then
-                  echo "::error::URGENT: Worker was restored but disabled state could not be verified"
+                  echo "::error::Cloudflare edge did not confirm pairing disabled after rollback; inspect account configuration"
                   rc=1
+                else
+                  echo "Cloudflare edge verified: private /start disabled (HTTP 503)."
                 fi
               fi
             fi
@@ -192,5 +213,25 @@ jobs:
               break
             fi
           done
+          node - <<'NODE'
+          const fs=require("node:fs");
+          let s={};
+          try{s=JSON.parse(fs.readFileSync("/tmp/wa-qr-status.json","utf8"))}catch{}
+          const p=s.probe||{};
+          const safe={
+            enabled:s.enabled===true,
+            active:s.active===true,
+            status:s.status||null,
+            socketInitiated:p.socketInitiated===true,
+            qrObserved:p.qrObserved===true,
+            connectionOpened:p.connectionOpened===true,
+            connectionClosed:p.connectionClosed===true,
+            connectionUpdates:Number(p.connectionUpdates)||0,
+            lastPhase:p.lastPhase||null,
+            disconnectCode:Number.isInteger(p.disconnectCode)?p.disconnectCode:null,
+            errorType:p.errorType||null
+          };
+          console.log("Sanitized cloud Baileys diagnostic:",JSON.stringify(safe));
+          NODE
           [ "$OBSERVED" = true ] || { echo "::error::Baileys did not emit QR within bounded cloud probe"; exit 1; }
           echo "Cloud Baileys QR event observed securely; QR content never fetched, no phone paired."
