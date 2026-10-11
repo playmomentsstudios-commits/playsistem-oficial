@@ -36,15 +36,18 @@ export class ExperimentalSessionController {
           if(update.connection==="open"){this.status="connected";this.lastProbe.connectionOpened=true;this.qr=null;void this.stop();} // test-only: deliberately disconnect after pairing
           if(update.connection==="close"){this.status="disconnected";this.qr=null;void this.stop();}
         });
+        await this.ctx.storage.setAlarm(this.deadline);
         this.stopTimer=setTimeout(()=>{void this.stop()},60000);
         return new Response(JSON.stringify({started:true,deadline:this.deadline,productionMessagesEnabled:false}),{headers});
       }catch(error){await this.stop();return new Response(JSON.stringify({error:"start_failed",errorType:error?.name||"Error",stage}),{status:500,headers});}
     }
     return new Response(JSON.stringify({error:"not_found"}),{status:404,headers});
   }
+  async alarm(){await this.stop();}
   async stop(){
     if(this.stopTimer){clearTimeout(this.stopTimer);this.stopTimer=null;}
     const old=this.socket;this.socket=null;this.qr=null;this.deadline=0;
+    try{await this.ctx.storage.deleteAlarm()}catch{}
     try{old?.end?.(new Error("Isolated probe timeout"))}catch{}
     this.status="stopped";
   }
