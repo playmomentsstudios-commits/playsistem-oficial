@@ -100,4 +100,22 @@ export class EncryptedAuthProbe {
   async webSocketMessage(ws,message){ if(typeof message==="string"&&message==="probe:ping")ws.send("probe:pong");else ws.close(1008,"test-only"); }
   async webSocketClose(ws){try{ws.close()}catch{}}
 }
-export default {async fetch(request,env){return env.AUTH_TEST.get(env.AUTH_TEST.idFromName("offline-auth")).fetch(request);}};
+export default {
+  async fetch(request,env){
+    // All auth and future QR/session endpoints are private. The local CI probe
+    // uses a test-only token; deployment must provision a distinct secret.
+    const path=new URL(request.url).pathname;
+    if(path==="/health")return Response.json({service:"baileys-isolated-probe",ready:false,noWhatsAppSocket:true});
+    const token=env.PROBE_ACCESS_TOKEN;
+    const supplied=request.headers.get("Authorization");
+    if(typeof token!=="string"||token.length<32||supplied!==`Bearer ${token}`){
+      return Response.json({error:"unauthorized"},{status:401,headers:{"Cache-Control":"no-store"}});
+    }
+    if(path==="/qr"||path==="/start"||path==="/pair"){
+      // Fail closed until a real Baileys socket/controller is implemented and reviewed.
+      return Response.json({error:"pairing_not_implemented",noWhatsAppSocket:true},{status:501,headers:{"Cache-Control":"no-store"}});
+    }
+    return env.AUTH_TEST.get(env.AUTH_TEST.idFromName("offline-auth")).fetch(request);
+  }
+};
+
