@@ -47,5 +47,5 @@ test('runbook requires backup, approval and security-preserving rollback',async(
   assert.match(s,/backup.*restaur/i)
   assert.match(s,/roll-forward/i)
   assert.match(s,/n[aã]o executar rollback SQL antigo automaticamente/i)
-  assert.match(s,/aprova[cç][aã]o expressa/i)
+  assert.match(s,/autorização expressa/i)
 })
