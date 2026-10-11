@@ -6,6 +6,7 @@ import { useToast } from '../../contexts/ToastContext'
 import { WhatsappQrBridgePanel } from '../../components/admin/WhatsappQrBridgePanel'
 import { PriorityAlertHistory } from '../../components/admin/PriorityAlertHistory'
 import { WHATSAPP_CONSENT_PATH } from '../../lib/whatsappConsent'
+import { WhatsappMessageTemplates } from '../../components/admin/WhatsappMessageTemplates'
 
 type WAState='ready_manual'|'missing_phone'|'historical'|'opened_manual'|'reported_sent'|'sending_auto'|'sent_auto'|'failed_auto'
 type WAAttempt={
@@ -110,7 +111,7 @@ export function AdminWhatsappCenter(){
   const [error,setError]=useState('')
   const [search,setSearch]=useState('')
   const [filter,setFilter]=useState('all')
-  const [view,setView]=useState<'history'|'settings'>('history')
+  const [view,setView]=useState<'history'|'settings'|'templates'>('history')
 
   async function load(){
     setError('')
@@ -188,7 +189,8 @@ export function AdminWhatsappCenter(){
       return
     }
     const destinationUrl=safeUrl(item.target_link)
-    const prepared=item.message_body+(destinationUrl&&!item.message_body.includes(destinationUrl)?'\n\nAcompanhar: '+destinationUrl:'')
+    const alreadyHasTarget=Boolean(item.target_link&&item.message_body.includes(item.target_link))
+    const prepared=item.message_body+(destinationUrl&&!alreadyHasTarget&&!item.message_body.includes(destinationUrl)?'\n\nAcompanhar: '+destinationUrl:'')
     const popup=window.open('https://wa.me/'+destination+'?text='+encodeURIComponent(prepared),'_blank')
     if(popup)popup.opener=null
     // "opened_manual" identifica apenas a ação de abrir. Não comprova envio.
@@ -253,9 +255,11 @@ export function AdminWhatsappCenter(){
     <div className="flex flex-wrap items-center gap-2 border-b border-white/10">
       <button onClick={()=>setView('history')} className={'px-4 py-3 text-sm '+(view==='history'?'border-b-2 border-[#A65A2A] text-white':'text-gray-500')}>Mensagens e destinatários</button>
       <button onClick={()=>setView('settings')} className={'px-4 py-3 text-sm '+(view==='settings'?'border-b-2 border-[#A65A2A] text-white':'text-gray-500')}>Configurações do canal</button>
+      <button onClick={()=>setView('templates')} className={'px-4 py-3 text-sm '+(view==='templates'?'border-b-2 border-[#A65A2A] text-white':'text-gray-500')}>Prévia das mensagens</button>
     </div>
     {error&&<p role="alert" className="rounded-xl border border-red-500/20 p-4 text-sm text-red-300">{error}</p>}
     {loading?<p className="py-12 text-center text-sm text-gray-400">Carregando a central...</p>:
+      view==='templates'?<WhatsappMessageTemplates/>:
       view==='settings'&&settings?<div className="space-y-5">
         <section className="rounded-2xl border border-white/10 bg-[#141416] p-5">
           <h2 className="font-semibold">Canal e custo</h2>
