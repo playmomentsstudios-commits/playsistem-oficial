@@ -12,13 +12,12 @@ import { supabase } from '../../lib/supabase'
 
 const INTERNAL_LIBRARY_KEY='__internal__'
 
+// Four operational destinations. Legacy folders stay available in the project inventory.
 const folderOptions=[
-  ['received','01 - Arquivos recebidos'],
-  ['raw','02 - Brutos'],
-  ['production','03 - Produção'],
-  ['preview','04 - Prévia'],
-  ['approved','05 - Aprovados'],
-  ['delivery','06 - Entrega final'],
+  ['received','01 - Recebidos'],
+  ['production','02 - Produção'],
+  ['preview','03 - Revisão'],
+  ['delivery','04 - Entregas'],
 ]
 
 function sizeLabel(value:number|null|undefined){
@@ -780,7 +779,7 @@ export function AdminFilesV2(){
           <select value={effectiveStage||''} disabled={Boolean(selectedTask?.stage_id)} onChange={e=>setStage(e.target.value)} className="pm-control mt-1 w-full px-3 bg-black disabled:opacity-60">
             {stages.map((item:any)=><option key={item.id} value={item.id}>{item.name}</option>)}
           </select>
-        </label>:<label className="text-xs text-gray-500">Pasta do projeto
+        </label>:<label className="text-xs text-gray-500">Destino dos arquivos
           <select value={folderKind} onChange={e=>{setFolderKind(e.target.value);setCustomFolder('')}} className="pm-control mt-1 w-full px-3 bg-black">
             {folderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
           </select>
@@ -795,7 +794,7 @@ export function AdminFilesV2(){
         </label>}
       </div>
 
-      {provider==='google_drive'&&project&&!selectedProjectIsInternal&&<div className="grid md:grid-cols-[1fr_auto] gap-3 items-end">
+      {provider==='google_drive'&&project&&!selectedProjectIsInternal&&<details className="rounded-xl border border-white/10 bg-white/[0.02] p-3"><summary className="cursor-pointer text-xs text-gray-400">Organização avançada · subpastas opcionais</summary><div className="grid md:grid-cols-[1fr_auto] gap-3 items-end mt-3">
         <label className="text-xs text-gray-500">Subpasta personalizada
           <select value={customFolder} onChange={e=>setCustomFolder(e.target.value)} className="pm-control mt-1 w-full px-3 bg-black">
             <option value="">Sem subpasta — usar {folderOptions.find(([value])=>value===folderKind)?.[1]||'pasta padrão'}</option>
@@ -803,7 +802,7 @@ export function AdminFilesV2(){
           </select>
         </label>
         <button type="button" disabled={creatingFolder} onClick={()=>void createFolder()} className="min-h-10 px-3 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-xs font-semibold disabled:opacity-50">+ Criar pasta aqui</button>
-      </div>}
+      </div></details>}
 
       {provider==='external'?<div className="grid md:grid-cols-2 gap-3">
         <input value={name} onChange={e=>setName(e.target.value)} placeholder="Nome do arquivo ou material" className="pm-control px-3 bg-white/[0.03]"/>
