@@ -1,6 +1,7 @@
 // Offline-only Baileys auth adapter test in Durable Object with encrypted SQLite-backed storage.
 // This does not connect to WhatsApp, publish QR codes, or access production.
 import makeWASocket, { Browsers, initAuthCreds, BufferJSON } from "@whiskeysockets/baileys";
+import { createEncryptedAuthState } from "./auth-store.js";
 const enc=new TextEncoder(),dec=new TextDecoder();
 export class EncryptedAuthProbe {
   constructor(ctx,env){this.ctx=ctx;this.env=env;}
@@ -35,6 +36,19 @@ export class EncryptedAuthProbe {
       }
     }
     const requested=new URL(request.url).pathname;
+    if(requested==="/auth-adapter-test"){
+      try{
+        const one=await createEncryptedAuthState(this.ctx.storage,this.env.PROBE_AES_KEY_B64);
+        await one.state.keys.set({session:{"test@example.invalid":{chainKey:new Uint8Array([4,5,6]),counter:3}}});
+        const two=await createEncryptedAuthState(this.ctx.storage,this.env.PROBE_AES_KEY_B64);
+        const restored=(await two.state.keys.get("session",["test@example.invalid"]))["test@example.invalid"];
+        const credsValid=Boolean(two.state.creds.noiseKey?.private?.length);
+        const keyValid=restored?.counter===3&&restored.chainKey[1]===5;
+        await two.state.keys.set({session:{"test@example.invalid":null}});
+        const deleted=Object.keys(await two.state.keys.get("session",["test@example.invalid"])).length===0;
+        return Response.json({authAdapter:true,credsValid,keyValid,deleted,encrypted:true,secretSeparated:true,noWhatsAppSocket:true});
+      }catch(error){return Response.json({authAdapter:false,errorType:error?.name||"Error"},{status:500});}
+    }
     if(requested==="/lifecycle"){
       // Deterministic bounded offline socket-lifecycle probe; no WhatsApp network/socket.
       let closed=false, events=0;
