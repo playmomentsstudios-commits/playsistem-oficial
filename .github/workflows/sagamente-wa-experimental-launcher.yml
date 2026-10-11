@@ -162,18 +162,24 @@ jobs:
                 else
                   echo "Cloudflare account confirms experimental pairing disabled."
                 fi
+                # Read-only check: POST /start is NEVER a safe rollback probe.
                 SAFE=false
-                for n in $(seq 1 24); do
-                  code="$(curl --silent --show-error --max-time 8 -X POST -H "Authorization: Bearer $PROBE_ACCESS_TOKEN" "$URL/start" -o /dev/null -w '%{http_code}' || true)"
-                  if [ "$code" = 503 ]; then SAFE=true; break; fi
-                  echo "Edge rollback propagation attempt $n: /start=$code"
+                for n in $(seq 1 12); do
+                  code="$(curl --silent --show-error --max-time 8 -H "Authorization: Bearer $PROBE_ACCESS_TOKEN" "$URL/controller-status" -o /tmp/wa-rollback-status.json -w '%{http_code}' || true)"
+                  if [ "$code" = 200 ] && node - <<'NODE'
+          const fs=require("node:fs");
+          let s;try{s=JSON.parse(fs.readFileSync("/tmp/wa-rollback-status.json","utf8"))}catch{process.exit(1)}
+          if(s.enabled!==false||s.productionMessagesEnabled!==false)process.exit(1);
+          NODE
+                  then SAFE=true; break; fi
+                  echo "Read-only rollback propagation check $n: /controller-status HTTP $code"
                   sleep 3
                 done
                 if [ "$SAFE" != true ]; then
-                  echo "::error::Cloudflare edge did not confirm pairing disabled after rollback; inspect account configuration"
+                  echo "::error::Read-only verification could not confirm disabled state"
                   rc=1
                 else
-                  echo "Cloudflare edge verified: private /start disabled (HTTP 503)."
+                  echo "Cloudflare edge read-only check: pairing disabled."
                 fi
               fi
             fi
