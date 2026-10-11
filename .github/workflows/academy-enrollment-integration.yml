@@ -1,0 +1,88 @@
+name: Academy Enrollment Integration
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/academy-enrollment-integration.yml'
+      - 'scripts/academy-extract-ddl.mjs'
+      - 'tests/db-isolation/academy/**'
+      - 'supabase/migrations/20260928211000_academic_results_completion.sql'
+      - 'supabase/migrations/20260928212000_academy_authoritative_completion_notifications.sql'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: academy-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  academy-integration:
+    name: Isolated PostgreSQL - Academy Enrollment and Certificate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout (no persistent credentials)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+      - name: Setup Supabase CLI (pinned)
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.81.3
+      - name: Initialize LOCAL ONLY database project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/sagamente-academy-integration"
+          cd "${RUNNER_TEMP}/sagamente-academy-integration"
+          supabase init
+          test -f supabase/config.toml
+          test ! -f supabase/.temp/project-ref
+      - name: Start isolated Supabase PostgreSQL in Docker
+        shell: bash
+        working-directory: ${{ runner.temp }}/sagamente-academy-integration
+        run: |
+          set -euo pipefail
+          supabase db start
+          pg_isready -h 127.0.0.1 -p 54322 -U postgres
+      - name: Fetch exact PR #359 migration and extract real repository wrappers
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --depth=1 origin refs/heads/audit100/sec02-academy-refresh-enrollment
+          expected="3bb14f4423d492ed4b2e1fed4e2a945024174351"
+          actual="$(git rev-parse FETCH_HEAD)"
+          test "$actual" = "$expected" || {
+            echo "::error::PR #359 changed: update pinned SHA after review"
+            exit 1
+          }
+          git show FETCH_HEAD:supabase/migrations/20261011060000_restrict_academy_refresh_enrollment.sql > "${RUNNER_TEMP}/academy-guard.sql"
+          node scripts/academy-extract-ddl.mjs "${RUNNER_TEMP}/academy-wrappers.sql"
+          test -s "${RUNNER_TEMP}/academy-guard.sql"
+          test -s "${RUNNER_TEMP}/academy-wrappers.sql"
+          echo "PR #359 pinned SHA: $expected" >> "$GITHUB_STEP_SUMMARY"
+          echo "Wrappers source: tracked repository migrations, not deployed DDL" >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify real PostgreSQL access and academy completion flows
+        shell: bash
+        env:
+          LOCAL_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          set -euo pipefail
+          export PGCONNECT_TIMEOUT=8
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f tests/db-isolation/academy/fixture.sql
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f "${RUNNER_TEMP}/academy-guard.sql"
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f "${RUNNER_TEMP}/academy-wrappers.sql"
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f tests/db-isolation/academy/assert-flows.sql
+          echo "PASS: direct authorization, own enrollment, certificates, notifications, attendance, idempotence" >> "$GITHUB_STEP_SUMMARY"
+      - name: Stop temporary database without backup
+        if: always()
+        continue-on-error: true
+        working-directory: ${{ runner.temp }}/sagamente-academy-integration
+        run: supabase stop --no-backup
