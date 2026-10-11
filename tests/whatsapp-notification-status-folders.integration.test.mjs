@@ -5,6 +5,8 @@ import {PGlite} from '@electric-sql/pglite'
 
 const firstMigration=readFileSync(new URL('../supabase/migrations/20261011160000_whatsapp_project_notification_copy.sql',import.meta.url),'utf8')
 const scopeMigration=readFileSync(new URL('../supabase/migrations/20261011204700_whatsapp_status_folder_scope.sql',import.meta.url),'utf8')
+const projectSyncSource=readFileSync(new URL('../supabase/functions/google-drive-project-sync/index.ts',import.meta.url),'utf8')
+const fileManageSource=readFileSync(new URL('../supabase/functions/google-drive-file-manage/index.ts',import.meta.url),'utf8')
 const projectId='11111111-1111-4111-8111-111111111111'
 const customerId='22222222-2222-4222-8222-222222222222'
 const taskId='33333333-3333-4333-8333-333333333333'
@@ -94,6 +96,11 @@ function includesOnly(body,allowed,excluded){
  assert.ok(body.includes(allowed),`Expected allowed file ${allowed} in ${body}`)
  for(const file of excluded) assert.ok(!body.includes(file),`Unexpected cross-folder file ${file} in ${body}`)
 }
+
+test('recursive Drive sync keeps the logical folder kind and moves refresh it',()=>{
+ assert.match(projectSyncSource,/queue\.push\(\{\s*id,\s*customId,\s*stageId,\s*folderKind,\s*depth\s*\}\)/)
+ assert.match(fileManageSource,/drive_folder_id:\s*target\.drive_folder_id,[\s\S]{0,120}drive_folder_kind:\s*target\.folder_kind/)
+})
 
 test('review task update includes only preview-folder files',async()=>{
  const body=await emit({type:'project_task',status:'review',metadata:{task_id:taskId}})
