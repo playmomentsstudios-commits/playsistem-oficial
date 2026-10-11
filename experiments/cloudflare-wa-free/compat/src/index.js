@@ -121,7 +121,13 @@ export default {
       // Fail closed until a real Baileys socket/controller is implemented and reviewed.
       return Response.json({error:"pairing_not_implemented",noWhatsAppSocket:true},{status:501,headers:{"Cache-Control":"no-store"}});
     }
-    return env.AUTH_TEST.get(env.AUTH_TEST.idFromName("offline-auth")).fetch(request);
+    // Keep every bounded QR attempt in its own named Durable Object.
+    // A previously running object can retain old bindings during rollout.
+    // Never reuse QR test session credentials in the ordinary offline auth probe.
+    const pairingProbe=env.EXPERIMENTAL_PAIRING_ENABLED==="true";
+    const boundedStamp=String(env.EXPERIMENTAL_PAIRING_EXPIRES_AT||"").slice(0,16);
+    const objectName=pairingProbe?"isolated-qr-probe-"+boundedStamp:"offline-auth";
+    return env.AUTH_TEST.get(env.AUTH_TEST.idFromName(objectName)).fetch(request);
   }
 };
 
