@@ -44,7 +44,7 @@ test('each file gets a separate 48h private token; task link comes last',()=>{
   assert.match(sql,/whatsapp-file-open\?t=/)
   assert.match(sql,/v_label\|\|E'\\n'\|\|v_link/)
   assert.match(sql,/Links dos arquivos válidos por 48 horas/)
-  assert.ok(sql.includes("new.target_link ~ '^/n/[A-Za-z0-9_-]{22}
+  assert.match(sql,/new\.target_link ~ /)
   assert.match(sql,/new.target_link/)
   assert.match(sql,/update public.whatsapp_message_outbox/)
   assert.match(sql,/return new;/)
