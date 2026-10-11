@@ -55,6 +55,10 @@ export function WhatsappQrBridgePanel(){
     setLoadError('')
   }
   useEffect(()=>{
+    const id=window.setInterval(()=>setNow(Date.now()),1000)
+    return()=>window.clearInterval(id)
+  },[])
+  useEffect(()=>{
     let alive=true
     async function poll(){
       try{if(alive)await refresh()}
@@ -64,7 +68,8 @@ export function WhatsappQrBridgePanel(){
     const id=window.setInterval(()=>{void poll()},5000)
     return()=>{alive=false;window.clearInterval(id)}
   },[])
-  const online=!!bridge?.heartbeat_at&&(now-new Date(bridge.heartbeat_at).getTime()<35000)
+  const heartbeatAgeMs=bridge?.heartbeat_at?now-Date.parse(bridge.heartbeat_at):Number.NaN
+  const online=Number.isFinite(heartbeatAgeMs)&&heartbeatAgeMs>=0&&heartbeatAgeMs<35000
   const connected=online&&bridge?.status==='connected'
   const correctNumber=connected&&bridge.connected_phone===config?.wa_bridge_sender_phone
   const updatedBridge=Boolean(bridge?.worker_capability==='registered-jid-receipts-v1'&&bridge.worker_capability_at&&(now-new Date(bridge.worker_capability_at).getTime()<35000))
@@ -138,6 +143,10 @@ export function WhatsappQrBridgePanel(){
       </span>
     </div>
     <details className="mt-3 text-xs text-amber-200"><summary className="cursor-pointer py-1">Condições da conexão local</summary><p className="mt-2 leading-relaxed">Conexão por biblioteca não oficial: risco de bloqueio do número. Sem tarifa por mensagem da biblioteca, mas computador e internet devem permanecer ativos.</p></details>
+    {bridge?.requested_mode==='connect'&&!online&&<p className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200">
+      {!bridge.heartbeat_at?'Nenhum heartbeat recebido.':!Number.isFinite(heartbeatAgeMs)?'Timestamp do heartbeat inválido.':heartbeatAgeMs<0?'Timestamp do heartbeat no futuro; estado tratado como offline.':`Heartbeat vencido há ${Math.floor(heartbeatAgeMs/1000)} s.`}
+      {' '}Verifique se o processo Node está ativo, se o computador tem energia e rede e se o RPC do Supabase autentica. O painel não consegue distinguir essas causas sem diagnóstico da máquina.
+    </p>}
     <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,240px)_1fr]">
       <div className={"rounded-xl border border-white/10 bg-black/25 p-4 flex flex-col items-center justify-center gap-3 "+(connected?"min-h-[140px]":"min-h-[240px]")}>
         {online&&bridge?.status==='qr_ready'&&bridge.qr_data_url?
