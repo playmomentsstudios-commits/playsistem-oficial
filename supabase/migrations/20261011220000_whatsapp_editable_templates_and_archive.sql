@@ -17,12 +17,12 @@ create policy wa_message_templates_admin_read on public.wa_message_templates
   for select to authenticated using (public.current_user_is_admin());
 
 insert into public.wa_message_templates(template_key,body) values
- ('project_started', E'*Seu projeto começou!*\\n\\nO projeto *{{project_name}}* já está em andamento.\\n\\n{{link}}'),
- ('stage_completed', E'*Etapa concluída*\\n\\nA etapa *{{stage_name}}* do projeto *{{project_name}}* foi concluída.\\n\\n{{link}}'),
- ('review_available', E'*Revisão disponível*\\n\\nO material *{{material_name}}* do projeto *{{project_name}}* está pronto para sua análise.\\n\\n{{link}}'),
- ('adjustments_completed', E'*Ajustes concluídos*\\n\\nUma nova versão do material *{{material_name}}* do projeto *{{project_name}}* está disponível.\\n\\n{{link}}'),
- ('final_delivery', E'*Entrega final disponível*\\n\\nConcluímos o projeto *{{project_name}}*. Os materiais finais estão disponíveis.\\n\\n{{link}}'),
- ('new_message', E'*Nova mensagem no projeto*\\n\\nHá uma nova mensagem sobre *{{project_name}}*.\\n\\n{{link}}')
+ ('project_started', E'*Seu projeto começou!*\n\nO projeto *{{project_name}}* já está em andamento.\n\n{{link}}'),
+ ('stage_completed', E'*Etapa concluída*\n\nA etapa *{{stage_name}}* do projeto *{{project_name}}* foi concluída.\n\n{{link}}'),
+ ('review_available', E'*Revisão disponível*\n\nO material *{{material_name}}* do projeto *{{project_name}}* está pronto para sua análise.\n\n{{link}}'),
+ ('adjustments_completed', E'*Ajustes concluídos*\n\nUma nova versão do material *{{material_name}}* do projeto *{{project_name}}* está disponível.\n\n{{link}}'),
+ ('final_delivery', E'*Entrega final disponível*\n\nConcluímos o projeto *{{project_name}}*. Os materiais finais estão disponíveis.\n\n{{link}}'),
+ ('new_message', E'*Nova mensagem no projeto*\n\nHá uma nova mensagem sobre *{{project_name}}*.\n\n{{link}}')
 on conflict (template_key) do nothing;
 
 -- Saves go through this RPC; no direct writes from authenticated clients.
