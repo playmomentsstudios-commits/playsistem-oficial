@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
     const folders = await ensureProjectFolder(ctx.db, ctx.userId, projectId);
     const { data: customFolders, error: customFoldersError } = await ctx.db
       .from("project_custom_folders")
-      .select("id,project_id,drive_folder_id")
+      .select("id,project_id,drive_folder_id,parent_kind")
       .eq("project_id", projectId);
     if (customFoldersError) throw customFoldersError;
 
@@ -106,6 +106,9 @@ Deno.serve(async (req) => {
 
     const fileStageId = taskStageId || (staff ? requestedStageId : null)
       || (project.project_type === "internal" ? file.appProperties?.playMomentsStageId || null : null);
+    const driveFolderKind = (folders.folders || []).find((row:any) => row.drive_folder_id === parentId)?.folder_kind
+      || (customFolders || []).find((row:any) => row.drive_folder_id === parentId)?.parent_kind
+      || null;
 
     if (fileStageId) {
       const { data: stage, error: stageError } = await ctx.db.from("project_stages")
@@ -133,6 +136,7 @@ Deno.serve(async (req) => {
       storage_provider: "google_drive",
       drive_file_id: file.id,
       drive_folder_id: parentId,
+      drive_folder_kind: driveFolderKind,
       file_size: file.size ? Number(file.size) : null,
       mime_type: file.mimeType || null,
       custom_folder_id: customFolderId,

@@ -1,0 +1,35 @@
+name: WhatsApp Bridge Cloud Runtime (isolated)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/whatsapp-bridge/**'
+      - 'tests/whatsapp-container-runtime.test.mjs'
+      - '.github/workflows/whatsapp-bridge-cloud-runtime.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check runtime policy and syntax without account access
+        run: |
+          node --test tests/whatsapp-container-runtime.test.mjs
+          node --check services/whatsapp-bridge/index.mjs
+          node --check services/whatsapp-bridge/phone-utils.mjs
+          node --check services/whatsapp-bridge/receipt-tracker.mjs
+      - name: Validate Docker Compose without real secrets
+        shell: bash
+        run: |
+          set -eu
+          cp services/whatsapp-bridge/.env.example services/whatsapp-bridge/.env
+          trap 'rm -f services/whatsapp-bridge/.env' EXIT
+          docker compose -f services/whatsapp-bridge/compose.yaml config --quiet
+      - name: Build isolated Node image (no pairing or outbound messages)
+        run: docker build -t sagamente-wa-bridge-ci:check services/whatsapp-bridge
