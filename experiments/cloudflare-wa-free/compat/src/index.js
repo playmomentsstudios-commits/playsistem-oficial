@@ -4,7 +4,18 @@ import makeWASocket, { Browsers, initAuthCreds, BufferJSON } from "@whiskeysocke
 const enc=new TextEncoder(),dec=new TextDecoder();
 export class EncryptedAuthProbe {
   constructor(ctx,env){this.ctx=ctx;this.env=env;}
-  async fetch(){
+  async fetch(request){
+    const requested=new URL(request.url).pathname;
+    if(requested==="/lifecycle"){
+      // Deterministic bounded offline socket-lifecycle probe; no WhatsApp network/socket.
+      let closed=false, events=0;
+      const ctrl=new AbortController();
+      const timer=setTimeout(()=>ctrl.abort("time-budget"),200);
+      try{
+        await new Promise((resolve)=>{const tick=setInterval(()=>{events++;if(events>=2||ctrl.signal.aborted){clearInterval(tick);resolve();}},15);});
+      }finally{clearTimeout(timer);closed=true;}
+      return Response.json({bounded:true,closed,events,noWhatsAppSocket:true,productionQueueUntouched:true,credentialFree:true});
+    }
     try{
       // Ephemeral test encryption key exists only for this local runtime; not production.
       // Test uses a generated key persisted in DO to check read/write mechanics ONLY.
