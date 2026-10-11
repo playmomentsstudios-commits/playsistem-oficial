@@ -1,4 +1,5 @@
 import { corsHeaders, getDriveAccessToken, hasPermission, json, requireUser } from "../_shared/googleDrive.ts";
+import { reconciliationAssociationPatch } from "../_shared/driveReconciliation.ts";
 
 // Read-only Drive inventory reconciliation: never deletes a Drive object or publishes files.
 // Every discovered file is recorded against the authoritative Google Drive ID.
@@ -121,8 +122,9 @@ Deno.serve(async (req: Request) => {
         if (globalError) throw globalError;
         if (globalExisting) {
           const { error } = await ctx.db.from("client_files").update({
-            ...metadata, project_id: projectId, customer_id: project.customer_id,
-            client_visible: false, task_id: null,
+            ...reconciliationAssociationPatch(metadata, globalExisting.project_id, projectId),
+            project_id: projectId, customer_id: project.customer_id,
+            client_visible: false,
           }).eq("id", globalExisting.id);
           if (error) throw error;
           updated++;

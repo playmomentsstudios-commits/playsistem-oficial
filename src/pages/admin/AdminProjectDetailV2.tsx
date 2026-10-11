@@ -446,7 +446,11 @@ export function AdminProjectDetailV2(){
           folder_kind:project.project_type==='internal'?'production':'preview',
           client_visible:false,
         },file)
-        if(project.project_type!=='internal'&&task.stage_id&&uploaded?.id){
+        if(!uploaded?.id)throw new Error('O Drive recebeu o arquivo, mas o vínculo com a tarefa não foi confirmado.')
+        // A concurrent Drive inventory can register the file before finalize.
+        // Explicitly restore the task association after upload, including its stage.
+        await portalApi.assignClientFileTask(uploaded.id,task.id)
+        if(project.project_type!=='internal'&&task.stage_id){
           await portalApi.assignClientFileStage(uploaded.id,task.stage_id)
         }
       }
