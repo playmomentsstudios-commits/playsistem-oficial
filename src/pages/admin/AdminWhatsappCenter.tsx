@@ -31,6 +31,7 @@ type WARecord={
   created_at:string
   opened_at:string|null
   reported_at:string|null
+  archived_at:string|null
 }
 type Summary={
   prepared_today:number
@@ -111,16 +112,19 @@ export function AdminWhatsappCenter(){
   const [error,setError]=useState('')
   const [search,setSearch]=useState('')
   const [filter,setFilter]=useState('all')
+  const [showArchived,setShowArchived]=useState(false)
   const [view,setView]=useState<'history'|'settings'|'templates'>('history')
 
   async function load(){
     setError('')
     try{
+      const historyQuery=supabase.from('whatsapp_message_outbox')
+        .select('id,notification_id,recipient_name,destination_phone,recipient_user_id,event_type,title,message_body,target_link,status,source,created_at,opened_at,reported_at,archived_at')
+        .order('created_at',{ascending:false}).limit(300)
+      const historyPromise=showArchived?historyQuery.not('archived_at','is',null):historyQuery.is('archived_at',null)
       const [cfg,list,daily,attemptRows,receiptDaily]=await Promise.all([
         settingsApi.appSettings(),
-        supabase.from('whatsapp_message_outbox')
-          .select('id,notification_id,recipient_name,destination_phone,recipient_user_id,event_type,title,message_body,target_link,status,source,created_at,opened_at,reported_at')
-          .order('created_at',{ascending:false}).limit(300),
+        historyPromise,
         supabase.rpc('wa_daily_dashboard'),
         supabase.from('whatsapp_bridge_attempts')
           .select('id,outbox_id,destination_phone,test_mode,status,provider_message_id,error_reason,claimed_at,completed_at,ack_status,ack_at,destination_jid,media_planned_count,media_submitted_count,media_fallback_count')
@@ -140,7 +144,7 @@ export function AdminWhatsappCenter(){
       setError(err?.message||'Não foi possível carregar a auditoria do WhatsApp.')
     }finally{setLoading(false)}
   }
-  useEffect(()=>{void load()},[])
+  useEffect(()=>{void load()},[showArchived])
   const attemptByOutbox=useMemo(()=>new Map(attempts.map(a=>[a.outbox_id,a])),[attempts])
   const filtered=useMemo(()=>rows.filter(r=>{
     if(filter!=='all'&&r.status!==filter)return false
@@ -173,6 +177,18 @@ export function AdminWhatsappCenter(){
       await load()
     }catch(err:any){toast(err?.message||'Não foi possível salvar as configurações.','error')}
     finally{setSaving(false)}
+  }
+  async function archiveRecord(item:WARecord){
+    const archive=!item.archived_at
+    if(archive&&!window.confirm('Arquivar apenas nesta central? O registro continuará no banco e o envio automático não será cancelado.'))return
+    try{
+      setBusy(item.id)
+      const {error:archiveError}=await supabase.rpc('wa_set_archive',{p_outbox_id:item.id,p_archive:archive})
+      if(archiveError)throw archiveError
+      toast(archive?'Registro arquivado.':'Registro restaurado.','success')
+      await load()
+    }catch(err:any){toast(err?.message||'Não foi possível alterar o arquivo.','error')}
+    finally{setBusy(null)}
   }
   async function mark(id:string,action:'opened'|'reported_sent'){
     const {error:rpcError}=await supabase.rpc('wa_mark_manual_action',{
@@ -334,27 +350,35 @@ export function AdminWhatsappCenter(){
             <option value="all">Todas as situações</option>
             {(Object.keys(STATUS) as WAState[]).map(key=><option key={key} value={key}>{STATUS[key].label}</option>)}
           </select>
+          <button onClick={()=>setShowArchived(value=>!value)} className={'min-h-11 rounded-xl border px-4 text-xs '+(showArchived?'border-[#A65A2A] text-white':'border-white/10 text-gray-300')}>{showArchived?'Ver recentes':'Arquivadas'}</button>
           <button onClick={()=>exportCsv(filtered)} disabled={!filtered.length} className="min-h-11 rounded-xl border border-white/10 px-4 text-xs disabled:opacity-40">Exportar CSV</button>
         </div>
-        <p className="text-[11px] text-gray-500">Exibindo {filtered.length} registros dentre os últimos 300. Indicadores incluem todos os registros do banco. Eventos históricos não representam tentativas de envio.</p>
+        <p className="text-[11px] text-gray-500">{showArchived?'Arquivadas':'Recentes'} · {filtered.length} de até 300 registros. Arquivar não exclui auditorias, altera status ou cancela envios.</p>
         {!filtered.length?<div className="rounded-2xl border border-white/10 p-8 text-center text-sm text-gray-500">Nenhuma mensagem corresponde aos filtros.</div>:
-        <div className="space-y-3">
-          {filtered.map(item=><article key={item.id} className="rounded-xl border border-white/10 bg-[#141416] p-3 sm:p-4">
+        <div className="overflow-hidden rounded-xl border border-white/10 bg-[#141416] divide-y divide-white/10">
+          {filtered.map(item=><article key={item.id} className="px-3 py-3 sm:px-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <strong className="text-sm text-white">{item.recipient_name}</strong>
                   <span className={'rounded-md px-2 py-1 text-[10px] '+STATUS[item.status].tone}>{STATUS[item.status].label}</span>
                 </div>
-                <p className="mt-1 text-xs text-gray-400">{item.destination_phone?('+'+item.destination_phone):'Telefone não cadastrado ou inválido'} · {EVENT[item.event_type]||item.event_type}</p>
-                <p className="mt-1 text-[11px] text-gray-600">{localDate(item.created_at)} · {item.source==='historical'?'Importado para auditoria':'Gerado pelo sistema'}</p>
+                <p className="mt-1 text-xs text-gray-400">{EVENT[item.event_type]||item.event_type} · {localDate(item.created_at)}</p>
               </div>
-              {!['historical','missing_phone','sending_auto','sent_auto'].includes(item.status)&&<div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+              {!showArchived&&!['historical','missing_phone','sending_auto','sent_auto'].includes(item.status)&&
                 <button onClick={()=>openWhatsApp(item)} disabled={busy===item.id} className="min-h-9 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 text-xs text-emerald-200 disabled:opacity-50">Abrir WhatsApp</button>
                 {item.status==='opened_manual'&&<button onClick={()=>void reportSent(item)} disabled={busy===item.id} className="min-h-9 rounded-lg border border-white/15 px-3 text-xs text-gray-200 disabled:opacity-50">Informar envio manual</button>}
-              </div>}
+              }
+              <button disabled={busy===item.id} type="button" onClick={()=>void archiveRecord(item)}
+                className="min-h-9 rounded-lg px-3 text-xs text-gray-400 hover:bg-white/5 hover:text-white disabled:opacity-40">{showArchived?'Restaurar':'Arquivar'}</button>
+              </div>
             </div>
-            {attemptByOutbox.get(item.id)&&<details className="mt-3 rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-gray-300"><summary className="cursor-pointer font-semibold">Detalhes técnicos do envio automático</summary><div className="mt-3">
+            <details className="mt-2 rounded-lg border border-white/5 bg-black/15 px-3 py-2 text-xs text-gray-400">
+              <summary className="cursor-pointer font-medium text-gray-300">Ver mensagem e detalhes</summary>
+              <p className="mt-3 whitespace-pre-wrap break-words leading-relaxed text-gray-300">{item.message_body}</p>
+              {safeUrl(item.target_link)&&<p className="mt-2 break-all text-[11px] text-gray-500">{safeUrl(item.target_link)}</p>}
+              {attemptByOutbox.get(item.id)&&<details className="mt-3 rounded-xl border border-white/10 bg-black/30 p-3 text-xs text-gray-300"><summary className="cursor-pointer font-semibold">Detalhes técnicos do envio automático</summary><div className="mt-3">
               <p className="font-semibold">Registro da tentativa automática</p>
               <p className="mt-1">Número de envio real: <strong className="text-white">+{attemptByOutbox.get(item.id)!.destination_phone}</strong>
                 {attemptByOutbox.get(item.id)!.test_mode&&<span className="ml-2 text-amber-200">(PILOTO · não enviado ao número do cliente)</span>}
@@ -375,15 +399,8 @@ export function AdminWhatsappCenter(){
               {attemptByOutbox.get(item.id)!.error_reason&&<p className="mt-1 text-red-300">Erro: {attemptByOutbox.get(item.id)!.error_reason}</p>}
               <p className="mt-1 text-gray-500">Iniciada em {localDate(attemptByOutbox.get(item.id)!.claimed_at)}</p>
             </div></details>}
-            <details className="mt-3 rounded-xl border border-white/5 bg-black/30 p-3">
-              <summary className="cursor-pointer text-xs font-semibold text-gray-300">Ver mensagem preparada</summary>
-              <p className="mt-3 whitespace-pre-wrap break-words text-xs leading-relaxed text-gray-400">{item.message_body}</p>
-              {safeUrl(item.target_link)&&<p className="mt-2 break-all text-[11px] text-gray-600">{safeUrl(item.target_link)}</p>}
             </details>
-            {(item.opened_at||item.reported_at)&&<p className="mt-2 text-[11px] text-gray-500">
-              {item.opened_at?'Abertura registrada: '+localDate(item.opened_at):''}
-              {item.reported_at?' · Declaração manual: '+localDate(item.reported_at):''}
-            </p>}
+
           </article>)}
         </div>}
       </>:null}
