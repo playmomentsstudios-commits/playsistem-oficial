@@ -24,6 +24,8 @@ export type RequestContext = {
   userId: string;
   role: string;
   permissions: string[];
+  // Inactive collaborators must never qualify for staff-only operations.
+  staffActive?: boolean;
 };
 
 export async function requireUser(req: Request): Promise<RequestContext> {
@@ -51,20 +53,25 @@ export async function requireUser(req: Request): Promise<RequestContext> {
   }
 
   let permissions: string[] = [];
+  let staffActive = false;
   if (profile.role === "staff") {
-    const { data: staff } = await db
+    const { data: staff, error: staffError } = await db
       .from("staff_profiles")
       .select("permissions,active")
       .eq("user_id", authData.user.id)
       .maybeSingle();
-    if (staff?.active) permissions = Array.isArray(staff.permissions) ? staff.permissions : [];
+    if (staffError) throw new Error("Unable to verify collaborator access");
+    if (staff?.active === true) {
+      staffActive = true;
+      permissions = Array.isArray(staff.permissions) ? staff.permissions : [];
+    }
   }
 
-  return { db, userId: authData.user.id, role: profile.role, permissions };
+  return { db, userId: authData.user.id, role: profile.role, permissions, staffActive };
 }
 
 export function requireStaff(ctx: RequestContext) {
-  if (!["admin", "staff"].includes(ctx.role)) {
+  if (ctx.role !== "admin" && !(ctx.role === "staff" && ctx.staffActive === true)) {
     throw new Error("Staff access required");
   }
 }
@@ -87,20 +94,32 @@ export async function getDriveAccessToken() {
     grant_type: "refresh_token",
   });
 
+  // Bound the OAuth request so Drive-dependent screens never hang indefinitely.
+  // Never forward raw Google error descriptions to client-facing Edge Functions.
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
+    signal: AbortSignal.timeout(10000),
+  }).catch(() => {
+    throw new Error("Serviço de autenticação do Google Drive indisponível. Tente novamente.");
   });
 
-  const payload = await response.json();
-  if (!response.ok || !payload.access_token) {
-    const raw = String(payload?.error_description || payload?.error || "Google OAuth token refresh failed");
-    const normalized = raw.toLowerCase();
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !payload?.access_token) {
+    const code = String(payload?.error || "").toLowerCase();
+    const description = String(payload?.error_description || "").toLowerCase();
+    const normalized = code + " " + description;
     if (normalized.includes("expired") || normalized.includes("revoked") || normalized.includes("invalid_grant")) {
       throw new Error("A conexão do Google Drive expirou ou foi revogada. Atualize o segredo GOOGLE_DRIVE_REFRESH_TOKEN no Supabase e tente novamente.");
     }
-    throw new Error(raw);
+    if (normalized.includes("invalid_client") || normalized.includes("unauthorized_client")) {
+      throw new Error("O Google recusou a configuração OAuth institucional. Solicite uma verificação ao administrador.");
+    }
+    if (response.status === 429 || response.status >= 500) {
+      throw new Error("Serviço de autenticação do Google Drive temporariamente indisponível. Tente novamente.");
+    }
+    throw new Error("O Google recusou a autenticação do Drive. Solicite uma verificação da conexão institucional.");
   }
 
   return payload.access_token as string;
@@ -111,20 +130,38 @@ export async function driveJson(
   init: RequestInit = {},
 ) {
   const token = await getDriveAccessToken();
+  // Protect caller-facing handlers from leaking raw Google error descriptions.
   const response = await fetch(url, {
     ...init,
     headers: {
       Authorization: `Bearer ${token}`,
       ...(init.headers || {}),
     },
+  }).catch(() => {
+    throw new Error("Falha de conexão com o Google Drive. Tente novamente.");
   });
 
-  const text = await response.text();
-  const payload = text ? JSON.parse(text) : null;
-  if (!response.ok) {
-    throw new Error(payload?.error?.message || `Google Drive error ${response.status}`);
+  const raw = await response.text().catch(() => "");
+  let payload: any = null;
+  if (raw) {
+    try {
+      payload = JSON.parse(raw);
+    } catch {
+      if (response.ok) throw new Error("O Google Drive retornou uma resposta inválida.");
+    }
   }
-
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      throw new Error("O Google Drive recusou o acesso. Verifique a conta institucional e as permissões.");
+    }
+    if (response.status === 404) {
+      throw new Error("Arquivo ou pasta não encontrado no Google Drive.");
+    }
+    if (response.status === 429 || response.status >= 500) {
+      throw new Error("O Google Drive está temporariamente indisponível. Tente novamente.");
+    }
+    throw new Error(`A operação no Google Drive falhou (HTTP ${response.status}).`);
+  }
   return payload;
 }
 
