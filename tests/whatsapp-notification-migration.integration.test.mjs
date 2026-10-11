@@ -5,6 +5,7 @@ import {PGlite} from '@electric-sql/pglite'
 
 const migration=readFileSync(new URL('../supabase/migrations/20261011160000_whatsapp_project_notification_copy.sql',import.meta.url),'utf8')
 const editableMigration=readFileSync(new URL('../supabase/migrations/20261011220000_whatsapp_editable_templates_and_archive.sql',import.meta.url),'utf8')
+const restoreBuilder=readFileSync(new URL('../docs/rollbacks/whatsapp-pr396-restore-message-builder.sql',import.meta.url),'utf8')
 const projectId='11111111-1111-4111-8111-111111111111'
 const customerId='22222222-2222-4222-8222-222222222222'
 const taskId='33333333-3333-4333-8333-333333333333'
@@ -148,4 +149,30 @@ test('editable migration compiles in Postgres and substitutes approved project c
  await db.query('select public.wa_set_archive($1,$2)',[outboxId,false])
  const restored=await db.query('select archived_at from public.whatsapp_message_outbox where id=$1',[outboxId])
  assert.equal(restored.rows[0].archived_at,null)
+})
+
+test('rollback restores the pre-edit message builder without deleting saved copy or archive records',async()=>{
+ await db.exec(editableMigration)
+ await db.query('select public.wa_save_template($1,$2)',[
+   'project_started','*Atualização exclusiva*\\n\\nProjeto {{project_name}}.\\n\\n{{link}}'.replaceAll('\\n','\n')
+ ])
+ const changed=await emit({type:'project_status',status:'active'})
+ assert.match(changed,/Atualização exclusiva/)
+ await db.exec(restoreBuilder)
+ const reverted=await emit({type:'project_status',status:'active'})
+ assert.match(reverted,/🚀 \*Projeto iniciado\*/)
+ assert.doesNotMatch(reverted,/Atualização exclusiva/)
+ const saved=await db.query("select body from public.wa_message_templates where template_key='project_started'")
+ assert.match(saved.rows[0].body,/Atualização exclusiva/)
+})
+
+test('unprivileged users cannot edit templates or archive messages',async()=>{
+ await db.exec(editableMigration)
+ await db.exec("create or replace function public.current_user_is_admin() returns boolean language sql stable as $permission_test$ select false $permission_test$")
+ await assert.rejects(db.query('select public.wa_save_template($1,$2)',[
+   'project_started','*Update*\\n\\n{{link}}'.replaceAll('\\n','\n')
+ ]),/administradores/i)
+ await assert.rejects(db.query('select public.wa_set_archive($1,$2)',[
+   '88888888-8888-4888-8888-000000000001',true
+ ]),/administradores/i)
 })
