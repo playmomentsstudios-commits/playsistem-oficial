@@ -13,7 +13,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   isolated-deploy:
-    if: ${{ inputs.confirmation == 'DEPLOY_ISOLATED_PROBE' }}
+    # Paused after run #38160624283 until Worker/DO hard-stop audit is completed.
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: 'cloudflare whatsistem'
@@ -97,7 +98,8 @@ jobs:
           echo "Isolated Baileys bundle deployed. Unauthorized access blocked. Pairing disabled."
 
   qr-only-diagnostic:
-    if: ${{ inputs.confirmation == 'QR_PROBE_NO_PAIRING' }}
+    # Paused: a stale DO continued returning 200/409 during rollback propagation.
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: 'cloudflare whatsistem'
