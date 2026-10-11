@@ -2,10 +2,15 @@
 // This does not connect to WhatsApp, publish QR codes, or access production.
 import makeWASocket, { Browsers, initAuthCreds, BufferJSON } from "@whiskeysockets/baileys";
 import { createEncryptedAuthState } from "./auth-store.js";
+import { ExperimentalSessionController } from "./session-controller.js";
 const enc=new TextEncoder(),dec=new TextDecoder();
 export class EncryptedAuthProbe {
   constructor(ctx,env){this.ctx=ctx;this.env=env;}
   async fetch(request){
+    if(["/controller-status","/qr","/start","/stop"].includes(new URL(request.url).pathname)){
+      this.controller ||= new ExperimentalSessionController(this.ctx,this.env);
+      return this.controller.fetch(request);
+    }
     if(new URL(request.url).pathname==="/ws-test"){
       if(request.headers.get("Upgrade")!=="websocket")return new Response("Upgrade required",{status:426});
       const pair=new WebSocketPair();
@@ -111,7 +116,7 @@ export default {
     if(typeof token!=="string"||token.length<32||supplied!==`Bearer ${token}`){
       return Response.json({error:"unauthorized"},{status:401,headers:{"Cache-Control":"no-store"}});
     }
-    if(path==="/qr"||path==="/start"||path==="/pair"){
+    if(path==="/pair"){
       // Fail closed until a real Baileys socket/controller is implemented and reviewed.
       return Response.json({error:"pairing_not_implemented",noWhatsAppSocket:true},{status:501,headers:{"Cache-Control":"no-store"}});
     }
