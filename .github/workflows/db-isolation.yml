@@ -1,0 +1,106 @@
+name: DB Isolation Pilot
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/db-isolation.yml"
+      - "scripts/migration-inventory.mjs"
+      - "tests/db-isolation/**"
+      - "supabase/migrations/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-isolation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inventory:
+    name: Migration Inventory (advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.22.0"
+      - name: Count local migrations and expose timestamp collisions
+        run: node scripts/migration-inventory.mjs
+
+  isolated-postgres:
+    name: Isolated PostgreSQL - Backup ACL
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout (read-only)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Supabase CLI (pinned)
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.81.3
+
+      - name: Confirm local-only Supabase CLI support
+        run: |
+          supabase --version
+          supabase db --help
+          supabase db start --help
+
+      - name: Initialize temporary LOCAL ONLY project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${RUNNER_TEMP}/sagamente-db-isolation"
+          cd "${RUNNER_TEMP}/sagamente-db-isolation"
+          supabase init
+          # The workdir deliberately has ZERO production migration files,
+          # no credentials, no linked project and no real customer data.
+          test -f supabase/config.toml
+          test ! -f supabase/.temp/project-ref
+
+      - name: Start ephemeral Supabase PostgreSQL in Docker
+        shell: bash
+        working-directory: ${{ runner.temp }}/sagamente-db-isolation
+        run: |
+          set -euo pipefail
+          supabase db start
+          pg_isready -h 127.0.0.1 -p 54322 -U postgres
+
+      - name: Fetch exact migration from immutable PR #355 commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          migration_source_sha="fdbf26ad0f093502cfe0d98a77bad8a9da111d52"
+          git fetch --no-tags --depth=1 origin "$migration_source_sha"
+          test "$(git rev-parse FETCH_HEAD)" = "$migration_source_sha"
+          echo "PR #355 immutable commit tested: $migration_source_sha" >> "$GITHUB_STEP_SUMMARY"
+          git show "${migration_source_sha}:supabase/migrations/20261011033800_restrict_project_backup_table_grants.sql" > "${RUNNER_TEMP}/sagamente-backup-security-migration.sql"
+          test -s "${RUNNER_TEMP}/sagamente-backup-security-migration.sql"
+
+      - name: Execute real migration and verify PostgreSQL ACLs
+        shell: bash
+        env:
+          LOCAL_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: |
+          set -euo pipefail
+          export PGCONNECT_TIMEOUT=8
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f tests/db-isolation/prepare-backup-acl.sql
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f "${RUNNER_TEMP}/sagamente-backup-security-migration.sql"
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f tests/db-isolation/verify-backup-acl.sql
+          # Idempotency and missing-table behavior are both mandatory.
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f "${RUNNER_TEMP}/sagamente-backup-security-migration.sql"
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f tests/db-isolation/verify-backup-acl.sql
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -c 'drop table public.project_restructure_backups'
+          psql "$LOCAL_DB_URL" -v ON_ERROR_STOP=1 -f "${RUNNER_TEMP}/sagamente-backup-security-migration.sql"
+          echo "### PASS: ACLs, RLS, idempotência e tabela ausente (banco local isolado)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Stop ephemeral database without backup
+        if: always()
+        continue-on-error: true
+        working-directory: ${{ runner.temp }}/sagamente-db-isolation
+        run: supabase stop --no-backup

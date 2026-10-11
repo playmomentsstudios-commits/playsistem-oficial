@@ -1,0 +1,163 @@
+{
+  "observed_at": "2026-10-11",
+  "source": "Supabase list_migrations read-only metadata; not schema or applied SQL",
+  "project_ref": "lfmjqctiutajgtacvxfq",
+  "migrations": [
+    {
+      "version": "20260924220725",
+      "name": "create_kv_table_89b8ead1"
+    },
+    {
+      "version": "20261008002836",
+      "name": "consolidate_cineclube_oct_nov_first_package_backup"
+    },
+    {
+      "version": "20261008144207",
+      "name": "sagamente_institutional_branding_20261008"
+    },
+    {
+      "version": "20261008150621",
+      "name": "portfolio_completed_projects_only_20261008"
+    },
+    {
+      "version": "20261008224526",
+      "name": "sagamente_brand_identity_center_20261008"
+    },
+    {
+      "version": "20261008230630",
+      "name": "link_existing_customer_to_project_and_sync_files"
+    },
+    {
+      "version": "20261008232416",
+      "name": "multiple_clients_per_project_view_access"
+    },
+    {
+      "version": "20261008232812",
+      "name": "pwa_admin_settings"
+    },
+    {
+      "version": "20261009004024",
+      "name": "seo_center_phase1_sagamente"
+    },
+    {
+      "version": "20261010062446",
+      "name": "pwa_push_v1_notifications"
+    },
+    {
+      "version": "20261010074439",
+      "name": "chat_sender_delete"
+    },
+    {
+      "version": "20261010074445",
+      "name": "shared_project_customer_files"
+    },
+    {
+      "version": "20261010130915",
+      "name": "chat_persistent_thumbnails"
+    },
+    {
+      "version": "20261010133100",
+      "name": "chat_drive_metadata"
+    },
+    {
+      "version": "20261010133104",
+      "name": "chat_drive_verified_uploads"
+    },
+    {
+      "version": "20261010133654",
+      "name": "chat_drive_recovery_audit"
+    },
+    {
+      "version": "20261010171653",
+      "name": "chat_drive_storage_cutover"
+    },
+    {
+      "version": "20261010190720",
+      "name": "zero_cost_priority_alerts"
+    },
+    {
+      "version": "20261010191219",
+      "name": "zero_cost_priority_alerts_live_sync"
+    },
+    {
+      "version": "20261010192525",
+      "name": "project_notifications_multi_customer"
+    },
+    {
+      "version": "20261010193135",
+      "name": "file_review_notices_all_project_clients"
+    },
+    {
+      "version": "20261010194415",
+      "name": "whatsapp_admin_audit_center"
+    },
+    {
+      "version": "20261010200130",
+      "name": "whatsapp_qr_local_bridge_pilot"
+    },
+    {
+      "version": "20261010200723",
+      "name": "whatsapp_qr_test_send"
+    },
+    {
+      "version": "20261010204019",
+      "name": "project_stage_detail_and_notifications_20261010"
+    },
+    {
+      "version": "20261010212441",
+      "name": "whatsapp_stage_notification_deeplinks_20261010"
+    },
+    {
+      "version": "20261010213111",
+      "name": "wa_optin_real_recipient_rollout"
+    },
+    {
+      "version": "20261010220119",
+      "name": "customer_task_specific_notifications_20261010"
+    },
+    {
+      "version": "20261010221250",
+      "name": "wa_delivery_receipt_tracking"
+    },
+    {
+      "version": "20261010221310",
+      "name": "wa_bridge_registered_destination"
+    },
+    {
+      "version": "20261010221329",
+      "name": "wa_bridge_receipt_events"
+    },
+    {
+      "version": "20261010222112",
+      "name": "wa_block_legacy_bridge_worker"
+    },
+    {
+      "version": "20261010222546",
+      "name": "wa_real_receipt_before_all_clients"
+    },
+    {
+      "version": "20261010231509",
+      "name": "whatsapp_central_editable_limits"
+    },
+    {
+      "version": "20261010234243",
+      "name": "compact_whatsapp_notification_links"
+    },
+    {
+      "version": "20261011000258",
+      "name": "wa_secure_task_file_links"
+    },
+    {
+      "version": "20261011010420",
+      "name": "wa_relevant_task_files_and_human_updates"
+    },
+    {
+      "version": "20261011011611",
+      "name": "wa_truthful_project_status_copy"
+    },
+    {
+      "version": "20261011013158",
+      "name": "whatsapp_media_attempt_counters"
+    }
+  ]
+}

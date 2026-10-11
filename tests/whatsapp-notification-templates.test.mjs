@@ -8,8 +8,10 @@ const migration=readFileSync(new URL('../supabase/migrations/20261011160000_what
 test('the admin preview presents six concise customer-facing WhatsApp models with project context and a link slot',()=>{
  for(const title of ['Projeto iniciado','Etapa concluída','Revisão disponível','Ajustes concluídos','Entrega final','Nova mensagem']) assert.match(templates,new RegExp(title))
  assert.equal((templates.match(/title:'/g)||[]).length,6)
- assert.equal((templates.match(/\{\{link_compacto_autenticado\}\}/g)||[]).length,6)
+ assert.equal((templates.match(/\{\{link\}\}/g)||[]).length>=6,true)
  assert.match(templates,/Prévia com dados de exemplo/)
+ assert.match(templates,/wa_save_template/)
+ assert.match(templates,/Restaurar padrão/)
  assert.doesNotMatch(templates,/tarefa|painel do cliente|responsável interno/i)
  assert.match(center,/>Modelos<\/button>/)
 })

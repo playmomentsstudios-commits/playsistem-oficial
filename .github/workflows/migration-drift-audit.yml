@@ -1,0 +1,43 @@
+name: Migration Drift Audit
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/migration-drift-audit.yml'
+      - 'scripts/reconcile-migration-history.mjs'
+      - 'tests/migration-reconciliation-readonly.test.mjs'
+      - 'docs/security/remote-migration-metadata-2026-10-11.json'
+      - 'supabase/migrations/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reconcile-metadata:
+    name: Migration Drift (read-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout (no persist credentials)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+      - name: Test metadata classification
+        run: node --test tests/migration-reconciliation-readonly.test.mjs
+      - name: Compare local filenames to read-only remote snapshot
+        run: |
+          node scripts/reconcile-migration-history.mjs \
+            --remote docs/security/remote-migration-metadata-2026-10-11.json \
+            --output "${RUNNER_TEMP}/sagamente-migration-drift.json"
+      - name: Upload report artifact (not a DB dump)
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-drift-metadata
+          path: ${{ runner.temp }}/sagamente-migration-drift.json
+          retention-days: 7
