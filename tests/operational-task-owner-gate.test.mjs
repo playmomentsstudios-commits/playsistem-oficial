@@ -21,6 +21,8 @@ test('active and review task writes require an active staff/admin owner in the d
 
 test('productivity board lets an operator assign an orphan and blocks ownerless transitions', () => {
   assert.match(page, /assignTask\(task\.id,e\.target\.value\)/);
+  assert.match(page, /!eligibleAssignees\.some\(\(member:any\)=>member\.id===task\.assigned_to\)/);
+  assert.match(page, /Substituir responsável/);
   assert.match(page, /Atribua um responsável antes de iniciar/);
   assert.match(page, /role="alert"/);
   assert.match(page, /async function changeStatus\(id:string,status:string\):Promise<boolean>/);
