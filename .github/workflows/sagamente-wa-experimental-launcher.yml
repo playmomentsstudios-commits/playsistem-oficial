@@ -1,0 +1,251 @@
+name: Sagamente WA Experimental Deployment Launcher
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'DEPLOY_ISOLATED_PROBE or QR_PROBE_NO_PAIRING (never scan the QR)'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: sagamente-wa-experimental-launcher
+  cancel-in-progress: false
+jobs:
+  isolated-deploy:
+    # Paused after run #38160624283 until Worker/DO hard-stop audit is completed.
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: 'cloudflare whatsistem'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: c0c72269720689809c4abf54effe1dbace429024
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check isolated deployment inputs
+        shell: bash
+        working-directory: experiments/cloudflare-wa-free/compat
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PROBE_AES_KEY_B64: ${{ secrets.PROBE_AES_KEY_B64 }}
+          PROBE_ACCESS_TOKEN: ${{ secrets.PROBE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || { echo "::error::Missing isolated CLOUDFLARE_API_TOKEN"; exit 1; }
+          node - <<'NODE'
+          const x=process.env.PROBE_AES_KEY_B64||"";
+          const y=process.env.PROBE_ACCESS_TOKEN||"";
+          if(!/^[A-Za-z0-9+/]{43}=$/.test(x)||Buffer.from(x,"base64").length!==32||y.length<32){
+            throw Error("Invalid/missing isolated secrets");
+          }
+          console.log("Isolated secret formats validated");
+          NODE
+          node - <<'NODE'
+          const fs=require("node:fs");
+          const cfg=JSON.parse(fs.readFileSync("wrangler.remote.jsonc","utf8"));
+          if(cfg.name!=="sagamente-wa-baileys-remote-probe"||cfg.vars?.EXPERIMENTAL_PAIRING_ENABLED!=="false"){
+            throw Error("Worker target is not the isolated, fail-closed probe");
+          }
+          console.log("Target verified:",cfg.name);
+          NODE
+      - name: Install and compile
+        working-directory: experiments/cloudflare-wa-free/compat
+        run: |
+          npm install --no-audit --no-fund
+          npx wrangler deploy --dry-run --config wrangler.remote.jsonc
+      - name: Deploy isolated Worker only
+        working-directory: experiments/cloudflare-wa-free/compat
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: c266e6cfc3a50abf60cc8c0e299bf467
+          PROBE_AES_KEY_B64: ${{ secrets.PROBE_AES_KEY_B64 }}
+          PROBE_ACCESS_TOKEN: ${{ secrets.PROBE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          printf %s "$PROBE_AES_KEY_B64" | npx wrangler secret put PROBE_AES_KEY_B64 --config wrangler.remote.jsonc
+          printf %s "$PROBE_ACCESS_TOKEN" | npx wrangler secret put PROBE_ACCESS_TOKEN --config wrangler.remote.jsonc
+          npx wrangler deploy --config wrangler.remote.jsonc
+      - name: Verify remote health and fail-closed access after propagation
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://sagamente-wa-baileys-remote-probe.playmomentsstudios.workers.dev"
+          HEALTH_OK=false
+          STATUS_OK=false
+          for attempt in $(seq 1 20); do
+            H_CODE="$(curl --silent --show-error --max-time 10 -o /tmp/wa-remote-health.json -w '%{http_code}' "$URL/health" || true)"
+            if [ "$H_CODE" = "200" ] && node - <<'NODE'
+          const fs=require("node:fs");
+          let h;
+          try { h=JSON.parse(fs.readFileSync("/tmp/wa-remote-health.json","utf8")); } catch { process.exit(1); }
+          if(h.service!=="baileys-isolated-probe"||h.ready!==false||h.noWhatsAppSocket!==true)process.exit(1);
+          NODE
+            then HEALTH_OK=true; fi
+            START_CODE="$(curl --silent --show-error --max-time 10 -o /dev/null -w '%{http_code}' "$URL/start" || true)"
+            QR_CODE="$(curl --silent --show-error --max-time 10 -o /dev/null -w '%{http_code}' "$URL/qr" || true)"
+            echo "Remote readiness attempt $attempt: health=$H_CODE start=$START_CODE qr=$QR_CODE"
+            if [ "$HEALTH_OK" = true ] && [ "$START_CODE" = "401" ] && [ "$QR_CODE" = "401" ]; then
+              STATUS_OK=true
+              break
+            fi
+            sleep 3
+          done
+          [ "$STATUS_OK" = true ] || { echo "::error::Remote verification failed after retries"; exit 1; }
+          echo "Isolated Baileys bundle deployed. Unauthorized access blocked. Pairing disabled."
+
+  qr-only-diagnostic:
+    # Paused: a stale DO continued returning 200/409 during rollback propagation.
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: 'cloudflare whatsistem'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: c0c72269720689809c4abf54effe1dbace429024
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Bounded cloud QR generation probe (no phone pairing)
+        working-directory: experiments/cloudflare-wa-free/compat
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: c266e6cfc3a50abf60cc8c0e299bf467
+          PROBE_ACCESS_TOKEN: ${{ secrets.PROBE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          [ -n "$CLOUDFLARE_API_TOKEN" ] && [ "${#PROBE_ACCESS_TOKEN}" -ge 32 ]
+          URL="https://sagamente-wa-baileys-remote-probe.playmomentsstudios.workers.dev"
+          [ "$(git rev-parse HEAD)" = "c0c72269720689809c4abf54effe1dbace429024" ] || { echo "::error::Wrong QR diagnostic source commit"; exit 1; }
+          npm install --no-audit --no-fund
+          node - <<'NODE'
+          const fs=require("node:fs");
+          const cfg=JSON.parse(fs.readFileSync("wrangler.remote.jsonc","utf8"));
+          if(cfg.name!=="sagamente-wa-baileys-remote-probe"||cfg.vars?.EXPERIMENTAL_PAIRING_ENABLED!=="false"||cfg.preview_urls!==false)throw Error("Unsafe Worker target");
+          cfg.vars.EXPERIMENTAL_PAIRING_ENABLED="true";
+          cfg.vars.EXPERIMENTAL_PAIRING_EXPIRES_AT=String(Date.now()+90000);
+          fs.writeFileSync("wrangler.qr.temp.jsonc",JSON.stringify(cfg,null,2));
+          console.log("QR-only test configuration prepared for isolated Worker.");
+          NODE
+          # All status reports contain booleans only. Never fetch the actual /qr payload.
+          ENABLED_DEPLOY_ATTEMPTED=false
+          cleanup() {
+            rc=$?
+            trap - EXIT
+            if [ "$ENABLED_DEPLOY_ATTEMPTED" = true ]; then
+              curl --silent --show-error --max-time 5 -X POST -H "Authorization: Bearer $PROBE_ACCESS_TOKEN" "$URL/stop" -o /dev/null || true
+              if ! npx wrangler deploy --config wrangler.remote.jsonc > /tmp/wa-qr-revert.log 2>&1; then
+                echo "::error::URGENT: isolated QR test rollback failed; disable Worker in Cloudflare dashboard"
+                rc=1
+              else
+                # Verify actual account settings, not only edge state immediately after deployment.
+                SETTINGS_CODE="$(curl --silent --show-error --max-time 12 \
+                  -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+                  "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/sagamente-wa-baileys-remote-probe/settings" \
+                  -o /tmp/wa-qr-restored-settings.json -w '%{http_code}' || true)"
+                if [ "$SETTINGS_CODE" != 200 ] || ! node - <<'NODE'
+          const fs=require("node:fs");
+          let x;try{x=JSON.parse(fs.readFileSync("/tmp/wa-qr-restored-settings.json","utf8"))}catch{process.exit(1)}
+          const b=x.result?.bindings||[];
+          if(!x.success||b.find(v=>v.name==="EXPERIMENTAL_PAIRING_ENABLED")?.text!=="false"||
+             b.some(v=>v.name==="EXPERIMENTAL_PAIRING_EXPIRES_AT"))process.exit(1);
+          NODE
+                then
+                  echo "::error::URGENT: Cloudflare account configuration did not confirm disabled pairing"
+                  rc=1
+                else
+                  echo "Cloudflare account confirms experimental pairing disabled."
+                fi
+                # Read-only check: POST /start is NEVER a safe rollback probe.
+                SAFE=false
+                for n in $(seq 1 12); do
+                  code="$(curl --silent --show-error --max-time 8 -H "Authorization: Bearer $PROBE_ACCESS_TOKEN" "$URL/controller-status" -o /tmp/wa-rollback-status.json -w '%{http_code}' || true)"
+                  if [ "$code" = 200 ] && node - <<'NODE'
+          const fs=require("node:fs");
+          let s;try{s=JSON.parse(fs.readFileSync("/tmp/wa-rollback-status.json","utf8"))}catch{process.exit(1)}
+          if(s.enabled!==false||s.productionMessagesEnabled!==false)process.exit(1);
+          NODE
+                  then SAFE=true; break; fi
+                  echo "Read-only rollback propagation check $n: /controller-status HTTP $code"
+                  sleep 3
+                done
+                if [ "$SAFE" != true ]; then
+                  echo "::error::Read-only verification could not confirm disabled state"
+                  rc=1
+                else
+                  echo "Cloudflare edge read-only check: pairing disabled."
+                fi
+              fi
+            fi
+            rm -f wrangler.qr.temp.jsonc
+            exit "$rc"
+          }
+          trap cleanup EXIT
+          # This temporary deploy changes only the experimental feature flag.
+          ENABLED_DEPLOY_ATTEMPTED=true
+          npx wrangler deploy --config wrangler.qr.temp.jsonc
+          READY=false
+          for n in $(seq 1 12); do
+            curl --silent --show-error --max-time 8 \
+              -H "Authorization: Bearer $PROBE_ACCESS_TOKEN" "$URL/controller-status" > /tmp/wa-qr-status.json || true
+            if node -e 'const fs=require("fs");let s;try{s=JSON.parse(fs.readFileSync("/tmp/wa-qr-status.json"))}catch{process.exit(1)};process.exit(s.enabled===true&&s.productionMessagesEnabled===false?0:1)'; then
+              READY=true
+              break
+            fi
+            sleep 2
+          done
+          [ "$READY" = true ] || { echo "::error::Experimental controller did not enable"; exit 1; }
+          CODE="$(curl --silent --show-error --max-time 12 -X POST \
+            -H "Authorization: Bearer $PROBE_ACCESS_TOKEN" \
+            "$URL/start" -o /tmp/wa-qr-start.json -w '%{http_code}' || true)"
+          [ "$CODE" = 200 ] || { echo "::error::Baileys remote start returned HTTP $CODE"; exit 1; }
+          node - <<'NODE'
+          const fs=require("fs");
+          const x=JSON.parse(fs.readFileSync("/tmp/wa-qr-start.json"));
+          if(x.started!==true||x.productionMessagesEnabled!==false)throw Error("Unexpected Baileys start response");
+          console.log("Real cloud Baileys start acknowledged; no messages permitted.");
+          NODE
+          OBSERVED=false
+          CLOSED_EARLY=false
+          for n in $(seq 1 18); do
+            sleep 2
+            curl --silent --show-error --max-time 8 \
+              -H "Authorization: Bearer $PROBE_ACCESS_TOKEN" \
+              "$URL/controller-status" -o /tmp/wa-qr-status.json || true
+            if node -e 'const fs=require("fs");let s;try{s=JSON.parse(fs.readFileSync("/tmp/wa-qr-status.json"))}catch{process.exit(1)};process.exit(s.probe?.qrObserved===true&&s.productionMessagesEnabled===false?0:1)'; then
+              OBSERVED=true
+              break
+            fi
+            if node -e 'const fs=require("fs");let s;try{s=JSON.parse(fs.readFileSync("/tmp/wa-qr-status.json"))}catch{process.exit(1)};process.exit(s.probe?.connectionClosed===true?0:1)'; then
+              CLOSED_EARLY=true
+              break
+            fi
+          done
+          node - <<'NODE'
+          const fs=require("node:fs");
+          let s={};
+          try{s=JSON.parse(fs.readFileSync("/tmp/wa-qr-status.json","utf8"))}catch{}
+          const p=s.probe||{};
+          const safe={
+            enabled:s.enabled===true,
+            active:s.active===true,
+            status:s.status||null,
+            socketInitiated:p.socketInitiated===true,
+            qrObserved:p.qrObserved===true,
+            connectionOpened:p.connectionOpened===true,
+            connectionClosed:p.connectionClosed===true,
+            connectionUpdates:Number(p.connectionUpdates)||0,
+            lastPhase:p.lastPhase||null,
+            disconnectCode:Number.isInteger(p.disconnectCode)?p.disconnectCode:null,
+            errorType:p.errorType||null
+          };
+          console.log("Sanitized cloud Baileys diagnostic:",JSON.stringify(safe));
+          NODE
+          [ "$OBSERVED" = true ] || { echo "::error::QR not observed; disconnectedEarly=$CLOSED_EARLY. Use sanitized diagnostic above to determine if WebSocket/Baileys is viable."; exit 1; }
+          echo "Cloud Baileys QR event observed securely; QR content never fetched, no phone paired."
