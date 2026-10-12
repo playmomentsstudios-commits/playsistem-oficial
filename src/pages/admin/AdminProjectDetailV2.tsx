@@ -383,6 +383,15 @@ export function AdminProjectDetailV2(){
     }catch(error:any){toast(error.message,'error')}
   }
 
+  async function deleteProjectRootFolder(folderId:string,folderName:string){
+    if(!window.confirm('Excluir a pasta vazia "'+folderName+'"? A pasta será movida para a lixeira do Google Drive.'))return
+    try{
+      await portalApi.deleteCustomDriveFolder(id,folderId)
+      setFolderDirectory(await portalApi.projectDriveFolderDirectory(id))
+      toast('Pasta vazia movida para a lixeira.','success')
+    }catch(error:any){toast(error?.message||'Não foi possível excluir a pasta.','error')}
+  }
+
   async function addProjectRootFolder(){
     if(project.project_type==='internal'){
       toast('Pastas extras na raiz ainda não estão disponíveis para projetos internos.','error')
@@ -835,7 +844,9 @@ export function AdminProjectDetailV2(){
           {fileGroups.map(group=><details key={group.key} open={group.files.length>0} className="rounded-xl border border-white/10 bg-black/20">
             <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs sm:px-4">
               <span className="flex min-w-0 items-center gap-2"><span aria-hidden="true">📁</span><strong className="truncate text-gray-100">{group.name}</strong>{group.parent&&<span className="hidden text-gray-500 sm:inline">· {group.parent}</span>}</span>
-              <span className="shrink-0 text-gray-400">{group.files.length} arquivo(s) <span aria-hidden="true">▾</span></span>
+              <span className="flex shrink-0 items-center gap-2 text-gray-400">{group.files.length} arquivo(s)
+                {group.kind==='custom'&&group.files.length===0&&folderDirectory.custom.some((folder:any)=>group.key==='custom:'+folder.id&&folder.parent_kind==='root')&&<button type="button" title="Excluir pasta vazia" aria-label="Excluir pasta vazia" onClick={e=>{e.preventDefault();e.stopPropagation();const folder=folderDirectory.custom.find((row:any)=>group.key==='custom:'+row.id);if(folder)void deleteProjectRootFolder(folder.id,folder.name)}} className="rounded px-2 py-1 text-red-400 hover:bg-red-500/10">Excluir</button>}
+                <span aria-hidden="true">▾</span></span>
             </summary>
             <div className="border-t border-white/10 p-2.5 sm:p-3">
               {group.files.length===0?<p className="py-2 text-xs text-gray-500">Pasta vazia.</p>:<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
