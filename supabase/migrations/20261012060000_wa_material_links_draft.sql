@@ -1,0 +1,1 @@
+-- Draft: WhatsApp material-link rules require Drive permissions verification before deployment.
