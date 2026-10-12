@@ -273,6 +273,31 @@ export function AdminProjectDetailV2(){
     }
   }
 
+  async function deliverStage(stageId:string){
+    if(!project||project.project_type==='internal')return
+    const members=(project.tasks||[]).filter((task:any)=>task.stage_id===stageId)
+    if(!members.length||members.some((task:any)=>task.status!=='completed')){
+      toast('Conclua todas as tarefas da etapa antes de preparar a entrega.','error')
+      return
+    }
+    const associated=new Set(members.map((task:any)=>task.id))
+    const pending=files.filter((file:any)=>file.storage_provider==='google_drive'&&
+      (associated.has(file.task_id)||(!file.task_id&&file.stage_id===stageId))&&
+      file.drive_folder_kind==='preview')
+    const delivery=folderDirectory.standard.find((row:any)=>row.folder_kind==='delivery')
+    if(!delivery?.drive_folder_id){toast('Pasta Entregas não encontrada no Drive.','error');return}
+    if(!pending.length){toast('Não há prévias pendentes de migração nesta etapa.','error');return}
+    if(!window.confirm('Migrar '+pending.length+' arquivo(s) da Revisão para Entregas? Os arquivos permanecerão privados até a publicação.'))return
+    try{
+      for(const file of pending)await fileManagementApi.move(file.id,'delivery')
+      await load()
+      toast('Arquivos migrados para Entregas. Revise os materiais antes de disponibilizar o link ao cliente.','success')
+    }catch(error:any){
+      await load()
+      toast('Migração parcial ou não concluída: '+(error?.message||'verifique as pastas')+'. Confira antes de repetir.','error')
+    }
+  }
+
   async function toggleChecklist(taskId:string,itemId:string,completed:boolean){
     setProject((current:any)=>current?{...current,tasks:(current.tasks||[]).map((task:any)=>
       task.id!==taskId?task:{...task,checklist:(task.checklist||[]).map((item:any)=>item.id===itemId?{...item,completed}:item)}
@@ -1071,6 +1096,10 @@ export function AdminProjectDetailV2(){
               {stage.client_visible&&<Link to={'/admin/projetos/'+id+'/etapas/'+stage.id} className="inline-flex min-h-9 items-center text-xs font-semibold text-[#DFA269] hover:underline">Ver página da etapa ↗</Link>}
               <label className="flex items-center gap-2"><input type="checkbox" checked={stage.client_visible} onChange={async e=>{await portalApi.saveStage({client_visible:e.target.checked},stage.id);await load()}}/> Visível ao cliente</label>
               <button type="button" className="text-red-400 ml-auto" onClick={async()=>{if(window.confirm('Excluir esta etapa? As tarefas permanecem sem etapa.')){await portalApi.deleteStage(stage.id);await load()}}}>Excluir etapa</button>
+            </div>}
+            {stage.id!=='sem-etapa'&&project.project_type!=='internal'&&<div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs text-gray-500">Entrega da etapa: {complete}/{stageTasks.length} tarefas concluídas</span>
+              <button type="button" disabled={!stageTasks.length||complete!==stageTasks.length} onClick={()=>void deliverStage(stage.id)} className="rounded-lg border border-[#A65A2A]/40 px-3 py-2 text-xs font-semibold text-[#DFA269] disabled:cursor-not-allowed disabled:opacity-35">Migrar prévias para Entregas</button>
             </div>}
             {stageTasks.length===0&&<p className="text-sm text-gray-500">Nenhuma tarefa nesta etapa.</p>}
             {stageTasks.map((task:any)=>{
