@@ -451,7 +451,7 @@ export function AdminProjectDetailV2(){
           folder_kind:fileFolder,
           custom_folder_id:project.project_type==='internal'?null:(fileCustomFolder||null),
           client_visible:false,
-        },file,value=>setFileProgress(Math.round(((index+value/100)/picked.length)*100)))
+        },file,value=>setFileProgress(Math.min(95,Math.round(((index+value/100)/picked.length)*100))))
         if(!uploaded?.id)throw new Error('O arquivo chegou ao Drive, mas não foi confirmado no painel.')
         saved++
         // Optional metadata reconciliation must not turn a successful upload into an error.
