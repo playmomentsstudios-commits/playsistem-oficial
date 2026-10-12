@@ -66,6 +66,9 @@ export function AdminProjectDetailV2(){
   const [fileTask,setFileTask]=useState('')
   const [fileStage,setFileStage]=useState('')
   const [fileFolder,setFileFolder]=useState('received')
+  const [fileCustomFolder,setFileCustomFolder]=useState('')
+  const [creatingReceivedFolder,setCreatingReceivedFolder]=useState(false)
+  useEffect(()=>{setFileCustomFolder('')},[id])
   const [taskUploadingId,setTaskUploadingId]=useState<string|null>(null)
   const [taskUploadProgress,setTaskUploadProgress]=useState<{taskId:string;name:string;percent:number;done:number;total:number;status:'uploading'|'done'|'error'}|null>(null)
   const [uploading,setUploading]=useState(false)
@@ -407,6 +410,23 @@ export function AdminProjectDetailV2(){
     }catch(error:any){toast(error?.message||'Não foi possível criar a pasta.','error')}
   }
 
+  async function addReceivedFolder(){
+    if(project.project_type==='internal')return
+    const name=window.prompt('Nome da subpasta em 01 — Recebidos (ex.: Pautas — Outubro/Novembro 2026)')
+    if(!name?.trim())return
+    setCreatingReceivedFolder(true)
+    try{
+      const created=await portalApi.createCustomDriveFolder({
+        project_id:id,parent_kind:'received',name:name.trim(),client_visible:false,
+      })
+      setFileFolder('received')
+      setFileCustomFolder(created.id)
+      setFolderDirectory(await portalApi.projectDriveFolderDirectory(id))
+      toast('Subpasta criada no Drive. Agora você pode adicionar os arquivos.','success')
+    }catch(error:any){toast(error?.message||'Não foi possível criar a subpasta.','error')}
+    finally{setCreatingReceivedFolder(false)}
+  }
+
   async function uploadProjectFile(event:React.ChangeEvent<HTMLInputElement>){
     const picked=Array.from(event.target.files||[])
     event.target.value=''
@@ -429,6 +449,7 @@ export function AdminProjectDetailV2(){
           task_id:fileTask||null,
           stage_id:effectiveFileStage,
           folder_kind:fileFolder,
+          custom_folder_id:project.project_type==='internal'?null:(fileCustomFolder||null),
           client_visible:false, // Keep file internal until explicit publication.
         },file,value=>setFileProgress(Math.round(((index+(value/100))/picked.length)*100)))
         // Existing deployed finalize functions can omit stage_id on customer projects.
@@ -816,10 +837,19 @@ export function AdminProjectDetailV2(){
               {sortedStages.map((stage:any)=><option key={stage.id} value={stage.id}>{stage.name}</option>)}
             </select>
           </label>:<label className="text-sm text-gray-400">Pasta no Drive
-            <select value={fileFolder} onChange={e=>setFileFolder(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+            <select value={fileFolder} onChange={e=>{setFileFolder(e.target.value);setFileCustomFolder('')}} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
               {driveFolderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
             </select>
           </label>}
+          {project.project_type!=='internal'&&fileFolder==='received'&&<div className="flex items-end gap-2">
+            <label className="min-w-0 flex-1 text-sm text-gray-400">Subpasta (opcional)
+              <select value={fileCustomFolder} onChange={e=>setFileCustomFolder(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+                <option value="">Direto em 01 — Recebidos</option>
+                {folderDirectory.custom.filter((folder:any)=>folder.parent_kind==='received').map((folder:any)=><option key={folder.id} value={folder.id}>{folder.name}</option>)}
+              </select>
+            </label>
+            <button type="button" title="Criar subpasta em Recebidos" aria-label="Criar subpasta em Recebidos" disabled={creatingReceivedFolder||uploading} onClick={()=>void addReceivedFolder()} className="h-10 w-10 shrink-0 rounded-xl border border-white/15 text-lg text-[#DFA269] disabled:opacity-50">+</button>
+          </div>}
           {project.project_type!=='internal'&&<label className="text-sm text-gray-400">Etapa do arquivo
             <select value={effectiveFileStage||'__general__'} disabled={Boolean(selectedFileTask?.stage_id)} onChange={e=>setFileStage(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10 disabled:opacity-60">
               <option value="__general__">Arquivo geral (sem etapa)</option>
