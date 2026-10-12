@@ -1107,10 +1107,10 @@ export function AdminProjectDetailV2(){
           <summary className={"cursor-pointer select-none p-4 rounded-xl "+(stage.status==="completed"?"text-emerald-300 hover:bg-emerald-500/[.07]":stage.status==="in_progress"?"text-amber-300 hover:bg-amber-400/[.07]":"hover:bg-white/[.035]")}>
             <span className="font-bold text-base">{/^\d{4}-\d{2}$/.test(stage.name)?new Date(stage.name+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):stage.name}</span>
             <span className="ml-3 text-xs text-gray-400">{complete}/{stageTasks.length} tarefas concluídas</span>
+            {stage.id!=='sem-etapa'&&<button type="button" onClick={e=>{e.preventDefault();e.stopPropagation();void renameStage(stage)}} className="ml-3 inline-flex min-h-8 items-center rounded-lg border border-current/30 px-3 py-1 text-xs font-semibold hover:bg-white/10" title="Editar nome deste material" aria-label={"Renomear "+stage.name}>✎ Renomear</button>}
           </summary>
           <div className="px-4 pb-4 space-y-3">
             {stage.id!=='sem-etapa'&&<div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 border-b border-white/10 pb-3">
-              <button type="button" onClick={()=>void renameStage(stage)} className="rounded-lg border border-white/15 px-3 py-2 text-xs hover:bg-white/5">Editar nome</button>
               <label>Etapa <select value={stage.status} onChange={e=>void changeStageStatus(stage.id,e.target.value)} className="ml-2 pm-control rounded-lg p-2">{stageStatuses.map(value=><option key={value} value={value}>{statusLabel('stage',value)}</option>)}</select></label>
               {stage.client_visible&&<Link to={'/admin/projetos/'+id+'/etapas/'+stage.id} className="inline-flex min-h-9 items-center text-xs font-semibold text-[#DFA269] hover:underline">Ver página da etapa ↗</Link>}
               <label className="flex items-center gap-2"><input type="checkbox" checked={stage.client_visible} onChange={async e=>{await portalApi.saveStage({client_visible:e.target.checked},stage.id);await load()}}/> Visível ao cliente</label>
