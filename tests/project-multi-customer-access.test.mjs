@@ -36,9 +36,10 @@ test('client profile can attach to projects that already have principal customer
   assert.match(customer,/customerProjectViewers/)
   assert.doesNotMatch(customer,/!item\.customer_id&&item\.project_type!=='internal'/)
 })
-test('extra viewers cannot upload files or approve deliveries',()=>{
-  assert.match(files,/selectedIsPrimary/)
-  assert.match(files,/file\.customer_id===user\?\.id&&file\.review_required/)
+test('extra viewers can upload intake files while approval stays with the primary customer',()=>{
+  assert.match(files,/customerProjectViewers\(user\.id\)/)
+  assert.match(files,/selectedCanUpload/)
+  assert.match(files,/folder_kind:'received'/)
   assert.match(files,/if\(file\.customer_id!==user\?\.id\)/)
   assert.match(download,/file\.client_visible/)
   assert.match(download,/project_customer_access/)

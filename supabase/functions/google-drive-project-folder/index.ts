@@ -1,4 +1,4 @@
-import { corsHeaders, ensureProjectFolder, hasPermission, json, listDriveFolderItems, requireUser } from "../_shared/googleDrive.ts";
+import { corsHeaders, customerCanAccessProject, ensureProjectFolder, hasPermission, json, listDriveFolderItems, requireUser } from "../_shared/googleDrive.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -12,10 +12,10 @@ Deno.serve(async (req) => {
     if (!staffAllowed) {
       const { data: project, error } = await ctx.db
         .from("projects")
-        .select("customer_id")
+        .select("id,customer_id,project_type")
         .eq("id", projectId)
         .single();
-      if (error || project?.customer_id !== ctx.userId) throw new Error("Forbidden");
+      if (error || !project || !(await customerCanAccessProject(ctx, project))) throw new Error("Forbidden");
     }
 
     const result = await ensureProjectFolder(ctx.db, ctx.userId, projectId);

@@ -1,4 +1,4 @@
-import { corsHeaders, ensureProjectFolder, getDriveAccessToken, hasPermission, json, requireUser, uploadFolderAliases } from "../_shared/googleDrive.ts";
+import { corsHeaders, customerCanAccessProject, ensureProjectFolder, getDriveAccessToken, hasPermission, json, requireUser, uploadFolderAliases } from "../_shared/googleDrive.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     if (projectError || !project) throw new Error("Project not found");
 
     const staffAllowed = ctx.role === "admin" || hasPermission(ctx, "files.manage");
-    if (!staffAllowed && project.customer_id !== ctx.userId) throw new Error("Forbidden");
+    if (!staffAllowed && !(await customerCanAccessProject(ctx, project))) throw new Error("Forbidden");
     // Customers can only send material to the intake area. Internal production,
     // approval and delivery folders are staff-controlled even when the customer owns the project.
     if (!staffAllowed && folderKind !== "received") throw new Error("Customers can only upload to received files");

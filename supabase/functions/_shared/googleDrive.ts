@@ -80,6 +80,23 @@ export function hasPermission(ctx: RequestContext, permission: string) {
   return ctx.role === "admin" || ctx.permissions.includes("*") || ctx.permissions.includes(permission);
 }
 
+export async function customerCanAccessProject(
+  ctx: RequestContext,
+  project: { id: string; customer_id: string | null; project_type: string | null },
+) {
+  if (ctx.role !== "customer" || project.project_type === "internal") return false;
+  if (project.customer_id === ctx.userId) return true;
+
+  const { data, error } = await ctx.db
+    .from("project_customer_access")
+    .select("project_id")
+    .eq("project_id", project.id)
+    .eq("customer_id", ctx.userId)
+    .maybeSingle();
+  if (error) throw error;
+  return Boolean(data);
+}
+
 export function requirePermission(ctx: RequestContext, permission: string) {
   if (!hasPermission(ctx, permission)) {
     throw new Error("Permission required: " + permission);
