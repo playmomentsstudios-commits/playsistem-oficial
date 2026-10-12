@@ -1,6 +1,6 @@
 import { corsHeaders, createDriveFolder, ensureProjectFolder, json, requirePermission, requireUser } from "../_shared/googleDrive.ts";
 
-const allowedKinds = new Set(["received","raw","production","preview","approved","delivery"]);
+const allowedKinds = new Set(["root","received","raw","production","preview","approved","delivery"]);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     if (projectError || !project) throw new Error("Project not found");
 
     const ensured = await ensureProjectFolder(ctx.db, ctx.userId, projectId);
-    const parent = ensured.folders.find((row:any) => row.folder_kind === parentKind);
+    const parent = parentKind === "root" ? { drive_folder_id: ensured.projectFolderId } : ensured.folders.find((row:any) => row.folder_kind === parentKind);
     if (!parent) throw new Error("Parent Drive folder not found");
 
     const { data: existing, error: existingError } = await ctx.db
