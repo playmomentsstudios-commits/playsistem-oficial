@@ -629,6 +629,14 @@ export const portalApi = {
     if(!data?.ok) throw new Error(data?.error||'Não foi possível criar a pasta no Google Drive.')
     return data.folder
   },
+  deleteCustomDriveFolder: async (projectId:string,folderId:string) => {
+    const {data,error}=await supabase.functions.invoke('google-drive-custom-folder',{
+      body:{action:'delete',project_id:projectId,folder_id:folderId},
+    })
+    if(error)throw error
+    if(!data?.ok)throw new Error(data?.error||'Não foi possível excluir a pasta.')
+    return data
+  },
   driveUploadStatus: async (projectId:string,uploadUrl:string,fileSize:number) => {
     const { data,error }=await supabase.functions.invoke('google-drive-upload-status',{
       body:{project_id:projectId,upload_url:uploadUrl,file_size:fileSize},
