@@ -837,11 +837,18 @@ export function AdminProjectDetailV2(){
               {sortedStages.map((stage:any)=><option key={stage.id} value={stage.id}>{stage.name}</option>)}
             </select>
           </label>:<label className="text-sm text-gray-400">Pasta no Drive
-            <select value={fileFolder} onChange={e=>{setFileFolder(e.target.value);setFileCustomFolder('')}} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
-              {driveFolderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}
+            <select value={fileCustomFolder?'custom:'+fileCustomFolder:fileFolder} onChange={e=>{
+              const value=e.target.value
+              if(value.startsWith('custom:')){
+                const custom=folderDirectory.custom.find((folder:any)=>folder.id===value.slice(7))
+                if(custom){setFileCustomFolder(custom.id);setFileFolder(custom.parent_kind==='root'?'received':custom.parent_kind)}
+              }else{setFileFolder(value);setFileCustomFolder('')}
+            }} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
+              <optgroup label="Pastas principais">{driveFolderOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}</optgroup>
+              {folderDirectory.custom.length>0&&<optgroup label="Pastas personalizadas">{folderDirectory.custom.map((folder:any)=><option key={folder.id} value={'custom:'+folder.id}>{folder.name}</option>)}</optgroup>}
             </select>
           </label>}
-          {project.project_type!=='internal'&&fileFolder==='received'&&<div className="flex items-end gap-2">
+          {project.project_type!=='internal'&&fileFolder==='received'&&!fileCustomFolder&&<div className="flex items-end gap-2">
             <label className="min-w-0 flex-1 text-sm text-gray-400">Subpasta (opcional)
               <select value={fileCustomFolder} onChange={e=>setFileCustomFolder(e.target.value)} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10">
                 <option value="">Direto em 01 — Recebidos</option>
