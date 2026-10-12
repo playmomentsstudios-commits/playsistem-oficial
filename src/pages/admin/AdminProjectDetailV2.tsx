@@ -430,18 +430,18 @@ export function AdminProjectDetailV2(){
   async function uploadProjectFile(event:React.ChangeEvent<HTMLInputElement>){
     const picked=Array.from(event.target.files||[])
     event.target.value=''
-    if(!picked.length||!user)return
-    const invalid=picked.find(file=>file.size>50*1024*1024*1024)
-    if(invalid){
+    if(!picked.length||!user||uploading)return
+    if(picked.some(file=>file.size>50*1024*1024*1024)){
       toast('Cada arquivo do Google Drive pode ter até 50 GB.','error')
       return
     }
     setUploading(true)
     setFileProgress(0)
-    setFileProgressName('')
+    setFileProgressName('Preparando envio...')
+    let saved=0
     try{
       await portalApi.ensureProjectDriveFolder(id)
-      for(let index=0;index<picked.length;index+=1){
+      for(let index=0;index<picked.length;index++){
         const file=picked[index]
         setFileProgressName(file.name)
         const uploaded=await portalApi.uploadDriveFile({
@@ -450,20 +450,29 @@ export function AdminProjectDetailV2(){
           stage_id:effectiveFileStage,
           folder_kind:fileFolder,
           custom_folder_id:project.project_type==='internal'?null:(fileCustomFolder||null),
-          client_visible:false, // Keep file internal until explicit publication.
-        },file,value=>setFileProgress(Math.round(((index+(value/100))/picked.length)*100)))
-        // Existing deployed finalize functions can omit stage_id on customer projects.
-        // Keep the stage association in Postgres even before the Edge rollout.
-        if(project.project_type!=='internal'&&effectiveFileStage&&uploaded?.id){
-          await portalApi.assignClientFileStage(uploaded.id,effectiveFileStage)
+          client_visible:false,
+        },file,value=>setFileProgress(Math.round(((index+value/100)/picked.length)*100)))
+        if(!uploaded?.id)throw new Error('O arquivo chegou ao Drive, mas não foi confirmado no painel.')
+        saved++
+        // Optional metadata reconciliation must not turn a successful upload into an error.
+        if(fileTask||effectiveFileStage){
+          try{
+            if(fileTask)await portalApi.assignClientFileTask(uploaded.id,fileTask)
+            else if(project.project_type!=='internal'&&effectiveFileStage)await portalApi.assignClientFileStage(uploaded.id,effectiveFileStage)
+          }catch(error:any){
+            toast('Arquivo salvo. Confira o vínculo com a tarefa/etapa: '+(error?.message||'não confirmado'),'error')
+          }
         }
       }
-      toast(picked.length===1?'Arquivo enviado ao Google Drive e adicionado ao projeto.':picked.length+' arquivos enviados ao projeto.','success')
-      setFileProgress(0)
-      setFileProgressName('')
-      await load()
-    }catch(error:any){toast(error.message,'error')}
-    finally{setUploading(false)}
+      setFileProgress(100)
+      setFileProgressName('Envio concluído')
+      toast(saved===1?'Arquivo enviado com sucesso.':saved+' arquivos enviados com sucesso.','success')
+    }catch(error:any){
+      toast((saved?saved+' arquivo(s) já salvo(s). ':'')+(error?.message||'Não foi possível confirmar o envio.')+' Confira a lista antes de reenviar.','error')
+    }finally{
+      setUploading(false)
+      try{await load()}catch{toast('Envio finalizado. Atualize a lista para conferir os arquivos.','error')}
+    }
   }
 
   async function uploadTaskFile(event:React.ChangeEvent<HTMLInputElement>,task:any){
@@ -872,7 +881,7 @@ export function AdminProjectDetailV2(){
           </label>
         </div>
 
-        {uploading&&fileProgress>0&&<div className="mt-4">
+        {(uploading||fileProgress===100)&&fileProgressName&&<div role="status" aria-live="polite" className="mt-4">
           <div className="flex justify-between gap-3 text-xs text-gray-500"><span className="truncate">{fileProgressName||'Upload para o Google Drive'}</span><span>{fileProgress}%</span></div>
           <div className="h-2 rounded bg-white/10 mt-2"><div className="h-2 rounded bg-[#A65A2A]" style={{width:fileProgress+'%'}}/></div>
         </div>}
