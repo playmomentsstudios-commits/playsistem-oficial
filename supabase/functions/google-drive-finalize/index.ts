@@ -142,16 +142,36 @@ Deno.serve(async (req) => {
       custom_folder_id: customFolderId,
     };
 
-    const { data, error } = await ctx.db
-      .from("client_files")
-      .upsert(values, { onConflict: "drive_file_id" })
-      .select()
-      .single();
+    // Drive inventory may register a file before the upload finalizer runs.
+    // UPDATE an existing record rather than INSERT ... ON CONFLICT, which can
+    // run insert-only validations and make an already saved file look failed.
+    const { data: existing, error: existingError } = await ctx.db
+      .from("client_files").select("id,project_id")
+      .eq("drive_file_id", file.id).maybeSingle();
+    if (existingError) throw existingError;
+    if (existing?.project_id && existing.project_id !== projectId) {
+      throw new Error("File already belongs to another project");
+    }
+    const mutation = existing
+      ? ctx.db.from("client_files").update(values).eq("id", existing.id)
+      : ctx.db.from("client_files").insert({
+          ...values,
+          version_group_id: crypto.randomUUID(),
+          version_number: 1,
+        });
+    const { data, error } = await mutation.select().single();
     if (error) throw error;
 
     return json({ ok: true, file: data });
   } catch (error) {
-    console.error("Drive finalize failed:", error instanceof Error ? error.message : "Unknown error");
-    return json({ ok: false, error: error instanceof Error ? error.message : "Unknown error" }, 400);
+    const err = error as {message?:string;code?:string;details?:string;hint?:string};
+    const message = typeof err?.message === "string" && err.message.trim()
+      ? err.message : "Falha ao finalizar o arquivo no sistema.";
+    console.error("Drive finalize failed:", {
+      message,
+      code: err?.code || null,
+      details: err?.details || null,
+    });
+    return json({ ok: false, error: message }, 400);
   }
 });
