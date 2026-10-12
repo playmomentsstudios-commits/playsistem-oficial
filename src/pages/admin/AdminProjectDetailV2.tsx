@@ -67,6 +67,7 @@ export function AdminProjectDetailV2(){
   const [fileStage,setFileStage]=useState('')
   const [fileFolder,setFileFolder]=useState('received')
   const [taskUploadingId,setTaskUploadingId]=useState<string|null>(null)
+  const [taskUploadProgress,setTaskUploadProgress]=useState<{taskId:string;name:string;percent:number;done:number;total:number;status:'uploading'|'done'|'error'}|null>(null)
   const [uploading,setUploading]=useState(false)
   const [fileProgress,setFileProgress]=useState(0)
   const [fileProgressName,setFileProgressName]=useState('')
@@ -457,30 +458,35 @@ export function AdminProjectDetailV2(){
       return
     }
     setTaskUploadingId(task.id)
+    setTaskUploadProgress({taskId:task.id,name:picked[0].name,percent:0,done:0,total:picked.length,status:'uploading'})
+    let completed=0
     try{
       await portalApi.ensureProjectDriveFolder(id)
       for(const file of picked){
+        setTaskUploadProgress({taskId:task.id,name:file.name,percent:0,done:completed,total:picked.length,status:'uploading'})
         const uploaded=await portalApi.uploadDriveFile({
           project_id:id,
           task_id:task.id,
           stage_id:task.stage_id||null,
-          // New material for client projects starts in Review; internal
-          // projects use their existing stage-based Drive folder structure.
           folder_kind:project.project_type==='internal'?'production':'preview',
           client_visible:false,
-        },file)
-        if(!uploaded?.id)throw new Error('O Drive recebeu o arquivo, mas o vínculo com a tarefa não foi confirmado.')
-        // A concurrent Drive inventory can register the file before finalize.
-        // Explicitly restore the task association after upload, including its stage.
+        },file,percent=>setTaskUploadProgress({taskId:task.id,name:file.name,percent,done:completed,total:picked.length,status:'uploading'}))
+        if(!uploaded?.id)throw new Error('O arquivo chegou ao Drive, mas não foi confirmado no painel.')
         await portalApi.assignClientFileTask(uploaded.id,task.id)
         if(project.project_type!=='internal'&&task.stage_id){
           await portalApi.assignClientFileStage(uploaded.id,task.stage_id)
         }
+        completed++
+        setTaskUploadProgress({taskId:task.id,name:file.name,percent:100,done:completed,total:picked.length,status:'uploading'})
       }
-      toast(picked.length===1?'Arquivo salvo nesta tarefa, somente para a equipe.':picked.length+' arquivos vinculados a esta tarefa, somente para a equipe.','success')
       await load()
-    }catch(error:any){toast(error?.message||'Não foi possível enviar os arquivos desta tarefa.','error')}
-    finally{setTaskUploadingId(null)}
+      setTaskUploadProgress({taskId:task.id,name:picked[picked.length-1].name,percent:100,done:completed,total:picked.length,status:'done'})
+      toast(completed===1?'Arquivo vinculado à tarefa com sucesso.':completed+' arquivos vinculados à tarefa.','success')
+    }catch(error:any){
+      setTaskUploadProgress({taskId:task.id,name:picked[Math.min(completed,picked.length-1)].name,percent:0,done:completed,total:picked.length,status:'error'})
+      toast((error?.message||'Falha no envio ou na associação.')+' Confira o arquivo antes de reenviar.','error')
+      try{await load()}catch{}
+    }finally{setTaskUploadingId(null)}
   }
 
   async function uploadNewVersion(event:React.ChangeEvent<HTMLInputElement>,previousFile:any){
@@ -973,6 +979,7 @@ export function AdminProjectDetailV2(){
             {stageTasks.map((task:any)=>{
         const member=team.find(item=>item.id===task.assigned_to)
         const stage=sortedStages.find((item:any)=>item.id===task.stage_id)
+        const taskProgress=taskUploadProgress?.taskId===task.id?taskUploadProgress:null
         return <details key={task.id} className={'rounded-xl border p-3 transition-colors '+(task.status==='completed'?'border-emerald-500/35 bg-emerald-500/[.07]':task.status==='in_progress'?'border-amber-400/35 bg-amber-400/[.07]':task.status==='review'?'border-sky-400/35 bg-sky-400/[.07]':task.status==='cancelled'?'border-white/10 bg-black/10 opacity-60':'border-white/15 bg-white/[.025]')}>
           <summary className={'cursor-pointer font-semibold text-sm select-none '+(task.status==='completed'?'text-emerald-300':task.status==='in_progress'?'text-amber-300':task.status==='review'?'text-sky-300':task.status==='cancelled'?'text-gray-500 line-through':'text-gray-200')}>{task.title} <span className="ml-2 text-xs font-normal opacity-80">· {rotulo(statusTarefa,task.status)}</span></summary>
           <div className="mt-3">
@@ -1000,6 +1007,11 @@ export function AdminProjectDetailV2(){
             </label>
             <span className="text-[11px] text-gray-500">Vinculado automaticamente · somente equipe · {project.project_type==='internal'?'pasta da etapa':'03 — Revisão'}</span>
           </div>
+          {taskProgress&&<div role="status" aria-live="polite" className="mt-2 max-w-lg rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-xs">
+            <p className="truncate">{taskProgress.status==='done'?'✓ Envio concluído':taskProgress.status==='error'?'Envio não confirmado — confira antes de reenviar':'Enviando arquivo...'} {taskProgress.name}</p>
+            <div className="mt-1 flex items-center justify-between text-gray-400"><span>{taskProgress.done}/{taskProgress.total} concluído(s)</span><span>{taskProgress.percent}%</span></div>
+            <div className="mt-1 h-1.5 overflow-hidden rounded bg-white/10"><div className="h-full bg-[#A65A2A]" style={{width:taskProgress.percent+'%'}}/></div>
+          </div>}
           {(files.filter((file:any)=>file.task_id===task.id).length>0)&&<div className="mt-4">
             <p className="text-sm font-semibold mb-2">Arquivos desta tarefa</p>
             <div className="flex flex-wrap gap-2">{files.filter((file:any)=>file.task_id===task.id).map((file:any)=><button key={file.id} onClick={()=>openFile(file)} className="px-3 py-2 rounded-lg bg-white/5 text-xs">{file.name} ↗</button>)}</div>
