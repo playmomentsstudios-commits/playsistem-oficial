@@ -1016,8 +1016,7 @@ export function AdminProjectDetailV2(){
           {stage?.client_visible&&task.client_visible&&<Link to={'/admin/projetos/'+id+'/etapas/'+stage.id+'/tarefas/'+task.id} className="mb-3 inline-flex min-h-10 items-center rounded-lg border border-[#A65A2A]/30 px-3 text-xs font-semibold text-[#DFA269] hover:bg-white/5">Prévia da tarefa para o cliente ↗</Link>}
           <div className="flex flex-wrap justify-between gap-3">
             <div>
-              <b>{task.title}</b>
-              <p className="text-xs text-gray-500 mt-1">{stage?.name||'Sem etapa'} · {member?member.first_name+' '+member.last_name:'Sem responsável'} · prioridade {rotulo(prioridade,task.priority)}</p>
+              <p className="text-xs text-gray-500">{stage?.name||'Sem etapa'} · {member?member.first_name+' '+member.last_name:'Sem responsável'} · prioridade {rotulo(prioridade,task.priority)}</p>
               {task.due_date&&<p className="text-xs text-gray-500 mt-1">Prazo: {new Date(task.due_date+'T12:00').toLocaleDateString('pt-BR')}</p>}
             </div>
             <div className="flex gap-2 items-start">
@@ -1031,11 +1030,11 @@ export function AdminProjectDetailV2(){
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-3">
-            <label className={'inline-flex min-h-9 items-center gap-2 rounded-lg border border-[#A65A2A]/40 px-3 py-2 text-xs font-semibold '+(taskUploadingId?'cursor-not-allowed opacity-50':'cursor-pointer hover:bg-[#A65A2A]/10')}>
-              {taskUploadingId===task.id?'Enviando arquivos...':'+ Adicionar arquivos'}
+            <label title="Adicionar arquivos à tarefa" aria-label="Adicionar arquivos à tarefa" className={'inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#A65A2A]/40 text-lg font-semibold '+(taskUploadingId?'cursor-not-allowed opacity-50':'cursor-pointer hover:bg-[#A65A2A]/10')}>
+              <span aria-hidden="true">{taskUploadingId===task.id?'…':'+'}</span>
               <input type="file" multiple className="sr-only" disabled={Boolean(taskUploadingId)} onChange={e=>void uploadTaskFile(e,task)}/>
             </label>
-            <span className="text-[11px] text-gray-500">Vinculado automaticamente · somente equipe · {project.project_type==='internal'?'pasta da etapa':'03 — Revisão'}</span>
+            <span className="text-[11px] text-gray-500">{project.project_type==='internal'?'Equipe · pasta da etapa':'Privado · Revisão'}</span>
           </div>
           {taskProgress&&<div role="status" aria-live="polite" className="mt-2 max-w-lg rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-xs">
             <p className="truncate">{taskProgress.status==='done'?'✓ Envio concluído':taskProgress.status==='error'?'Envio não confirmado — confira antes de reenviar':'Enviando arquivo...'} {taskProgress.name}</p>
@@ -1043,16 +1042,16 @@ export function AdminProjectDetailV2(){
             <div className="mt-1 h-1.5 overflow-hidden rounded bg-white/10"><div className="h-full bg-[#A65A2A]" style={{width:taskProgress.percent+'%'}}/></div>
           </div>}
           {(files.filter((file:any)=>file.task_id===task.id).length>0)&&<div className="mt-4">
-            <p className="text-sm font-semibold mb-2">Arquivos desta tarefa</p>
+            <p className="text-xs font-medium text-gray-400 mb-2">Arquivos ({files.filter((file:any)=>file.task_id===task.id).length})</p>
             <div className="flex flex-wrap gap-2">{files.filter((file:any)=>file.task_id===task.id).map((file:any)=><button key={file.id} onClick={()=>openFile(file)} className="px-3 py-2 rounded-lg bg-white/5 text-xs">{file.name} ↗</button>)}</div>
           </div>}
-          <div className="grid lg:grid-cols-2 gap-4 mt-4">
+          <div className="grid lg:grid-cols-2 gap-4 mt-3">
             <div>
-              <div className="flex justify-between"><p className="text-sm font-semibold">Checklist</p><button onClick={()=>addChecklist(task.id)} className="text-xs text-[#A65A2A]">+ item</button></div>
+              <div className="flex justify-between"><p className="text-xs font-medium text-gray-400">Checklist · {(task.checklist||[]).filter((item:any)=>item.completed).length}/{(task.checklist||[]).length}</p><button onClick={()=>addChecklist(task.id)} title="Adicionar item" aria-label="Adicionar item ao checklist" className="text-xs text-[#A65A2A]">+</button></div>
               <div className="space-y-1 mt-2">{(task.checklist||[]).sort((a:any,b:any)=>a.position-b.position).map((item:any)=><label key={item.id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={item.completed} onChange={e=>void toggleChecklist(task.id,item.id,e.target.checked)}/><span className={item.completed?'line-through text-gray-500':''}>{item.title}</span><button type="button" onClick={async()=>{await portalApi.deleteChecklistItem(item.id);await load()}} className="ml-auto text-xs text-red-400">×</button></label>)}</div>
             </div>
             <div>
-              <div className="flex justify-between"><p className="text-sm font-semibold">Links</p><button onClick={()=>addLink(task.id)} className="text-xs text-[#A65A2A]">+ link</button></div>
+              <div className="flex justify-between"><p className="text-xs font-medium text-gray-400">Links</p><button onClick={()=>addLink(task.id)} title="Adicionar link" aria-label="Adicionar link" className="text-xs text-[#A65A2A]">+</button></div>
               <div className="space-y-1 mt-2">{(task.links||[]).map((link:any)=><div key={link.id} className="flex items-center gap-2 text-sm"><a href={link.url} target="_blank" rel="noreferrer" className="text-[#A65A2A]">{link.label} ↗</a>{link.client_visible&&<span className="text-[10px] text-emerald-400">cliente</span>}<button onClick={async()=>{await portalApi.deleteTaskLink(link.id);await load()}} className="ml-auto text-xs text-red-400">×</button></div>)}</div>
             </div>
           </div>
