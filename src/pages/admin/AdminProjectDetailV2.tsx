@@ -264,7 +264,23 @@ export function AdminProjectDetailV2(){
     const previous=project?.tasks?.find((task:any)=>task.id===taskId)
     const completed_at=status==='completed'?(previous?.completed_at||new Date().toISOString()):null
     setProject((current:any)=>current?{...current,tasks:(current.tasks||[]).map((task:any)=>task.id===taskId?{...task,status,completed_at}:task)}:current)
-    try{await portalApi.saveTask({status,completed_at},taskId)}
+    try{
+      if(status==='completed'&&previous?.status!=='completed'&&project?.project_type!=='internal'){
+        const draftFiles=files.filter((file:any)=>
+          file.task_id===taskId&&file.storage_provider==='google_drive'
+          &&file.drive_folder_kind==='preview'
+        )
+        if(draftFiles.length){
+          if(!window.confirm('Concluir a tarefa e mover '+draftFiles.length+' arquivo(s) da Revisão para Entregas? Os arquivos continuam privados até serem publicados.')){
+            setProject((current:any)=>current?{...current,tasks:(current.tasks||[]).map((task:any)=>task.id===taskId?{...task,status:previous.status,completed_at:previous.completed_at}:task)}:current)
+            return
+          }
+          for(const file of draftFiles)await fileManagementApi.move(file.id,'delivery')
+        }
+      }
+      await portalApi.saveTask({status,completed_at})
+      await load()
+    }
     catch(error:any){
       setProject((current:any)=>current?{...current,tasks:(current.tasks||[]).map((task:any)=>task.id===taskId?{...task,status:previous?.status,completed_at:previous?.completed_at}:task)}:current)
       toast(error?.message||'Não foi possível atualizar a tarefa.','error')
