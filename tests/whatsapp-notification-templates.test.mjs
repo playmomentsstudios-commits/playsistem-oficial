@@ -6,7 +6,7 @@ const center=readFileSync(new URL('../src/pages/admin/AdminWhatsappCenter.tsx',i
 const migration=readFileSync(new URL('../supabase/migrations/20261011160000_whatsapp_project_notification_copy.sql',import.meta.url),'utf8')
 
 test('the admin preview presents six concise customer-facing WhatsApp models with project context and a link slot',()=>{
- for(const title of ['Projeto iniciado','Etapa concluída','Revisão disponível','Ajustes concluídos','Entrega final','Nova mensagem']) assert.match(templates,new RegExp(title))
+ for(const title of ['Projeto iniciado','Produção finalizada','Revisão disponível','Ajustes concluídos','Entrega final','Nova mensagem']) assert.match(templates,new RegExp(title))
  assert.equal((templates.match(/title:'/g)||[]).length,6)
  assert.equal((templates.match(/\{\{link\}\}/g)||[]).length>=6,true)
  assert.match(templates,/Prévia com dados de exemplo/)

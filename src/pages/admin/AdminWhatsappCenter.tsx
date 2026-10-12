@@ -8,7 +8,7 @@ import { PriorityAlertHistory } from '../../components/admin/PriorityAlertHistor
 import { WHATSAPP_CONSENT_PATH } from '../../lib/whatsappConsent'
 import { WhatsappMessageTemplates } from '../../components/admin/WhatsappMessageTemplates'
 
-type WAState='ready_manual'|'missing_phone'|'historical'|'opened_manual'|'reported_sent'|'sending_auto'|'sent_auto'|'failed_auto'
+type WAState='ready_manual'|'missing_phone'|'historical'|'opened_manual'|'reported_sent'|'sending_auto'|'sent_auto'|'failed_auto'|'blocked_files'
 type WAAttempt={
   id:string;outbox_id:string;destination_phone:string;test_mode:boolean;
   status:'claimed'|'sent'|'failed';provider_message_id:string|null;
@@ -58,6 +58,7 @@ const RULES=[
   ['wa_prepare_priority_events','Alertas administrativos prioritários'],
 ] as const satisfies ReadonlyArray<readonly [keyof AppSettings,string]>
 const STATUS:Record<WAState,{label:string;tone:string}>={
+  blocked_files:{label:'Bloqueada · conferir arquivos e acesso ao Drive',tone:'text-red-200 bg-red-500/10'},
   ready_manual:{label:'Aguardando envio manual',tone:'text-amber-200 bg-amber-500/10'},
   missing_phone:{label:'Sem número válido',tone:'text-red-200 bg-red-500/10'},
   historical:{label:'Histórico · não enviado',tone:'text-gray-300 bg-white/5'},
@@ -197,8 +198,9 @@ export function AdminWhatsappCenter(){
     if(rpcError)throw rpcError
     await load()
   }
-  function openWhatsApp(item:WARecord){
-    if(!item.destination_phone||['historical','missing_phone','sending_auto','sent_auto'].includes(item.status))return
+  async function openWhatsApp(item:WARecord){
+    if(item.status==='blocked_files')return
+    if(!item.destination_phone||['historical','missing_phone','sending_auto','sent_auto','blocked_files'].includes(item.status))return
     const destination=item.destination_phone.replace(/\D/g,'')
     if(!/^55\d{10,11}$/.test(destination)){
       toast('Número do destinatário inválido. Atualize o cadastro.','error')
@@ -207,7 +209,7 @@ export function AdminWhatsappCenter(){
     const destinationUrl=safeUrl(item.target_link)
     const alreadyHasTarget=Boolean(item.target_link&&item.message_body.includes(item.target_link))
     const prepared=item.message_body+(destinationUrl&&!alreadyHasTarget&&!item.message_body.includes(destinationUrl)?'\n\nAcompanhar: '+destinationUrl:'')
-    const popup=window.open('https://wa.me/'+destination+'?text='+encodeURIComponent(prepared),'_blank')
+    const popup=window.open('about:blank','_blank')
     if(popup)popup.opener=null
     // "opened_manual" identifica apenas a ação de abrir. Não comprova envio.
     if(popup===null){
@@ -215,9 +217,23 @@ export function AdminWhatsappCenter(){
       return
     }
     setBusy(item.id)
-    void mark(item.id,'opened')
-      .catch(err=>toast(err?.message||'Não foi possível registrar a abertura.','error'))
-      .finally(()=>setBusy(null))
+    try{
+      await mark(item.id,'opened')
+      popup.location.href='https://wa.me/'+destination+'?text='+encodeURIComponent(prepared)
+    }catch(err:any){popup.close();toast(err?.message||'Não foi possível verificar a abertura.','error')}
+    finally{setBusy(null)}
+  }
+  async function retryBlocked(item:WARecord){
+    setBusy(item.id)
+    try{
+      const {data,error}=await supabase.functions.invoke('google-drive-project-sync',{body:{outbox_id:item.id}})
+      if(error||!data?.ok)throw error||new Error(data?.error||'Não foi possível verificar o Drive.')
+      const result=await supabase.rpc('wa_retry_blocked_notification',{p_outbox_id:item.id})
+      if(result.error)throw result.error
+      toast(result.data==='ready_manual'?'Mensagem preparada. Nenhum envio foi realizado.':'Ainda faltam arquivos publicados, vínculos ou permissão no Drive.',result.data==='ready_manual'?'success':'error')
+      await load()
+    }catch(err:any){toast(err?.message||'Não foi possível preparar a mensagem.','error')}
+    finally{setBusy(null)}
   }
   async function reportSent(item:WARecord){
     if(!window.confirm('Você confirma que enviou MANUALMENTE esta mensagem no WhatsApp? Isso é uma declaração do operador, não comprovação de entrega.'))return
@@ -366,7 +382,8 @@ export function AdminWhatsappCenter(){
                 <p className="mt-1 text-xs text-gray-400">{EVENT[item.event_type]||item.event_type} · {localDate(item.created_at)}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-              {!showArchived&&!['historical','missing_phone','sending_auto','sent_auto'].includes(item.status)&&
+              {!showArchived&&item.status==='blocked_files'&&<button onClick={()=>void retryBlocked(item)} disabled={busy===item.id} className="min-h-9 rounded-lg border border-white/10 px-3 text-xs disabled:opacity-50">Verificar arquivos e preparar</button>}
+              {!showArchived&&!['historical','missing_phone','sending_auto','sent_auto','blocked_files'].includes(item.status)&&
                 <button onClick={()=>openWhatsApp(item)} disabled={busy===item.id} className="min-h-9 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 text-xs text-emerald-200 disabled:opacity-50">Abrir WhatsApp</button>}
               {!showArchived&&item.status==='opened_manual'&&<button onClick={()=>void reportSent(item)} disabled={busy===item.id} className="min-h-9 rounded-lg border border-white/15 px-3 text-xs text-gray-200 disabled:opacity-50">Informar envio manual</button>}
               <button disabled={busy===item.id} type="button" onClick={()=>void archiveRecord(item)}
