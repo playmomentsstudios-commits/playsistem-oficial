@@ -90,8 +90,8 @@ test('final project delivery includes every authorized project file',async()=>{
 test('ordinary progress preserves short preview only',async()=>{
  const body=await emit('project_task','in_progress')
  assert.match(body,/\+8 outro\(s\) arquivo\(s\)/)
- assert.ok(body.includes(drive(1)))
- assert.ok(!body.includes(drive(16)))
+ assert.ok(body.includes(drive(11)))
+ assert.ok(!body.includes(drive(1)))
 })
 test('invalid Drive identifier is not emitted as a link',async()=>{
  await addFile(19,'Arquivo sem link',{driveId:'bad'})
