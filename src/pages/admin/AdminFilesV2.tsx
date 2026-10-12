@@ -9,6 +9,7 @@ import { CompactPageHeader } from '../../components/ui/CompactWorkspace'
 import { DriveFileThumbnail } from '../../components/files/DriveFileThumbnail'
 import { settingsApi } from '../../api/settings'
 import { supabase } from '../../lib/supabase'
+import { adminFileAccessLabel, adminFilePhysicalFolderLabel } from '../../lib/projectFileOrganization'
 
 const INTERNAL_LIBRARY_KEY='__internal__'
 
@@ -679,6 +680,10 @@ export function AdminFilesV2(){
               {filteredLibraryFiles.map(row=>{
                 const review=reviewBadge(row)
                 const internalRow=isInternalRow(row)
+                const projectRow=projects.find((item:any)=>item.id===row.project_id)||row.project
+                const physicalFolder=adminFilePhysicalFolderLabel(row,projectRow)
+                const fileContext=[row.stage?.name,row.task?.title].filter(Boolean).join(' · ')||'Arquivo geral do projeto'
+                const visibility=adminFileAccessLabel(row,projectRow)
                 return <div key={row.id} className="relative p-2.5 rounded-xl bg-[#171719] border border-white/8 hover:border-white/15 transition-colors">
                   <button type="button" onClick={()=>open(row)} className="w-full text-left">
                     <div className="h-64 sm:h-72 rounded-lg bg-white/[0.035] flex items-center justify-center text-2xl overflow-hidden"><DriveFileThumbnail file={row} fallback={fileIcon(row)} className="w-full h-full"/></div>
@@ -687,7 +692,9 @@ export function AdminFilesV2(){
                       <span className="text-[9px] text-gray-600">{sizeLabel(row.file_size)}</span>
                     </div>}
                     <p className="text-xs font-normal text-gray-400 truncate mt-2" title={row.name}>{row.name}</p>
-                    <p className="text-[9px] text-gray-500 truncate mt-1">{row.stage?.name?('📁 '+row.stage.name):(row.custom_folder?.name?('📁 '+row.custom_folder.name):(row.task?.title||'Arquivo geral'))}</p>
+                    <p className="text-[9px] text-gray-500 truncate mt-1" title={physicalFolder}>📂 Pasta física: {physicalFolder}</p>
+                    <p className="text-[9px] text-gray-600 truncate mt-1" title={fileContext}>Contexto: {fileContext}</p>
+                    <p className="text-[9px] mt-1" title="Acesso calculado considerando o arquivo, a tarefa e a etapa"><span className={visibility==='Liberado ao cliente'?'text-emerald-300':visibility.startsWith('Acesso não confirmado')?'text-amber-300':'text-gray-500'}>{visibility}</span></p>
                     {review&&<span className={'inline-flex mt-2 px-2 py-1 rounded-full text-[9px] font-semibold '+review.className}>{review.label}</span>}
                   </button>
 
