@@ -1,4 +1,4 @@
-import { corsHeaders, driveJson, ensureProjectFolder, getDriveAccessToken, hasPermission, json, requireUser } from "../_shared/googleDrive.ts";
+import { corsHeaders, customerCanAccessProject, driveJson, ensureProjectFolder, getDriveAccessToken, hasPermission, json, requireUser } from "../_shared/googleDrive.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     if (projectError || !project) throw new Error("Project not found");
 
     const staff = ctx.role === "admin" || hasPermission(ctx, "files.manage");
-    if (!staff && project.customer_id !== ctx.userId) throw new Error("Forbidden");
+    if (!staff && !(await customerCanAccessProject(ctx, project))) throw new Error("Forbidden");
 
     let taskStageId:string|null = null;
     if (taskId) {
@@ -50,12 +50,16 @@ Deno.serve(async (req) => {
     const folders = await ensureProjectFolder(ctx.db, ctx.userId, projectId);
     const { data: customFolders, error: customFoldersError } = await ctx.db
       .from("project_custom_folders")
-      .select("id,project_id,drive_folder_id,parent_kind")
+      .select("id,project_id,drive_folder_id,parent_kind,client_visible")
       .eq("project_id", projectId);
     if (customFoldersError) throw customFoldersError;
 
-    if (customFolderId && !(customFolders || []).some((row:any) => row.id === customFolderId)) {
-      throw new Error("Custom folder does not belong to this project");
+    const customFolder = customFolderId
+      ? (customFolders || []).find((row:any) => row.id === customFolderId) || null
+      : null;
+    if (customFolderId && !customFolder) throw new Error("Custom folder does not belong to this project");
+    if (!staff && customFolder && (!customFolder.client_visible || customFolder.parent_kind !== "received")) {
+      throw new Error("Custom folder is not available for customer uploads");
     }
 
     const allowedFolderIds = new Set<string>([
@@ -102,6 +106,15 @@ Deno.serve(async (req) => {
     const parentId = file.parents?.[0] || null;
     if (!parentId || !allowedFolderIds.has(parentId)) {
       throw new Error("Drive file is outside this project");
+    }
+
+    if (!staff) {
+      const isReceivedFolder = (folders.folders || []).some(
+        (row:any) => row.drive_folder_id === parentId && row.folder_kind === "received",
+      );
+      if (!isReceivedFolder && customFolder?.drive_folder_id !== parentId) {
+        throw new Error("Customers can only upload to received files");
+      }
     }
 
     const fileStageId = taskStageId || (staff ? requestedStageId : null)

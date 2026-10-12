@@ -69,12 +69,18 @@ export function FilesPage(){
     try{
       setLoading(true)
       const [fileRows,projectRows]=await Promise.all([portalApi.files(),portalApi.projects()])
+      const viewerRows=user?.id?await portalApi.customerProjectViewers(user.id):[]
+      const viewerProjectIds=new Set(viewerRows.map((row:any)=>row.project_id))
       setRows(fileRows)
-      setProjects(projectRows)
+      setProjects(projectRows.map((project:any)=>({
+        ...project,
+        can_upload:project.project_type!=='internal'
+          &&(project.customer_id===user?.id||viewerProjectIds.has(project.id)),
+      })))
     }finally{setLoading(false)}
   }
 
-  useEffect(()=>{void load()},[])
+  useEffect(()=>{if(user?.id)void load()},[user?.id])
 
   const groups=useMemo(()=>{
     const map=new Map<string,{project:any;files:any[]}>()
@@ -99,7 +105,7 @@ export function FilesPage(){
   },[groups,projectSearch])
 
   const selected=projectId?groups.find(([id])=>id===projectId)?.[1]||null:null
-  const selectedIsPrimary=Boolean(user?.id&&selected?.project?.customer_id===user.id)
+  const selectedCanUpload=Boolean(selected?.project?.can_upload)
 
   const selectedVersionGroups=useMemo(()=>{
     if(!selected)return []
@@ -136,7 +142,7 @@ export function FilesPage(){
   },[selectedVersionGroups,fileSearch,fileType,fileReview])
 
   async function uploadToProject(){
-    if(!selectedIsPrimary)return toast('Somente o cliente principal pode enviar arquivos ao projeto.','error')
+    if(!selectedCanUpload)return toast('Somente o cliente principal pode enviar arquivos ao projeto.','error')
     if(!projectId||projectId==='general'||!uploadFiles.length)return
     try{
       setUploading(true);setUploadProgress(0);setUploadName('')
@@ -245,7 +251,7 @@ export function FilesPage(){
             <p className="text-sm font-semibold truncate">{selected.project?.title||'Arquivos gerais'}</p>
             <p className="text-[10px] text-gray-500">{selected.files.length} arquivo(s) disponíveis</p>
           </div>
-          {projectId!=='general'&&selectedIsPrimary&&<label className="min-h-10 px-3 rounded-xl bg-[#A65A2A] text-white text-xs font-semibold flex items-center justify-center cursor-pointer">
+          {projectId!=='general'&&selectedCanUpload&&<label className="min-h-10 px-3 rounded-xl bg-[#A65A2A] text-white text-xs font-semibold flex items-center justify-center cursor-pointer">
             <input type="file" multiple className="sr-only" disabled={uploading} onChange={event=>{
               const picked=Array.from(event.target.files||[])
               const invalid=picked.find(file=>file.size>50*1024*1024*1024)
@@ -262,7 +268,7 @@ export function FilesPage(){
         </div>
 
         <div className="p-2.5 sm:p-3 overflow-y-auto">
-          {uploadFiles.length>0&&projectId!=='general'&&selectedIsPrimary&&<div className="mb-4 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
+          {uploadFiles.length>0&&projectId!=='general'&&selectedCanUpload&&<div className="mb-4 p-3 rounded-2xl border border-white/10 bg-white/[0.03]">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm font-semibold">{uploadFiles.length} arquivo(s) na fila</p>
