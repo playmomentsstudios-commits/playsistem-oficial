@@ -331,6 +331,26 @@ export function AdminProjectDetailV2(){
     }catch(error:any){toast(error.message||'Não foi possível excluir o projeto.','error')}
   }
 
+  async function renameStage(stage:any){
+    const next=window.prompt('Novo nome da etapa',stage.name)?.trim()
+    if(!next||next===stage.name)return
+    try{
+      await portalApi.saveStage({name:next},stage.id)
+      await load()
+      toast('Etapa renomeada.','success')
+    }catch(error:any){toast(error?.message||'Não foi possível renomear a etapa.','error')}
+  }
+
+  async function renameTask(task:any){
+    const next=window.prompt('Novo título da tarefa',task.title)?.trim()
+    if(!next||next===task.title)return
+    try{
+      await portalApi.saveTask({title:next},task.id)
+      await load()
+      toast('Tarefa renomeada.','success')
+    }catch(error:any){toast(error?.message||'Não foi possível renomear a tarefa.','error')}
+  }
+
   async function addStage(e:React.FormEvent){
     e.preventDefault()
     if(!stageName.trim())return
@@ -1016,6 +1036,7 @@ export function AdminProjectDetailV2(){
           </summary>
           <div className="px-4 pb-4 space-y-3">
             {stage.id!=='sem-etapa'&&<div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 border-b border-white/10 pb-3">
+              <button type="button" onClick={()=>void renameStage(stage)} className="rounded-lg border border-white/15 px-3 py-2 text-xs hover:bg-white/5">Editar nome</button>
               <label>Etapa <select value={stage.status} onChange={e=>void changeStageStatus(stage.id,e.target.value)} className="ml-2 pm-control rounded-lg p-2">{stageStatuses.map(value=><option key={value} value={value}>{rotulo(statusEtapa,value)}</option>)}</select></label>
               {stage.client_visible&&<Link to={'/admin/projetos/'+id+'/etapas/'+stage.id} className="inline-flex min-h-9 items-center text-xs font-semibold text-[#DFA269] hover:underline">Ver página da etapa ↗</Link>}
               <label className="flex items-center gap-2"><input type="checkbox" checked={stage.client_visible} onChange={async e=>{await portalApi.saveStage({client_visible:e.target.checked},stage.id);await load()}}/> Visível ao cliente</label>
@@ -1036,6 +1057,7 @@ export function AdminProjectDetailV2(){
               {task.due_date&&<p className="text-xs text-gray-500 mt-1">Prazo: {new Date(task.due_date+'T12:00').toLocaleDateString('pt-BR')}</p>}
             </div>
             <div className="flex gap-2 items-start">
+              <button type="button" title="Renomear tarefa" aria-label="Renomear tarefa" onClick={()=>void renameTask(task)} className="px-2 py-2 text-xs text-gray-400 hover:text-white">Editar</button>
               <label className="flex items-center gap-2 text-xs text-gray-400 min-h-10">
                 <input type="checkbox" checked={Boolean(task.client_visible)} onChange={e=>void changeTaskVisibility(task.id,e.target.checked)}/>
                 Visível ao cliente
