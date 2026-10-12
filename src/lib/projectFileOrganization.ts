@@ -14,6 +14,33 @@ const legacyProjectFolders=[
   {kind:'approved',label:'Legado · Aprovados'},
 ] as const
 
+
+export function adminFilePhysicalFolderLabel(file:Record<string,any>,project:Record<string,any>|null|undefined){
+  if(file.storage_provider!=='google_drive'){
+    return file.storage_provider==='supabase'?'Supabase Storage':'Link externo'
+  }
+  const registered=project?.drive_folders?.find((folder:Record<string,any>)=>folder.drive_folder_id===file.drive_folder_id)
+  const kind=file.custom_folder?.parent_kind||file.folder_kind||registered?.folder_kind
+  const base=[...standardProjectFolders,...legacyProjectFolders].find(folder=>folder.kind===kind)?.label||null
+  if(file.custom_folder?.name)return [base||'Pasta personalizada',file.custom_folder.name].join(' / ')
+  if(registered)return base||'Pasta padrão do Drive'
+  if(file.drive_folder_id)return 'Outra pasta do Drive'
+  return 'Pasta no Drive não identificada'
+}
+
+export function adminFileAccessLabel(file:Record<string,any>,project:Record<string,any>|null|undefined){
+  if(project?.project_type==='internal')return 'Somente equipe · projeto interno'
+  if(!file.client_visible)return 'Somente equipe · arquivo'
+  const task=file.task||project?.tasks?.find((item:Record<string,any>)=>item.id===file.task_id)
+  if(file.task_id&&!task)return 'Acesso não confirmado · tarefa'
+  if(task&&task.client_visible===false)return 'Somente equipe · tarefa'
+  const stageId=task?.stage_id||file.stage_id
+  const stage=file.stage||project?.stages?.find((item:Record<string,any>)=>item.id===stageId)
+  if(stageId&&!stage)return 'Acesso não confirmado · etapa'
+  if(stage&&stage.client_visible===false)return 'Somente equipe · etapa'
+  return 'Liberado ao cliente'
+}
+
 type Row=Record<string,any>
 type FolderGroup={key:string;name:string;kind:string;files:Row[];parent?:string}
 
