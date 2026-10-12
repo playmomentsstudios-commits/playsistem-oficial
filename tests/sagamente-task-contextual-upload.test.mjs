@@ -17,5 +17,6 @@ test('internal task without stage cannot upload',()=>{
 })
 test('task UI exposes contextual upload',()=>{
   assert.match(source,/uploadTaskFile\(e,task\)/)
-  assert.match(source,/Vinculado automaticamente/)
+  assert.match(source,/title="Adicionar arquivos à tarefa" aria-label="Adicionar arquivos à tarefa"/)
+  assert.match(source,/Privado · Revisão/)
 })
