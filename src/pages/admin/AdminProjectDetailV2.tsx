@@ -62,6 +62,8 @@ export function AdminProjectDetailV2(){
   const [loadWarning,setLoadWarning]=useState<string|null>(null)
   const [stageName,setStageName]=useState('')
   const [showStageForm,setShowStageForm]=useState(false)
+  const [showStatusLabels,setShowStatusLabels]=useState(false)
+  const [statusLabelDraft,setStatusLabelDraft]=useState<Record<string,string>>({})
   const [showTaskForm,setShowTaskForm]=useState(false)
   const [fileTask,setFileTask]=useState('')
   const [fileStage,setFileStage]=useState('')
@@ -329,6 +331,33 @@ export function AdminProjectDetailV2(){
       toast('Projeto excluído do sistema. Os arquivos do Google Drive foram preservados.','success')
       navigate('/admin/projetos',{replace:true})
     }catch(error:any){toast(error.message||'Não foi possível excluir o projeto.','error')}
+  }
+
+  function openStatusLabels(){
+    setStatusLabelDraft({...((project?.status_labels||{}) as Record<string,string>)})
+    setShowStatusLabels(true)
+  }
+  async function saveStatusLabels(){
+    const allowed=new Set([
+      ...projectStatuses.map(value=>'project.'+value),
+      ...stageStatuses.map(value=>'stage.'+value),
+      ...taskStatuses.map(value=>'task.'+value),
+    ])
+    const payload:Record<string,string>={}
+    for(const [key,value] of Object.entries(statusLabelDraft)){
+      if(allowed.has(key)&&value.trim())payload[key]=value.trim().slice(0,48)
+    }
+    try{
+      await portalApi.saveProject({status_labels:payload},id)
+      setProject((current:any)=>({...current,status_labels:payload}))
+      setShowStatusLabels(false)
+      toast('Rótulos atualizados neste projeto.','success')
+    }catch(error:any){toast(error?.message||'Não foi possível salvar os rótulos.','error')}
+  }
+  const statusLabel=(scope:'project'|'stage'|'task',value:string)=>{
+    const overrides=project?.status_labels as Record<string,string>|undefined
+    const defaults=scope==='project'?statusProjeto:scope==='stage'?statusEtapa:statusTarefa
+    return overrides?.[scope+'.'+value]||rotulo(defaults,value)
   }
 
   async function renameStage(stage:any){
@@ -695,9 +724,10 @@ export function AdminProjectDetailV2(){
               <span>Andamento</span>
               <select aria-label="Andamento do projeto" value={project.status} onChange={e=>void updateProject({status:e.target.value})}
                 className="h-8 max-w-[160px] rounded-lg border border-white/10 bg-[#171719] px-2 text-xs font-medium text-gray-100 focus-visible:outline-2 focus-visible:outline-[#A65A2A]">
-                {projectStatuses.map(value=><option key={value} value={value}>{rotulo(statusProjeto,value)}</option>)}
+                {projectStatuses.map(value=><option key={value} value={value}>{statusLabel('project',value)}</option>)}
               </select>
             </label>
+            <button type="button" onClick={openStatusLabels} title="Personalizar nomes dos status deste projeto" className="h-8 rounded-lg border border-white/15 px-2 text-xs text-gray-400 hover:text-white">Editar status</button>
             <label className="inline-flex items-center gap-1.5 text-[11px] text-gray-500">
               <span>Prioridade</span>
               <select aria-label="Prioridade do projeto" value={project.priority} onChange={e=>void updateProject({priority:e.target.value})}
@@ -1037,7 +1067,7 @@ export function AdminProjectDetailV2(){
           <div className="px-4 pb-4 space-y-3">
             {stage.id!=='sem-etapa'&&<div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 border-b border-white/10 pb-3">
               <button type="button" onClick={()=>void renameStage(stage)} className="rounded-lg border border-white/15 px-3 py-2 text-xs hover:bg-white/5">Editar nome</button>
-              <label>Etapa <select value={stage.status} onChange={e=>void changeStageStatus(stage.id,e.target.value)} className="ml-2 pm-control rounded-lg p-2">{stageStatuses.map(value=><option key={value} value={value}>{rotulo(statusEtapa,value)}</option>)}</select></label>
+              <label>Etapa <select value={stage.status} onChange={e=>void changeStageStatus(stage.id,e.target.value)} className="ml-2 pm-control rounded-lg p-2">{stageStatuses.map(value=><option key={value} value={value}>{statusLabel('stage',value)}</option>)}</select></label>
               {stage.client_visible&&<Link to={'/admin/projetos/'+id+'/etapas/'+stage.id} className="inline-flex min-h-9 items-center text-xs font-semibold text-[#DFA269] hover:underline">Ver página da etapa ↗</Link>}
               <label className="flex items-center gap-2"><input type="checkbox" checked={stage.client_visible} onChange={async e=>{await portalApi.saveStage({client_visible:e.target.checked},stage.id);await load()}}/> Visível ao cliente</label>
               <button type="button" className="text-red-400 ml-auto" onClick={async()=>{if(window.confirm('Excluir esta etapa? As tarefas permanecem sem etapa.')){await portalApi.deleteStage(stage.id);await load()}}}>Excluir etapa</button>
@@ -1048,7 +1078,7 @@ export function AdminProjectDetailV2(){
         const stage=sortedStages.find((item:any)=>item.id===task.stage_id)
         const taskProgress=taskUploadProgress?.taskId===task.id?taskUploadProgress:null
         return <details key={task.id} className={'rounded-xl border p-3 transition-colors '+(task.status==='completed'?'border-emerald-500/35 bg-emerald-500/[.07]':task.status==='in_progress'?'border-amber-400/35 bg-amber-400/[.07]':task.status==='review'?'border-sky-400/35 bg-sky-400/[.07]':task.status==='cancelled'?'border-white/10 bg-black/10 opacity-60':'border-white/15 bg-white/[.025]')}>
-          <summary className={'cursor-pointer font-semibold text-sm select-none '+(task.status==='completed'?'text-emerald-300':task.status==='in_progress'?'text-amber-300':task.status==='review'?'text-sky-300':task.status==='cancelled'?'text-gray-500 line-through':'text-gray-200')}>{task.title} <span className="ml-2 text-xs font-normal opacity-80">· {rotulo(statusTarefa,task.status)}</span></summary>
+          <summary className={'cursor-pointer font-semibold text-sm select-none '+(task.status==='completed'?'text-emerald-300':task.status==='in_progress'?'text-amber-300':task.status==='review'?'text-sky-300':task.status==='cancelled'?'text-gray-500 line-through':'text-gray-200')}>{task.title} <span className="ml-2 text-xs font-normal opacity-80">· {statusLabel('task',task.status)}</span></summary>
           <div className="mt-3">
           {stage?.client_visible&&task.client_visible&&<Link to={'/admin/projetos/'+id+'/etapas/'+stage.id+'/tarefas/'+task.id} className="mb-3 inline-flex min-h-10 items-center rounded-lg border border-[#A65A2A]/30 px-3 text-xs font-semibold text-[#DFA269] hover:bg-white/5">Prévia da tarefa para o cliente ↗</Link>}
           <div className="flex flex-wrap justify-between gap-3">
@@ -1062,7 +1092,7 @@ export function AdminProjectDetailV2(){
                 <input type="checkbox" checked={Boolean(task.client_visible)} onChange={e=>void changeTaskVisibility(task.id,e.target.checked)}/>
                 Visível ao cliente
               </label>
-              <select value={task.status} onChange={e=>void changeTaskStatus(task.id,e.target.value)} className={"pm-select-status px-3 py-2 rounded-lg text-sm "+(task.status==="pending"?"pm-state-pending":task.status==="in_progress"?"pm-state-progress":task.status==="review"?"pm-state-review":task.status==="completed"?"pm-state-success":"pm-state-danger")}>{taskStatuses.map(value=><option key={value} value={value}>{rotulo(statusTarefa,value)}</option>)}</select>
+              <select value={task.status} onChange={e=>void changeTaskStatus(task.id,e.target.value)} className={"pm-select-status px-3 py-2 rounded-lg text-sm "+(task.status==="pending"?"pm-state-pending":task.status==="in_progress"?"pm-state-progress":task.status==="review"?"pm-state-review":task.status==="completed"?"pm-state-success":"pm-state-danger")}>{taskStatuses.map(value=><option key={value} value={value}>{statusLabel('task',value)}</option>)}</select>
               <button onClick={async()=>{if(window.confirm('Excluir esta tarefa?')){await portalApi.deleteTask(task.id);await load()}}} className="px-3 py-2 text-xs text-red-400">Excluir</button>
             </div>
           </div>
@@ -1101,6 +1131,24 @@ export function AdminProjectDetailV2(){
       })}</div>
     </section>
     </div>}
+  {showStatusLabels&&<div role="dialog" aria-modal="true" aria-label="Personalizar status" className="fixed inset-0 z-[80] flex items-center justify-center bg-black/75 p-4">
+    <div className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-xl border border-white/15 bg-[#171719] p-4 space-y-4">
+      <div className="flex items-center justify-between gap-3"><h2 className="font-semibold">Nomes dos status</h2><button type="button" onClick={()=>setShowStatusLabels(false)} aria-label="Fechar">×</button></div>
+      <p className="text-xs text-gray-400">Altera somente os nomes exibidos neste projeto. As regras internas, etapas e notificações permanecem inalteradas.</p>
+      {([
+        {name:'Projeto',scope:'project',values:projectStatuses,defaults:statusProjeto},
+        {name:'Etapas',scope:'stage',values:stageStatuses,defaults:statusEtapa},
+        {name:'Tarefas',scope:'task',values:taskStatuses,defaults:statusTarefa},
+      ] as const).map(section=><div key={section.scope} className="space-y-2">
+        <h3 className="text-xs font-semibold text-[#DFA269]">{section.name}</h3>
+        {section.values.map(value=><label key={section.scope+'.'+value} className="flex items-center gap-2 text-xs">
+          <span className="w-32 shrink-0 text-gray-400">{rotulo(section.defaults,value)}</span>
+          <input maxLength={48} value={statusLabelDraft[section.scope+'.'+value]||''} onChange={e=>setStatusLabelDraft(current=>({...current,[section.scope+'.'+value]:e.target.value}))} placeholder="Usar padrão" className="min-w-0 flex-1 rounded-lg border border-white/15 bg-black px-2 py-2"/>
+        </label>)}
+      </div>)}
+      <div className="flex justify-end gap-2"><button type="button" onClick={()=>setShowStatusLabels(false)} className="px-3 py-2 text-xs text-gray-400">Cancelar</button><button type="button" onClick={()=>void saveStatusLabels()} className="rounded-lg bg-[#A65A2A] px-4 py-2 text-xs font-semibold text-white">Salvar nomes</button></div>
+    </div>
+  </div>}
   {reviewHistoryFile&&<div className="fixed inset-0 z-[70] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4" onMouseDown={e=>{if(e.currentTarget===e.target)setReviewHistoryFile(null)}}>
     <div className="w-full max-w-xl max-h-[80vh] overflow-hidden rounded-2xl bg-[#111113] border border-white/10 shadow-2xl">
       <div className="h-14 px-4 border-b border-white/10 flex items-center justify-between gap-3">
