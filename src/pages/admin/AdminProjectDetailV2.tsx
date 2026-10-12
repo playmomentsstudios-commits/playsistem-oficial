@@ -275,26 +275,45 @@ export function AdminProjectDetailV2(){
 
   async function deliverStage(stageId:string){
     if(!project||project.project_type==='internal')return
+    const stage=(project.stages||[]).find((item:any)=>item.id===stageId)
+    if(!stage||stage.status==='completed'){
+      toast('Esta entrega já foi concluída.','error')
+      return
+    }
     const members=(project.tasks||[]).filter((task:any)=>task.stage_id===stageId)
     if(!members.length||members.some((task:any)=>task.status!=='completed')){
-      toast('Conclua todas as tarefas da etapa antes de preparar a entrega.','error')
+      toast('Conclua todos os materiais desta produção antes de preparar a entrega.','error')
       return
     }
     const associated=new Set(members.map((task:any)=>task.id))
-    const pending=files.filter((file:any)=>file.storage_provider==='google_drive'&&
+    const stageFiles=files.filter((file:any)=>
+      file.storage_provider==='google_drive'&&
       (associated.has(file.task_id)||(!file.task_id&&file.stage_id===stageId))&&
-      file.drive_folder_kind==='preview')
+      ['preview','delivery'].includes(file.drive_folder_kind)
+    )
+    const pending=stageFiles.filter((file:any)=>file.drive_folder_kind==='preview')
     const delivery=folderDirectory.standard.find((row:any)=>row.folder_kind==='delivery')
     if(!delivery?.drive_folder_id){toast('Pasta Entregas não encontrada no Drive.','error');return}
-    if(!pending.length){toast('Não há prévias pendentes de migração nesta etapa.','error');return}
-    if(!window.confirm('Migrar '+pending.length+' arquivo(s) da Revisão para Entregas? Os arquivos permanecerão privados até a publicação.'))return
+    if(!stageFiles.length){toast('Não há arquivos vinculados a esta produção.','error');return}
+    if(stageFiles.some((file:any)=>!file.client_visible)){
+      toast('Antes do disparo, libere os arquivos desta entrega para o destinatário autorizado.','error')
+      return
+    }
+    if(!stage.client_visible){
+      toast('Torne esta produção visível para o destinatário antes de concluir.','error')
+      return
+    }
+    if(!window.confirm('Finalizar esta entrega? '+pending.length+' arquivo(s) serão movidos para Entregas e uma única atualização será preparada para cada destinatário autorizado. Confirme antes que os links do Google Drive são acessíveis.'))return
     try{
       for(const file of pending)await fileManagementApi.move(file.id,'delivery')
+      // Stage status notification is the single completion event. Updating it
+      // only after every move succeeds avoids notices for incomplete deliveries.
+      await portalApi.saveStage({status:'completed'},stageId)
       await load()
-      toast('Arquivos migrados para Entregas. Revise os materiais antes de disponibilizar o link ao cliente.','success')
+      toast('Entrega concluída. Atualização preparada para os destinatários autorizados.','success')
     }catch(error:any){
       await load()
-      toast('Migração parcial ou não concluída: '+(error?.message||'verifique as pastas')+'. Confira antes de repetir.','error')
+      toast('Entrega não confirmada: '+(error?.message||'verifique os arquivos')+'. Confira antes de repetir.','error')
     }
   }
 
