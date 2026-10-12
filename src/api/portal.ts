@@ -750,12 +750,15 @@ export const portalApi = {
 
     let finalized:any=null
     let finalizeError:any=null
-    for(let attempt=0;attempt<8;attempt+=1){
+    for(let attempt=0;attempt<3;attempt+=1){
       const result=await supabase.functions.invoke('google-drive-finalize',{body:finalizeBody})
       finalized=result.data
       finalizeError=result.error
       if(!finalizeError&&finalized?.ok)break
-      if(attempt<7)await new Promise(resolve=>window.setTimeout(resolve,1500*(attempt+1)))
+      // Only retry transient failures; repeated business-rule failures cannot recover.
+      const errorText=String(finalized?.error||finalizeError?.message||'')
+      if(/does not belong|Forbidden|not found|Invalid|23503|23514/i.test(errorText))break
+      if(attempt<2)await new Promise(resolve=>window.setTimeout(resolve,1200*(attempt+1)))
     }
 
     if(finalizeError){
