@@ -151,23 +151,38 @@ Deno.serve(async (req) => {
       }
 
       const token = await getDriveAccessToken();
-      const params = new URLSearchParams({
-        addParents: target.drive_folder_id,
-        fields: "id,parents",
+      // A prior attempt may have moved the file successfully but failed to
+      // persist its new folder in Supabase. Read Drive's actual parents first
+      // so retries reconcile the database instead of attempting a second move.
+      const fileUrl = `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.drive_file_id)}`;
+      const currentResponse = await fetch(`${fileUrl}?fields=id,parents`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (file.drive_folder_id) params.set("removeParents", file.drive_folder_id);
-
-      const response = await fetch(
-        `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.drive_file_id)}?${params.toString()}`,
-        {
+      if (!currentResponse.ok) {
+        throw new Error(`Could not inspect Drive file: ${currentResponse.status}`);
+      }
+      const currentDrive = await currentResponse.json();
+      const actualParents = Array.isArray(currentDrive.parents)
+        ? currentDrive.parents.filter((parent: unknown): parent is string => typeof parent === "string")
+        : [];
+      if (!actualParents.includes(target.drive_folder_id)) {
+        const params = new URLSearchParams({
+          addParents: target.drive_folder_id,
+          fields: "id,parents",
+        });
+        if (actualParents.length) params.set("removeParents", actualParents.join(","));
+        const response = await fetch(`${fileUrl}?${params.toString()}`, {
           method: "PATCH",
           headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-
-      if (!response.ok) {
-        const detail = await response.text();
-        throw new Error(`Could not move Drive file: ${response.status} ${detail}`);
+        });
+        if (!response.ok) {
+          const detail = await response.text();
+          throw new Error(`Could not move Drive file: ${response.status} ${detail}`);
+        }
+        const movedFile = await response.json();
+        if (!Array.isArray(movedFile.parents) || !movedFile.parents.includes(target.drive_folder_id)) {
+          throw new Error("Drive did not confirm the target folder. The database was not changed.");
+        }
       }
 
       const { error: updateError } = await ctx.db
