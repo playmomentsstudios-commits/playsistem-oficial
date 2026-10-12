@@ -383,6 +383,20 @@ export function AdminProjectDetailV2(){
     }catch(error:any){toast(error.message,'error')}
   }
 
+  async function addProjectRootFolder(){
+    if(project.project_type==='internal'){
+      toast('Pastas extras na raiz ainda não estão disponíveis para projetos internos.','error')
+      return
+    }
+    const name=window.prompt('Nome da pasta do projeto (ex.: Logos, Fotos, Imagens)')
+    if(!name?.trim())return
+    try{
+      await portalApi.createCustomDriveFolder({project_id:id,parent_kind:'root',name:name.trim(),client_visible:false})
+      setFolderDirectory(await portalApi.projectDriveFolderDirectory(id))
+      toast('Pasta criada no Google Drive.','success')
+    }catch(error:any){toast(error?.message||'Não foi possível criar a pasta.','error')}
+  }
+
   async function uploadProjectFile(event:React.ChangeEvent<HTMLInputElement>){
     const picked=Array.from(event.target.files||[])
     event.target.value=''
@@ -813,6 +827,9 @@ export function AdminProjectDetailV2(){
 
         
 
+        {project.project_type!=='internal'&&<div className="mt-4 flex justify-end">
+          <button type="button" onClick={()=>void addProjectRootFolder()} className="min-h-9 rounded-lg border border-white/15 px-3 text-xs text-gray-300 hover:bg-white/[.06]">+ Nova pasta</button>
+        </div>}
         <div className="mt-5 space-y-3" aria-label="Arquivos por pasta no Google Drive">
           {files.length===0&&<p className="text-sm text-gray-500">Nenhum arquivo vinculado a este projeto.</p>}
           {fileGroups.map(group=><details key={group.key} open={group.files.length>0} className="rounded-xl border border-white/10 bg-black/20">
