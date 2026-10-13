@@ -83,7 +83,7 @@ export function ProjectsPage(){
 
     return <div className="pb-6">
       <FilePreviewModal file={previewFile} onClose={()=>setPreviewFile(null)}/>
-      <section className="pm-compact-card" aria-label="Resumo do projeto">
+      <section className={"pm-compact-card "+(project.status==='completed'?'border-emerald-500/45 bg-emerald-500/[.055]':'')} aria-label="Resumo do projeto">
         <CompactPageHeader title={project.title} backTo="/app/projetos" backLabel="Meus projetos"
           actions={<span className="pm-tag pm-tag-progress inline-flex items-center gap-1 whitespace-nowrap"><ProjectStatusMark status={project.status}/>{rotulo(statusProjeto,project.status)}</span>}>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-gray-400">
@@ -96,7 +96,7 @@ export function ProjectsPage(){
         <div className="flex flex-wrap items-center gap-3 border-t border-white/[.08] pt-3">
           <div className="min-w-[110px] text-xs font-semibold text-gray-300">Progresso <span className="ml-1 text-white">{tasks.length?percentage+'%':'—'}</span></div>
           <div className="h-1.5 min-w-[95px] flex-1 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-label="Progresso do projeto" aria-valuemin={0} aria-valuemax={100} aria-valuenow={tasks.length?percentage:0}>
-            <div className="h-full rounded-full bg-[#A65A2A]" style={{width:(tasks.length?percentage:0)+'%'}}/>
+            <div className={"h-full rounded-full "+(project.status==='completed'?'bg-emerald-500':'bg-[#A65A2A]')} style={{width:(tasks.length?percentage:0)+'%'}}/>
           </div>
           <span className="text-[11px] text-emerald-300">{completed.length} concluída(s)</span>
           <span className="text-[11px] text-amber-200">{remaining.length} em aberto</span>
@@ -149,7 +149,7 @@ export function ProjectsPage(){
           <div className="space-y-2">{stages.map((stage:any)=>{
             const stageTasks=tasks.filter((task:any)=>task.stage_id===stage.id)
             const stageComplete=stageTasks.filter(isComplete).length
-            return <CompactDisclosure key={stage.id} title={stage.name}
+            return <CompactDisclosure key={stage.id} title={stage.name} className={stage.status==='completed'?'!border-emerald-500/45 !bg-emerald-500/[.065] [&_.pm-compact-disclosure-trigger>span:first-child]:!text-emerald-300':''}
               summary={<span>{rotulo(statusEtapa,stage.status)} · {stageComplete}/{stageTasks.length}</span>}
               defaultOpen={stage.status==='in_progress'}>
               <Link to={'/app/projetos/'+id+'/etapas/'+stage.id} className="mb-2 inline-flex min-h-10 items-center text-xs font-semibold text-[#DFA269] hover:underline">Visualizar página desta etapa ↗</Link>
@@ -203,12 +203,12 @@ export function ProjectsPage(){
       const listedTasks=(item.tasks||[]).filter((task:any)=>task.client_visible&&(!task.stage_id||visibleStages.has(task.stage_id)))
       const done=listedTasks.filter(isComplete).length
       const percent=projectProgress({tasks:listedTasks})
-      return <Link key={item.id} to={'/app/projetos/'+item.id} className="pm-compact-card pm-compact-card-interactive block">
+      return <Link key={item.id} to={'/app/projetos/'+item.id} className={"pm-compact-card pm-compact-card-interactive block "+(item.status==='completed'?'!border-emerald-500/45 !bg-emerald-500/[.065] hover:!border-emerald-400/70 hover:!bg-emerald-500/[.11]':'')}>
         <div className="flex flex-wrap justify-between gap-3"><b className="text-sm text-white">{item.title}</b><span title={rotulo(statusProjeto,item.status)} aria-label={rotulo(statusProjeto,item.status)} className="inline-flex shrink-0 items-center justify-center rounded-lg bg-white/[.04] px-2 py-1"><ProjectStatusMark status={item.status}/></span></div>
         <p className="text-[11px] text-gray-400 mt-2">{listedTasks.length?percent+'% concluído · '+done+' de '+listedTasks.length+' entregas concluídas':'Aguardando atualização das entregas'}</p>
-        <div className="h-1.5 bg-white/10 rounded-full mt-2 overflow-hidden"><div className="h-full bg-[#A65A2A] rounded-full" style={{width:(listedTasks.length?percent:0)+'%'}}/></div>
+        <div className="h-1.5 bg-white/10 rounded-full mt-2 overflow-hidden"><div className={"h-full rounded-full "+(item.status==='completed'?'bg-emerald-500':'bg-[#A65A2A]')} style={{width:(listedTasks.length?percent:0)+'%'}}/></div>
         {item.due_date&&<p className="text-[11px] text-gray-500 mt-2">Prazo: {formatDate(item.due_date)}</p>}
-        <p className="text-[11px] font-semibold text-[#DFA269] mt-2">Ver detalhes e arquivos ↗</p>
+        <p className={"text-[11px] font-semibold mt-2 "+(item.status==='completed'?'text-emerald-300':'text-[#DFA269]')}>Ver detalhes e arquivos ↗</p>
       </Link>
     })}</div>}
   </div>
