@@ -123,13 +123,13 @@ export function AdminProjects(){
       <Link to="/admin/produtividade" className="min-h-11 px-4 rounded-xl bg-white/[0.05] border border-white/10 text-sm flex items-center hover:bg-white/[0.08]">Abrir tarefas →</Link>
     </div>
 
-    {loading?<p className="text-gray-400">Carregando...</p>:!filtered.length?<p className="text-gray-500">Nenhum projeto encontrado.</p>:<div className="grid gap-2 lg:grid-cols-2">{filtered.map(project=><Link key={project.id} to={'/admin/projetos/'+project.id} className="pm-compact-card pm-compact-card-interactive block">
+    {loading?<p className="text-gray-400">Carregando...</p>:!filtered.length?<p className="text-gray-500">Nenhum projeto encontrado.</p>:<div className="grid gap-2 lg:grid-cols-2">{filtered.map(project=><Link key={project.id} to={'/admin/projetos/'+project.id} className={"pm-compact-card pm-compact-card-interactive block "+(project.status==='completed'?'!border-emerald-500/45 !bg-emerald-500/[.065] hover:!border-emerald-400/70 hover:!bg-emerald-500/[.11]':'')}>
       <div className="flex justify-between gap-3">
         <div><b className="text-white">{project.title}</b><p className="text-xs text-gray-500 mt-1">{rotulo(tipoProjeto,project.project_type)} · prioridade {rotulo(prioridade,project.priority)}</p></div>
         <span title={rotulo(statusProjeto,project.status)} aria-label={rotulo(statusProjeto,project.status)} className="inline-flex items-center justify-center shrink-0 rounded-lg bg-white/[.04] px-2 py-1"><ProjectStatusMark status={project.status}/></span>
       </div>
       <div className="flex justify-between mt-2 text-xs"><span className="text-gray-500">Progresso</span><b>{progress(project)}%</b></div>
-      <div className="h-1.5 bg-white/10 rounded mt-1.5"><div className="h-full bg-[#A65A2A] rounded" style={{width:progress(project)+'%'}}/></div>
+      <div className="h-1.5 bg-white/10 rounded mt-1.5"><div className={"h-full rounded "+(project.status==='completed'?'bg-emerald-500':'bg-[#A65A2A]')} style={{width:progress(project)+'%'}}/></div>
       {project.due_date&&<p className={'text-xs mt-2 '+(project.due_date<today&&!['completed','cancelled'].includes(project.status)?'text-red-300':'text-gray-500')}>Prazo: {new Date(project.due_date+'T12:00').toLocaleDateString('pt-BR')}{project.due_date<today&&!['completed','cancelled'].includes(project.status)?' · atrasado':''}</p>}
     </Link>)}</div>}
   </div>
