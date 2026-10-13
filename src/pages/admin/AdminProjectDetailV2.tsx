@@ -800,7 +800,7 @@ export function AdminProjectDetailV2(){
       <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-white/[.07] pt-3">
         <span className="shrink-0 text-[11px] text-gray-400">Progresso <strong className="ml-1 text-xs text-white">{progress(project)}%</strong></span>
         <div className="h-1.5 min-w-[105px] flex-1 overflow-hidden rounded-full bg-white/[.08]" role="progressbar" aria-label="Progresso do projeto" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress(project)}>
-          <div className="h-full rounded-full bg-[#A65A2A] transition-[width] duration-300" style={{width:progress(project)+'%'}}/>
+          <div className={"h-full rounded-full transition-[width] duration-300 "+(project.status==='completed'?'bg-emerald-500':'bg-[#A65A2A]')} style={{width:progress(project)+'%'}}/>
         </div>
         <details className="group relative shrink-0 text-xs text-gray-400">
           <summary className="flex cursor-pointer list-none items-center gap-1 rounded-md px-1 py-1 hover:text-white focus-visible:outline-2 focus-visible:outline-[#A65A2A]">
@@ -1107,7 +1107,7 @@ export function AdminProjectDetailV2(){
           <summary className={"cursor-pointer select-none p-4 rounded-xl "+(stage.status==="completed"?"text-emerald-300 hover:bg-emerald-500/[.07]":stage.status==="in_progress"?"text-amber-300 hover:bg-amber-400/[.07]":"hover:bg-white/[.035]")}>
             <span className="font-bold text-base">{/^\d{4}-\d{2}$/.test(stage.name)?new Date(stage.name+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):stage.name}</span>
             <span className="ml-3 text-xs text-gray-400">{complete}/{stageTasks.length} tarefas concluídas</span>
-            {stage.id!=='sem-etapa'&&<button type="button" onClick={e=>{e.preventDefault();e.stopPropagation();void renameStage(stage)}} className="ml-3 inline-flex min-h-8 items-center rounded-lg border border-current/30 px-3 py-1 text-xs font-semibold hover:bg-white/10" title="Editar nome deste material" aria-label={"Renomear "+stage.name}>✎ Renomear</button>}
+            {stage.id!=='sem-etapa'&&<button type="button" onClick={e=>{e.preventDefault();e.stopPropagation();void renameStage(stage)}} className="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-md text-emerald-300/65 hover:bg-white/10 hover:text-emerald-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400" title="Renomear etapa" aria-label={"Renomear "+stage.name}>✎</button>}
           </summary>
           <div className="px-4 pb-4 space-y-3">
             {stage.id!=='sem-etapa'&&<div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 border-b border-white/10 pb-3">
