@@ -1,4 +1,5 @@
 import { corsHeaders, getDriveAccessToken, hasPermission, json, requireUser } from "../_shared/googleDrive.ts";
+import { inspectWhatsAppDriveAccess } from "../_shared/whatsappDriveAccess.ts";
 import { reconciliationAssociationPatch } from "../_shared/driveReconciliation.ts";
 
 // Read-only Drive inventory reconciliation: never deletes a Drive object or publishes files.
@@ -18,7 +19,19 @@ Deno.serve(async (req: Request) => {
       return json({ ok: false, error: "Forbidden" }, 403);
     }
     const body = await req.json();
-    const projectId = String(body?.project_id || "");
+    let projectId = String(body?.project_id || "");
+    if (body?.outbox_id) {
+      if (ctx.role !== "admin") return json({ ok: false, error: "Forbidden" }, 403);
+      const { data: draft, error: draftError } = await ctx.db.from("whatsapp_message_outbox")
+        .select("notification_id,status,source").eq("id", String(body.outbox_id)).single();
+      if (draftError || !draft || draft.status !== "blocked_files" || draft.source !== "live") {
+        return json({ ok: false, error: "Somente novos avisos bloqueados podem ser verificados." }, 400);
+      }
+      const { data: notice, error: noticeError } = await ctx.db.from("notifications")
+        .select("metadata").eq("id", draft.notification_id).single();
+      if (noticeError || !notice) return json({ ok: false, error: "Notificação não encontrada." }, 404);
+      projectId = String(notice.metadata?.project_id || "");
+    }
     if (!/^[0-9a-f-]{36}$/i.test(projectId)) return json({ ok: false, error: "Invalid project ID" }, 400);
 
     const { data: project, error: projectError } = await ctx.db.from("projects")
@@ -146,7 +159,23 @@ Deno.serve(async (req: Request) => {
         if (!error) added++;
       }
     }
-    return json({ ok: true, project_id: projectId, added, updated, scanned, folders: queue.length });
+    // Verify only already-published client files. Inventory never publishes private objects.
+    const { data: visibleFiles, error: visibleError } = await ctx.db.from("client_files")
+      .select("id,name,drive_file_id,drive_folder_id")
+      .eq("project_id", projectId).eq("client_visible", true).eq("storage_provider", "google_drive");
+    if (visibleError) throw visibleError;
+    let verified = 0;
+    for (const file of visibleFiles || []) {
+      const { error: clearError } = await ctx.db.from("wa_drive_access_checks").delete().eq("file_id", file.id);
+      if (clearError) throw clearError;
+      if (!scannedIds.has(file.drive_file_id) || !file.drive_folder_id) continue;
+      const evidence = await inspectWhatsAppDriveAccess(file, token);
+      if (!evidence) continue;
+      const { error: evidenceError } = await ctx.db.from("wa_drive_access_checks").upsert(evidence);
+      if (evidenceError) throw evidenceError;
+      verified++;
+    }
+    return json({ ok: true, project_id: projectId, added, updated, scanned, verified, folders: queue.length });
   } catch (error) {
     return json({ ok: false, error: error instanceof Error ? error.message : "Falha na sincronização" }, 400);
   }

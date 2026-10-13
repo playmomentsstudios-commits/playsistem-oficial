@@ -44,7 +44,7 @@ test('Google inventory sync preserves stage metadata on existing files',()=>{
  assert.match(sync,/stage_id: folder\.stageId/)
  assert.match(sync,/client_visible: false/)
  assert.match(sync,/const matched = known\.get\(entry\.id\)/)
- assert.doesNotMatch(sync,/\.delete\(\)/)
+ assert.doesNotMatch(sync,/from\(["']client_files["']\)[\s\S]{0,80}\.delete\(\)/)
 })
 
 test('customer sees only published deliverables grouped by allowed stages and tasks',()=>{

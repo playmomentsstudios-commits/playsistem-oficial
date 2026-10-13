@@ -310,7 +310,7 @@ export function AdminProjectDetailV2(){
       // only after every move succeeds avoids notices for incomplete deliveries.
       await portalApi.saveStage({status:'completed'},stageId)
       await load()
-      toast('Entrega concluída. Atualização preparada para os destinatários autorizados.','success')
+      toast('Produção concluída. Confira a preparação da mensagem na Central WhatsApp.','success')
     }catch(error:any){
       await load()
       toast('Entrega não confirmada: '+(error?.message||'verifique os arquivos')+'. Confira antes de repetir.','error')

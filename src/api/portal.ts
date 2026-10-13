@@ -242,6 +242,11 @@ export const portalApi = {
     if(error) throw error
   },
   saveProject: async (values:any,id?:string) => {
+    if(id&&['review','completed'].includes(values.status)){
+      const {data:current,error}=await supabase.from('projects').select('status').eq('id',id).single()
+      if(error)throw error
+      if(current.status!==values.status)await portalApi.syncDriveProjectFiles(id)
+    }
     const q=id?supabase.from('projects').update(values).eq('id',id):supabase.from('projects').insert(values)
     const { data,error }=await q.select().single()
     if(error) throw error
@@ -314,6 +319,13 @@ export const portalApi = {
     return data as string
   },
   saveStage: async (values:any,id?:string) => {
+    // Read-only inventory/access preflight precedes the actual status event.
+    if(['review','completed'].includes(values.status)){
+      const current=id?await supabase.from('project_stages').select('project_id,status').eq('id',id).single():null
+      if(current?.error)throw current.error
+      const projectId=current?.data?.project_id||values.project_id
+      if(projectId&&(!current||current.data.status!==values.status))await portalApi.syncDriveProjectFiles(projectId)
+    }
     const q=id?supabase.from('project_stages').update(values).eq('id',id):supabase.from('project_stages').insert(values)
     const { data,error }=await q.select().single()
     if(error) throw error
@@ -329,6 +341,13 @@ export const portalApi = {
     if(error) throw error
   },
   saveTask: async (values:any,id?:string) => {
+    // Read-only inventory/access preflight precedes the actual status event.
+    if(['review'].includes(values.status)){
+      const current=id?await supabase.from('tasks').select('project_id,status').eq('id',id).single():null
+      if(current?.error)throw current.error
+      const projectId=current?.data?.project_id||values.project_id
+      if(projectId&&(!current||current.data.status!==values.status))await portalApi.syncDriveProjectFiles(projectId)
+    }
     const q=id?supabase.from('tasks').update(values).eq('id',id):supabase.from('tasks').insert(values)
     const { data,error }=await q.select().single()
     if(error) throw error

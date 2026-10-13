@@ -5,7 +5,7 @@ type Key='project_started'|'stage_completed'|'review_available'|'adjustments_com
 type Model={key:Key;title:string;icon:string;body:string;active:boolean}
 const TEMPLATES:Model[]=[
  {key:'project_started',title:'Projeto iniciado',icon:'🚀',active:true,body:'*Seu projeto começou!*\n\nO projeto *{{project_name}}* já está em andamento.\n\n{{link}}'},
- {key:'stage_completed',title:'Etapa concluída',icon:'✅',active:true,body:'*Etapa concluída*\n\nA etapa *{{stage_name}}* do projeto *{{project_name}}* foi concluída.\n\n{{link}}'},
+ {key:'stage_completed',title:'Produção finalizada',icon:'✅',active:true,body:'*Materiais finalizados!*\n\nA produção *{{stage_name}}* do projeto *{{project_name}}* foi concluída.\n\n{{link}}'},
  {key:'review_available',title:'Revisão disponível',icon:'🔎',active:true,body:'*Revisão disponível*\n\nO material *{{material_name}}* do projeto *{{project_name}}* está pronto para sua análise.\n\n{{link}}'},
  {key:'adjustments_completed',title:'Ajustes concluídos',icon:'🛠️',active:true,body:'*Ajustes concluídos*\n\nUma nova versão do material *{{material_name}}* do projeto *{{project_name}}* está disponível.\n\n{{link}}'},
  {key:'final_delivery',title:'Entrega final',icon:'🎉',active:true,body:'*Entrega final disponível*\n\nConcluímos o projeto *{{project_name}}*. Os materiais finais estão disponíveis.\n\n{{link}}'},
