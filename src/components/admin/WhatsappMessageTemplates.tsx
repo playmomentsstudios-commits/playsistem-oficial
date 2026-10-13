@@ -4,12 +4,12 @@ import {useToast} from '../../contexts/ToastContext'
 type Key='project_started'|'stage_completed'|'review_available'|'adjustments_completed'|'final_delivery'|'new_message'
 type Model={key:Key;title:string;icon:string;body:string;active:boolean}
 const TEMPLATES:Model[]=[
- {key:'project_started',title:'Projeto iniciado',icon:'🚀',active:true,body:'*Seu projeto começou!*\n\nO projeto *{{project_name}}* já está em andamento.\n\n{{link}}'},
- {key:'stage_completed',title:'Etapa concluída',icon:'✅',active:true,body:'*Etapa concluída*\n\nA etapa *{{stage_name}}* do projeto *{{project_name}}* foi concluída.\n\n{{link}}'},
- {key:'review_available',title:'Revisão disponível',icon:'🔎',active:true,body:'*Revisão disponível*\n\nO material *{{material_name}}* do projeto *{{project_name}}* está pronto para sua análise.\n\n{{link}}'},
- {key:'adjustments_completed',title:'Ajustes concluídos',icon:'🛠️',active:true,body:'*Ajustes concluídos*\n\nUma nova versão do material *{{material_name}}* do projeto *{{project_name}}* está disponível.\n\n{{link}}'},
- {key:'final_delivery',title:'Entrega final',icon:'🎉',active:true,body:'*Entrega final disponível*\n\nConcluímos o projeto *{{project_name}}*. Os materiais finais estão disponíveis.\n\n{{link}}'},
- {key:'new_message',title:'Nova mensagem',icon:'💬',active:false,body:'*Nova mensagem no projeto*\n\nHá uma nova mensagem sobre *{{project_name}}*.\n\n{{link}}'},
+ {key:'project_started',title:'Projeto iniciado',icon:'🚀',active:true,body:"🚀 *Seu projeto começou!*\n\nO projeto *{{project_name}}* já está em andamento. Você poderá acompanhar as atualizações e os materiais no seu espaço de acompanhamento.\n\n{{link}}"},
+ {key:'stage_completed',title:'Materiais finalizados',icon:'✅',active:true,body:"✅ *Materiais finalizados!*\n\nOs materiais de *{{stage_name}}* do projeto *{{project_name}}* foram finalizados. Confira abaixo os arquivos liberados desta entrega.\n\n{{link}}"},
+ {key:'review_available',title:'Revisão disponível',icon:'🔎',active:true,body:"🔎 *Material disponível para revisão*\n\nO material *{{material_name}}* do projeto *{{project_name}}* está disponível para sua análise. Confira abaixo os arquivos liberados para revisão.\n\n{{link}}"},
+ {key:'adjustments_completed',title:'Ajustes concluídos',icon:'🛠️',active:true,body:"🛠️ *Ajustes concluídos!*\n\nOs ajustes do material *{{material_name}}* do projeto *{{project_name}}* foram concluídos. Confira abaixo os arquivos da nova versão liberada para sua análise.\n\n{{link}}"},
+ {key:'final_delivery',title:'Entrega final',icon:'🎉',active:true,body:"✅ *Entrega final disponível!*\n\nO projeto *{{project_name}}* foi concluído. Confira abaixo todos os arquivos finais liberados desta entrega.\n\n{{link}}"},
+ {key:'new_message',title:'Nova mensagem',icon:'💬',active:false,body:"💬 *Nova mensagem no projeto*\n\nHá uma nova mensagem sobre o projeto *{{project_name}}*. Abra seu espaço de acompanhamento para conferir e responder.\n\n{{link}}"},
 ]
 const EXAMPLES:Record<string,string>={
  project_name:'Identidade visual da marca',stage_name:'Conceito visual',
@@ -77,7 +77,7 @@ export function WhatsappMessageTemplates(){
  return <section className="space-y-4" aria-label="Editor de modelos WhatsApp">
   <header>
    <h2 className="text-base font-semibold text-white">Modelos de notificação</h2>
-   <p className="mt-1 text-xs text-gray-400">Edite os textos que serão usados nos novos avisos. Prévia com dados de exemplo; links reais são gerados pelo sistema.</p>
+   <p className="mt-1 text-xs text-gray-400">Edite os textos que serão usados nos novos avisos. Prévia com dados de exemplo. Nas revisões e entregas, o sistema acrescenta os nomes e links de todos os arquivos liberados.</p>
   </header>
   {error&&<p role="alert" className="rounded-lg border border-amber-500/20 p-3 text-xs text-amber-200">{error}</p>}
   {loading?<p className="py-8 text-sm text-gray-400">Carregando modelos...</p>:
@@ -109,7 +109,7 @@ export function WhatsappMessageTemplates(){
       <div className="mt-2 flex flex-wrap gap-2">{Object.keys(EXAMPLES).map(key=>
        <button key={key} type="button" disabled={!!error||key==='link'} onClick={()=>setDraft(v=>v.replace(/\{\{link\}\}\s*$/,'{{'+key+'}}\n\n{{link}}'))}
         className="rounded-lg border border-white/10 px-2 py-1 disabled:opacity-40">{'{{'+key+'}}'}</button>)}</div>
-      <p className="mt-2">Mantenha {'{{link}}'} uma única vez no final. O link protegido sempre é inserido após os arquivos da mensagem.</p>
+      <p className="mt-2">Mantenha {'{{link}}'} uma única vez no final. Os nomes e links dos arquivos são acrescentados automaticamente; você edita aqui o texto da mensagem.</p>
      </details>
      {problem&&<p role="alert" className="text-xs text-amber-200">{problem}</p>}
      <div className="flex flex-wrap gap-2">
