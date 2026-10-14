@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase'
+import { supabase, supabaseUrl } from '../lib/supabase'
 
 export type LibraryItem={
  id:string
@@ -15,7 +15,7 @@ export const academyLibraryApi={
   if(error)throw new Error('Não foi possível carregar seus e-books e audiobooks.')
   return (data||[]) as LibraryItem[]
  },
- async mediaTicket(itemId:string):Promise<{url:string;mime_type:string;expires_at:string}>{
+ async mediaTicket(itemId:string):Promise<{url:string;fallbackUrl:string;mime_type:string;expires_at:string}>{
   const {data,error}=await supabase.functions.invoke('academy-library-media',{body:{item_id:itemId}})
   if(error||!data?.ok)throw new Error('Não foi possível abrir este conteúdo. Confirme seu acesso e tente novamente.')
   // Only use the opaque, short-lived token returned by the authenticated endpoint.
@@ -28,6 +28,19 @@ export const academyLibraryApi={
   if(data.mime_type!=='audio/mpeg'&&data.mime_type!=='application/pdf'){
     throw new Error('O serviço retornou um formato de arquivo inválido.')
   }
-  return {url:'/app/academia/midia?ticket='+encodeURIComponent(ticket),mime_type:data.mime_type,expires_at:data.expires_at}
+  // Fallback uses ONLY our configured Supabase project, never an untrusted
+  // URL from a server response. GET still requires a non-expired, granted ticket.
+  const base=new URL(supabaseUrl)
+  if(base.protocol!=='https:'||!base.hostname.endsWith('.supabase.co')){
+    throw new Error('Servidor de arquivos não configurado corretamente.')
+  }
+  const direct=new URL('/functions/v1/academy-library-media',base.origin)
+  direct.searchParams.set('ticket',ticket)
+  return {
+    url:'/app/academia/midia?ticket='+encodeURIComponent(ticket),
+    fallbackUrl:direct.toString(),
+    mime_type:data.mime_type,
+    expires_at:data.expires_at
+  }
  }
 }

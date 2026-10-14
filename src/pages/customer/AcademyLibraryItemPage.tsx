@@ -24,15 +24,33 @@ export function AcademyLibraryItemPage(){
    if(media.mime_type!==owned.mime_type)throw new Error('Formato da mídia inconsistente.')
    // Preflight on the SAME origin catches expired tickets and upstream Drive
    // errors before showing a blank PDF iframe or an audio element at 0:00.
-   const probe=await fetch(media.url,{method:'HEAD',cache:'no-store'})
+   let playableUrl=media.url
+   let probe:Response
+   try{
+    probe=await fetch(media.url,{method:'HEAD',cache:'no-store'})
+   }catch{
+    // Browser network errors at the same-origin bridge may be transient.
+    probe=new Response(null,{status:503})
+   }
+   if(probe.status===503){
+    // The Worker bridge failed before it could contact the authenticated
+    // Supabase function. Fall back to the canonical, fixed Supabase endpoint.
+    playableUrl=media.fallbackUrl
+    try{
+     probe=await fetch(playableUrl,{method:'HEAD',cache:'no-store'})
+    }catch{
+     throw new Error('O navegador não conseguiu alcançar o serviço de mídia. Verifique a conexão ou tente novamente.')
+    }
+   }
    if(!probe.ok){
     if(probe.status===403)throw new Error('Seu acesso temporário expirou. Atualize para gerar um novo link.')
-    throw new Error('O arquivo não pôde ser carregado do Drive (erro '+probe.status+'). Tente novamente.')
+    if(probe.status===503)throw new Error('O servidor de mídia não conseguiu acessar o Google Drive (503). Verifique a conexão institucional do Drive.')
+    throw new Error('O arquivo não pôde ser carregado (erro '+probe.status+'). Tente novamente.')
    }
    const receivedType=String(probe.headers.get('Content-Type')||'').split(';')[0].toLowerCase()
    if(receivedType!==owned.mime_type)throw new Error('O arquivo recebido não corresponde ao formato esperado.')
    if(!active)return
-   setItem(owned);setStream(media.url)
+   setItem(owned);setStream(playableUrl)
   }).catch((e:any)=>{if(active)setError(e?.message||'Erro ao abrir conteúdo.')})
    .finally(()=>{if(active)setLoading(false)})
   return()=>{active=false}
