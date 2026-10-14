@@ -38,7 +38,7 @@ function Icon({name,size=20,className=''}:{name:IconName;size?:number;className?
 }
 function Mark({compact=false}:{compact?:boolean}) {
  return <Link to="/app/academia" aria-label="Academia Sagamente — início" className="academy-brand">
-  <img src="/pwa/icon-192.png" alt="" width="40" height="40" className="academy-brand-icon"/>
+  <img src="/pwa/academy-icon-192.png" alt="" width="40" height="40" className="academy-brand-icon"/>
   <span className="academy-brand-label"><strong>SAGAMENTE</strong><span>ACADEMIA</span></span>
   {!compact&&<span className="sr-only">Voltar ao início</span>}
  </Link>
