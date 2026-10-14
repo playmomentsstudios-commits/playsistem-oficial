@@ -104,13 +104,14 @@ async function serveAcademyMedia(request) {
   })
   const range = request.headers.get('Range')
   if (range) upstreamHeaders.set('Range', range)
+  upstreamHeaders.set('Cache-Control', 'no-store')
   try {
+    // Use a minimal RequestInit supported across Worker compatibility modes.
+    // Token-bearing URLs are unique and responses must never be cached.
     const upstream = await fetch(upstreamUrl, {
       method: request.method,
       headers: upstreamHeaders,
-      redirect: 'error',
-      cache: 'no-store',
-      signal: AbortSignal.timeout(30000)
+      redirect: 'manual'
     })
     if (!upstream.ok) {
       const status = upstream.status === 401 || upstream.status === 403 ? 403 : upstream.status === 416 ? 416 : 502
@@ -136,9 +137,18 @@ async function serveAcademyMedia(request) {
       headers
     })
   } catch (error) {
-    console.error('Academy media bridge unavailable', error instanceof Error ? error.name : 'unknown')
+    const message = error instanceof Error ? error.message : ''
+    const reason = /cache mode|cache.field|RequestInitializerDict|cache_option/i.test(message)
+      ? 'unsupported-fetch-cache'
+      : /timeout|abort/i.test(message)
+        ? 'request-aborted'
+        : /redirect/i.test(message)
+          ? 'upstream-redirect'
+          : 'upstream-network'
+    // Log a fixed category rather than a URL that might contain a private ticket.
+    console.error('Academy media bridge unavailable', reason, error instanceof Error ? error.name : 'unknown')
     return new Response('Serviço de mídia temporariamente indisponível.', {
-      status: 503, headers: noCache
+      status: 503, headers: { ...noCache, 'X-Academy-Media-Failure': reason }
     })
   }
 }
