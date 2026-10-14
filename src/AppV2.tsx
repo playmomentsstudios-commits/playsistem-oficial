@@ -217,6 +217,7 @@ export default function AppV2() {
                 <Route path="site" element={<AdminPermissionGate permission="site.manage"><AdminSiteSettings /></AdminPermissionGate>} />
                 <Route path="seo" element={<AdminPermissionGate permission="site.manage"><AdminSeo /></AdminPermissionGate>} />
                 <Route path="landings" element={<AdminPermissionGate adminOnly><AdminLandingPages /></AdminPermissionGate>} />
+                <Route path="landings/preview/:slug" element={<AdminPermissionGate adminOnly><LandingPage preview /></AdminPermissionGate>} />
                 <Route path="curriculos" element={<AdminPermissionGate permission="site.manage"><AdminResumes /></AdminPermissionGate>} />
                 <Route path="curriculos/novo" element={<AdminPermissionGate permission="site.manage"><AdminResumeEditor /></AdminPermissionGate>} />
                 <Route path="curriculos/:id" element={<AdminPermissionGate permission="site.manage"><AdminResumeEditor /></AdminPermissionGate>} />
