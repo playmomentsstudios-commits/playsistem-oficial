@@ -59,6 +59,74 @@ async function authorizedItem(db:any,userId:string,itemId:string){
   return item
 }
 
+
+/**
+ * Transitional Drive read path for pre-existing files shared with "anyone with link".
+ * The caller has already passed ticket, active grant and active profile validation.
+ * File IDs and Google links NEVER leave the function; this does not change sharing.
+ * Prefer the OAuth Drive API; use this only if it answers 404 for an existing item.
+ * Once the institutional OAuth token can read these files, remove this fallback.
+ */
+async function serveAlreadySharedDrive(request:Request,driveFileId:string,mimeType:string){
+  const sourceUrl='https://drive.usercontent.google.com/download?id='+encodeURIComponent(driveFileId)+'&export=download&confirm=t'
+  const fail=(stage:string)=>reply({error:'Media source unavailable',stage},502)
+  const probe=await fetch(sourceUrl,{
+    headers:{Range:'bytes=0-31'},
+    signal:AbortSignal.timeout(15000)
+  })
+  if(probe.status!==206)return fail('drive_shared_source')
+  const ct=String(probe.headers.get('Content-Type')||'').split(';')[0].toLowerCase()
+  if(![mimeType,'application/octet-stream'].includes(ct))return fail('drive_shared_mime')
+  const contentRange=String(probe.headers.get('Content-Range')||'')
+  const match=/^bytes 0-31\/(\d+)$/.exec(contentRange)
+  if(!match)return fail('drive_shared_range')
+  const size=Number(match[1])
+  if(!Number.isSafeInteger(size)||size<32||size>300*1024*1024)return fail('drive_shared_size')
+  const signature=new Uint8Array(await probe.arrayBuffer())
+  if(signature.length!==32)return fail('drive_shared_range')
+  const pdf=signature[0]===37&&signature[1]===80&&signature[2]===68&&signature[3]===70&&signature[4]===45
+  const mp3=(signature[0]===73&&signature[1]===68&&signature[2]===51)
+    ||(signature[0]===255&&(signature[1]&224)===224)
+  if(mimeType==='application/pdf'&&!pdf)return fail('drive_shared_mime')
+  if(mimeType==='audio/mpeg'&&!mp3&&ct!=='audio/mpeg')return fail('drive_shared_mime')
+  const out=headers()
+  out.set('Content-Type',mimeType)
+  out.set('Content-Disposition','inline')
+  out.set('Accept-Ranges','bytes')
+  if(request.method==='HEAD'){
+    out.set('Content-Length',String(size))
+    return new Response(null,{status:200,headers:out})
+  }
+  const requested=request.headers.get('Range')
+  let range:{start:number,end:number}|null=null
+  if(requested){
+    try{range=parseRange(requested,size)}catch{
+      out.set('Content-Range','bytes */'+size)
+      return new Response(null,{status:416,headers:out})
+    }
+  }
+  const upstream=await fetch(sourceUrl,{
+    headers:range?{Range:'bytes='+range.start+'-'+range.end}:{},
+    signal:AbortSignal.timeout(45000)
+  })
+  const gotType=String(upstream.headers.get('Content-Type')||'').split(';')[0].toLowerCase()
+  if(![mimeType,'application/octet-stream'].includes(gotType)||!upstream.body)return fail('drive_shared_mime')
+  if(range){
+    const expected='bytes '+range.start+'-'+range.end+'/'+size
+    const length=range.end-range.start+1
+    if(upstream.status!==206||upstream.headers.get('Content-Range')!==expected
+      ||Number(upstream.headers.get('Content-Length'))!==length)return fail('drive_shared_range')
+    out.set('Content-Range',expected)
+    out.set('Content-Length',String(length))
+    return new Response(upstream.body,{status:206,headers:out})
+  }
+  if(upstream.status!==200)return fail('drive_shared_source')
+  const providedLength=upstream.headers.get('Content-Length')
+  if(providedLength&&Number(providedLength)!==size)return fail('drive_shared_size')
+  out.set('Content-Length',String(size))
+  return new Response(upstream.body,{status:200,headers:out})
+}
+
 Deno.serve(async(request:Request)=>{
   if(request.method==='OPTIONS')return new Response('ok',{headers:cors})
   if(!['GET','HEAD','POST'].includes(request.method))return reply({error:'Method not allowed'},405)
@@ -90,6 +158,13 @@ Deno.serve(async(request:Request)=>{
     const upstreamHeaders={Authorization:'Bearer '+token}
     const metadata=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(item.drive_file_id)+'?fields=id,size,mimeType,capabilities(canDownload),isAppAuthorized',{headers:upstreamHeaders,signal:AbortSignal.timeout(15000)})
     if(!metadata.ok){
+      if(metadata.status===404){
+        // The refresh token may have the Drive.file scope rather than Drive.readonly.
+        // These library objects are already shared by link, so proxy them only
+        // after the same private ticket and grant checks above.
+        console.warn('academy-media:oauth-drive-metadata-404-shared-link-proxy')
+        return await serveAlreadySharedDrive(request,item.drive_file_id,item.mime_type)
+      }
       const reasonBody=await metadata.json().catch(()=>null)
       const reason=String(reasonBody?.error?.errors?.[0]?.reason||reasonBody?.error?.status||'unknown').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,60)
       console.error('academy-media:drive-metadata',metadata.status,reason)
