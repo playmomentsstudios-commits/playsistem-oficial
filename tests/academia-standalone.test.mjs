@@ -73,3 +73,32 @@ test('Customer and administrator Academies both expose the install screen link',
  assert.match(customer,/<AcademyAppInstallCard\/>/)
  assert.match(admin,/<AcademyAppInstallCard admin\/>/)
 })
+
+
+test('Standalone Academy shows only functional catalog categories',()=>{
+ const catalog=read('src/pages/customer/AcademyCatalogPage.tsx')
+ assert.match(catalog,/const standalone=import\.meta\.env\.MODE==='academy'/)
+ assert.match(catalog,/\{!standalone&&<nav aria-label="Filtrar formato"/)
+ assert.match(catalog,/Seus e-books e audiobooks estão na aba Biblioteca/)
+ assert.match(catalog,/standalone\?'Explore cursos e videoaulas disponíveis/)
+})
+
+test('Academy resumes owned audiobooks with the unchanged native player progress key',()=>{
+ const app=read('src/academy/standalone.tsx')
+ const reader=read('src/pages/customer/AcademyLibraryItemPage.tsx')
+ assert.match(app,/resumable = useMemo/)
+ assert.match(app,/sagamente\.library\.position\./)
+ assert.match(app,/item\.format === 'audiobook'/)
+ assert.match(app,/Retomar audiobook/)
+ assert.match(reader,/sagamente\.library\.position\./)
+ assert.match(reader,/onTimeUpdate=\{saveAudioPosition\}/)
+})
+
+test('Certificate links have a valid in-app route, and password help goes to the real main site',()=>{
+ const app=read('src/academy/standalone.tsx')
+ assert.match(app,/Route path="\/certificados\/:code" element=\{<CertificateVerify\/>\}/)
+ assert.match(app,/CertificateVerifyPage/)
+ assert.match(app,/https:\/\/playsistem-oficial\.playmomentsstudios\.workers\.dev\/esqueci-senha/)
+ assert.match(app,/rel="noopener noreferrer"/)
+ assert.match(app,/\/pwa\/icon-192\.png/)
+})
