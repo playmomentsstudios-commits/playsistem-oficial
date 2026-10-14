@@ -102,3 +102,34 @@ test('Certificate links have a valid in-app route, and password help goes to the
  assert.match(app,/rel="noopener noreferrer"/)
  assert.match(app,/\/pwa\/icon-192\.png/)
 })
+
+
+test('Premium Academy visual system covers login, home, library, courses and account without mock data',()=>{
+ const app=read('src/academy/standalone.tsx')
+ const css=read('src/academy/academy.css')
+ for(const name of ['academy-login','academy-featured','academy-library-grid','academy-media-card','academy-course-card','academy-profile-card','academy-tabbar']){
+  assert.match(app,new RegExp(name))
+  assert.match(css,new RegExp('\\.'+name))
+ }
+ assert.match(css,/--ac-orange:/)
+ assert.match(css,/@media\(max-width:420px\)/)
+ assert.match(css,/@media\(prefers-reduced-motion:reduce\)/)
+ assert.match(app,/const paths: Record<IconName,string>/)
+ assert.match(app,/function ContentArtwork/)
+ assert.doesNotMatch(app,/<img[^>]*src="https:\/\/images\./)
+})
+
+test('Standalone premium redesign preserves the existing media readers and scoped styling',()=>{
+ const app=read('src/academy/standalone.tsx')
+ const css=read('src/academy/academy.css')
+ const worker=read('worker/academy-standalone.js')
+ assert.match(app,/import\('\.\.\/pages\/customer\/AcademyLibraryItemPage'\)/)
+ assert.match(app,/import\('\.\.\/pages\/customer\/AcademyCoursePage'\)/)
+ assert.match(app,/academyLibraryApi\.mine\(\)/)
+ assert.match(app,/academyApi\.myCourses\(\)/)
+ assert.match(app,/sagamente\.library\.position\./)
+ assert.match(app,/className="academy-reader"/)
+ assert.match(css,/\.academy-reader :is\(iframe,video\)/)
+ assert.match(worker,/academy-library-media\?ticket=/)
+ assert.doesNotMatch(css,/@import '.*http/)
+})
