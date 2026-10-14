@@ -84,10 +84,17 @@ Deno.serve(async(request:Request)=>{
     const token=await driveToken()
     const upstreamHeaders={Authorization:'Bearer '+token}
     const metadata=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(item.drive_file_id)+'?fields=size,mimeType,capabilities(canDownload)',{headers:upstreamHeaders,signal:AbortSignal.timeout(15000)})
-    if(!metadata.ok)return reply({error:'Source file unavailable'},502)
+    if(!metadata.ok){console.error('academy-media:drive-metadata',metadata.status);return reply({error:'Source file unavailable',stage:'drive_metadata'},502)}
     const info=await metadata.json()
     const size=Number(info.size||0)
-    if(!Number.isSafeInteger(size)||size<=0||size>300*1024*1024||info.capabilities?.canDownload===false||info.mimeType!==item.mime_type)return reply({error:'Media is not ready'},502)
+    if(!Number.isSafeInteger(size)||size<=0||size>300*1024*1024){console.error('academy-media:invalid-size');return reply({error:'Media is not ready',stage:'invalid_size'},502)}
+    if(info.capabilities?.canDownload===false){console.error('academy-media:download-denied');return reply({error:'Media is not ready',stage:'drive_permission'},502)}
+    // Google Drive sometimes stores uploaded MP3/PDF as application/octet-stream.
+    // The canonical media type comes from the private library record, not from user input.
+    if(info.mimeType!==item.mime_type && info.mimeType!=='application/octet-stream'){
+      console.error('academy-media:unexpected-mime',info.mimeType,item.mime_type)
+      return reply({error:'Media is not ready',stage:'mime_mismatch'},502)
+    }
     const output=headers()
     output.set('Content-Type',item.mime_type)
     output.set('Content-Disposition','inline')
@@ -106,7 +113,7 @@ Deno.serve(async(request:Request)=>{
     const driveHeaders:Record<string,string>={Authorization:'Bearer '+token}
     if(range)driveHeaders.Range='bytes='+range.start+'-'+range.end
     const upstream=await fetch('https://www.googleapis.com/drive/v3/files/'+encodeURIComponent(item.drive_file_id)+'?alt=media',{headers:driveHeaders,signal:AbortSignal.timeout(45000)})
-    if(!upstream.ok)return reply({error:'Unable to read media'},502)
+    if(!upstream.ok){console.error('academy-media:drive-download',upstream.status);return reply({error:'Unable to read media',stage:'drive_download'},502)}
     if(range){
       const count=range.end-range.start+1
       output.set('Content-Range','bytes '+range.start+'-'+range.end+'/'+size)
@@ -116,13 +123,13 @@ Deno.serve(async(request:Request)=>{
       }
       // Drive may ignore Range on small files; honor the requested slice ourselves.
       const bytes=new Uint8Array(await upstream.arrayBuffer())
-      if(bytes.length!==size)return reply({error:'Unexpected media range'},502)
+      if(bytes.length!==size){console.error('academy-media:range-size-mismatch');return reply({error:'Unexpected media range',stage:'range_mismatch'},502)}
       return new Response(bytes.slice(range.start,range.end+1),{status:206,headers:output})
     }
     output.set('Content-Length',String(size))
     return new Response(upstream.body,{status:200,headers:output})
   }catch(error){
     console.error('academy-library-media request failed',error instanceof Error?error.message:'unknown')
-    return reply({error:'Media service temporarily unavailable'},503)
+    return reply({error:'Media service temporarily unavailable',stage:'runtime_failure'},503)
   }
 })
