@@ -1126,6 +1126,8 @@ export function AdminProjectDetailV2(){
         const member=team.find(item=>item.id===task.assigned_to)
         const stage=sortedStages.find((item:any)=>item.id===task.stage_id)
         const taskProgress=taskUploadProgress?.taskId===task.id?taskUploadProgress:null
+        const taskFiles=files.filter((file:any)=>file.task_id===task.id)
+        const previewCount=taskFiles.filter((file:any)=>file.drive_folder_kind==='preview').length
         return <details key={task.id} className={'group/task overflow-hidden rounded-xl border border-l-4 shadow-sm transition-colors duration-150 '+(task.status==='completed'?'border-[#2E7650] border-l-[#4ADE80] bg-[#1C4430] hover:bg-[#235239]':task.status==='in_progress'?'border-[#88542B] border-l-[#F59E49] bg-[#50321F] hover:bg-[#5B3923]':task.status==='review'?'border-[#335F89] border-l-[#60A5FA] bg-[#203D58] hover:bg-[#274B69]':task.status==='cancelled'?'border-[#41444B] border-l-[#64748B] bg-[#24262B] opacity-65':'border-[#444952] border-l-[#94A3B8] bg-[#292D35] hover:bg-[#343A44]')}>
           <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-4 py-3 text-sm font-semibold leading-relaxed text-[#F6F7F9] marker:content-none [&::-webkit-details-marker]:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#F5B77B]">
             <span className="min-w-0 flex-1">
@@ -1139,50 +1141,71 @@ export function AdminProjectDetailV2(){
               </svg>
             </span>
           </summary>
-          <div className="border-t border-black/10 bg-[#151518] px-4 pb-4 pt-3 text-gray-200">
-          {stage?.client_visible&&task.client_visible&&<Link to={'/admin/projetos/'+id+'/etapas/'+stage.id+'/tarefas/'+task.id} className="mb-3 inline-flex min-h-10 items-center rounded-lg border border-[#A65A2A]/30 px-3 text-xs font-semibold text-[#DFA269] hover:bg-white/5">Prévia da tarefa para o cliente ↗</Link>}
-          <div className="flex flex-wrap justify-between gap-3">
-            <div>
-              <p className="text-xs text-gray-500">{stage?.name||'Sem etapa'} · {member?member.first_name+' '+member.last_name:'Sem responsável'} · prioridade {rotulo(prioridade,task.priority)}</p>
-              {task.due_date&&<p className="text-xs text-gray-500 mt-1">Prazo: {new Date(task.due_date+'T12:00').toLocaleDateString('pt-BR')}</p>}
-            </div>
-            <div className="flex gap-2 items-start">
-              <button type="button" title="Renomear tarefa" aria-label="Renomear tarefa" onClick={()=>void renameTask(task)} className="px-2 py-2 text-xs text-gray-400 hover:text-white">Editar</button>
-              <label className="flex items-center gap-2 text-xs text-gray-400 min-h-10">
-                <input type="checkbox" checked={Boolean(task.client_visible)} onChange={e=>void changeTaskVisibility(task.id,e.target.checked)}/>
-                Visível ao cliente
+          <div className="border-t border-black/10 bg-[#151518] px-3 pb-3 pt-2 text-gray-200 sm:px-4">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-2 border-b border-white/[.07] pb-2.5">
+              {stage?.client_visible&&task.client_visible&&<Link
+                to={'/admin/projetos/'+id+'/etapas/'+stage.id+'/tarefas/'+task.id}
+                title="Visualizar a página de prévia da tarefa para o cliente"
+                aria-label={'Visualizar prévia da tarefa '+task.title}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/[.035] text-[#DFA269] hover:border-[#A65A2A]/60 hover:bg-[#A65A2A]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DFA269]"
+              >
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                  <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </Link>}
+              <label title={project.project_type==='internal'?'Adicionar arquivo à tarefa':'Adicionar arquivo de prévia à tarefa'} aria-label="Adicionar arquivos à tarefa" className={'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#A65A2A]/45 text-base font-semibold text-[#E6A46D] '+(taskUploadingId?'cursor-not-allowed opacity-50':'cursor-pointer hover:bg-[#A65A2A]/10')}>
+                <span aria-hidden="true">{taskUploadingId===task.id?'…':'+'}</span>
+                <input type="file" multiple className="sr-only" disabled={Boolean(taskUploadingId)} onChange={e=>void uploadTaskFile(e,task)}/>
               </label>
-              <select value={task.status} onChange={e=>void changeTaskStatus(task.id,e.target.value)} className={"pm-select-status px-3 py-2 rounded-lg text-sm "+(task.status==="pending"?"pm-state-pending":task.status==="in_progress"?"pm-state-progress":task.status==="review"?"pm-state-review":task.status==="completed"?"pm-state-success":"pm-state-danger")}>{taskStatuses.map(value=><option key={value} value={value}>{statusLabel('task',value)}</option>)}</select>
-              <button onClick={async()=>{if(window.confirm('Excluir esta tarefa?')){await portalApi.deleteTask(task.id);await load()}}} className="px-3 py-2 text-xs text-red-400">Excluir</button>
+              {previewCount>0&&<span title={previewCount+' arquivo(s) de prévia anexado(s)'} className="inline-flex min-h-7 shrink-0 items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/[.08] px-2 text-[11px] font-medium text-emerald-300">
+                <span aria-hidden="true">✓</span> {previewCount===1?'Prévia anexada':previewCount+' prévias'}
+              </span>}
+              <span className="min-w-[170px] flex-1 text-[11px] leading-relaxed text-gray-400">
+                {stage?.name||'Sem etapa'} · {member?member.first_name+' '+member.last_name:'Sem responsável'} · prioridade {rotulo(prioridade,task.priority)}
+                {task.due_date&&' · prazo '+new Date(task.due_date+'T12:00').toLocaleDateString('pt-BR')}
+              </span>
+              <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2 gap-y-1">
+                <button type="button" title="Renomear tarefa" aria-label="Renomear tarefa" onClick={()=>void renameTask(task)} className="min-h-8 rounded-md px-2 text-xs text-gray-300 hover:bg-white/5 hover:text-white">Editar</button>
+                <label className="inline-flex min-h-8 items-center gap-1.5 whitespace-nowrap text-[11px] text-gray-300">
+                  <input type="checkbox" checked={Boolean(task.client_visible)} onChange={e=>void changeTaskVisibility(task.id,e.target.checked)}/>
+                  Visível ao cliente
+                </label>
+                <select value={task.status} aria-label="Status da tarefa" onChange={e=>void changeTaskStatus(task.id,e.target.value)} className={"pm-select-status min-h-8 rounded-lg px-2 py-1 text-xs "+(task.status==="pending"?"pm-state-pending":task.status==="in_progress"?"pm-state-progress":task.status==="review"?"pm-state-review":task.status==="completed"?"pm-state-success":"pm-state-danger")}>{taskStatuses.map(value=><option key={value} value={value}>{statusLabel('task',value)}</option>)}</select>
+                <button type="button" onClick={async()=>{if(window.confirm('Excluir esta tarefa?')){await portalApi.deleteTask(task.id);await load()}}} className="min-h-8 rounded-md px-2 text-xs text-red-400 hover:bg-red-500/10">Excluir</button>
+              </div>
             </div>
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <label title="Adicionar arquivos à tarefa" aria-label="Adicionar arquivos à tarefa" className={'inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#A65A2A]/40 text-lg font-semibold '+(taskUploadingId?'cursor-not-allowed opacity-50':'cursor-pointer hover:bg-[#A65A2A]/10')}>
-              <span aria-hidden="true">{taskUploadingId===task.id?'…':'+'}</span>
-              <input type="file" multiple className="sr-only" disabled={Boolean(taskUploadingId)} onChange={e=>void uploadTaskFile(e,task)}/>
-            </label>
-            <span className="text-[11px] text-gray-500">{project.project_type==='internal'?'Equipe · pasta da etapa':'Privado · Revisão'}</span>
-          </div>
-          {taskProgress&&<div role="status" aria-live="polite" className="mt-2 max-w-lg rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-xs">
-            <p className="truncate">{taskProgress.status==='done'?'✓ Envio concluído':taskProgress.status==='error'?'Envio não confirmado — confira antes de reenviar':'Enviando arquivo...'} {taskProgress.name}</p>
-            <div className="mt-1 flex items-center justify-between text-gray-400"><span>{taskProgress.done}/{taskProgress.total} concluído(s)</span><span>{taskProgress.percent}%</span></div>
-            <div className="mt-1 h-1.5 overflow-hidden rounded bg-white/10"><div className="h-full bg-[#A65A2A]" style={{width:taskProgress.percent+'%'}}/></div>
-          </div>}
-          {(files.filter((file:any)=>file.task_id===task.id).length>0)&&<div className="mt-4">
-            <p className="text-xs font-medium text-gray-400 mb-2">Arquivos ({files.filter((file:any)=>file.task_id===task.id).length})</p>
-            <div className="flex flex-wrap gap-2">{files.filter((file:any)=>file.task_id===task.id).map((file:any)=><button key={file.id} onClick={()=>openFile(file)} className="px-3 py-2 rounded-lg bg-white/5 text-xs">{file.name} ↗</button>)}</div>
-          </div>}
-          <div className="grid lg:grid-cols-2 gap-4 mt-3">
-            <div>
-              <div className="flex justify-between"><p className="text-xs font-medium text-gray-400">Checklist · {(task.checklist||[]).filter((item:any)=>item.completed).length}/{(task.checklist||[]).length}</p><button onClick={()=>addChecklist(task.id)} title="Adicionar item" aria-label="Adicionar item ao checklist" className="text-xs text-[#A65A2A]">+</button></div>
-              <div className="space-y-1 mt-2">{(task.checklist||[]).sort((a:any,b:any)=>a.position-b.position).map((item:any)=><label key={item.id} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={item.completed} onChange={e=>void toggleChecklist(task.id,item.id,e.target.checked)}/><span className={item.completed?'line-through text-gray-500':''}>{item.title}</span><button type="button" onClick={async()=>{await portalApi.deleteChecklistItem(item.id);await load()}} className="ml-auto text-xs text-red-400">×</button></label>)}</div>
-            </div>
-            <div>
-              <div className="flex justify-between"><p className="text-xs font-medium text-gray-400">Links</p><button onClick={()=>addLink(task.id)} title="Adicionar link" aria-label="Adicionar link" className="text-xs text-[#A65A2A]">+</button></div>
-              <div className="space-y-1 mt-2">{(task.links||[]).map((link:any)=><div key={link.id} className="flex items-center gap-2 text-sm"><a href={link.url} target="_blank" rel="noreferrer" className="text-[#A65A2A]">{link.label} ↗</a>{link.client_visible&&<span className="text-[10px] text-emerald-400">cliente</span>}<button onClick={async()=>{await portalApi.deleteTaskLink(link.id);await load()}} className="ml-auto text-xs text-red-400">×</button></div>)}</div>
-            </div>
-          </div>
+            {taskProgress&&<div role="status" aria-live="polite" className="mt-2 max-w-lg rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-xs">
+              <p className="truncate">{taskProgress.status==='done'?'✓ Envio concluído':taskProgress.status==='error'?'Envio não confirmado — confira antes de reenviar':'Enviando arquivo...'} {taskProgress.name}</p>
+              <div className="mt-1 flex items-center justify-between text-gray-400"><span>{taskProgress.done}/{taskProgress.total} concluído(s)</span><span>{taskProgress.percent}%</span></div>
+              <div className="mt-1 h-1.5 overflow-hidden rounded bg-white/10"><div className="h-full bg-[#A65A2A]" style={{width:taskProgress.percent+'%'}}/></div>
+            </div>}
+            {taskFiles.length>0&&<section aria-label="Arquivos da tarefa" className="mt-3">
+              <p className="mb-1.5 text-xs font-medium text-gray-400">Arquivos ({taskFiles.length})</p>
+              <div className="flex flex-wrap gap-2">{taskFiles.map((file:any)=><button type="button" key={file.id} onClick={()=>openFile(file)} className="max-w-full truncate rounded-lg bg-white/5 px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/10" title={file.name}>{file.name} ↗</button>)}</div>
+            </section>}
+            <section aria-label="Checklist da tarefa" className="mt-3 border-t border-white/[.07] pt-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold text-gray-300">Checklist · {(task.checklist||[]).filter((item:any)=>item.completed).length}/{(task.checklist||[]).length}</p>
+                <button type="button" onClick={()=>addChecklist(task.id)} title="Adicionar item" aria-label="Adicionar item ao checklist" className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-lg text-[#DFA269] hover:bg-white/5">+</button>
+              </div>
+              <div className="mt-1 space-y-1">{[...(task.checklist||[])].sort((a:any,b:any)=>a.position-b.position).map((item:any)=><label key={item.id} className="flex min-h-7 items-center gap-2 text-sm">
+                <input type="checkbox" checked={item.completed} onChange={e=>void toggleChecklist(task.id,item.id,e.target.checked)}/>
+                <span className={'min-w-0 flex-1 break-words '+(item.completed?'line-through text-gray-500':'text-gray-200')}>{item.title}</span>
+                <button type="button" title="Excluir item do checklist" aria-label={'Excluir item '+item.title} onClick={async e=>{e.preventDefault();await portalApi.deleteChecklistItem(item.id);await load()}} className="shrink-0 px-2 py-1 text-xs text-red-400">×</button>
+              </label>)}</div>
+            </section>
+            <section aria-label="Links da tarefa" className="mt-3 border-t border-white/[.07] pt-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-medium text-gray-400">Links {(task.links||[]).length>0&&'('+task.links.length+')'}</p>
+                <button type="button" onClick={()=>addLink(task.id)} title="Adicionar link" aria-label="Adicionar link" className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-lg text-[#DFA269] hover:bg-white/5">+</button>
+              </div>
+              {(task.links||[]).length>0&&<div className="mt-1 space-y-1">{(task.links||[]).map((link:any)=><div key={link.id} className="flex min-h-7 items-center gap-2 text-sm">
+                <a href={link.url} target="_blank" rel="noreferrer" className="min-w-0 flex-1 break-words text-[#DFA269] hover:underline">{link.label} ↗</a>
+                {link.client_visible&&<span className="shrink-0 text-[10px] text-emerald-400">cliente</span>}
+                <button type="button" onClick={async()=>{await portalApi.deleteTaskLink(link.id);await load()}} aria-label={'Excluir link '+link.label} className="shrink-0 px-2 py-1 text-xs text-red-400">×</button>
+              </div>)}</div>}
+            </section>
           </div>
         </details>
       })}
