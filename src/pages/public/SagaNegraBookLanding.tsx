@@ -65,7 +65,7 @@ export function SagaNegraBookLanding({page,preview=false}:Props){
     <div className="mx-auto max-w-6xl">
       <p className="text-xs font-bold uppercase tracking-[.2em] text-[#D69058]">Experimente antes do lançamento</p>
       <h2 id="previews-title" className="mt-3 max-w-3xl font-serif text-3xl font-semibold leading-tight text-[#f8eee4] sm:text-4xl">Duas formas de conhecer a história.</h2>
-      <p className="mt-3 max-w-3xl text-sm leading-7 text-[#bcb3aa]">Leia um trecho original do prólogo e escute aproximadamente 46 segundos da narração. Amostras gratuitas e independentes dos arquivos completos.</p>
+      <p className="mt-3 max-w-3xl text-sm leading-7 text-[#bcb3aa]">Leia um trecho original do prólogo e escute aproximadamente 1 minuto e 30 segundos da narração. Amostras gratuitas e independentes dos arquivos completos.</p>
       <div className="mt-9 grid items-stretch gap-4 lg:grid-cols-2">
         <article className="flex flex-col rounded-2xl border border-[#c7906b]/25 bg-[#17181a] p-5 sm:p-7" aria-labelledby="preview-ebook-title">
           <div className="flex flex-wrap items-center justify-between gap-3"><span className="rounded-md border border-[#b87449]/35 bg-[#b87449]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.15em] text-[#efb688]">Amostra do e-book</span><span className="text-xs text-[#9f9993]">Prólogo · leitura</span></div>
@@ -76,18 +76,20 @@ export function SagaNegraBookLanding({page,preview=false}:Props){
               <div className="mt-4 space-y-4">
                 <p>A história financeira de uma pessoa não começa quando ela recebe seu primeiro pagamento. Começa também nas condições que encontrou ao nascer. Mas essas condições não escrevem, sozinhas, o restante de sua vida.</p>
                 <p>Entre o ponto de partida e o resultado existe uma combinação de escolhas, oportunidades, riscos, conhecimentos, acontecimentos inesperados e relações de poder. É nesse espaço que se encontram os fracassos e os sucessos financeiros.</p>
+                <p>Durante séculos, pessoas negras produziram riqueza em condições profundamente desiguais. Muitas foram impedidas de controlar o próprio trabalho. Outras construíram negócios, adquiriram bens, organizaram redes comerciais e financiaram projetos familiares. Houve perdas, conquistas, erros e patrimônios transmitidos entre gerações. Não existe uma única trajetória.</p>
+                <p>Seria um equívoco transformar a população negra em símbolo permanente da pobreza. Também seria um equívoco apresentar exemplos individuais de enriquecimento como prova de que todas as barreiras sociais desapareceram.</p>
               </div>
             </details>
           </div>
           <p className="mt-auto pt-6 text-[11px] text-[#999188]">Trecho literal da introdução do Release 00. A obra completa será oferecida separadamente no lançamento.</p>
         </article>
         <article className="flex flex-col rounded-2xl border border-[#c7906b]/25 bg-[#17181a] p-5 sm:p-7" aria-labelledby="preview-audio-title">
-          <div className="flex flex-wrap items-center justify-between gap-3"><span className="rounded-md border border-[#b87449]/35 bg-[#b87449]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.15em] text-[#efb688]">Amostra do audiobook</span><span className="text-xs text-[#9f9993]">Cerca de 46 segundos</span></div>
+          <div className="flex flex-wrap items-center justify-between gap-3"><span className="rounded-md border border-[#b87449]/35 bg-[#b87449]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.15em] text-[#efb688]">Amostra do audiobook</span><span className="text-xs text-[#9f9993]">Cerca de 1min30s</span></div>
           <h3 id="preview-audio-title" className="mt-5 font-serif text-2xl font-semibold text-[#ffebd2]">Ouça a narração original</h3>
           <p className="mt-3 max-w-md text-sm leading-7 text-[#c4b9af]">Experimente o ritmo e a voz da obra. Este player reproduz apenas a amostra, sem disponibilizar o MP3 integral.</p>
           <div className="my-7 rounded-xl border border-[#d6a477]/20 bg-[#0d0f11] p-4">
             <div className="mb-3 flex items-center gap-3 text-sm font-semibold text-[#ede1d3]"><span aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-full bg-[#ad602f]/20 text-xl text-[#e4a06d]">♫</span> Release 00 · Trecho da narração</div>
-            <audio className="w-full [color-scheme:dark]" controls preload="none" src="/audio/saga-negra-release00-amostra.mp3" aria-label="Amostra de 46 segundos do audiobook Entre o Fracasso e a Prosperidade">
+            <audio className="w-full [color-scheme:dark]" controls preload="none" src="/audio/saga-negra-release00-amostra.mp3" aria-label="Amostra de aproximadamente 90 segundos do audiobook Entre o Fracasso e a Prosperidade">
               Seu navegador não consegue reproduzir este áudio.
             </audio>
           </div>
