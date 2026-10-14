@@ -764,22 +764,9 @@ export function AdminProjectDetailV2(){
             <span className="shrink-0 rounded-md border border-white/10 bg-white/[.04] px-2 py-1 text-[10px] font-medium text-gray-400">{rotulo(tipoProjeto,project.project_type)}</span>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <label className="inline-flex items-center gap-1.5 text-[11px] text-gray-500">
-              <span>Andamento</span>
-              <select aria-label="Andamento do projeto" value={project.status} onChange={e=>void updateProject({status:e.target.value})}
-                className="h-8 max-w-[160px] rounded-lg border border-white/10 bg-[#171719] px-2 text-xs font-medium text-gray-100 focus-visible:outline-2 focus-visible:outline-[#A65A2A]">
-                {projectStatuses.map(value=><option key={value} value={value}>{statusLabel('project',value)}</option>)}
-              </select>
-            </label>
-            <button type="button" onClick={openStatusLabels} title="Personalizar nomes dos status deste projeto" className="h-8 rounded-lg border border-white/15 px-2 text-xs text-gray-400 hover:text-white">Editar status</button>
-            <label className="inline-flex items-center gap-1.5 text-[11px] text-gray-500">
-              <span>Prioridade</span>
-              <select aria-label="Prioridade do projeto" value={project.priority} onChange={e=>void updateProject({priority:e.target.value})}
-                className="h-8 max-w-[116px] rounded-lg border border-white/10 bg-[#171719] px-2 text-xs font-medium text-gray-100 focus-visible:outline-2 focus-visible:outline-[#A65A2A]">
-                {priorities.map(value=><option key={value} value={value}>{rotulo(prioridade,value)}</option>)}
-              </select>
-            </label>
-            {project.due_date&&<span className="text-[11px] text-gray-500">Entrega {new Date(project.due_date+'T12:00').toLocaleDateString('pt-BR')}</span>}
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[.035] px-2.5 py-1.5 text-[11px] text-gray-300"><span aria-hidden="true">◷</span>{statusLabel('project',project.status)}</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[.035] px-2.5 py-1.5 text-[11px] text-gray-300"><span aria-hidden="true">⚑</span>{rotulo(prioridade,project.priority)}</span>
+            {project.due_date&&<span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[.035] px-2.5 py-1.5 text-[11px] text-gray-400"><span aria-hidden="true">▦</span>Entrega {new Date(project.due_date+'T12:00').toLocaleDateString('pt-BR')}</span>}
           </div>
         </div>
         <details className="group relative shrink-0 self-start">
@@ -787,6 +774,19 @@ export function AdminProjectDetailV2(){
             <span aria-hidden="true">⋯</span> Ações <span aria-hidden="true" className="text-gray-500 transition-transform group-open:rotate-180">▾</span>
           </summary>
           <div className="absolute right-0 top-full z-30 mt-1 w-56 rounded-xl border border-white/15 bg-[#111114] p-1.5 shadow-2xl">
+            <div className="space-y-2 border-b border-white/10 p-2 pb-3">
+              <label className="block text-[10px] text-gray-500">Andamento
+                <select aria-label="Andamento do projeto" value={project.status} onChange={e=>void updateProject({status:e.target.value})} className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-[#171719] px-2 text-xs font-medium text-gray-100">
+                  {projectStatuses.map(value=><option key={value} value={value}>{statusLabel('project',value)}</option>)}
+                </select>
+              </label>
+              <label className="block text-[10px] text-gray-500">Prioridade
+                <select aria-label="Prioridade do projeto" value={project.priority} onChange={e=>void updateProject({priority:e.target.value})} className="mt-1 h-9 w-full rounded-lg border border-white/10 bg-[#171719] px-2 text-xs font-medium text-gray-100">
+                  {priorities.map(value=><option key={value} value={value}>{rotulo(prioridade,value)}</option>)}
+                </select>
+              </label>
+              <button type="button" onClick={openStatusLabels} className="w-full rounded-lg px-2 py-1.5 text-left text-[11px] text-gray-400 hover:bg-white/[.06] hover:text-white">Personalizar nomes dos status</button>
+            </div>
             <button type="button" onClick={()=>exportProjectReportSpreadsheet(project,team)} className="w-full rounded-lg px-3 py-2.5 text-left text-xs text-gray-200 hover:bg-white/[.07]">Exportar planilha (.xls)</button>
             <button type="button" onClick={()=>printProjectReportPdf(project,team)} className="w-full rounded-lg px-3 py-2.5 text-left text-xs text-gray-200 hover:bg-white/[.07]">Gerar relatório PDF</button>
             {user?.role==='admin'&&<>
@@ -894,10 +894,13 @@ export function AdminProjectDetailV2(){
           </details>}
     </section>
 
-    <div className="mt-2 flex gap-2 overflow-x-auto pb-1" aria-label="Seções do projeto"><button type="button" onClick={()=>setProjectTab('execucao')} className={'shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border '+(projectTab==='execucao'?'bg-[#A65A2A]/15 text-[#F1C19D] border-[#A65A2A]/30':'bg-white/[.03] text-gray-400 border-white/10')}>Execução</button><button type="button" onClick={()=>setProjectTab('arquivos')} className={'shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border '+(projectTab==='arquivos'?'bg-[#A65A2A]/15 text-[#F1C19D] border-[#A65A2A]/30':'bg-white/[.03] text-gray-400 border-white/10')}>Arquivos <span className="ml-1 text-[10px] opacity-70">({files.length})</span></button><Link to="/admin/arquivos" className="shrink-0 min-h-10 px-4 rounded-xl text-sm font-semibold border border-white/10 text-gray-400 flex items-center">Central de Arquivos ↗</Link></div>
+    <div className="mt-3 flex gap-1 border-b border-white/10" role="tablist" aria-label="Seções do projeto">
+      <button type="button" role="tab" aria-selected={projectTab==='execucao'} onClick={()=>setProjectTab('execucao')} className={'min-h-10 rounded-t-xl border border-b-0 px-4 text-sm font-semibold transition-colors '+(projectTab==='execucao'?'border-[#A65A2A]/40 bg-[#A65A2A]/10 text-[#F1C19D]':'border-transparent bg-white/[.025] text-gray-400 hover:text-white')}>Execução</button>
+      <button type="button" role="tab" aria-selected={projectTab==='arquivos'} onClick={()=>setProjectTab('arquivos')} className={'min-h-10 rounded-t-xl border border-b-0 px-4 text-sm font-semibold transition-colors '+(projectTab==='arquivos'?'border-[#A65A2A]/40 bg-[#A65A2A]/10 text-[#F1C19D]':'border-transparent bg-white/[.025] text-gray-400 hover:text-white')}>Arquivos <span className="ml-1 text-[10px] opacity-70">({files.length})</span></button>
+    </div>
 
     {projectTab==='arquivos'&&<div>
-    <section className="mt-8">
+    <section className="mt-3">
       <div className="flex flex-wrap justify-between gap-3 items-end">
         <div>
           <h2 className="text-xl font-bold">Arquivos do projeto</h2>
@@ -907,7 +910,6 @@ export function AdminProjectDetailV2(){
 <div className="flex items-center flex-wrap gap-3">
           <span className="text-[11px] text-gray-500">{syncingFiles?'Atualizando arquivos do Drive...':syncedAt?'Sincronizado às '+syncedAt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'Sincronização automática ativa'}</span>
           <button type="button" disabled={syncingFiles} onClick={()=>void syncDriveFiles()} className="min-h-9 px-3 rounded-xl border border-white/15 text-xs text-gray-200 disabled:opacity-50">↻ Atualizar agora</button>
-          <Link to="/admin/arquivos" className="text-sm text-[#A65A2A]">Abrir Central de Arquivos →</Link>
         </div>
       </div>
 
@@ -987,7 +989,7 @@ export function AdminProjectDetailV2(){
         </div>}
         <div className="mt-5 space-y-3" aria-label="Arquivos por pasta no Google Drive">
           {files.length===0&&<p className="text-sm text-gray-500">Nenhum arquivo vinculado a este projeto.</p>}
-          {fileGroups.map(group=><details key={group.key} open={group.files.length>0} className="rounded-xl border border-white/10 bg-black/20">
+          {fileGroups.map(group=><details key={group.key} className="rounded-xl border border-white/10 bg-black/20">
             <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs sm:px-4">
               <span className="flex min-w-0 items-center gap-2"><span aria-hidden="true">📁</span><strong className="truncate text-gray-100">{group.name}</strong>{group.parent&&<span className="hidden text-gray-500 sm:inline">· {group.parent}</span>}</span>
               <span className="flex shrink-0 items-center gap-2 text-gray-400">{group.files.length} arquivo(s)
@@ -995,21 +997,17 @@ export function AdminProjectDetailV2(){
                 <span aria-hidden="true">▾</span></span>
             </summary>
             <div className="border-t border-white/10 p-2.5 sm:p-3">
-              {group.files.length===0?<p className="py-2 text-xs text-gray-500">Pasta vazia.</p>:<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {group.files.length===0?<p className="py-2 text-xs text-gray-500">Pasta vazia.</p>:<div className="grid gap-2 md:grid-cols-2">
           {group.files.map(file=>{
             const review=reviewBadge(file)
-            return <div key={file.id} className="p-3 rounded-xl bg-white/5 border border-white/10">
-              <div className="flex gap-3">
-                <button type="button" onClick={()=>openFile(file)} title={'Visualizar '+file.name} className="w-12 h-12 shrink-0 rounded-xl bg-black/30 flex items-center justify-center text-2xl overflow-hidden"><DriveFileThumbnail file={file} fallback={projectFileIcon(file)} className="w-full h-full"/></button>
+            return <div key={file.id} className="min-w-0 rounded-xl border border-white/10 bg-white/[.035] px-2.5 py-2">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <button type="button" onClick={()=>openFile(file)} title={'Visualizar '+file.name} className="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-black/30 flex items-center justify-center text-xl"><DriveFileThumbnail file={file} fallback={projectFileIcon(file)} className="h-full w-full"/></button>
                 <button onClick={()=>openFile(file)} className="text-left min-w-0 flex-1">
                   <div className="flex items-center gap-2 min-w-0"><p className="text-sm font-medium truncate" title={file.name}>{file.name}</p><span className="text-[9px] text-[#A65A2A] shrink-0">v{file.version_number||1}</span></div>
-                  <p className="text-xs text-gray-500 mt-1">{fileSize(file.file_size)} · {file.client_visible?'Cliente':'Equipe'}</p>
-                  <p className="text-[10px] text-gray-400 mt-1">{tasks.find((task:any)=>task.id===file.task_id)?.title?('Tarefa: '+tasks.find((task:any)=>task.id===file.task_id)?.title):'Sem tarefa vinculada'}</p>
-                  <p className="text-[10px] text-gray-500 mt-1">Etapa: {tasks.find((task:any)=>task.id===file.task_id)?.stage_id?sortedStages.find((stage:any)=>stage.id===tasks.find((task:any)=>task.id===file.task_id)?.stage_id)?.name||'Não localizada':file.stage?.name||'Não vinculada'}</p>
-                  {review&&<span className={'inline-flex mt-2 px-2 py-1 rounded-full text-[9px] font-semibold '+review.className}>{review.label}</span>}
+                  <p className="text-[10px] text-gray-500">{fileSize(file.file_size)} · {file.client_visible?'Cliente':'Equipe'}{review?' · '+review.label:''}</p>
                 </button>
-              </div>
-              <div className="mt-3 flex justify-end relative">
+              <div className="relative shrink-0">
                 <button type="button" onClick={()=>setFileMenu(fileMenu===file.id?null:file.id)} className="w-8 h-8 rounded-lg bg-black/30 hover:bg-black/50 text-gray-400 hover:text-white" title="Ações" aria-label="Ações do arquivo">•••</button>
                 {fileMenu===file.id&&<div className="absolute z-20 right-0 bottom-10 w-56 rounded-xl border border-white/10 bg-[#0d0d0f] shadow-2xl p-2">
                   <div className="flex items-center gap-1 mb-2">
@@ -1059,6 +1057,7 @@ export function AdminProjectDetailV2(){
                 </div>}
               </div>
             </div>
+            </div>
           })}
               </div>}
             </div>
@@ -1088,7 +1087,7 @@ export function AdminProjectDetailV2(){
         <label className="flex items-center gap-2 text-sm text-gray-400"><input type="checkbox" checked={taskForm.client_visible} onChange={e=>setTaskForm({...taskForm,client_visible:e.target.checked})}/> Visível ao cliente</label>
         <div className="lg:col-span-3 flex items-center gap-3"><Button type="submit">Criar tarefa</Button><button type="button" onClick={()=>setShowTaskForm(false)} className="text-sm text-gray-400">Cancelar</button></div>
       </form>}
-      <div className="space-y-3">{[...sortedStages,{id:'sem-etapa',name:'Sem etapa',status:'pending',client_visible:false}].map((stage:any)=>{
+      <div className="space-y-2">{[...sortedStages,{id:'sem-etapa',name:'Sem etapa',status:'pending',client_visible:false}].map((stage:any)=>{
         const stageTasks=tasks.filter((task:any)=>stage.id==='sem-etapa'?!task.stage_id:task.stage_id===stage.id).sort((a:any,b:any)=>{
           const rank=(task:any)=>{
             const title=String(task.title||'').trim()
@@ -1104,10 +1103,12 @@ export function AdminProjectDetailV2(){
         if(stage.id==='sem-etapa'&&!stageTasks.length)return null
         const complete=stageTasks.filter((task:any)=>task.status==='completed').length
         return <details key={stage.id} className={'pm-surface rounded-xl border transition-colors '+(stage.status==='completed'?'border-emerald-500/45 bg-emerald-500/[.09]':stage.status==='in_progress'?'border-amber-400/45 bg-amber-400/[.08]':'border-white/10')} >
-          <summary className={"cursor-pointer select-none p-4 rounded-xl "+(stage.status==="completed"?"text-emerald-300 hover:bg-emerald-500/[.07]":stage.status==="in_progress"?"text-amber-300 hover:bg-amber-400/[.07]":"hover:bg-white/[.035]")}>
-            <span className="font-bold text-base">{/^\d{4}-\d{2}$/.test(stage.name)?new Date(stage.name+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):stage.name}</span>
-            <span className="ml-3 text-xs text-gray-400">{complete}/{stageTasks.length} tarefas concluídas</span>
-            {stage.id!=='sem-etapa'&&<button type="button" onClick={e=>{e.preventDefault();e.stopPropagation();void renameStage(stage)}} className="ml-2 inline-flex h-8 w-8 items-center justify-center rounded-md text-emerald-300/65 hover:bg-white/10 hover:text-emerald-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400" title="Renomear etapa" aria-label={"Renomear "+stage.name}>✎</button>}
+          <summary className={"flex cursor-pointer list-none items-center gap-3 select-none rounded-xl px-3 py-3 sm:px-4 "+(stage.status==="completed"?"text-emerald-300 hover:bg-emerald-500/[.07]":stage.status==="in_progress"?"text-amber-300 hover:bg-amber-400/[.07]":"hover:bg-white/[.035]")}>
+            <span aria-hidden="true" className="text-xs text-gray-500">▸</span>
+            <span className="min-w-0 flex-1 truncate font-bold text-sm">{/^\d{4}-\d{2}$/.test(stage.name)?new Date(stage.name+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'}):stage.name}</span>
+            <span className="shrink-0 text-[11px] text-gray-400">{complete}/{stageTasks.length}</span>
+            <span className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-white/10 sm:block"><span className="block h-full rounded-full bg-[#A65A2A]" style={{width:(stageTasks.length?Math.round(complete/stageTasks.length*100):0)+'%'}}/></span>
+            {stage.id!=='sem-etapa'&&<button type="button" onClick={e=>{e.preventDefault();e.stopPropagation();void renameStage(stage)}} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-emerald-300/65 hover:bg-white/10 hover:text-emerald-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400" title="Renomear etapa" aria-label={"Renomear "+stage.name}>✎</button>}
           </summary>
           <div className="px-4 pb-4 space-y-3">
             {stage.id!=='sem-etapa'&&<div className="flex flex-wrap items-center gap-3 text-xs text-gray-400 border-b border-white/10 pb-3">

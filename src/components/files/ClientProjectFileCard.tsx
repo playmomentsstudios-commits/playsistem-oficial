@@ -76,6 +76,20 @@ export function ClientProjectFileCard({file,onOpen,compact=false}:Props){
     }
   },[file.id,file.drive_file_id,canFetch])
 
+  if(compact)return <button type="button" ref={buttonRef} onClick={()=>onOpen(file)}
+    aria-label={'Visualizar '+file.name}
+    className="group flex min-h-14 min-w-0 items-center gap-2.5 rounded-lg border border-white/10 bg-[#161719] p-2 text-left transition-colors hover:border-[#A65A2A]/60 hover:bg-[#1b1a19] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DFA269]">
+    <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[#0b0c0e] text-[#797D81]">
+      {thumbnail?<img src={thumbnail} alt="" loading="lazy" className="h-full w-full object-cover" onError={()=>{setState('unavailable');setThumbnail(null)}}/>:
+        <span className="flex flex-col items-center justify-center gap-0.5 text-center"><span aria-hidden="true" className="text-lg leading-none">{type.symbol}</span><span className="text-[8px] leading-tight">{state==='loading'?'…':state==='unavailable'?'Indisponível':type.label}</span></span>}
+    </span>
+    <span className="min-w-0 flex-1">
+      <span className="block truncate text-xs font-medium text-gray-200" title={file.name}>{file.name}</span>
+      <span className="mt-0.5 block text-[10px] text-gray-500">{type.label} · Abrir prévia</span>
+    </span>
+    <span aria-hidden="true" className="shrink-0 px-1 text-xs text-[#DFA269]">↗</span>
+  </button>
+
   return <button type="button" ref={buttonRef} onClick={()=>onOpen(file)}
     aria-label={'Visualizar '+file.name}
     className={'group min-w-0 w-full overflow-hidden rounded-xl border border-white/10 bg-[#161719] text-left hover:border-[#A65A2A]/60 hover:bg-[#1b1a19] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DFA269] transition-colors '+(compact?'':'shadow-sm')}>

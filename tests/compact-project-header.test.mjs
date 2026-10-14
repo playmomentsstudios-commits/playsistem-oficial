@@ -4,12 +4,16 @@ import { readFileSync } from 'node:fs'
 
 const page = readFileSync(new URL('../src/pages/admin/AdminProjectDetailV2.tsx', import.meta.url), 'utf8')
 
-test('project summary uses compact inline status and priority controls', () => {
+test('project summary keeps status and priority compact and editable through contextual actions', () => {
   assert.match(page, /aria-label="Resumo do projeto"/)
   assert.match(page, /aria-label="Andamento do projeto"/)
   assert.match(page, /aria-label="Prioridade do projeto"/)
   assert.match(page, /onChange=\{e=>void updateProject\(\{status:e\.target\.value\}\)\}/)
   assert.match(page, /onChange=\{e=>void updateProject\(\{priority:e\.target\.value\}\)\}/)
+  assert.match(page, /statusLabel\('project',project\.status\)/)
+  assert.match(page, /rotulo\(prioridade,project\.priority\)/)
+  assert.match(page, /aria-label="Seções do projeto"/)
+  assert.doesNotMatch(page, /to="\/admin\/arquivos" className="shrink-0 min-h-10/)
   assert.match(page, /role="progressbar"/)
   assert.match(page, /Informações/)
 })

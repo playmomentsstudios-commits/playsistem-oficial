@@ -21,6 +21,7 @@ export function ProjectsPage(){
   const [files,setFiles]=useState<any[]>([])
   const [previewFile,setPreviewFile]=useState<any|null>(null)
   const [filesExpanded,setFilesExpanded]=useState(false)
+  const [projectTab,setProjectTab]=useState<'execucao'|'arquivos'>('execucao')
   const [loading,setLoading]=useState(true)
   const [error,setError]=useState('')
   const [warning,setWarning]=useState('')
@@ -32,6 +33,7 @@ export function ProjectsPage(){
     setWarning('')
     setPreviewFile(null)
     setFilesExpanded(false)
+    setProjectTab('execucao')
     if(id){
       // A problem loading Drive files must never hide the project's progress.
       Promise.allSettled([portalApi.project(id),portalApi.projectFiles(id)])
@@ -68,7 +70,6 @@ export function ProjectsPage(){
   const fileGroups=useMemo(()=>customerProjectFileGroups(files,stages,tasks),[files,stages,tasks])
   const published=useMemo(()=>fileGroups.flatMap(group=>group.files),[fileGroups])
   const completed=useMemo(()=>tasks.filter(isComplete),[tasks])
-  const remaining=useMemo(()=>tasks.filter((task:any)=>task.status!=='completed'&&task.status!=='cancelled'),[tasks])
   const percentage=useMemo(()=>projectProgress({tasks}),[tasks])
   const currentStage=stages.find((stage:any)=>stage.status==='in_progress')||stages.find((stage:any)=>stage.status==='pending')||stages.at(-1)
   const nextStage=currentStage?stages.find((stage:any)=>stage.position>currentStage.position&&stage.status!=='completed'):null
@@ -90,7 +91,7 @@ export function ProjectsPage(){
             <span>Prazo: <strong className="text-gray-200">{formatDate(project.due_date)}</strong></span>
             <span>Etapa: <strong className="text-gray-200">{currentStage?.name||'A definir'}</strong></span>
             <span><strong className="text-gray-200">{published.length}</strong> arquivo(s) disponíveis</span>
-            <a href="#arquivos-projeto" onClick={()=>setFilesExpanded(true)} className="font-semibold text-[#DFA269] hover:underline">Ver artes ↘</a>
+            <button type="button" onClick={()=>{setProjectTab('arquivos');setFilesExpanded(true)}} className="font-semibold text-[#DFA269] hover:underline">Ver arquivos ↘</button>
           </div>
         </CompactPageHeader>
         <div className="flex flex-wrap items-center gap-3 border-t border-white/[.08] pt-3">
@@ -98,15 +99,18 @@ export function ProjectsPage(){
           <div className="h-1.5 min-w-[95px] flex-1 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-label="Progresso do projeto" aria-valuemin={0} aria-valuemax={100} aria-valuenow={tasks.length?percentage:0}>
             <div className={"h-full rounded-full "+(project.status==='completed'?'bg-emerald-500':'bg-[#A65A2A]')} style={{width:(tasks.length?percentage:0)+'%'}}/>
           </div>
-          <span className="text-[11px] text-emerald-300">{completed.length} concluída(s)</span>
-          <span className="text-[11px] text-amber-200">{remaining.length} em aberto</span>
         </div>
         {!tasks.length&&<p className="mt-2 text-[11px] text-gray-500">O andamento será exibido quando houver tarefas liberadas.</p>}
       </section>
 
+      <div className="mt-3 flex gap-1 border-b border-white/10" role="tablist" aria-label="Seções do projeto">
+        <button type="button" role="tab" aria-selected={projectTab==='execucao'} onClick={()=>setProjectTab('execucao')} className={'min-h-10 rounded-t-xl border border-b-0 px-4 text-sm font-semibold transition-colors '+(projectTab==='execucao'?'border-[#A65A2A]/40 bg-[#A65A2A]/10 text-[#F1C19D]':'border-transparent bg-white/[.025] text-gray-400 hover:text-white')}>Execução</button>
+        <button type="button" role="tab" aria-selected={projectTab==='arquivos'} onClick={()=>setProjectTab('arquivos')} className={'min-h-10 rounded-t-xl border border-b-0 px-4 text-sm font-semibold transition-colors '+(projectTab==='arquivos'?'border-[#A65A2A]/40 bg-[#A65A2A]/10 text-[#F1C19D]':'border-transparent bg-white/[.025] text-gray-400 hover:text-white')}>Arquivos <span className="ml-1 text-[10px] opacity-70">({published.length})</span></button>
+      </div>
+
       {warning&&<p role="status" className="mt-3 rounded-xl border border-amber-400/25 bg-amber-400/10 p-3 text-xs text-amber-200">{warning}</p>}
 
-      <section id="arquivos-projeto" className="mt-4 scroll-mt-20" aria-label="Arquivos do projeto">
+      {projectTab==='arquivos'&&<section id="arquivos-projeto" className="mt-3 scroll-mt-20" aria-label="Arquivos do projeto">
         <div className="flex min-h-11 flex-wrap items-center justify-between gap-2 rounded-xl border border-white/[.08] bg-white/[.025] px-3 py-1.5">
           <h2 className="min-w-0 flex-1">
             <button type="button" aria-expanded={filesExpanded} aria-controls="arquivos-projeto-conteudo"
@@ -120,27 +124,24 @@ export function ProjectsPage(){
               </span>
             </button>
           </h2>
-          <Link to="/app/arquivos" className="pm-compact-tap text-xs font-semibold text-[#DFA269] hover:underline">Biblioteca completa ↗</Link>
         </div>
         <div id="arquivos-projeto-conteudo" hidden={!filesExpanded} className="mt-2">
-          {filesExpanded&&(published.length?<div className="pm-compact-card space-y-4" aria-label="Entregas organizadas por etapa e tarefa">
-            {fileGroups.map(group=><section key={group.key} aria-label={group.title}>
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <h3 className="text-xs font-semibold text-white">{group.title} <span className="font-normal text-gray-500">({group.files.length})</span></h3>
-                  <p className="mt-0.5 text-[11px] text-gray-400">{group.description}</p>
-                </div>
-                {group.stageId&&<Link to={'/app/projetos/'+id+'/etapas/'+group.stageId+(group.taskId?'/tarefas/'+group.taskId:'')} className="inline-flex min-h-9 items-center text-xs font-semibold text-[#DFA269] hover:underline">{group.taskId?'Ver tarefa':'Ver etapa'} ↗</Link>}
-              </div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+          {filesExpanded&&(published.length?<div className="pm-compact-card space-y-2" aria-label="Entregas organizadas por etapa e tarefa">
+            {fileGroups.map(group=><details key={group.key} className="rounded-xl border border-white/10 bg-black/15">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs">
+                <span className="min-w-0 truncate font-semibold text-gray-100">{group.title}<span className="ml-2 font-normal text-gray-500">{group.description}</span></span>
+                <span className="flex shrink-0 items-center gap-2 text-gray-400">{group.files.length} arquivo(s) <span aria-hidden="true">▾</span></span>
+              </summary>
+              {group.stageId&&<Link to={'/app/projetos/'+id+'/etapas/'+group.stageId+(group.taskId?'/tarefas/'+group.taskId:'')} className="inline-flex min-h-9 items-center px-3 text-xs font-semibold text-[#DFA269]">Abrir {group.taskId?'tarefa':'etapa'} ↗</Link>}
+              <div className="grid gap-2 border-t border-white/10 p-2 md:grid-cols-2">
                 {group.files.map((file:any)=><ClientProjectFileCard key={file.id} file={file} onOpen={openFile} compact/>)}
               </div>
-            </section>)}
+            </details>)}
           </div>:<p className="pm-compact-card text-xs text-gray-400">Nenhum arquivo liberado para visualização ainda. As novas artes aparecerão aqui após publicação pela equipe.</p>)}
         </div>
-      </section>
+      </section>}
 
-      <section className="mt-4" aria-label="Etapas e tarefas">
+      {projectTab==='execucao'&&<><section className="mt-3" aria-label="Etapas e tarefas">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <h2 className="pm-compact-section-title">Etapas e tarefas</h2>
           <span className="text-[11px] text-gray-500">{stages.length} etapa(s) · {tasks.length} tarefa(s)</span>
@@ -193,6 +194,7 @@ export function ProjectsPage(){
           </div>
         </CompactDisclosure>
       </div>
+      </>}
     </div>
   }
 
