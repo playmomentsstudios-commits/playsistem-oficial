@@ -89,7 +89,7 @@ export function SagaNegraBookLanding({page,preview=false}:Props){
           <p className="mt-3 max-w-md text-sm leading-7 text-[#c4b9af]">Experimente o ritmo e a voz da obra. Este player reproduz apenas a amostra, sem disponibilizar o MP3 integral.</p>
           <div className="my-7 rounded-xl border border-[#d6a477]/20 bg-[#0d0f11] p-4">
             <div className="mb-3 flex items-center gap-3 text-sm font-semibold text-[#ede1d3]"><span aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-full bg-[#ad602f]/20 text-xl text-[#e4a06d]">♫</span> Release 00 · Trecho da narração</div>
-            <audio className="w-full [color-scheme:dark]" controls preload="none" src="/audio/saga-negra-release00-amostra.mp3" aria-label="Amostra de aproximadamente 90 segundos do audiobook Entre o Fracasso e a Prosperidade">
+            <audio className="w-full [color-scheme:dark]" controls preload="none" src="/audio/saga-negra-release00-amostra.mp3?v=90s-20261014" aria-label="Amostra de aproximadamente 90 segundos do audiobook Entre o Fracasso e a Prosperidade">
               Seu navegador não consegue reproduzir este áudio.
             </audio>
           </div>
