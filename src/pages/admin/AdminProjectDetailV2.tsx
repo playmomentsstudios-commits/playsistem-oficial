@@ -1154,7 +1154,7 @@ export function AdminProjectDetailV2(){
                   <circle cx="12" cy="12" r="3" />
                 </svg>
               </Link>}
-              <label title="Adicionar arquivos à tarefa" aria-label="Adicionar arquivos à tarefa" className={'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#A65A2A]/45 text-base font-semibold text-[#E6A46D] '+(taskUploadingId?'cursor-not-allowed opacity-50':'cursor-pointer hover:bg-[#A65A2A]/10')}>
+              <label title="Adicionar arquivos à tarefa" aria-label="Adicionar arquivos à tarefa" aria-description={project.project_type==='internal'?'Equipe · pasta da etapa':'Privado · Revisão'} className={'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#A65A2A]/45 text-base font-semibold text-[#E6A46D] '+(taskUploadingId?'cursor-not-allowed opacity-50':'cursor-pointer hover:bg-[#A65A2A]/10')}>
                 <span aria-hidden="true">{taskUploadingId===task.id?'…':'+'}</span>
                 <input type="file" multiple className="sr-only" disabled={Boolean(taskUploadingId)} onChange={e=>void uploadTaskFile(e,task)}/>
               </label>
