@@ -229,3 +229,35 @@
 @media(prefers-reduced-motion:reduce){
  .academy-app a,.academy-app button,.academy-app input,.academy-tab svg{transition:none}
 }
+
+
+/* Catalog and protected readers are imported from the existing platform.
+   Apply only presentation refinements in the standalone Academy; their player
+   logic, progress, certificates, captions and grants are unchanged. */
+.academy-catalog>div>header{margin-bottom:24px}
+.academy-catalog>div>header h1{font-size:clamp(28px,4vw,37px);letter-spacing:-.055em;font-weight:760}
+.academy-catalog input[type="text"],.academy-catalog input:not([type]){border-color:var(--ac-line);background:#151619;border-radius:14px}
+.academy-catalog article{border:1px solid var(--ac-line);border-radius:18px;background:#151619;box-shadow:none}
+.academy-catalog article:hover{border-color:rgba(233,145,86,.3)}
+.academy-catalog article>div:first-child{background:linear-gradient(125deg,#57301f,#241c1d 65%,#151518)}
+.academy-catalog article h2{font-size:16px;letter-spacing:-.03em}
+.academy-catalog article button{background:var(--ac-orange);color:#1b0d07}
+.academy-catalog article button:hover{background:#ffac74}
+.academy-catalog .grid{gap:14px}
+.academy-reader{min-width:0}
+.academy-reader>div{max-width:100%}
+.academy-reader>div>a:first-of-type{margin-bottom:17px;color:#e6a270;font-size:12px}
+.academy-reader section{border:1px solid var(--ac-line);border-radius:19px;background:#151619}
+.academy-reader section>header{padding:clamp(16px,2.5vw,25px);background:#181819;border-bottom:1px solid var(--ac-line)}
+.academy-reader section>header h1{font-size:clamp(20px,3vw,27px);font-weight:760;letter-spacing:-.035em}
+.academy-reader section>header>p:first-child{color:#e6a270}
+.academy-reader section>div{min-width:0}
+.academy-reader section>div:has(audio){padding:clamp(13px,2.4vw,24px)}
+.academy-reader :is(.rounded-xl,.rounded-2xl){border-color:rgba(255,255,255,.085)}
+.academy-reader .academy-audiobook-transcript{min-width:0}
+.academy-reader .max-h-80{scrollbar-width:thin}
+.academy-reader :is(iframe,video){max-width:100%}
+.academy-reader iframe[title^="Leitor digital"]{border-radius:13px;box-shadow:0 16px 45px rgba(0,0,0,.18)}
+.academy-course-reader :is(.pm-surface){border-radius:18px;border-color:var(--ac-line);background:#171719}
+.academy-course-reader button:where(:not([disabled])){transition:filter .2s ease}
+.academy-course-reader button:where(:not([disabled])):hover{filter:brightness(1.08)}
