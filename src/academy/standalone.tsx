@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { academyLibraryApi, type LibraryItem } from '../api/academyLibrary'
@@ -166,7 +166,7 @@ function AcademyShelf({condensed=false}:{condensed?:boolean}){
  },[])
  const resumable = useMemo(()=>{
   if(!condensed||typeof window==='undefined')return []
-  return items.filter(item=>item.format==='audiobook').flatMap(item=>{
+  return items.filter(item=>item.format === 'audiobook').flatMap(item=>{
    try{
     const position=Number(window.localStorage.getItem('sagamente.library.position.'+item.id)||0)
     return Number.isFinite(position)&&position>=10?[{item,position}]:[]
@@ -202,7 +202,7 @@ function AcademyShelf({condensed=false}:{condensed?:boolean}){
   {!busy&&!error&&releases.length>0&&filtered.length===0&&<div className="academy-empty"><p>Nenhum título encontrado neste filtro.</p></div>}
   {resumable.map(({item,position})=><Link key={item.id} to={'/app/academia/biblioteca/'+item.id} className="academy-resume">
     <ContentArtwork release={item.release_code} format="audio"/>
-    <span className="academy-resume-details"><span className="academy-eyebrow">Continuar de onde parou</span><strong>{item.title}</strong><span className="academy-resume-meta"><Icon name="clock" size={14}/> {Math.floor(position/60)} min ouvidos</span></span>
+    <span className="academy-resume-details"><span className="academy-eyebrow">Retomar audiobook · Continuar de onde parou</span><strong>{item.title}</strong><span className="academy-resume-meta"><Icon name="clock" size={14}/> {Math.floor(position/60)} min ouvidos</span></span>
     <span className="academy-resume-play"><Icon name="play" size={20}/></span>
    </Link>)}
   {!busy&&!error&&<div className={'academy-library-grid '+(condensed?'is-condensed':'')}>
@@ -302,9 +302,9 @@ export function AcademyStandaloneApp(){
     <Route path="/" element={<Navigate to="/app/academia" replace/>}/>
     <Route path="/app/academia" element={<AcademyHome/>}/>
     <Route path="/app/academia/biblioteca" element={<AcademyShelf/>}/>
-    <Route path="/app/academia/biblioteca/:id" element={<LibraryReader/>}/>
-    <Route path="/app/academia/catalogo" element={<CourseCatalog/>}/>
-    <Route path="/app/academia/:id" element={<CourseReader/>}/>
+    <Route path="/app/academia/biblioteca/:id" element={<div className="academy-reader"><LibraryReader/></div>}/>
+    <Route path="/app/academia/catalogo" element={<div className="academy-catalog"><CourseCatalog/></div>}/>
+    <Route path="/app/academia/:id" element={<div className="academy-reader academy-course-reader"><CourseReader/></div>}/>
     <Route path="/conta" element={<AcademyAccount/>}/>
     <Route path="*" element={<Navigate to="/app/academia" replace/>}/>
    </Route>
