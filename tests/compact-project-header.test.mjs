@@ -13,6 +13,8 @@ test('project summary keeps status and priority compact and editable through con
   assert.match(page, /statusLabel\('project',project\.status\)/)
   assert.match(page, /rotulo\(prioridade,project\.priority\)/)
   assert.match(page, /aria-label="Seções do projeto"/)
+  assert.match(page, /aria-pressed=\{projectTab==='execucao'\}/)
+  assert.doesNotMatch(page, /role="tablist"|role="tab"/)
   assert.doesNotMatch(page, /to="\/admin\/arquivos" className="shrink-0 min-h-10/)
   assert.match(page, /role="progressbar"/)
   assert.match(page, /Informações/)

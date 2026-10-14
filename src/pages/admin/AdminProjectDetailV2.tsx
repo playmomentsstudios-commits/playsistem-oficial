@@ -894,9 +894,9 @@ export function AdminProjectDetailV2(){
           </details>}
     </section>
 
-    <div className="mt-3 flex gap-1 border-b border-white/10" role="tablist" aria-label="Seções do projeto">
-      <button type="button" role="tab" aria-selected={projectTab==='execucao'} onClick={()=>setProjectTab('execucao')} className={'min-h-10 rounded-t-xl border border-b-0 px-4 text-sm font-semibold transition-colors '+(projectTab==='execucao'?'border-[#A65A2A]/40 bg-[#A65A2A]/10 text-[#F1C19D]':'border-transparent bg-white/[.025] text-gray-400 hover:text-white')}>Execução</button>
-      <button type="button" role="tab" aria-selected={projectTab==='arquivos'} onClick={()=>setProjectTab('arquivos')} className={'min-h-10 rounded-t-xl border border-b-0 px-4 text-sm font-semibold transition-colors '+(projectTab==='arquivos'?'border-[#A65A2A]/40 bg-[#A65A2A]/10 text-[#F1C19D]':'border-transparent bg-white/[.025] text-gray-400 hover:text-white')}>Arquivos <span className="ml-1 text-[10px] opacity-70">({files.length})</span></button>
+    <div className="mt-3 flex gap-1 border-b border-white/10" role="group" aria-label="Seções do projeto">
+      <button type="button" aria-pressed={projectTab==='execucao'} onClick={()=>setProjectTab('execucao')} className={'min-h-10 rounded-t-xl border border-b-0 px-4 text-sm font-semibold transition-colors '+(projectTab==='execucao'?'border-[#A65A2A]/40 bg-[#A65A2A]/10 text-[#F1C19D]':'border-transparent bg-white/[.025] text-gray-400 hover:text-white')}>Execução</button>
+      <button type="button" aria-pressed={projectTab==='arquivos'} onClick={()=>setProjectTab('arquivos')} className={'min-h-10 rounded-t-xl border border-b-0 px-4 text-sm font-semibold transition-colors '+(projectTab==='arquivos'?'border-[#A65A2A]/40 bg-[#A65A2A]/10 text-[#F1C19D]':'border-transparent bg-white/[.025] text-gray-400 hover:text-white')}>Arquivos <span className="ml-1 text-[10px] opacity-70">({files.length})</span></button>
     </div>
 
     {projectTab==='arquivos'&&<div>
