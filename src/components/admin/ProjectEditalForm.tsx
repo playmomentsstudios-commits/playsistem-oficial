@@ -59,7 +59,7 @@ export function ProjectEditalForm({projectId}:{projectId:string}){
   async function save(){
     if(!instance)return
     const submitted=instance.answers.status_externo==='enviado'
-    if(submitted&&(!filled({id:'protocolo'},instance.answers.protocolo)||!filled({id:'data_envio'},instance.answers.data_envio))){
+    if(submitted&&(!filled({id:'protocolo',label:'Protocolo'},instance.answers.protocolo)||!filled({id:'data_envio',label:'Data do envio'},instance.answers.data_envio))){
       setError('Para marcar como enviado, informe a data do envio e o protocolo. Isso não envia a inscrição ao site externo.')
       return
     }
@@ -146,7 +146,7 @@ export function ProjectEditalForm({projectId}:{projectId:string}){
             {!field.required&&<button type="button" className={actionStyle+' text-red-300'} onClick={()=>removeField(section.id,field.id)}>Remover</button>}
           </div>
           {field.type==='checkbox'?<label className="flex items-center gap-2 text-sm text-gray-300"><input id={'edital-'+field.id} type="checkbox" checked={value===true} onChange={e=>updateAnswer(field.id,e.target.checked)}/>Confirmado</label>
-          :field.type==='select'?<select id={'edital-'+field.id} className={inputStyle} value={fieldValue(value)} onChange={e=>updateAnswer(field.id,e.target.value)}><option value="">Selecione...</option>{(field.options||[]).map(x=><option value={x} key={x}>{x.replaceAll('_',' ')}</option>)}</select>
+          :field.type==='select'?<select id={'edital-'+field.id} className={inputStyle} value={fieldValue(value)} onChange={e=>updateAnswer(field.id,e.target.value)}><option value="">Selecione...</option>{(field.options||[]).map(x=><option value={x} key={x}>{x.split('_').join(' ')}</option>)}</select>
           :field.type==='long_text'?<textarea id={'edital-'+field.id} rows={field.id==='links'?4:3} maxLength={field.maxLength} className={inputStyle} value={fieldValue(value)} onChange={e=>updateAnswer(field.id,e.target.value)} placeholder={field.id==='links'?'Cole um link por linha':'Escreva sua resposta aqui'}/>
           :<input id={'edital-'+field.id} className={inputStyle} type={field.type==='date'?'date':field.type==='datetime'?'datetime-local':field.type==='url'?'url':'text'} maxLength={field.maxLength} value={field.type==='datetime'?safeDate(value):fieldValue(value)} onChange={e=>updateAnswer(field.id,e.target.value)} />}
           {field.maxLength&&<p className="mt-1 text-right text-xs text-gray-500">{fieldValue(value).length}/{field.maxLength} caracteres</p>}
