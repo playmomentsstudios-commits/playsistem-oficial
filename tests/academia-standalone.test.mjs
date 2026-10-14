@@ -39,7 +39,7 @@ test('New worker never stores private media and validates tickets for GET/HEAD',
  assert.match(worker,/academy-library-media\?ticket=/)
  assert.match(worker,/request\.headers\.get\('Range'\)/)
  assert.match(worker,/Cache-Control':'private, no-store/)
- assert.match(worker,/if\(request\.method==='HEAD'/)
+ assert.match(worker,/request\.method==='HEAD'\?/)
  assert.match(worker,/Never cache authenticated HTML, media, PDF, video, tickets/)
  assert.match(worker,/env\.ASSETS\.fetch\(request\)/)
  assert.doesNotMatch(worker,/GOOGLE_DRIVE_REFRESH_TOKEN|service_role/)
