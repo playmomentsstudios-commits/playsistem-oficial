@@ -241,11 +241,46 @@ export const portalApi = {
     const { error }=await supabase.rpc('admin_set_member_role',{p_user_id:userId,p_role:role})
     if(error) throw error
   },
-  saveProject: async (values:any,id?:string) => {
+  createInternalProjectFromTemplate: async (templateId:string,form:{
+    title:string;description?:string|null;priority:string;status:string;start_date?:string|null;due_date?:string|null
+  }) => {
+    const {data,error}=await supabase.rpc('create_internal_project_from_template',{
+      p_template_id:templateId,p_title:form.title,p_description:form.description||null,
+      p_priority:form.priority,p_status:form.status,p_start_date:form.start_date||null,p_due_date:form.due_date||null,
+    })
+    if(error)throw error
+    return {id:data as string}
+  },
+  projectFormTemplates: async () => {
+    const {data,error}=await supabase.from('project_form_templates').select('*').eq('active',true).order('name')
+    if(error)throw error
+    return data??[]
+  },
+  projectFormInstance: async (projectId:string) => {
+    const {data,error}=await supabase.from('project_form_instances').select('*').eq('project_id',projectId).maybeSingle()
+    if(error)throw error
+    return data
+  },
+  attachProjectFormTemplate: async (projectId:string,template:any) => {
+    const {data,error}=await supabase.from('project_form_instances').insert({
+      project_id:projectId,template_id:template.id,template_slug:template.slug,
+      snapshot:template.configuration,answers:{status_externo:'em_preparacao'},review_states:{},
+    }).select().single()
+    if(error)throw error
+    return data
+  },
+  saveProjectFormInstance: async (projectId:string,snapshot:any,answers:any,review_states:any) => {
+    const {data,error}=await supabase.from('project_form_instances').update({
+      snapshot,answers,review_states,updated_at:new Date().toISOString(),
+    }).eq('project_id',projectId).select().single()
+    if(error)throw error
+    return data
+  },
+  saveProject: async (values:any,id?:string,options?:{deferDrive?:boolean}) => {
     const q=id?supabase.from('projects').update(values).eq('id',id):supabase.from('projects').insert(values)
     const { data,error }=await q.select().single()
     if(error) throw error
-    if(data?.customer_id||data?.project_type==='internal'){
+    if(!options?.deferDrive&&(data?.customer_id||data?.project_type==='internal')){
       void supabase.functions.invoke('google-drive-project-folder',{
         body:{project_id:data.id},
       }).catch(()=>undefined)

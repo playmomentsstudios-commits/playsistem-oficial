@@ -9,6 +9,7 @@ import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
 import { FilePreviewModal } from '../../components/files/FilePreviewModal'
 import { DriveFileThumbnail } from '../../components/files/DriveFileThumbnail'
+import { ProjectEditalForm } from '../../components/admin/ProjectEditalForm'
 import { exportProjectReportSpreadsheet,printProjectReportPdf } from '../../lib/projectReport'
 import { prioridade,rotulo,statusEtapa,statusProjeto,statusTarefa,tipoProjeto } from '../../lib/labels.ptBR'
 
@@ -814,6 +815,8 @@ export function AdminProjectDetailV2(){
         </details>
       </div>
     </section>
+
+    {project.project_type==='internal'&&<ProjectEditalForm projectId={id}/>}
 
     <section className="pm-surface mt-2 px-3 py-2 sm:px-4" aria-label="Clientes com acesso ao projeto">
       {project.project_type==='internal'
