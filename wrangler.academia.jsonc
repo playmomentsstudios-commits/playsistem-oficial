@@ -1,0 +1,11 @@
+{
+  "name": "academia-sagamente",
+  "compatibility_date": "2026-09-25",
+  "main": "./worker/academy-standalone.js",
+  "assets": {
+    "directory": "./dist-academia",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/*"]
+  }
+}

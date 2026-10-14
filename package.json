@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit",
     "dev": "node scripts/generate-pwa-icons.mjs && vite",
     "build": "node scripts/generate-pwa-icons.mjs && vite build && node scripts/prerender-resumes.mjs",
+    "build:academia": "node scripts/generate-pwa-icons.mjs && vite build --config vite.academia.config.ts --mode academy",
     "preview": "vite preview",
     "format": "oxfmt"
   },
