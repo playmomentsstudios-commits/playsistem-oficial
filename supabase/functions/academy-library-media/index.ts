@@ -73,7 +73,7 @@ Deno.serve(async(request:Request)=>{
       const {data:ticket,error}=await db.from('academy_library_tickets').insert({item_id:itemId,user_id:auth.user.id,expires_at:expiresAt}).select('token,expires_at').single()
       if(error||!ticket)return reply({error:'Media unavailable'},503)
       const streamUrl=new URL(request.url);streamUrl.search='';streamUrl.searchParams.set('ticket',ticket.token)
-      return reply({ok:true,url:streamUrl.toString(),mime_type:item.mime_type,expires_at:ticket.expires_at})
+      return reply({ok:true,ticket:ticket.token,url:streamUrl.toString(),mime_type:item.mime_type,expires_at:ticket.expires_at})
     }
     const ticketId=url.searchParams.get('ticket')||''
     if(!uuid.test(ticketId))return reply({error:'Media ticket required'},403)
