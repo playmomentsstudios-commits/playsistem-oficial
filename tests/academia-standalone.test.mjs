@@ -178,3 +178,27 @@ test('Administrators can configure real home sections but cannot modify private 
  assert.match(app,/appSettings\.show_quick_links/)
  assert.match(app,/appSettings\.show_courses/)
 })
+
+
+test('Academy admin home preview reflects unsaved edits and restores copy only on request',()=>{
+ const panel=read('src/components/admin/AcademyAppSettingsPanel.tsx')
+ assert.match(panel,/Prévia da Home/)
+ assert.match(panel,/value\.hero_eyebrow\|\|DEFAULT_ACADEMY_APP_SETTINGS\.hero_eyebrow/)
+ assert.match(panel,/value\.hero_title\|\|'Título em edição'/)
+ assert.match(panel,/value\.hero_subtitle\|\|'Descrição em edição'/)
+ assert.match(panel,/value\.show_quick_links&&/)
+ assert.match(panel,/value\.show_courses\?'Meus cursos exibidos':'Meus cursos ocultos'/)
+ assert.match(panel,/Restaurar textos padrão/)
+ assert.match(panel,/type="button" disabled=\{saving\}/)
+ assert.match(panel,/type="submit" disabled=\{saving\}/)
+})
+test('Admin deep link scrolls to Academy settings after initial lazy-loaded form renders',()=>{
+ const screen=read('src/pages/admin/AdminSettings.tsx')
+ const card=read('src/components/admin/AcademyAppSettingsPanel.tsx')
+ assert.match(screen,/const location=useLocation\(\)/)
+ assert.match(screen,/loading\|\|location\.hash!=='#academia-app'/)
+ assert.match(screen,/requestAnimationFrame/)
+ assert.match(screen,/getElementById\('academia-app'\)\?\.scrollIntoView/)
+ assert.match(screen,/scroll-mt-24/)
+ assert.match(card,/id="academia-app"/)
+})

@@ -48,6 +48,24 @@ export function AcademyAppSettingsPanel() {
    </div>
    <p className="min-w-0 max-w-md text-xs leading-relaxed text-gray-400">Mesmo símbolo geométrico: segmentos brancos passam para laranja; segmentos laranjas passam para grafite sobre fundo claro. Cada aplicativo terá seu próprio ícone na tela inicial.</p>
   </div>
+  <div aria-label="Prévia de tela inicial da Academia" className="mt-5 overflow-hidden rounded-2xl border border-white/[.09] bg-[#0B0C0E]">
+   <div className="flex items-center justify-between gap-3 border-b border-white/[.07] px-4 py-3">
+    <p className="text-xs font-semibold text-gray-200">Prévia da Home</p>
+    <span className="text-[10px] font-medium text-[#DFA269]">Alterações ainda não salvas</span>
+   </div>
+   <div className="p-4">
+    <div className="overflow-hidden rounded-xl border border-[#C78657]/20 bg-gradient-to-br from-[#40231b] via-[#251b1b] to-[#121417] p-5">
+     <p className="text-[10px] font-bold uppercase tracking-[.15em] text-[#E9AC77]">{value.hero_eyebrow||DEFAULT_ACADEMY_APP_SETTINGS.hero_eyebrow}</p>
+     <h3 className="mt-3 max-w-md text-xl font-bold leading-tight tracking-tight text-white">{value.hero_title||'Título em edição'}</h3>
+     <p className="mt-2 max-w-md text-xs leading-relaxed text-gray-300">{value.hero_subtitle||'Descrição em edição'}</p>
+     <span className="mt-4 inline-flex items-center rounded-lg bg-[#F0B089] px-3 py-2 text-[11px] font-bold text-[#241309]">Explorar biblioteca →</span>
+    </div>
+    {value.show_quick_links&&<div className="mt-3 grid grid-cols-3 gap-2">
+     {['Audiobooks','E-books','Cursos'].map(label=><div key={label} className="rounded-lg border border-white/[.07] bg-[#161719] px-2 py-3 text-center text-[11px] text-gray-300">{label}</div>)}
+    </div>}
+    <p className="mt-3 text-[11px] text-gray-500">Biblioteca exibida · {value.show_courses?'Meus cursos exibidos':'Meus cursos ocultos'}</p>
+   </div>
+  </div>
   {loading?<p role="status" className="mt-5 text-xs text-gray-400">Carregando configurações da Academia…</p>:
   <form className="mt-5 space-y-4" onSubmit={event=>void save(event)}>
    <div className="grid gap-4 sm:grid-cols-2">
@@ -73,7 +91,10 @@ export function AcademyAppSettingsPanel() {
    </div>
    <div className="flex flex-wrap items-center justify-between gap-3">
     <p className="text-[11px] text-gray-500">O ícone instalável é gerado no build. Textos e seções são ajustáveis aqui sem atualizar o código.</p>
+    <div className="flex flex-wrap items-center gap-2">
+     <button type="button" disabled={saving} onClick={()=>setValue(v=>({...v,hero_eyebrow:DEFAULT_ACADEMY_APP_SETTINGS.hero_eyebrow,hero_title:DEFAULT_ACADEMY_APP_SETTINGS.hero_title,hero_subtitle:DEFAULT_ACADEMY_APP_SETTINGS.hero_subtitle}))} className="min-h-11 rounded-xl border border-white/10 px-3 text-xs font-semibold text-gray-300 hover:bg-white/[.04] disabled:opacity-50">Restaurar textos padrão</button>
     <button type="submit" disabled={saving} className="min-h-11 rounded-xl bg-[#A65A2A] px-5 text-sm font-semibold text-white disabled:opacity-50">{saving?'Salvando…':'Salvar Academia'}</button>
+    </div>
    </div>
   </form>}
   {status&&<p role="status" className="mt-3 text-xs text-emerald-300">{status}</p>}
