@@ -115,9 +115,14 @@ async function serveAcademyMedia(request) {
     })
     if (!upstream.ok) {
       const status = upstream.status === 401 || upstream.status === 403 ? 403 : upstream.status === 416 ? 416 : 502
+      // A fixed, non-sensitive failure stage allows the reader to distinguish
+      // a Drive authorization failure from an invalid ticket.
+      const stage = upstream.headers.get('X-Academy-Media-Stage') || ''
+      const errorHeaders = new Headers(noCache)
+      if (/^[a-z_]{1,40}$/.test(stage)) errorHeaders.set('X-Academy-Media-Stage', stage)
       return new Response(
         status === 403 ? 'Acesso expirado. Atualize a página.' : 'Não foi possível carregar este arquivo.',
-        { status, headers: noCache }
+        { status, headers: errorHeaders }
       )
     }
     const mimeType = String(upstream.headers.get('Content-Type') || '').split(';')[0].toLowerCase()

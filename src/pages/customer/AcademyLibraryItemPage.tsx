@@ -43,6 +43,11 @@ export function AcademyLibraryItemPage(){
     }
    }
    if(!probe.ok){
+    const stage=probe.headers.get('X-Academy-Media-Stage')
+    if(probe.status===502&&stage==='drive_metadata')throw new Error('A integração do Google Drive não conseguiu acessar o arquivo. É necessário revisar a autorização da conta Google conectada ao sistema.')
+    if(probe.status===502&&stage==='drive_permission')throw new Error('O Google Drive não autorizou o download deste arquivo. Revise a permissão de download na conta institucional.')
+    if(probe.status===502&&stage==='mime_mismatch')throw new Error('O arquivo encontrado no Drive não corresponde ao formato cadastrado.')
+    if(probe.status===502&&stage==='invalid_size')throw new Error('O arquivo no Drive parece estar vazio ou fora do limite configurado.')
     if(probe.status===403)throw new Error('Seu acesso temporário expirou. Atualize para gerar um novo link.')
     if(probe.status===503)throw new Error('O servidor de mídia não conseguiu acessar o Google Drive (503). Verifique a conexão institucional do Drive.')
     throw new Error('O arquivo não pôde ser carregado (erro '+probe.status+'). Tente novamente.')
