@@ -1145,7 +1145,7 @@ export function AdminProjectDetailV2(){
             <div className="flex flex-wrap items-center gap-x-2 gap-y-2 border-b border-white/[.07] pb-2.5">
               {stage?.client_visible&&task.client_visible&&<Link
                 to={'/admin/projetos/'+id+'/etapas/'+stage.id+'/tarefas/'+task.id}
-                title="Visualizar a página de prévia da tarefa para o cliente"
+                title="Prévia da tarefa para o cliente"
                 aria-label={'Visualizar prévia da tarefa '+task.title}
                 className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/[.035] text-[#DFA269] hover:border-[#A65A2A]/60 hover:bg-[#A65A2A]/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#DFA269]"
               >
@@ -1154,7 +1154,7 @@ export function AdminProjectDetailV2(){
                   <circle cx="12" cy="12" r="3" />
                 </svg>
               </Link>}
-              <label title={project.project_type==='internal'?'Adicionar arquivo à tarefa':'Adicionar arquivo de prévia à tarefa'} aria-label="Adicionar arquivos à tarefa" className={'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#A65A2A]/45 text-base font-semibold text-[#E6A46D] '+(taskUploadingId?'cursor-not-allowed opacity-50':'cursor-pointer hover:bg-[#A65A2A]/10')}>
+              <label title="Adicionar arquivos à tarefa" aria-label="Adicionar arquivos à tarefa" className={'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#A65A2A]/45 text-base font-semibold text-[#E6A46D] '+(taskUploadingId?'cursor-not-allowed opacity-50':'cursor-pointer hover:bg-[#A65A2A]/10')}>
                 <span aria-hidden="true">{taskUploadingId===task.id?'…':'+'}</span>
                 <input type="file" multiple className="sr-only" disabled={Boolean(taskUploadingId)} onChange={e=>void uploadTaskFile(e,task)}/>
               </label>
