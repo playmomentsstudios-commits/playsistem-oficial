@@ -1,0 +1,48 @@
+name: Academia Sagamente PWA
+on:
+  pull_request:
+    paths:
+      - 'academy-app/**'
+      - 'src/academy/**'
+      - 'worker/academy-standalone.js'
+      - 'wrangler.academia.jsonc'
+      - 'vite.academia.config.ts'
+      - 'package.json'
+      - 'src/components/academy/**'
+      - 'src/pages/customer/Academy**'
+      - '.github/workflows/academia-pwa.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'academy-app/**'
+      - 'src/academy/**'
+      - 'worker/academy-standalone.js'
+      - 'wrangler.academia.jsonc'
+      - 'vite.academia.config.ts'
+      - 'package.json'
+      - 'src/components/academy/**'
+      - 'src/pages/customer/Academy**'
+      - '.github/workflows/academia-pwa.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    name: Standalone build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '10.30.3'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: node --test tests/academia-standalone.test.mjs
+      - run: pnpm run build:academia
+      - name: Verify independent site shell
+        run: |
+          test -f dist-academia/index.html
+          test -d dist-academia/assets
+          grep -q 'academia-manifest.webmanifest' dist-academia/index.html
