@@ -1,0 +1,5 @@
+/* Tailwind v4 auto-detection starts at academy-app/ for this independent Vite build.
+   The React screens and shared players are in src/, outside that directory.
+   Include those class names explicitly so the installed PWA has its layout. */
+@import '../index.css';
+@source '../';

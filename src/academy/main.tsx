@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from '../contexts/AuthContext'
 import { ToastProvider } from '../contexts/ToastContext'
 import { AcademyStandaloneApp } from './standalone'
-import '../index.css'
+import './academy.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
  <React.StrictMode>

@@ -53,3 +53,23 @@ test('Main platform remains unchanged, with separate manifest and deployment con
  const nav=read('src/components/academy/AcademyNavigation.tsx')
  assert.match(nav,/import\.meta\.env\.MODE==='academy'/)
 })
+
+test('Academy standalone CSS scans React views outside the Vite application root',()=>{
+ const app=read('src/academy/main.tsx')
+ const styles=read('src/academy/academy.css')
+ assert.match(app,/import '\.\/academy\.css'/)
+ assert.match(styles,/@import '\.\.\/index\.css'/)
+ assert.match(styles,/@source '\.\.\/'/)
+ assert.match(read('.github/workflows/academia-pwa.yml'),/node scripts\/check-academia-css\.mjs/)
+})
+
+test('Customer and administrator Academies both expose the install screen link',()=>{
+ const component=read('src/components/academy/AcademyAppInstallCard.tsx')
+ const customer=read('src/pages/customer/AcademyPage.tsx')
+ const admin=read('src/pages/admin/AdminAcademy.tsx')
+ assert.match(component,/https:\/\/academia-sagamente\.playmomentsstudios\.workers\.dev\//)
+ assert.match(component,/Adicionar à Tela de Início/)
+ assert.match(component,/Instalar aplicativo/)
+ assert.match(customer,/<AcademyAppInstallCard\/>/)
+ assert.match(admin,/<AcademyAppInstallCard admin\/>/)
+})

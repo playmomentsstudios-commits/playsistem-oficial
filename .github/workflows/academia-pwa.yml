@@ -41,6 +41,7 @@ jobs:
       - run: pnpm run typecheck
       - run: node --test tests/academia-standalone.test.mjs
       - run: pnpm run build:academia
+      - run: node scripts/check-academia-css.mjs
       - name: Verify independent site shell
         run: |
           test -f dist-academia/index.html
