@@ -48,7 +48,7 @@ test('Library media uses same-origin Worker bridge, preserving range and MIME',(
  assert.match(worker,/upstreamHeaders\.set\('Range', range\)/)
  assert.match(worker,/\['audio\/mpeg', 'application\/pdf'\]/)
  assert.match(worker,/Cache-Control': 'private, no-store/)
- assert.match(api,/url:'\/app\/academia\/midia\\?ticket='/)
+ assert.match(api,/url:'\/app\/academia\/midia\?ticket='/)
  assert.match(api,/typeof data\.ticket==='string'/)
  assert.doesNotMatch(api,/new URL\(data\.url\)/)
  assert.doesNotMatch(api,/upstream\.origin!==origin\.origin/)
