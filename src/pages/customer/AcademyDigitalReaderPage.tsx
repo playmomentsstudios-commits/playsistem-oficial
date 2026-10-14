@@ -3,7 +3,7 @@ import { Link,useParams } from 'react-router-dom'
 import { academyDigitalApi,type DigitalPublication } from '../../api/academyDigital'
 
 const speedOptions=[0.75,1,1.25,1.5,2]
-export function AcademyDigitalReaderPage(){
+export function AcademyDigitalReaderPage({adminPreview=false}:{adminPreview?:boolean}){
  const {id}=useParams()
  const [content,setContent]=useState<DigitalPublication|null>(null)
  const [src,setSrc]=useState('')
@@ -39,12 +39,12 @@ export function AcademyDigitalReaderPage(){
   setSpeed(value);if(audio.current)audio.current.playbackRate=value
  }
  return <div className="mx-auto max-w-6xl">
-  <Link to="/app/academia" className="text-xs font-semibold text-[#F2AE74] hover:underline">← Minha Academia</Link>
+  <Link to={adminPreview?'/admin/academia/publicacoes':'/app/academia'} className="text-xs font-semibold text-[#F2AE74] hover:underline">← {adminPreview?'Publicações digitais':'Minha Academia'}</Link>
   {loading?<div className="mt-6 rounded-2xl border border-white/10 p-8 text-sm text-gray-400">Preparando seu conteúdo…</div>:error?<section role="alert" className="mt-6 rounded-2xl border border-white/10 bg-[#18191c] p-6">
    <h1 className="text-xl font-bold">Não foi possível abrir</h1>
    <p className="mt-2 text-sm text-gray-400">{error}</p>
    <p className="mt-2 text-xs text-gray-500">O acesso requer uma compra confirmada ou liberação administrativa. Se acabou de pagar, confira o status do pedido antes de tentar novamente.</p>
-   <Link to="/app/academia" className="mt-5 inline-flex rounded-lg border border-white/15 px-4 py-2 text-xs text-gray-100">Voltar à biblioteca</Link>
+   <Link to={adminPreview?'/admin/academia/publicacoes':'/app/academia'} className="mt-5 inline-flex rounded-lg border border-white/15 px-4 py-2 text-xs text-gray-100">Voltar</Link>
   </section>:content&&<div className="mt-5">
    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
     <div><span className="text-[11px] font-bold uppercase tracking-[.15em] text-[#F2AE74]">{content.kind==='ebook'?'E-book':'Audiobook'}</span><h1 className="mt-1 text-2xl font-bold text-white">{content.title}</h1>{content.author&&<p className="mt-1 text-xs text-gray-400">{content.author}</p>}</div>
