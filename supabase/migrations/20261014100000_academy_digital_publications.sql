@@ -89,7 +89,9 @@ REVOKE ALL ON FUNCTION public.sync_academy_publication_order_access(uuid) FROM P
 CREATE OR REPLACE FUNCTION public.academy_publication_order_status_trigger() RETURNS trigger
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$
 BEGIN
- IF TG_OP='INSERT' OR NEW.payment_status IS DISTINCT FROM OLD.payment_status THEN
+ IF TG_OP='INSERT' THEN
+  PERFORM public.sync_academy_publication_order_access(NEW.id);
+ ELSIF NEW.payment_status IS DISTINCT FROM OLD.payment_status THEN
   PERFORM public.sync_academy_publication_order_access(NEW.id);
  END IF;
  RETURN NEW;
@@ -102,6 +104,6 @@ BEGIN
  PERFORM public.sync_academy_publication_order_access(NEW.order_id);
  RETURN NEW;
 END $$;
-CREATE TRIGGER academy_entitlements_from_order_item AFTER INSERT OR UPDATE OF product_id ON public.order_items
+CREATE TRIGGER academy_entitlements_from_order_item AFTER INSERT OR UPDATE OF product_id,order_id ON public.order_items
 FOR EACH ROW EXECUTE FUNCTION public.academy_publication_order_item_trigger();
 COMMIT;
