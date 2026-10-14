@@ -16,6 +16,7 @@ const savedDensity=()=>{try{return window.localStorage.getItem('sagamente.academ
 
 export function AcademyCatalogPage(){
  const navigate=useNavigate()
+ const standalone=import.meta.env.MODE==='academy'
  const [courses,setCourses]=useState<Course[]>([])
  const [owned,setOwned]=useState<Set<string>>(new Set())
  const [loading,setLoading]=useState(true)
@@ -51,7 +52,7 @@ export function AcademyCatalogPage(){
   <header className="mb-6">
    <p className="text-[11px] font-semibold uppercase tracking-[.17em] text-[#DFA269]">Biblioteca de conhecimento</p>
    <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">Academia</h1>
-   <p className="mt-2 max-w-2xl text-sm leading-relaxed text-gray-400">Explore e-books, audiobooks, cursos e mentorias. Aqui você encontra os conteúdos disponíveis; na Minha Academia ficam somente os conteúdos liberados para você.</p>
+   <p className="mt-2 max-w-2xl text-sm leading-relaxed text-gray-400">{standalone?'Explore cursos e videoaulas disponíveis, inicie uma formação e acompanhe o progresso. Seus e-books e audiobooks estão na aba Biblioteca.':'Explore e-books, audiobooks, cursos e mentorias. Aqui você encontra os conteúdos disponíveis; na Minha Academia ficam somente os conteúdos liberados para você.'}</p>
   </header>
   <section aria-label="Pesquisar conteúdos" className="mb-4">
    <label htmlFor="academy-catalog-search" className="sr-only">Buscar na Academia</label>
@@ -59,10 +60,10 @@ export function AcademyCatalogPage(){
     placeholder="Buscar por título, assunto ou autor..."
     className="min-h-11 w-full rounded-xl border border-white/10 bg-white/[.035] px-4 text-sm text-white outline-none placeholder:text-gray-500 focus:border-[#DFA269]"/>
   </section>
-  <nav aria-label="Filtrar formato" className="mb-5 flex flex-wrap gap-2">
+  {!standalone&&<nav aria-label="Filtrar formato" className="mb-5 flex flex-wrap gap-2">
    {categories.map(category=><button type="button" key={category.key} onClick={()=>setFilter(category.key)} aria-pressed={filter===category.key}
     className={'min-h-10 rounded-xl border px-3.5 py-2 text-xs font-semibold transition-colors '+(filter===category.key?'border-[#A65A2A] bg-[#A65A2A] text-white':'border-white/10 bg-white/[.025] text-gray-400 hover:border-white/20 hover:text-white')}>{category.label}</button>)}
-  </nav>
+  </nav>}
   {error&&<div role="alert" className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</div>}
   {loading?<LoadingState label="Carregando conteúdos disponíveis..."/>:error&&courses.length===0?<ErrorState message={error} action={<button type="button" onClick={()=>window.location.reload()} className="rounded-lg border border-white/10 px-4 py-2 text-sm">Tentar novamente</button>}/>:results.length>0?<section aria-label="Conteúdos disponíveis" className={'grid sm:grid-cols-2 lg:grid-cols-3 '+(compact?'gap-2':'gap-4')}>
    {results.map(course=><article key={course.id} className="overflow-hidden rounded-2xl border border-white/10 bg-[#17181C] transition-colors hover:border-white/20">
@@ -87,7 +88,7 @@ export function AcademyCatalogPage(){
    <button type="button" onClick={()=>{setSearch('');setFilter('all')}} className="mt-4 min-h-10 rounded-lg border border-white/15 px-4 text-xs font-semibold text-gray-200">Ver conteúdos disponíveis</button>
   </section>}
   <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[.025] p-4">
-   <p className="text-xs text-gray-400">Já tem algum conteúdo liberado? Encontre-o sem misturar com toda a vitrine.</p>
+   <p className="text-xs text-gray-400">{standalone?'Seus cursos e conteúdos liberados ficam na tela inicial. Os audiobooks e PDFs ficam na Biblioteca.':'Já tem algum conteúdo liberado? Encontre-o sem misturar com toda a vitrine.'}</p>
    <Link to="/app/academia" className="text-sm font-semibold text-[#F2AE74] hover:underline">Abrir Minha Academia →</Link>
   </div>
  </div>
