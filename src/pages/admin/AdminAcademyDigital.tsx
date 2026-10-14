@@ -1,4 +1,4 @@
-import { useEffect,useState } from 'react'
+import { useEffect,useState,type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { academyDigitalApi,type DigitalPublication,type DigitalAsset,type DigitalKind } from '../../api/academyDigital'
 
@@ -24,7 +24,7 @@ export function AdminAcademyDigital(){
    setOpen(true)
   }catch(e:any){setError(e.message||'Falha ao abrir publicação.')}
  }
- async function save(event:React.FormEvent<HTMLFormElement>){
+ async function save(event:FormEvent<HTMLFormElement>){
   event.preventDefault();setBusy(true);setError('');setSuccess('')
   try{
    const title=form.title.trim();const slug=slugify(form.slug||title);const driveId=form.drive_file_id.trim()
@@ -49,7 +49,7 @@ export function AdminAcademyDigital(){
   {loading?<p className="text-sm text-gray-400">Carregando publicações…</p>:rows.length===0?<p className="rounded-2xl border border-dashed border-white/15 p-9 text-center text-sm text-gray-400">Nenhuma publicação cadastrada. Crie a primeira como rascunho.</p>:<div className="overflow-hidden rounded-2xl border border-white/10">
    {rows.map(row=><div key={row.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-[#17181C] p-4 last:border-none">
     <div className="min-w-0"><span className="text-[10px] uppercase tracking-wide text-[#DFA269]">{row.kind==='ebook'?'E-book':'Audiobook'} · {row.status==='published'?'Publicado':row.status==='draft'?'Rascunho':'Arquivado'}</span><h2 className="mt-1 truncate font-semibold text-white">{row.title}</h2><p className="text-xs text-gray-500">{row.slug}</p></div>
-    <div className="flex gap-2">{row.id&&<Link to={'/app/academia/obra/'+row.id} className="min-h-10 rounded-lg border border-white/10 px-3 py-2 text-xs text-gray-300">Testar leitor</Link>}<button type="button" onClick={()=>void edit(row)} className="min-h-10 rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-white">Editar</button></div>
+    <div className="flex gap-2">{row.id&&<Link to={'/admin/academia/publicacoes/obra/'+row.id} className="min-h-10 rounded-lg border border-white/10 px-3 py-2 text-xs text-gray-300">Testar leitor</Link>}<button type="button" onClick={()=>void edit(row)} className="min-h-10 rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-white">Editar</button></div>
    </div>)}
   </div>}
   {open&&<div className="fixed inset-0 z-[90] flex items-end justify-center overflow-y-auto bg-black/80 p-2 sm:items-center sm:p-5"><form onSubmit={e=>void save(e)} className="max-h-[94vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-[#18191C] p-5">
