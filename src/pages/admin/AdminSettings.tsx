@@ -1,6 +1,7 @@
 import { useEffect,useState } from 'react'
 import { Link } from 'react-router-dom'
 import { settingsApi,type AppSettings } from '../../api/settings'
+import { AcademyAppSettingsPanel } from '../../components/admin/AcademyAppSettingsPanel'
 import { useToast } from '../../contexts/ToastContext'
 
 const DEFAULTS:AppSettings={
@@ -100,6 +101,7 @@ export function AdminSettings(){
     </div>
 
     <div className="grid lg:grid-cols-2 gap-5">
+      <AcademyAppSettingsPanel/>
       <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
         <h2 className="font-semibold">Negócio</h2>
         <p className="text-xs text-gray-500 mt-1">Informações-base usadas nos módulos internos.</p>
