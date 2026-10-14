@@ -1125,9 +1125,12 @@ export function AdminProjectDetailV2(){
         const member=team.find(item=>item.id===task.assigned_to)
         const stage=sortedStages.find((item:any)=>item.id===task.stage_id)
         const taskProgress=taskUploadProgress?.taskId===task.id?taskUploadProgress:null
-        return <details key={task.id} className={'rounded-xl border p-3 transition-colors '+(task.status==='completed'?'border-emerald-500/35 bg-emerald-500/[.07]':task.status==='in_progress'?'border-amber-400/35 bg-amber-400/[.07]':task.status==='review'?'border-sky-400/35 bg-sky-400/[.07]':task.status==='cancelled'?'border-white/10 bg-black/10 opacity-60':'border-white/15 bg-white/[.025]')}>
-          <summary className={'cursor-pointer font-semibold text-sm select-none '+(task.status==='completed'?'text-emerald-300':task.status==='in_progress'?'text-amber-300':task.status==='review'?'text-sky-300':task.status==='cancelled'?'text-gray-500 line-through':'text-gray-200')}>{task.title} <span className="ml-2 text-xs font-normal opacity-80">· {statusLabel('task',task.status)}</span></summary>
-          <div className="mt-3">
+        return <details key={task.id} className={'overflow-hidden rounded-xl border border-l-4 shadow-sm transition-colors '+(task.status==='completed'?'border-[#BBDDC9] border-l-[#15803D] bg-[#EBF7EF] hover:bg-[#F2FBF5]':task.status==='in_progress'?'border-[#E9D7B8] border-l-[#B45309] bg-[#FFF5E7] hover:bg-[#FFF9F0]':task.status==='review'?'border-[#B7D6EF] border-l-[#0369A1] bg-[#EDF6FE] hover:bg-[#F4FAFF]':task.status==='cancelled'?'border-[#D5D5D5] border-l-[#9CA3AF] bg-[#E5E7EB] opacity-60':'border-[#C7CCD3] border-l-[#64748B] bg-[#ECEFF3] hover:bg-[#F6F7F9]')}>
+          <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold leading-relaxed text-[#17191D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#A65A2A]">
+            <span className={task.status==='cancelled'?'line-through':''}>{task.title}</span>
+            <span className={'ml-2 inline-flex rounded-md px-2 py-0.5 text-[11px] font-semibold '+(task.status==='completed'?'bg-emerald-700/10 text-emerald-900':task.status==='in_progress'?'bg-amber-700/10 text-amber-900':task.status==='review'?'bg-sky-700/10 text-sky-900':'bg-slate-700/10 text-slate-800')}>{statusLabel('task',task.status)}</span>
+          </summary>
+          <div className="border-t border-black/10 bg-[#151518] px-4 pb-4 pt-3 text-gray-200">
           {stage?.client_visible&&task.client_visible&&<Link to={'/admin/projetos/'+id+'/etapas/'+stage.id+'/tarefas/'+task.id} className="mb-3 inline-flex min-h-10 items-center rounded-lg border border-[#A65A2A]/30 px-3 text-xs font-semibold text-[#DFA269] hover:bg-white/5">Prévia da tarefa para o cliente ↗</Link>}
           <div className="flex flex-wrap justify-between gap-3">
             <div>
