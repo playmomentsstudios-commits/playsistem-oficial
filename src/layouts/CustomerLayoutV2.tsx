@@ -45,7 +45,8 @@ const MENU:{label:string;href:string;icon:IconName;group:string}[]=[
   { label: 'Orçamentos', href: '/app/orcamentos', icon: 'quotes', group: 'negocios' },
   { label: 'Pagamentos', href: '/app/pagamentos', icon: 'payments', group: 'negocios' },
   { label: 'Arquivos', href: '/app/arquivos', icon: 'files', group: 'principal' },
-  { label: 'Academia', href: '/app/academia', icon: 'academy', group: 'experiencia' },
+  { label: 'Academia', href: '/app/academia/catalogo', icon: 'academy', group: 'experiencia' },
+  { label: 'Minha Academia', href: '/app/academia', icon: 'academy', group: 'experiencia' },
   { label: 'Comunidade', href: '/comunidade', icon: 'community', group: 'experiencia' },
   { label: 'Ajuda', href: '/app/ajuda', icon: 'help', group: 'experiencia' },
   { label: 'Configurações', href: '/app/configuracoes', icon: 'settings', group: 'experiencia' },
@@ -171,7 +172,9 @@ export function CustomerLayoutV2() {
           return <div key={group} className={groupIndex?'mt-4 pt-3 border-t border-white/[.045]':''}>
             {showLabels&&<p className="px-3 mb-1.5 text-[9px] uppercase tracking-[.16em] font-semibold text-[#555560]">{title}</p>}
             {items.map(item=>{
-              const active=location.pathname===item.href||location.pathname.startsWith(item.href+'/')
+              const active=item.href==='/app/academia'
+                ? location.pathname==='/app/academia'||(location.pathname.startsWith('/app/academia/')&&!['/app/academia/catalogo','/app/academia/preferencias'].includes(location.pathname))
+                : location.pathname===item.href||location.pathname.startsWith(item.href+'/')
               const count=item.href==='/app/conversas'?counts.messages:item.href==='/app/notificacoes'?counts.notifications:0
               return <Link key={item.href} to={item.href} onClick={()=>setSidebarOpen(false)} title={!showLabels?item.label:undefined}
                 aria-current={active?'page':undefined}
@@ -275,7 +278,9 @@ export function CustomerLayoutV2() {
         {href:'/app/arquivos',label:'Arquivos',icon:'files'},
         {href:'/app/perfil',label:'Conta',icon:'user'},
       ] as {href:string,label:string,icon:IconName}[]).map(item=>{
-        const active=location.pathname===item.href||location.pathname.startsWith(item.href+'/')
+        const active=item.href==='/app/academia'
+          ? location.pathname==='/app/academia'||(location.pathname.startsWith('/app/academia/')&&!['/app/academia/catalogo','/app/academia/preferencias'].includes(location.pathname))
+          : location.pathname===item.href||location.pathname.startsWith(item.href+'/')
         return <Link key={item.href} to={item.href} aria-current={active?'page':undefined} className={'relative flex min-h-[60px] flex-col items-center justify-center gap-1 text-[10px] font-medium '+(active?'text-[#DFA269]':'text-gray-400')}>
           <MenuIcon name={item.icon} size={20}/>
           <span>{item.label}</span>
