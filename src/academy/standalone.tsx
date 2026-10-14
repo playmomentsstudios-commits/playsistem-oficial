@@ -9,23 +9,57 @@ const CourseReader = lazy(() => import('../pages/customer/AcademyCoursePage').th
 const CourseCatalog = lazy(() => import('../pages/customer/AcademyCatalogPage').then(m => ({ default: m.AcademyCatalogPage })))
 const CertificateVerify = lazy(() => import('../pages/public/CertificateVerifyPage').then(m => ({ default: m.CertificateVerifyPage })))
 
+type IconName = 'home'|'library'|'courses'|'account'|'audio'|'book'|'arrow'|'play'|'clock'|'shield'|'logout'|'check'|'spark'|'mail'|'lock'|'chevron'|'headphones'
 type Release = { release_code: string; title: string; audiobook?: LibraryItem; ebook?: LibraryItem }
 type AcademyCourse = { id: string; title: string; cover_url?: string; description?: string }
 
-function Mark() {
- return <Link to="/app/academia" className="inline-flex min-w-0 items-center gap-2.5 text-left">
-  <img src="/pwa/icon-192.png" alt="" aria-hidden="true" width="40" height="40" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
-  <span className="min-w-0">
-   <span className="block text-[11px] font-semibold uppercase tracking-[.15em] text-[#E5B18B]">Sagamente</span>
-   <span className="block text-sm font-bold tracking-wide text-white">Academia</span>
-  </span>
+const paths: Record<IconName,string> = {
+ home:'m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z',
+ library:'M4 4h6a2 2 0 0 1 2 2v14H6a2 2 0 0 0-2 2zm8 2a2 2 0 0 1 2-2h6v18h-6a2 2 0 0 0-2 2',
+ courses:'M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zm7 3 6 4-6 4z',
+ account:'M20 21a8 8 0 0 0-16 0M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8',
+ audio:'M4 14v-3a8 8 0 0 1 16 0v3M4 13h3v8H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 1-2m16 0h-3v8h2a2 2 0 0 0 2-2v-4a2 2 0 0 0-1-2',
+ book:'M12 6a8 8 0 0 0-9-2v15a8 8 0 0 1 9 2zm0 0a8 8 0 0 1 9-2v15a8 8 0 0 0-9 2zm0 0v15',
+ arrow:'M5 12h14m-6-6 6 6-6 6',
+ play:'m9 6 10 6-10 6z',
+ clock:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18m0 4v5l4 2',
+ shield:'M12 2 4 5v6c0 5 3 9 8 11 5-2 8-6 8-11V5zM9 12l2 2 4-4',
+ logout:'M9 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4m4-14 6 7-6 7m6-7H9',
+ check:'m5 12 5 5L20 7',
+ spark:'m12 2 2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5z',
+ mail:'M3 5h18v14H3zm0 2 9 7 9-7',
+ lock:'M5 10h14v11H5zm3 0V7a4 4 0 1 1 8 0v3',
+ chevron:'m9 5 7 7-7 7',
+ headphones:'M3 14v-2a9 9 0 0 1 18 0v2M3 14h4v7H5a2 2 0 0 1-2-2zm18 0h-4v7h2a2 2 0 0 0 2-2z'
+}
+
+function Icon({name,size=20,className=''}:{name:IconName;size?:number;className?:string}) {
+ return <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" className={className}><path d={paths[name]}/></svg>
+}
+function Mark({compact=false}:{compact?:boolean}) {
+ return <Link to="/app/academia" aria-label="Academia Sagamente — início" className="academy-brand">
+  <img src="/pwa/icon-192.png" alt="" width="40" height="40" className="academy-brand-icon"/>
+  <span className="academy-brand-label"><strong>SAGAMENTE</strong><span>ACADEMIA</span></span>
+  {!compact&&<span className="sr-only">Voltar ao início</span>}
  </Link>
 }
-
 function Loading() {
- return <div role="status" className="mx-auto flex min-h-[50vh] items-center justify-center gap-3 text-sm text-gray-400"><span className="h-5 w-5 animate-spin rounded-full border-2 border-[#C78657] border-t-transparent" />Preparando sua Academia…</div>
+ return <div role="status" className="flex min-h-[46vh] items-center justify-center gap-3 text-sm text-neutral-400"><span className="h-5 w-5 animate-spin rounded-full border-2 border-[#E58D50] border-t-transparent"/>Carregando sua Academia…</div>
 }
-
+function SectionTitle({eyebrow,title,href,action='Ver tudo'}:{eyebrow?:string;title:string;href?:string;action?:string}) {
+ return <header className="academy-section-title">
+  <div>{eyebrow&&<p className="academy-eyebrow">{eyebrow}</p>}<h2>{title}</h2></div>
+  {href&&<Link to={href} className="academy-text-link">{action}<Icon name="chevron" size={14}/></Link>}
+ </header>
+}
+function ContentArtwork({release,format}:{release:string;format:'audio'|'book'}) {
+ const tone=Number.parseInt(release,10)%3
+ return <div className={'academy-content-art academy-content-art-'+tone} aria-hidden="true">
+  <span className="academy-art-ring"/>
+  <span className="academy-art-grain">SAGA<br/>NEGRA</span>
+  <span className="academy-art-footer">{format==='audio'?<Icon name="headphones" size={22}/>:<Icon name="book" size={22}/>} <small>{release}</small></span>
+ </div>
+}
 function RequireAccess() {
  const { isAuthenticated, isLoading } = useAuth()
  const location = useLocation()
@@ -36,73 +70,82 @@ function RequireAccess() {
 
 function AcademyLogin() {
  const { login, isAuthenticated, isLoading } = useAuth()
- const navigate = useNavigate()
- const location = useLocation()
- const [email,setEmail] = useState('')
- const [password,setPassword] = useState('')
- const [error,setError] = useState('')
- const [busy,setBusy] = useState(false)
- const from = (location.state as {from?:string} | null)?.from
- const target = from?.startsWith('/app/academia') ? from : '/app/academia'
- if (isLoading) return <Loading/>
- if (isAuthenticated) return <Navigate to={target} replace/>
- async function submit(event:FormEvent<HTMLFormElement>) {
+ const navigate=useNavigate()
+ const location=useLocation()
+ const [email,setEmail]=useState('')
+ const [password,setPassword]=useState('')
+ const [error,setError]=useState('')
+ const [busy,setBusy]=useState(false)
+ const [showPassword,setShowPassword]=useState(false)
+ const from=(location.state as {from?:string}|null)?.from
+ const target=from?.startsWith('/app/academia')?from:'/app/academia'
+ if(isLoading)return <Loading/>
+ if(isAuthenticated)return <Navigate to={target} replace/>
+ async function submit(event:FormEvent<HTMLFormElement>){
   event.preventDefault()
-  if (busy) return
-  setBusy(true); setError('')
-  try {
-   await login({email,password})
-   navigate(target,{replace:true})
-  } catch(e) {
-   setError(e instanceof Error ? e.message : 'Não foi possível entrar.')
-  } finally {setBusy(false)}
+  if(busy)return
+  setBusy(true);setError('')
+  try{await login({email,password});navigate(target,{replace:true})}
+  catch(e){setError(e instanceof Error?e.message:'Não foi possível entrar.')}
+  finally{setBusy(false)}
  }
- return <div className="flex min-h-[100dvh] items-center justify-center bg-[#0a0a0b] px-4 py-10">
-  <section className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#161719] p-6 shadow-xl sm:p-8">
-   <Mark/>
-   <h1 className="mt-8 text-2xl font-bold text-white">Seu conhecimento, em um só lugar.</h1>
-   <p className="mt-2 text-sm leading-relaxed text-gray-400">Entre com a mesma conta da Sagamente para acessar seus áudios, e-books e cursos.</p>
-   <form className="mt-7 space-y-4" onSubmit={event=>void submit(event)}>
-    <label className="block text-xs font-semibold text-gray-300" htmlFor="academy-login-email">E-mail
-     <input id="academy-login-email" type="email" autoComplete="email" required value={email} onChange={event=>setEmail(event.target.value)} className="mt-2 block min-h-12 w-full rounded-xl border border-white/15 bg-[#0d0e10] px-4 text-sm text-white outline-none focus:border-[#C78657]"/>
-    </label>
-    <label className="block text-xs font-semibold text-gray-300" htmlFor="academy-login-password">Senha
-     <input id="academy-login-password" type="password" autoComplete="current-password" required value={password} onChange={event=>setPassword(event.target.value)} className="mt-2 block min-h-12 w-full rounded-xl border border-white/15 bg-[#0d0e10] px-4 text-sm text-white outline-none focus:border-[#C78657]"/>
-    </label>
-    {error&&<p role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">{error}</p>}
-    <button type="submit" disabled={busy} className="min-h-12 w-full rounded-xl bg-[#A9683D] px-4 font-semibold text-white disabled:opacity-60">{busy?'Entrando…':'Entrar na Academia'}</button>
-    <a href="https://playsistem-oficial.playmomentsstudios.workers.dev/esqueci-senha" target="_blank" rel="noopener noreferrer" className="block py-2 text-center text-xs text-[#E7B78A] underline-offset-4 hover:underline">Esqueci minha senha ↗</a>
-   </form>
-  </section>
+ return <div className="academy-app academy-login">
+  <div className="academy-login-orb" aria-hidden="true"/>
+  <div className="academy-login-layout">
+   <div className="academy-login-art" aria-hidden="true">
+    <div className="academy-login-art-circle"/>
+    <span>SAGA NEGRA<br/>CONHECIMENTO<br/>EM MOVIMENTO</span>
+   </div>
+   <main className="academy-login-panel">
+    <Mark/>
+    <div className="academy-login-copy">
+     <p className="academy-eyebrow">Seu espaço de conhecimento</p>
+     <h1>Seu conhecimento,<br/><em>em um só lugar.</em></h1>
+     <p>Áudios, e-books e cursos para aprender no seu ritmo.</p>
+    </div>
+    <form className="academy-login-form" onSubmit={event=>void submit(event)}>
+     <label htmlFor="academy-login-email">E-mail</label>
+     <div className="academy-input-wrap"><Icon name="mail" size={19}/>
+      <input id="academy-login-email" type="email" autoComplete="email" placeholder="seu@email.com" required value={email} onChange={event=>setEmail(event.target.value)}/>
+     </div>
+     <label htmlFor="academy-login-password">Senha</label>
+     <div className="academy-input-wrap"><Icon name="lock" size={19}/>
+      <input id="academy-login-password" type={showPassword?'text':'password'} autoComplete="current-password" placeholder="Sua senha" required value={password} onChange={event=>setPassword(event.target.value)}/>
+      <button type="button" className="academy-show-password" onClick={()=>setShowPassword(value=>!value)} aria-label={showPassword?'Ocultar senha':'Mostrar senha'}>{showPassword?'Ocultar':'Mostrar'}</button>
+     </div>
+     {error&&<p role="alert" className="academy-login-error">{error}</p>}
+     <button type="submit" disabled={busy} className="academy-primary-button academy-login-submit">{busy?'Entrando…':'Entrar na Academia'}<Icon name="arrow" size={18}/></button>
+     <a href="https://playsistem-oficial.playmomentsstudios.workers.dev/esqueci-senha" target="_blank" rel="noopener noreferrer" className="academy-forgot">Esqueci minha senha <span aria-hidden="true">↗</span></a>
+    </form>
+    <p className="academy-login-footer"><Icon name="shield" size={14}/> Acesse com a sua conta Sagamente.</p>
+   </main>
+  </div>
  </div>
 }
 
-const tabs = [
- {href:'/app/academia', label:'Início',symbol:'⌂'},
- {href:'/app/academia/biblioteca',label:'Biblioteca',symbol:'▣'},
- {href:'/app/academia/catalogo',label:'Cursos',symbol:'▶'},
- {href:'/conta',label:'Conta',symbol:'◎'}
+const tabs:{href:string;label:string;icon:IconName}[]=[
+ {href:'/app/academia',label:'Início',icon:'home'},
+ {href:'/app/academia/biblioteca',label:'Biblioteca',icon:'library'},
+ {href:'/app/academia/catalogo',label:'Cursos',icon:'courses'},
+ {href:'/conta',label:'Conta',icon:'account'}
 ]
-
 function AcademyShell() {
- const { user } = useAuth()
+ const {user}=useAuth()
  const pathname=useLocation().pathname
- return <div className="min-h-[100dvh] bg-[#0a0a0b] text-white">
-  <header className="sticky top-0 z-30 border-b border-white/10 bg-[#0b0b0d]/95 px-4 py-3 backdrop-blur-xl">
-   <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
-    <Mark/>
-    <span className="max-w-[40%] truncate text-right text-xs text-gray-400">Olá, {user?.name||'estudante'}</span>
+ return <div className="academy-app academy-shell">
+  <header className="academy-topbar">
+   <div className="academy-container academy-topbar-inner">
+    <Mark compact/>
+    <Link to="/conta" className="academy-avatar" aria-label="Abrir perfil">{(user?.name||'A').charAt(0).toUpperCase()}</Link>
    </div>
   </header>
-  <main className="mx-auto min-h-[75dvh] w-full max-w-5xl px-4 pb-28 pt-5 sm:px-6 sm:pt-8">
-   <Outlet/>
-  </main>
-  <nav aria-label="Menu da Academia" className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#101114]/95 px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl">
-   <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
+  <main className="academy-container academy-main"><Outlet/></main>
+  <nav aria-label="Menu da Academia" className="academy-tabbar">
+   <div className="academy-tabbar-inner">
     {tabs.map(tab=>{
-     const active= tab.href==='/app/academia' ? pathname==='/app/academia' : pathname===tab.href||pathname.startsWith(tab.href+'/')
-     return <Link key={tab.href} to={tab.href} aria-current={active?'page':undefined} className={'flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl text-xs transition-colors '+(active?'bg-[#A9683D]/15 text-[#F0B887]':'text-gray-400 hover:text-white')}>
-      <span aria-hidden="true" className="text-xl leading-none">{tab.symbol}</span><span>{tab.label}</span>
+     const active=tab.href==='/app/academia'?pathname==='/app/academia':pathname===tab.href||pathname.startsWith(tab.href+'/')
+     return <Link key={tab.href} to={tab.href} aria-current={active?'page':undefined} className={'academy-tab '+(active?'is-active':'')}>
+      <Icon name={tab.icon} size={21}/><span>{tab.label}</span>
      </Link>
     })}
    </div>
@@ -110,92 +153,118 @@ function AcademyShell() {
  </div>
 }
 
-function AcademyShelf({ condensed=false }: {condensed?:boolean}) {
+function AcademyShelf({condensed=false}:{condensed?:boolean}){
  const [items,setItems]=useState<LibraryItem[]>([])
  const [busy,setBusy]=useState(true)
  const [error,setError]=useState('')
  const [filter,setFilter]=useState<'all'|'audiobook'|'ebook'>('all')
+ const [search,setSearch]=useState('')
  useEffect(()=>{
   let alive=true
   void academyLibraryApi.mine().then(data=>{if(alive)setItems(data)}).catch(e=>{if(alive)setError(e instanceof Error?e.message:'Erro ao carregar biblioteca.')}).finally(()=>{if(alive)setBusy(false)})
   return()=>{alive=false}
  },[])
- const resumable = useMemo(() => {
-  if (!condensed || typeof window === 'undefined') return []
-  return items.filter(item => item.format === 'audiobook').flatMap(item => {
-   try {
-    const position = Number(window.localStorage.getItem('sagamente.library.position.' + item.id) || 0)
-    return Number.isFinite(position) && position >= 10 ? [{ item, position }] : []
-   } catch { return [] }
-  }).sort((a, b) => b.position - a.position).slice(0, 1)
- }, [items, condensed])
+ const resumable = useMemo(()=>{
+  if(!condensed||typeof window==='undefined')return []
+  return items.filter(item=>item.format === 'audiobook').flatMap(item=>{
+   try{
+    const position=Number(window.localStorage.getItem('sagamente.library.position.'+item.id)||0)
+    return Number.isFinite(position)&&position>=10?[{item,position}]:[]
+   }catch{return []}
+  }).sort((a,b)=>b.position-a.position).slice(0,1)
+ },[items,condensed])
  const releases=useMemo(()=>{
-  const m=new Map<string,Release>()
+  const map=new Map<string,Release>()
   for(const item of items){
-   const r=m.get(item.release_code)||{release_code:item.release_code,title:item.title}
-   r[item.format]=item
-   m.set(item.release_code,r)
+   const release=map.get(item.release_code)||{release_code:item.release_code,title:item.title}
+   release[item.format]=item
+   map.set(item.release_code,release)
   }
-  const ordered=[...m.values()].sort((a,b)=>a.release_code.localeCompare(b.release_code))
+  const ordered=[...map.values()].sort((a,b)=>a.release_code.localeCompare(b.release_code))
   return condensed?ordered.slice(0,3):ordered
  },[items,condensed])
- return <section aria-label="Sua biblioteca digital" className="min-w-0">
-  <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-   <div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-[#E4A572]">Biblioteca digital</p><h2 className="mt-1 text-xl font-bold">Seus e-books e audiobooks</h2></div>
-   {condensed&&<Link to="/app/academia/biblioteca" className="text-xs font-semibold text-[#E9AE7B]">Ver tudo →</Link>}
-  </div>
-  {!condensed&&<div className="mb-4 flex flex-wrap gap-2">
-   {([{key:'all',label:'Todos'},{key:'audiobook',label:'Audiobooks'},{key:'ebook',label:'E-books'}] as const).map(f=><button key={f.key} type="button" aria-pressed={filter===f.key} onClick={()=>setFilter(f.key)} className={'min-h-10 rounded-full border px-4 text-xs font-semibold '+(filter===f.key?'border-[#B77745] bg-[#B77745]/20 text-[#F1BD94]':'border-white/10 text-gray-400')}>{f.label}</button>)}
+ const filtered=releases.filter(release=>{
+  const matchesType=filter==='all'||Boolean(release[filter])
+  const matchesSearch=condensed||release.title.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR'))
+  return matchesType&&matchesSearch
+ })
+ return <section aria-label="Sua biblioteca digital" className="academy-shelf">
+  <SectionTitle eyebrow={condensed?'Sua coleção':'Biblioteca digital'} title={condensed?'Biblioteca':'Explore sua biblioteca'} href={condensed?'/app/academia/biblioteca':undefined}/>
+  {!condensed&&<div className="academy-library-toolbar">
+   <div className="academy-search"><span aria-hidden="true">⌕</span><input type="search" aria-label="Buscar na biblioteca" placeholder="Buscar por título ou release…" value={search} onChange={event=>setSearch(event.target.value)}/></div>
+   <div className="academy-filter-row" aria-label="Filtrar conteúdos">
+    {([{key:'all',label:'Todos'},{key:'audiobook',label:'Áudios'},{key:'ebook',label:'E-books'}] as const).map(f=><button key={f.key} type="button" aria-pressed={filter===f.key} onClick={()=>setFilter(f.key)} className={'academy-filter '+(filter===f.key?'is-active':'')}>{f.label}</button>)}
+   </div>
   </div>}
-  {busy&&<p role="status" className="py-4 text-sm text-gray-400">Carregando sua biblioteca…</p>}
-  {error&&<p role="alert" className="rounded-xl border border-red-500/30 p-4 text-sm text-red-200">{error}</p>}
-  {!busy&&!error&&releases.length===0&&<p className="rounded-xl border border-white/10 p-5 text-sm text-gray-400">Nenhum conteúdo liberado nesta conta.</p>}
-  {resumable.map(({item,position}) => <Link key={item.id} to={'/app/academia/biblioteca/'+item.id} className="mb-4 flex min-h-16 items-center justify-between gap-3 rounded-xl border border-[#B77745]/40 bg-[#B77745]/10 p-4 transition-colors hover:bg-[#B77745]/20">
-   <span className="min-w-0"><span className="block text-[10px] font-bold uppercase tracking-[.12em] text-[#E4A572]">Retomar audiobook · {Math.floor(position / 60)} min ouvidos</span><span className="mt-1 block truncate text-sm font-semibold text-white">{item.title}</span></span><span className="shrink-0 text-xs font-bold text-[#F2BD92]">Ouvir ↗</span>
-  </Link>)}
-  <div className="grid min-w-0 gap-3 sm:grid-cols-2">
-   {releases.filter(r=>filter==='all'||Boolean(r[filter])).map(r=><article key={r.release_code} className="flex min-w-0 flex-col justify-between rounded-2xl border border-white/10 bg-[#171719] p-4">
-    <div><span className="text-[10px] font-bold uppercase tracking-[.15em] text-[#E4A572]">SAGA NEGRA · Release {r.release_code}</span><h3 className="mt-2 line-clamp-3 text-base font-semibold leading-snug">{r.title}</h3></div>
-    <div className="mt-5 flex flex-wrap gap-2">
-     {r.audiobook&&<Link to={'/app/academia/biblioteca/'+r.audiobook.id} className="inline-flex min-h-11 items-center rounded-xl bg-[#A9683D] px-4 text-xs font-bold text-white">▶ Ouvir</Link>}
-     {r.ebook&&<Link to={'/app/academia/biblioteca/'+r.ebook.id} className="inline-flex min-h-11 items-center rounded-xl border border-white/20 px-4 text-xs font-bold text-gray-200">▤ Ler PDF</Link>}
-    </div>
-   </article>)}
-  </div>
+  {busy&&<Loading/>}
+  {error&&<p role="alert" className="academy-error">{error}</p>}
+  {!busy&&!error&&releases.length===0&&<div className="academy-empty"><Icon name="library" size={27}/><h3>Sua biblioteca está esperando por você</h3><p>Os conteúdos liberados para sua conta aparecerão aqui.</p></div>}
+  {!busy&&!error&&releases.length>0&&filtered.length===0&&<div className="academy-empty"><p>Nenhum título encontrado neste filtro.</p></div>}
+  {resumable.map(({item,position})=><Link key={item.id} to={'/app/academia/biblioteca/'+item.id} className="academy-resume">
+    <ContentArtwork release={item.release_code} format="audio"/>
+    <span className="academy-resume-details"><span className="academy-eyebrow">Retomar audiobook · Continuar de onde parou</span><strong>{item.title}</strong><span className="academy-resume-meta"><Icon name="clock" size={14}/> {Math.floor(position/60)} min ouvidos</span></span>
+    <span className="academy-resume-play"><Icon name="play" size={20}/></span>
+   </Link>)}
+  {!busy&&!error&&<div className={'academy-library-grid '+(condensed?'is-condensed':'')}>
+   {filtered.map(release=>{
+    const primary=release.audiobook||release.ebook
+    const kind=release.audiobook?'audio':'book'
+    const target=primary?'/app/academia/biblioteca/'+primary.id:'/app/academia/biblioteca'
+    return <article key={release.release_code} className="academy-media-card">
+     <Link to={target} className="academy-media-art-link" aria-label={'Abrir '+release.title}><ContentArtwork release={release.release_code} format={kind}/></Link>
+     <div className="academy-media-body">
+      <span className="academy-eyebrow">SAGA NEGRA · RELEASE {release.release_code}</span>
+      <h3>{release.title}</h3>
+      <p>{release.audiobook&&release.ebook?'Audiobook e e-book disponíveis':release.audiobook?'Audiobook disponível':'E-book disponível'}</p>
+      <div className="academy-media-actions">
+       {release.audiobook&&<Link to={'/app/academia/biblioteca/'+release.audiobook.id} className="academy-media-play"><Icon name="play" size={16}/> Ouvir</Link>}
+       {release.ebook&&<Link to={'/app/academia/biblioteca/'+release.ebook.id} className="academy-media-read"><Icon name="book" size={16}/> Ler PDF</Link>}
+      </div>
+     </div>
+    </article>
+   })}
+  </div>}
  </section>
 }
 
-function AcademyHome() {
+function AcademyHome(){
+ const {user}=useAuth()
  const [courses,setCourses]=useState<AcademyCourse[]>([])
+ const [loadingCourses,setLoadingCourses]=useState(true)
  useEffect(()=>{
   let alive=true
-  void academyApi.myCourses().then(rows=>{if(alive)setCourses(rows.filter((row:any)=>row.course).map((row:any)=>row.course))}).catch(()=>undefined)
+  void academyApi.myCourses().then(rows=>{
+   if(alive)setCourses(rows.filter((row:any)=>row.course).map((row:any)=>row.course))
+  }).catch(()=>undefined).finally(()=>{if(alive)setLoadingCourses(false)})
   return()=>{alive=false}
  },[])
- return <div className="space-y-9">
-  <section className="rounded-3xl border border-[#A9683D]/30 bg-gradient-to-br from-[#382315] via-[#201A18] to-[#151516] px-5 py-7 sm:px-8 sm:py-9">
-   <p className="text-xs font-bold uppercase tracking-[.2em] text-[#E7B78A]">Seu espaço de conhecimento</p>
-   <h1 className="mt-3 max-w-lg text-3xl font-bold leading-tight tracking-tight sm:text-4xl">Ouça, leia e aprenda no seu ritmo.</h1>
-   <p className="mt-3 max-w-lg text-sm leading-relaxed text-gray-300">Seus conteúdos em um aplicativo, sem menus desnecessários. Continue estudando de onde estiver.</p>
-   <div className="mt-6 flex flex-wrap gap-2">
-    <Link to="/app/academia/biblioteca" className="inline-flex min-h-11 items-center rounded-xl bg-[#B87749] px-4 text-xs font-bold text-white">Abrir biblioteca →</Link>
-    <Link to="/app/academia/catalogo" className="inline-flex min-h-11 items-center rounded-xl border border-white/25 px-4 text-xs font-semibold">Explorar cursos</Link>
+ return <div className="academy-home">
+  <div className="academy-welcome"><p className="academy-eyebrow">SEU ESPAÇO DE CONHECIMENTO</p><h1>Olá, {user?.name||'estudante'}<span className="academy-welcome-dot">.</span></h1><p>O que você quer explorar hoje?</p></div>
+  <section className="academy-featured">
+   <div className="academy-featured-art" aria-hidden="true"><span className="academy-featured-orbit"/><span>ACERVO<br/>DIGITAL</span></div>
+   <div className="academy-featured-content"><p className="academy-eyebrow">ACADEMIA SAGAMENTE</p><h2>Histórias para ouvir.<br/>Ideias para transformar.</h2><p>Seus conteúdos favoritos, no seu ritmo.</p>
+    <Link className="academy-featured-button" to="/app/academia/biblioteca">Explorar biblioteca <Icon name="arrow" size={17}/></Link>
    </div>
   </section>
+  <div className="academy-quick-grid">
+   <Link to="/app/academia/biblioteca" className="academy-quick-card"><Icon name="headphones" size={25}/><strong>Audiobooks</strong><span>Ouvir</span></Link>
+   <Link to="/app/academia/biblioteca" className="academy-quick-card"><Icon name="book" size={25}/><strong>E-books</strong><span>Ler</span></Link>
+   <Link to="/app/academia/catalogo" className="academy-quick-card"><Icon name="courses" size={25}/><strong>Cursos</strong><span>Aprender</span></Link>
+  </div>
   <AcademyShelf condensed/>
-  <section>
-   <div className="mb-4 flex items-center justify-between gap-3">
-    <h2 className="text-xl font-bold">Meus cursos</h2><Link className="text-xs font-semibold text-[#E9AE7B]" to="/app/academia/catalogo">Catálogo →</Link>
-   </div>
-   {courses.length===0?<p className="rounded-2xl border border-white/10 bg-[#171719] p-5 text-sm text-gray-400">Seus cursos aparecerão aqui quando estiver matriculado. Explore o catálogo para começar.</p>:
-    <div className="grid gap-3 sm:grid-cols-2">
-     {courses.slice(0,4).map(c=><Link key={c.id} to={'/app/academia/'+c.id} className="rounded-2xl border border-white/10 bg-[#171719] p-4 hover:border-[#A9683D]/60"><span className="text-[10px] uppercase tracking-wider text-[#E7B78A]">Curso</span><h3 className="mt-2 font-bold">{c.title}</h3><span className="mt-3 inline-block text-xs text-[#E7B78A]">Continuar →</span></Link>)}
-    </div>}
+  <section className="academy-courses-home">
+   <SectionTitle eyebrow="Seu aprendizado" title="Meus cursos" href="/app/academia/catalogo" action="Explorar"/>
+   {loadingCourses?<p className="academy-muted">Carregando cursos…</p>:courses.length===0?
+    <Link to="/app/academia/catalogo" className="academy-course-empty"><Icon name="courses" size={26}/><span><strong>Descubra algo novo</strong><small>Explore cursos e aulas gratuitas.</small></span><Icon name="chevron" size={20}/></Link>:
+    <div className="academy-course-grid">{courses.slice(0,4).map(c=><Link key={c.id} to={'/app/academia/'+c.id} className="academy-course-card">
+     <div className="academy-course-art">{c.cover_url?<img src={c.cover_url} loading="lazy" alt=""/>:<Icon name="courses" size={30}/>}</div>
+     <div><span className="academy-eyebrow">CURSO</span><h3>{c.title}</h3><span className="academy-text-link">Continuar <Icon name="arrow" size={14}/></span></div>
+    </Link>)}</div>}
   </section>
  </div>
 }
 
-function AcademyAccount() {
+function AcademyAccount(){
  const {user,logout}=useAuth()
  const navigate=useNavigate()
  const [busy,setBusy]=useState(false)
@@ -206,16 +275,25 @@ function AcademyAccount() {
   catch(e){setError(e instanceof Error?e.message:'Não foi possível sair.')}
   finally{setBusy(false)}
  }
- return <section className="mx-auto max-w-xl space-y-5">
-  <div><p className="text-xs font-bold uppercase tracking-wider text-[#E7B78A]">Sua conta</p><h1 className="mt-1 text-2xl font-bold">Perfil da Academia</h1></div>
-  <div className="rounded-2xl border border-white/10 bg-[#171719] p-5"><p className="font-semibold">{user?.name} {user?.lastName}</p><p className="mt-1 break-words text-xs text-gray-400">{user?.email}</p><p className="mt-4 text-xs leading-relaxed text-gray-400">Você utiliza o mesmo cadastro da Sagamente. Seus conteúdos são liberados de acordo com as permissões da sua conta.</p></div>
-  <div className="rounded-2xl border border-white/10 bg-[#171719] p-5"><h2 className="font-semibold">Instalar no celular</h2><p className="mt-2 text-sm leading-relaxed text-gray-400">No iPhone, abra o menu Compartilhar do Safari e escolha “Adicionar à Tela de Início”. No Android, procure “Instalar aplicativo” no menu do navegador.</p></div>
-  {error&&<p role="alert" className="text-sm text-red-300">{error}</p>}
-  <button type="button" disabled={busy} onClick={()=>void signOut()} className="min-h-11 w-full rounded-xl border border-white/15 bg-white/5 text-sm font-semibold text-gray-200">{busy?'Saindo…':'Sair da Academia'}</button>
+ return <section className="academy-account">
+  <p className="academy-eyebrow">SEU ESPAÇO</p><h1>Minha conta</h1>
+  <div className="academy-profile-card"><div className="academy-profile-avatar">{(user?.name||'A').charAt(0).toUpperCase()}</div>
+   <div><h2>{user?.name} {user?.lastName}</h2><p>{user?.email}</p><span>Conta Sagamente</span></div>
+  </div>
+  <div className="academy-account-links">
+   <Link to="/app/academia/biblioteca"><Icon name="library" size={20}/> Minha biblioteca <Icon name="chevron" size={18}/></Link>
+   <Link to="/app/academia/catalogo"><Icon name="courses" size={20}/> Cursos e aulas <Icon name="chevron" size={18}/></Link>
+   <details><summary><Icon name="spark" size={20}/> Instalar aplicativo <Icon name="chevron" size={18}/></summary>
+    <div className="academy-account-detail"><p><strong>iPhone:</strong> abra no Safari, toque em Compartilhar e em “Adicionar à Tela de Início”.</p><p><strong>Android:</strong> no Chrome, escolha “Instalar aplicativo” no menu.</p></div>
+   </details>
+   <div className="academy-account-note"><Icon name="shield" size={19}/><span>Sua biblioteca é pessoal e protegida pelas permissões da sua conta Sagamente.</span></div>
+  </div>
+  {error&&<p role="alert" className="academy-error">{error}</p>}
+  <button type="button" disabled={busy} onClick={()=>void signOut()} className="academy-logout"><Icon name="logout" size={18}/>{busy?'Saindo…':'Sair da conta'}</button>
  </section>
 }
 
-export function AcademyStandaloneApp() {
+export function AcademyStandaloneApp(){
  return <Suspense fallback={<Loading/>}><Routes>
   <Route path="/login" element={<AcademyLogin/>}/>
   <Route path="/certificados/:code" element={<CertificateVerify/>}/>
@@ -224,9 +302,9 @@ export function AcademyStandaloneApp() {
     <Route path="/" element={<Navigate to="/app/academia" replace/>}/>
     <Route path="/app/academia" element={<AcademyHome/>}/>
     <Route path="/app/academia/biblioteca" element={<AcademyShelf/>}/>
-    <Route path="/app/academia/biblioteca/:id" element={<LibraryReader/>}/>
-    <Route path="/app/academia/catalogo" element={<CourseCatalog/>}/>
-    <Route path="/app/academia/:id" element={<CourseReader/>}/>
+    <Route path="/app/academia/biblioteca/:id" element={<div className="academy-reader"><LibraryReader/></div>}/>
+    <Route path="/app/academia/catalogo" element={<div className="academy-catalog"><CourseCatalog/></div>}/>
+    <Route path="/app/academia/:id" element={<div className="academy-reader academy-course-reader"><CourseReader/></div>}/>
     <Route path="/conta" element={<AcademyAccount/>}/>
     <Route path="*" element={<Navigate to="/app/academia" replace/>}/>
    </Route>
