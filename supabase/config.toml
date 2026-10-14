@@ -1,0 +1,6 @@
+# Saga Negra library media endpoints validate authorization inside the function.
+# POST validates the signed-in user and active library grant; GET/HEAD validate
+# a short-lived opaque ticket and re-check the grant on every request.
+# Browser audio/PDF elements cannot attach custom Authorization headers.
+[functions.academy-library-media]
+verify_jwt = false
