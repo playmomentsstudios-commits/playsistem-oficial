@@ -7,13 +7,14 @@ import { academyApi } from '../api/academy'
 const LibraryReader = lazy(() => import('../pages/customer/AcademyLibraryItemPage').then(m => ({ default: m.AcademyLibraryItemPage })))
 const CourseReader = lazy(() => import('../pages/customer/AcademyCoursePage').then(m => ({ default: m.AcademyCoursePage })))
 const CourseCatalog = lazy(() => import('../pages/customer/AcademyCatalogPage').then(m => ({ default: m.AcademyCatalogPage })))
+const CertificateVerify = lazy(() => import('../pages/public/CertificateVerifyPage').then(m => ({ default: m.CertificateVerifyPage })))
 
 type Release = { release_code: string; title: string; audiobook?: LibraryItem; ebook?: LibraryItem }
 type AcademyCourse = { id: string; title: string; cover_url?: string; description?: string }
 
 function Mark() {
  return <Link to="/app/academia" className="inline-flex min-w-0 items-center gap-2.5 text-left">
-  <span aria-hidden="true" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#C67D43] to-[#63321B] text-xl font-black text-white">S</span>
+  <img src="/pwa/icon-192.png" alt="" aria-hidden="true" width="40" height="40" className="h-10 w-10 shrink-0 rounded-xl object-cover" />
   <span className="min-w-0">
    <span className="block text-[11px] font-semibold uppercase tracking-[.15em] text-[#E5B18B]">Sagamente</span>
    <span className="block text-sm font-bold tracking-wide text-white">Academia</span>
@@ -70,6 +71,7 @@ function AcademyLogin() {
     </label>
     {error&&<p role="alert" className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">{error}</p>}
     <button type="submit" disabled={busy} className="min-h-12 w-full rounded-xl bg-[#A9683D] px-4 font-semibold text-white disabled:opacity-60">{busy?'Entrando…':'Entrar na Academia'}</button>
+    <a href="https://playsistem-oficial.playmomentsstudios.workers.dev/esqueci-senha" target="_blank" rel="noopener noreferrer" className="block py-2 text-center text-xs text-[#E7B78A] underline-offset-4 hover:underline">Esqueci minha senha ↗</a>
    </form>
   </section>
  </div>
@@ -118,6 +120,15 @@ function AcademyShelf({ condensed=false }: {condensed?:boolean}) {
   void academyLibraryApi.mine().then(data=>{if(alive)setItems(data)}).catch(e=>{if(alive)setError(e instanceof Error?e.message:'Erro ao carregar biblioteca.')}).finally(()=>{if(alive)setBusy(false)})
   return()=>{alive=false}
  },[])
+ const resumable = useMemo(() => {
+  if (!condensed || typeof window === 'undefined') return []
+  return items.filter(item => item.format === 'audiobook').flatMap(item => {
+   try {
+    const position = Number(window.localStorage.getItem('sagamente.library.position.' + item.id) || 0)
+    return Number.isFinite(position) && position >= 10 ? [{ item, position }] : []
+   } catch { return [] }
+  }).sort((a, b) => b.position - a.position).slice(0, 1)
+ }, [items, condensed])
  const releases=useMemo(()=>{
   const m=new Map<string,Release>()
   for(const item of items){
@@ -139,6 +150,9 @@ function AcademyShelf({ condensed=false }: {condensed?:boolean}) {
   {busy&&<p role="status" className="py-4 text-sm text-gray-400">Carregando sua biblioteca…</p>}
   {error&&<p role="alert" className="rounded-xl border border-red-500/30 p-4 text-sm text-red-200">{error}</p>}
   {!busy&&!error&&releases.length===0&&<p className="rounded-xl border border-white/10 p-5 text-sm text-gray-400">Nenhum conteúdo liberado nesta conta.</p>}
+  {resumable.map(({item,position}) => <Link key={item.id} to={'/app/academia/biblioteca/'+item.id} className="mb-4 flex min-h-16 items-center justify-between gap-3 rounded-xl border border-[#B77745]/40 bg-[#B77745]/10 p-4 transition-colors hover:bg-[#B77745]/20">
+   <span className="min-w-0"><span className="block text-[10px] font-bold uppercase tracking-[.12em] text-[#E4A572]">Retomar audiobook · {Math.floor(position / 60)} min ouvidos</span><span className="mt-1 block truncate text-sm font-semibold text-white">{item.title}</span></span><span className="shrink-0 text-xs font-bold text-[#F2BD92]">Ouvir ↗</span>
+  </Link>)}
   <div className="grid min-w-0 gap-3 sm:grid-cols-2">
    {releases.filter(r=>filter==='all'||Boolean(r[filter])).map(r=><article key={r.release_code} className="flex min-w-0 flex-col justify-between rounded-2xl border border-white/10 bg-[#171719] p-4">
     <div><span className="text-[10px] font-bold uppercase tracking-[.15em] text-[#E4A572]">SAGA NEGRA · Release {r.release_code}</span><h3 className="mt-2 line-clamp-3 text-base font-semibold leading-snug">{r.title}</h3></div>
@@ -204,6 +218,7 @@ function AcademyAccount() {
 export function AcademyStandaloneApp() {
  return <Suspense fallback={<Loading/>}><Routes>
   <Route path="/login" element={<AcademyLogin/>}/>
+  <Route path="/certificados/:code" element={<CertificateVerify/>}/>
   <Route element={<RequireAccess/>}>
    <Route element={<AcademyShell/>}>
     <Route path="/" element={<Navigate to="/app/academia" replace/>}/>
