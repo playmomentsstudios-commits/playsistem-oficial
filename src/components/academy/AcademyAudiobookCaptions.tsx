@@ -25,7 +25,7 @@ function validStoredCues(value: unknown): AudiobookCaptionCue[] {
 export function AcademyAudiobookCaptions({ itemId, audioRef, children }: Props) {
  const [cues, setCues] = useState<AudiobookCaptionCue[]>([])
  const [time, setTime] = useState(0)
- const [expanded, setExpanded] = useState(false)
+ const [expanded, setExpanded] = useState(true)
  const [isAdmin, setIsAdmin] = useState(false)
  const [editing, setEditing] = useState(false)
  const [draft, setDraft] = useState('')
@@ -37,7 +37,7 @@ export function AcademyAudiobookCaptions({ itemId, audioRef, children }: Props) 
  useEffect(() => {
   let mounted = true
   setCues([])
-  setExpanded(false)
+  setExpanded(true)
   setEditing(false)
   setStatus('')
   setLoadError('')
@@ -52,6 +52,7 @@ export function AcademyAudiobookCaptions({ itemId, audioRef, children }: Props) 
     return
    }
    const next = validStoredCues(data?.cues)
+   if (!next.length) setLoadError('Ainda não há legendas disponíveis para este audiobook.')
    setCues(next)
    if (next.length) setDraft(serializeAudiobookCaptions(next))
   }
@@ -142,7 +143,7 @@ export function AcademyAudiobookCaptions({ itemId, audioRef, children }: Props) 
 
  return <div className="space-y-5">
   <div className="flex aspect-[3/1] min-h-36 max-h-52 flex-col items-center justify-center rounded-xl bg-gradient-to-br from-[#56321C] via-[#29221F] to-[#141416] px-5 py-5 text-center" aria-label="Legenda da narração">
-   {cues.length ? <>
+   {cues.length && expanded ? <>
     <span className="text-[10px] font-bold uppercase tracking-[.17em] text-[#E4A36C]">
      Acompanhe a narração
     </span>
@@ -160,7 +161,7 @@ export function AcademyAudiobookCaptions({ itemId, audioRef, children }: Props) 
   {cues.length > 0 && <div className="rounded-xl border border-white/10 bg-[#111215]">
    <button type="button" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}
     className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-semibold text-[#E7AD79]">
-    <span>{expanded ? 'Ocultar transcrição' : 'Ver transcrição sincronizada'}</span>
+    <span>{expanded ? 'Ocultar transcrição' : 'Mostrar transcrição'}</span>
     <span aria-hidden="true">{expanded ? '−' : '+'}</span>
    </button>
    {expanded && <div ref={listRef} className="relative max-h-72 space-y-1 overflow-y-auto border-t border-white/10 p-2 sm:p-3"
@@ -179,6 +180,10 @@ export function AcademyAudiobookCaptions({ itemId, audioRef, children }: Props) 
    {expanded && <p className="border-t border-white/10 px-4 py-3 text-xs text-gray-500">
     Toque em qualquer trecho para ouvir daquele ponto.
    </p>}
+  </div>}
+
+  {loadError && <div role="alert" className="rounded-lg border border-amber-600/30 bg-amber-950/20 p-3 text-xs text-[#E7AD79]">
+   {loadError} Atualize a página para tentar novamente.
   </div>}
 
   {isAdmin && <div className="rounded-xl border border-[#E7AD79]/20 bg-[#17181B] p-4">
@@ -204,7 +209,6 @@ export function AcademyAudiobookCaptions({ itemId, audioRef, children }: Props) 
     </button>
    </div>}
    {status && <p role="status" className="mt-2 text-xs text-[#E7AD79]">{status}</p>}
-   {loadError && <p role="status" className="mt-2 text-xs text-gray-400">{loadError}</p>}
   </div>}
  </div>
 }
