@@ -20,6 +20,7 @@ export function AdminProjects(){
   const toast=useToast()
   const [rows,setRows]=useState<any[]>([])
   const [customers,setCustomers]=useState<any[]>([])
+  const [templates,setTemplates]=useState<any[]>([])
   const [loading,setLoading]=useState(true)
   const [showForm,setShowForm]=useState(false)
   const [search,setSearch]=useState('')
@@ -27,6 +28,7 @@ export function AdminProjects(){
   const [form,setForm]=useState({
     title:'',
     description:'',
+    template_id:'',
     project_type:'other',
     customer_id:'',
     status:'planning',
@@ -45,6 +47,7 @@ export function AdminProjects(){
 
   useEffect(()=>{
     void load()
+    void portalApi.projectFormTemplates().then(setTemplates).catch(()=>undefined)
     settingsApi.appSettings().then(settings=>{
       if(settings)setForm(current=>({...current,priority:settings.default_project_priority}))
     }).catch(()=>undefined)
@@ -60,6 +63,7 @@ export function AdminProjects(){
     e.preventDefault()
     if(!user||!form.title.trim())return
     try{
+      const selectedTemplate=form.project_type==='internal'?templates.find(t=>t.id===form.template_id):null
       const created=await portalApi.saveProject({
         title:form.title.trim(),
         description:form.description.trim()||null,
@@ -71,10 +75,17 @@ export function AdminProjects(){
         due_date:form.due_date||null,
         drive_folder_url:form.drive_folder_url.trim()||null,
         created_by:user.id,
-      })
+      },undefined,{deferDrive:!!selectedTemplate})
+      if(selectedTemplate){
+        await portalApi.attachProjectFormTemplate(created.id,selectedTemplate)
+        for(const [position,name] of ((selectedTemplate.configuration?.defaultStages||[]) as string[]).entries()){
+          await portalApi.saveStage({project_id:created.id,name,description:null,position,status:'pending',client_visible:false})
+        }
+        await portalApi.ensureProjectDriveFolder(created.id).catch(()=>undefined)
+      }
       toast('Projeto criado com sucesso.','success')
       setShowForm(false)
-      setForm({title:'',description:'',project_type:'other',customer_id:'',status:'planning',priority:'medium',start_date:'',due_date:'',drive_folder_url:''})
+      setForm({title:'',description:'',template_id:'',project_type:'other',customer_id:'',status:'planning',priority:'medium',start_date:'',due_date:'',drive_folder_url:''})
       window.location.href='/admin/projetos/'+created.id
     }catch(error:any){
       toast(error.message,'error')
@@ -102,11 +113,19 @@ export function AdminProjects(){
       </div>
       <textarea rows={3} value={form.description} onChange={e=>setForm({...form,description:e.target.value})} placeholder="Descrição do projeto" className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <select value={form.project_type} onChange={e=>setForm({...form,project_type:e.target.value,customer_id:e.target.value==='internal'?'':form.customer_id})} className="px-3 py-2 rounded-xl bg-black border border-white/10">{tipos.map(value=><option key={value} value={value}>{rotulo(tipoProjeto,value)}</option>)}</select>
+        <select value={form.project_type} onChange={e=>setForm({...form,project_type:e.target.value,template_id:e.target.value==='internal'?form.template_id:'',customer_id:e.target.value==='internal'?'':form.customer_id})} className="px-3 py-2 rounded-xl bg-black border border-white/10">{tipos.map(value=><option key={value} value={value}>{rotulo(tipoProjeto,value)}</option>)}</select>
         <select value={form.priority} onChange={e=>setForm({...form,priority:e.target.value})} className="px-3 py-2 rounded-xl bg-black border border-white/10">{prioridades.map(value=><option key={value} value={value}>{rotulo(prioridade,value)}</option>)}</select>
         <select aria-label="Situação do projeto" value={form.status} onChange={e=>setForm({...form,status:e.target.value})} className={"pm-select-status px-3 py-2 rounded-xl "+(form.status==="active"?"pm-state-progress":form.status==="review"?"pm-state-review":form.status==="completed"?"pm-state-success":form.status==="cancelled"?"pm-state-danger":form.status==="paused"?"pm-state-pending":"pm-state-neutral")}>{statuses.map(value=><option key={value} value={value}>{rotulo(statusProjeto,value)}</option>)}</select>
         <input value={form.drive_folder_url} onChange={e=>setForm({...form,drive_folder_url:e.target.value})} placeholder="Link da pasta no Drive" className="px-3 py-2 rounded-xl bg-white/5 border border-white/10"/>
       </div>
+      {form.project_type==='internal'&&<div className="rounded-xl border border-white/10 bg-white/[.03] p-3">
+        <label className="mb-1 block text-xs text-gray-400">Modelo de categoria (formulário reutilizável)</label>
+        <select value={form.template_id} onChange={e=>setForm({...form,template_id:e.target.value})} className="w-full rounded-lg border border-white/10 bg-black px-3 py-2">
+          <option value="">Projeto interno padrão — sem modelo</option>
+          {templates.map(template=><option key={template.id} value={template.id}>{template.name}</option>)}
+        </select>
+        <p className="mt-1 text-xs text-gray-500">O modelo cria etapas e um formulário próprio sem modificar projetos existentes.</p>
+      </div>}
       <div className="grid sm:grid-cols-2 gap-3">
         <label className="text-sm text-gray-400">Início<input type="date" value={form.start_date} onChange={e=>setForm({...form,start_date:e.target.value})} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10"/></label>
         <label className="text-sm text-gray-400">Prazo<input type="date" value={form.due_date} onChange={e=>setForm({...form,due_date:e.target.value})} className="mt-1 w-full px-3 py-2 rounded-xl bg-black border border-white/10"/></label>
