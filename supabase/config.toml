@@ -1,0 +1,4 @@
+# SAGA NEGRA: browser media GET/HEAD uses short-lived tickets validated by the function.
+# POST authenticates the signed-in user and checks the active grant.
+[functions.academy-library-media]
+verify_jwt = false
