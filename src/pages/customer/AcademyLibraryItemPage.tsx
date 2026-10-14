@@ -2,6 +2,7 @@ import { useEffect,useRef,useState } from 'react'
 import { Link,useParams } from 'react-router-dom'
 import { academyLibraryApi,type LibraryItem } from '../../api/academyLibrary'
 import { AcademyNavigation } from '../../components/academy/AcademyNavigation'
+import { AcademyAudiobookCaptions } from '../../components/academy/AcademyAudiobookCaptions'
 import { LoadingState } from '../../components/ui/AsyncState'
 
 export function AcademyLibraryItemPage(){
@@ -89,9 +90,7 @@ export function AcademyLibraryItemPage(){
     <p className="mt-1 text-xs text-gray-400">Disponível exclusivamente para sua conta na Academia.</p>
    </header>
    {item.format==='audiobook'?<div className="space-y-5 p-5 sm:p-7">
-    <div className="flex aspect-[3/1] max-h-52 items-center justify-center rounded-xl bg-gradient-to-br from-[#56321C] via-[#29221F] to-[#141416]">
-     <span className="text-5xl text-[#E4A36C]" aria-hidden="true">♫</span>
-    </div>
+    <AcademyAudiobookCaptions itemId={item.id} audioRef={audioRef}>
     <div className="rounded-xl border border-white/10 bg-black/30 p-4">
      <audio ref={audioRef} key={item.id} controls controlsList="nodownload" preload="metadata" src={stream} className="w-full" onLoadedMetadata={restoreAudioPosition} onTimeUpdate={saveAudioPosition} onEnded={()=>{try{window.localStorage.removeItem('sagamente.library.position.'+item.id)}catch{}}} onError={()=>setError('O arquivo não foi reproduzido. Verifique o acesso ao Drive ou recarregue a página.')}>
       Seu navegador não suporta reprodução de áudio.
@@ -104,6 +103,7 @@ export function AcademyLibraryItemPage(){
      </div>
      <p className="mt-3 text-xs text-gray-500">Pause, avance ou retorne pelo controle de reprodução. A posição é lembrada neste dispositivo.</p>
     </div>
+    </AcademyAudiobookCaptions>
    </div>:<div className="p-3 sm:p-5">
     <iframe title={'Leitor digital — '+item.title} src={stream} referrerPolicy="no-referrer" className="h-[74vh] min-h-[380px] w-full rounded-xl border border-white/10 bg-white"/>
     <p className="mt-3 text-xs text-gray-400">Leitura no navegador. Se o PDF não carregar, atualize a página para renovar o acesso temporário.</p>
