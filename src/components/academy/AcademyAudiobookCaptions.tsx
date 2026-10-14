@@ -141,13 +141,13 @@ export function AcademyAudiobookCaptions({ itemId, audioRef, children }: Props) 
   }
  }
 
- return <div className="space-y-5">
-  <div className="flex aspect-[3/1] min-h-36 max-h-52 flex-col items-center justify-center rounded-xl bg-gradient-to-br from-[#56321C] via-[#29221F] to-[#141416] px-5 py-5 text-center" aria-label="Legenda da narração">
+ return <div className="min-w-0 w-full space-y-5">
+  <div className="flex min-h-36 w-full min-w-0 flex-col justify-center rounded-xl bg-gradient-to-br from-[#56321C] via-[#29221F] to-[#141416] px-4 py-5 text-left sm:min-h-40 sm:px-6 md:px-8" aria-label="Legenda da narração">
    {cues.length && expanded ? <>
-    <span className="text-[10px] font-bold uppercase tracking-[.17em] text-[#E4A36C]">
+    <span className="block w-full text-left text-[10px] font-bold uppercase tracking-[.17em] text-[#E4A36C]">
      Acompanhe a narração
     </span>
-    <p className="mt-3 max-w-2xl text-balance text-base font-medium leading-relaxed text-[#F6EDE5] sm:text-lg" aria-live="off">
+    <p className="mt-3 w-full min-w-0 max-w-none break-words text-left text-base font-medium leading-relaxed text-[#F6EDE5] sm:text-lg" aria-live="off">
      {current?.text || 'Aperte o play para acompanhar o texto da narração.'}
     </p>
    </> : <>
@@ -158,23 +158,23 @@ export function AcademyAudiobookCaptions({ itemId, audioRef, children }: Props) 
 
   {children}
 
-  {cues.length > 0 && <div className="rounded-xl border border-white/10 bg-[#111215]">
+  {cues.length > 0 && <div className="min-w-0 w-full rounded-xl border border-white/10 bg-[#111215]">
    <button type="button" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}
-    className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-semibold text-[#E7AD79]">
+    className="flex min-h-12 w-full min-w-0 items-center justify-between gap-3 px-4 py-3 text-left text-sm font-semibold text-[#E7AD79]">
     <span>{expanded ? 'Ocultar transcrição' : 'Mostrar transcrição'}</span>
     <span aria-hidden="true">{expanded ? '−' : '+'}</span>
    </button>
-   {expanded && <div ref={listRef} className="relative max-h-72 space-y-1 overflow-y-auto border-t border-white/10 p-2 sm:p-3"
+   {expanded && <div ref={listRef} className="relative max-h-80 min-w-0 space-y-2 overflow-y-auto border-t border-white/10 p-2 sm:p-3"
     role="group" aria-label="Trechos da narração">
     {cues.map((cue, index) => <button
      key={index} type="button" aria-current={index === active ? 'true' : undefined}
      data-active-caption={index === active ? 'true' : undefined}
      onClick={() => seekTo(cue.start)}
-     className={'flex w-full items-start gap-3 rounded-lg px-3 py-3 text-left transition-colors ' +
+     className={'grid w-full min-w-0 grid-cols-1 gap-1 rounded-lg px-3 py-3 text-left transition-colors sm:grid-cols-[3.5rem_minmax(0,1fr)] sm:gap-3 ' +
       (index === active ? 'bg-[#B77745]/20 text-white ring-1 ring-[#B77745]/40' : 'text-gray-400 hover:bg-white/5 hover:text-white')}
     >
-     <span className="shrink-0 pt-0.5 text-[11px] font-medium tabular-nums text-[#E7AD79]">{formatCaptionTime(cue.start)}</span>
-     <span className="text-sm leading-relaxed">{cue.text}</span>
+     <span className="text-[11px] font-medium tabular-nums text-[#E7AD79] sm:pt-0.5">{formatCaptionTime(cue.start)}</span>
+     <span className="block w-full min-w-0 break-words text-left text-sm leading-relaxed">{cue.text}</span>
     </button>)}
    </div>}
    {expanded && <p className="border-t border-white/10 px-4 py-3 text-xs text-gray-500">
