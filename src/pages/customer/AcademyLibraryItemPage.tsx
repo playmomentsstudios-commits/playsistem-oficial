@@ -22,6 +22,16 @@ export function AcademyLibraryItemPage(){
    const media=await academyLibraryApi.mediaTicket(owned.id)
    if(!active)return
    if(media.mime_type!==owned.mime_type)throw new Error('Formato da mídia inconsistente.')
+   // Preflight on the SAME origin catches expired tickets and upstream Drive
+   // errors before showing a blank PDF iframe or an audio element at 0:00.
+   const probe=await fetch(media.url,{method:'HEAD',cache:'no-store'})
+   if(!probe.ok){
+    if(probe.status===403)throw new Error('Seu acesso temporário expirou. Atualize para gerar um novo link.')
+    throw new Error('O arquivo não pôde ser carregado do Drive (erro '+probe.status+'). Tente novamente.')
+   }
+   const receivedType=String(probe.headers.get('Content-Type')||'').split(';')[0].toLowerCase()
+   if(receivedType!==owned.mime_type)throw new Error('O arquivo recebido não corresponde ao formato esperado.')
+   if(!active)return
    setItem(owned);setStream(media.url)
   }).catch((e:any)=>{if(active)setError(e?.message||'Erro ao abrir conteúdo.')})
    .finally(()=>{if(active)setLoading(false)})
@@ -60,7 +70,7 @@ export function AcademyLibraryItemPage(){
      <span className="text-5xl text-[#E4A36C]" aria-hidden="true">♫</span>
     </div>
     <div className="rounded-xl border border-white/10 bg-black/30 p-4">
-     <audio ref={audioRef} key={item.id} controls preload="metadata" src={stream} className="w-full" onLoadedMetadata={restoreAudioPosition} onTimeUpdate={saveAudioPosition} onEnded={()=>{try{window.localStorage.removeItem('sagamente.library.position.'+item.id)}catch{}}} onError={()=>setError('O arquivo não foi reproduzido. Verifique o acesso ao Drive ou recarregue a página.')}>
+     <audio ref={audioRef} key={item.id} controls controlsList="nodownload" preload="metadata" src={stream} className="w-full" onLoadedMetadata={restoreAudioPosition} onTimeUpdate={saveAudioPosition} onEnded={()=>{try{window.localStorage.removeItem('sagamente.library.position.'+item.id)}catch{}}} onError={()=>setError('O arquivo não foi reproduzido. Verifique o acesso ao Drive ou recarregue a página.')}>
       Seu navegador não suporta reprodução de áudio.
      </audio>
      <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
@@ -72,7 +82,7 @@ export function AcademyLibraryItemPage(){
      <p className="mt-3 text-xs text-gray-500">Pause, avance ou retorne pelo controle de reprodução. A posição é lembrada neste dispositivo.</p>
     </div>
    </div>:<div className="p-3 sm:p-5">
-    <iframe title={'Leitor digital — '+item.title} src={stream} className="h-[74vh] min-h-[380px] w-full rounded-xl border border-white/10 bg-white" loading="lazy"/>
+    <iframe title={'Leitor digital — '+item.title} src={stream} referrerPolicy="no-referrer" className="h-[74vh] min-h-[380px] w-full rounded-xl border border-white/10 bg-white"/>
     <p className="mt-3 text-xs text-gray-400">Leitura no navegador. Se o PDF não carregar, atualize a página para renovar o acesso temporário.</p>
    </div>}
   </section>}
