@@ -32,7 +32,7 @@ test('Caption UI follows the native audio clock and allows click-to-seek', () =>
  assert.match(component, /activeCaptionIndex\(cues, time\)/)
  assert.match(component, /audio\.currentTime = Math\.min\(seconds/)
  assert.match(component, /aria-current=/)
- assert.match(component, /Ver transcrição sincronizada/)
+ assert.match(component, /Mostrar transcrição/)
  assert.match(component, /overflow-y-auto/)
  assert.match(component, /void loadFile\(event\.target\.files\?\.\[0\]\)/)
 })
