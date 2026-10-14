@@ -38,10 +38,11 @@ function chunk(type, data) {
   crc.writeUInt32BE(crc32(Buffer.concat([tag, data])))
   return Buffer.concat([length, tag, data, crc])
 }
-function createIcon(size, maskable = false) {
+function createIcon(size, maskable = false, academy = false) {
   const rowSize = 1 + Math.ceil(size / 4)
   const raw = Buffer.alloc(size * rowSize)
   // Android applies the launcher mask; avoid an extra reduction of the artwork.
+  const colors = academy ? ['#F5E7D8', '#1D1D20', '#B24B18'] : palette
   const scale = size * (maskable ? 0.66 : 0.76) / 124
   const left = (size - 100 * scale) / 2
   const top = (size - 124 * scale) / 2
@@ -52,7 +53,7 @@ function createIcon(size, maskable = false) {
       const py = (y + 0.5 - top) / scale
       let color = 0
       for (const shape of shapes) {
-        if (contains(px, py, shape.points)) color = palette.indexOf(shape.color)
+        if (contains(px, py, shape.points)) color = academy ? (shape.color === '#FFFFFF' ? 2 : 1) : palette.indexOf(shape.color)
       }
       raw[row + 1 + (x >>> 2)] |= color << (6 - ((x & 3) * 2))
     }
@@ -62,12 +63,15 @@ function createIcon(size, maskable = false) {
   header.writeUInt32BE(size, 4)
   header[8] = 2
   header[9] = 3
-  const colors = Buffer.from(palette.flatMap((hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))))
+  const paletteBytes = Buffer.from(colors.flatMap((hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))))
   return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]), chunk('IHDR', header),
-    chunk('PLTE', colors), chunk('IDAT', deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0))])
+    chunk('PLTE', paletteBytes), chunk('IDAT', deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0))])
 }
 mkdirSync(new URL('../public/pwa/', import.meta.url), { recursive: true })
 for (const size of [180, 192, 512]) {
   writeFileSync(new URL('../public/pwa/icon-' + size + '.png', import.meta.url), createIcon(size))
+  // Academy uses the identical symbol with a distinct reversed colour layout.
+  writeFileSync(new URL('../public/pwa/academy-icon-' + size + '.png', import.meta.url), createIcon(size, false, true))
 }
 writeFileSync(new URL('../public/pwa/maskable-512.png', import.meta.url), createIcon(512, true))
+writeFileSync(new URL('../public/pwa/academy-maskable-512.png', import.meta.url), createIcon(512, true, true))

@@ -3,6 +3,7 @@ import { Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 
 import { useAuth } from '../contexts/AuthContext'
 import { academyLibraryApi, type LibraryItem } from '../api/academyLibrary'
 import { academyApi } from '../api/academy'
+import { readAcademyAppSettings, DEFAULT_ACADEMY_APP_SETTINGS, type AcademyAppSettings } from '../api/academyAppSettings'
 
 const LibraryReader = lazy(() => import('../pages/customer/AcademyLibraryItemPage').then(m => ({ default: m.AcademyLibraryItemPage })))
 const CourseReader = lazy(() => import('../pages/customer/AcademyCoursePage').then(m => ({ default: m.AcademyCoursePage })))
@@ -38,7 +39,7 @@ function Icon({name,size=20,className=''}:{name:IconName;size?:number;className?
 }
 function Mark({compact=false}:{compact?:boolean}) {
  return <Link to="/app/academia" aria-label="Academia Sagamente — início" className="academy-brand">
-  <img src="/pwa/icon-192.png" alt="" width="40" height="40" className="academy-brand-icon"/>
+  <img src="/pwa/academy-icon-192.png" alt="" width="40" height="40" className="academy-brand-icon"/>
   <span className="academy-brand-label"><strong>SAGAMENTE</strong><span>ACADEMIA</span></span>
   {!compact&&<span className="sr-only">Voltar ao início</span>}
  </Link>
@@ -229,8 +230,14 @@ function AcademyShelf({condensed=false}:{condensed?:boolean}){
 
 function AcademyHome(){
  const {user}=useAuth()
+ const [appSettings,setAppSettings]=useState<AcademyAppSettings>(DEFAULT_ACADEMY_APP_SETTINGS)
  const [courses,setCourses]=useState<AcademyCourse[]>([])
  const [loadingCourses,setLoadingCourses]=useState(true)
+ useEffect(()=>{
+  let alive=true
+  void readAcademyAppSettings().then(settings=>{if(alive)setAppSettings(settings)}).catch(()=>undefined)
+  return()=>{alive=false}
+ },[])
  useEffect(()=>{
   let alive=true
   void academyApi.myCourses().then(rows=>{
@@ -242,17 +249,17 @@ function AcademyHome(){
   <div className="academy-welcome"><p className="academy-eyebrow">SEU ESPAÇO DE CONHECIMENTO</p><h1>Olá, {user?.name||'estudante'}<span className="academy-welcome-dot">.</span></h1><p>O que você quer explorar hoje?</p></div>
   <section className="academy-featured">
    <div className="academy-featured-art" aria-hidden="true"><span className="academy-featured-orbit"/><span>ACERVO<br/>DIGITAL</span></div>
-   <div className="academy-featured-content"><p className="academy-eyebrow">ACADEMIA SAGAMENTE</p><h2>Histórias para ouvir.<br/>Ideias para transformar.</h2><p>Seus conteúdos favoritos, no seu ritmo.</p>
+   <div className="academy-featured-content"><p className="academy-eyebrow">{appSettings.hero_eyebrow}</p><h2>{appSettings.hero_title}</h2><p>{appSettings.hero_subtitle}</p>
     <Link className="academy-featured-button" to="/app/academia/biblioteca">Explorar biblioteca <Icon name="arrow" size={17}/></Link>
    </div>
   </section>
-  <div className="academy-quick-grid">
+  {appSettings.show_quick_links&&<div className="academy-quick-grid">
    <Link to="/app/academia/biblioteca" className="academy-quick-card"><Icon name="headphones" size={25}/><strong>Audiobooks</strong><span>Ouvir</span></Link>
    <Link to="/app/academia/biblioteca" className="academy-quick-card"><Icon name="book" size={25}/><strong>E-books</strong><span>Ler</span></Link>
    <Link to="/app/academia/catalogo" className="academy-quick-card"><Icon name="courses" size={25}/><strong>Cursos</strong><span>Aprender</span></Link>
-  </div>
+  </div>}
   <AcademyShelf condensed/>
-  <section className="academy-courses-home">
+  {appSettings.show_courses&&<section className="academy-courses-home">
    <SectionTitle eyebrow="Seu aprendizado" title="Meus cursos" href="/app/academia/catalogo" action="Explorar"/>
    {loadingCourses?<p className="academy-muted">Carregando cursos…</p>:courses.length===0?
     <Link to="/app/academia/catalogo" className="academy-course-empty"><Icon name="courses" size={26}/><span><strong>Descubra algo novo</strong><small>Explore cursos e aulas gratuitas.</small></span><Icon name="chevron" size={20}/></Link>:
@@ -260,7 +267,7 @@ function AcademyHome(){
      <div className="academy-course-art">{c.cover_url?<img src={c.cover_url} loading="lazy" alt=""/>:<Icon name="courses" size={30}/>}</div>
      <div><span className="academy-eyebrow">CURSO</span><h3>{c.title}</h3><span className="academy-text-link">Continuar <Icon name="arrow" size={14}/></span></div>
     </Link>)}</div>}
-  </section>
+  </section>}
  </div>
 }
 
