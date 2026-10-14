@@ -64,25 +64,18 @@ export function AdminProjects(){
     if(!user||!form.title.trim())return
     try{
       const selectedTemplate=form.project_type==='internal'?templates.find(t=>t.id===form.template_id):null
-      const created=await portalApi.saveProject({
-        title:form.title.trim(),
-        description:form.description.trim()||null,
-        project_type:form.project_type,
-        customer_id:form.customer_id||null,
-        status:form.status,
-        priority:form.priority,
-        start_date:form.start_date||null,
-        due_date:form.due_date||null,
-        drive_folder_url:form.drive_folder_url.trim()||null,
-        created_by:user.id,
-      },undefined,{deferDrive:!!selectedTemplate})
-      if(selectedTemplate){
-        await portalApi.attachProjectFormTemplate(created.id,selectedTemplate)
-        for(const [position,name] of ((selectedTemplate.configuration?.defaultStages||[]) as string[]).entries()){
-          await portalApi.saveStage({project_id:created.id,name,description:null,position,status:'pending',client_visible:false})
-        }
-        await portalApi.ensureProjectDriveFolder(created.id).catch(()=>undefined)
-      }
+      const created=selectedTemplate
+        ?await portalApi.createInternalProjectFromTemplate(selectedTemplate.id,{
+          title:form.title.trim(),description:form.description.trim()||null,
+          priority:form.priority,status:form.status,start_date:form.start_date||null,due_date:form.due_date||null,
+        })
+        :await portalApi.saveProject({
+          title:form.title.trim(),description:form.description.trim()||null,
+          project_type:form.project_type,customer_id:form.customer_id||null,status:form.status,
+          priority:form.priority,start_date:form.start_date||null,due_date:form.due_date||null,
+          drive_folder_url:form.drive_folder_url.trim()||null,created_by:user.id,
+        })
+      if(selectedTemplate)void portalApi.ensureProjectDriveFolder(created.id).catch(()=>undefined)
       toast('Projeto criado com sucesso.','success')
       setShowForm(false)
       setForm({title:'',description:'',template_id:'',project_type:'other',customer_id:'',status:'planning',priority:'medium',start_date:'',due_date:'',drive_folder_url:''})
