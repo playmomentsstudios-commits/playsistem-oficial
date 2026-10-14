@@ -19,6 +19,7 @@ export function AcademyAppInstallCard({ admin = false }: { admin?: boolean }) {
     Abrir aplicativo para instalar ↗
    </a>
   </div>
+  {admin&&<a href="/admin/configuracoes#academia-app" className="mb-2 inline-flex min-h-10 items-center text-xs font-semibold text-[#E8AF7B] hover:underline">Configurar aplicativo na administração →</a>}
   <details className="mt-3 border-t border-white/10 pt-3">
    <summary className="cursor-pointer text-xs font-semibold text-[#E8AF7B]">Como instalar no celular</summary>
    <div className="mt-3 grid gap-2 text-xs leading-relaxed text-gray-300 sm:grid-cols-2">
