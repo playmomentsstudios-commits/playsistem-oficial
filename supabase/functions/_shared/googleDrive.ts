@@ -389,6 +389,23 @@ export async function ensureProjectFolder(
       if (updateError) throw updateError;
     }
     projectParentId = internalRootId;
+    // Modelos são configurações; apenas projetos internos de Editais
+    // recebem agrupamento físico, sem mover pastas já existentes.
+    const { data: formInstance, error: formError } = await db
+      .from("project_form_instances")
+      .select("template_slug")
+      .eq("project_id", projectId)
+      .maybeSingle();
+    if (formError) throw formError;
+    if (formInstance?.template_slug === "editais") {
+      const editalRoot = await findDriveFolder(internalRootId, "internal-template-category", "editais");
+      const category = editalRoot || await createDriveFolder(
+        "Editais",
+        internalRootId,
+        { playMomentsKind: "internal-template-category", playMomentsEntityId: "editais" },
+      );
+      projectParentId = category.id;
+    }
   } else {
     if (!project.customer_id) {
       // Institutional customers are managed without an auth profile.
