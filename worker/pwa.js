@@ -80,10 +80,74 @@ async function serveIcon(request, env, settings, column) {
   } catch { return env.ASSETS.fetch(request) }
 }
 
+// A same-origin bridge keeps the browser's audio/PDF loads under the same CSP
+// as the Sagamente app. All entitlement and expiry checks remain on Supabase.
+const academyMediaPath = '/app/academia/midia'
+const isTicket = (value) => /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(value || '')
+
+async function serveAcademyMedia(request) {
+  const url = new URL(request.url)
+  const ticket = url.searchParams.get('ticket') || ''
+  const noCache = {
+    'Cache-Control': 'private, no-store, max-age=0',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'no-referrer',
+    'Cross-Origin-Resource-Policy': 'same-origin'
+  }
+  if (!isTicket(ticket)) {
+    return new Response('Link de mídia inválido.', { status: 403, headers: noCache })
+  }
+  const upstreamUrl = supabaseBase + '/functions/v1/academy-library-media?ticket=' + encodeURIComponent(ticket)
+  const upstreamHeaders = new Headers({
+    apikey: publicAnonKey,
+    Authorization: 'Bearer ' + publicAnonKey
+  })
+  const range = request.headers.get('Range')
+  if (range) upstreamHeaders.set('Range', range)
+  try {
+    const upstream = await fetch(upstreamUrl, {
+      method: request.method,
+      headers: upstreamHeaders,
+      redirect: 'error',
+      cache: 'no-store',
+      signal: AbortSignal.timeout(30000)
+    })
+    if (!upstream.ok) {
+      const status = upstream.status === 401 || upstream.status === 403 ? 403 : upstream.status === 416 ? 416 : 502
+      return new Response(
+        status === 403 ? 'Acesso expirado. Atualize a página.' : 'Não foi possível carregar este arquivo.',
+        { status, headers: noCache }
+      )
+    }
+    const mimeType = String(upstream.headers.get('Content-Type') || '').split(';')[0].toLowerCase()
+    if (!['audio/mpeg', 'application/pdf'].includes(mimeType)) {
+      return new Response('O arquivo possui um formato inesperado.', { status: 502, headers: noCache })
+    }
+    const headers = new Headers(noCache)
+    headers.set('Content-Type', mimeType)
+    headers.set('Content-Disposition', 'inline')
+    headers.set('Accept-Ranges', 'bytes')
+    for (const key of ['Content-Length', 'Content-Range', 'ETag', 'Last-Modified']) {
+      const value = upstream.headers.get(key)
+      if (value) headers.set(key, value)
+    }
+    return new Response(request.method === 'HEAD' ? null : upstream.body, {
+      status: upstream.status,
+      headers
+    })
+  } catch (error) {
+    console.error('Academy media bridge unavailable', error instanceof Error ? error.name : 'unknown')
+    return new Response('Serviço de mídia temporariamente indisponível.', {
+      status: 503, headers: noCache
+    })
+  }
+}
+
 export default {
   async fetch(request, env) {
     if (request.method !== 'GET' && request.method !== 'HEAD') return env.ASSETS.fetch(request)
     const path = new URL(request.url).pathname
+    if (path === academyMediaPath) return serveAcademyMedia(request)
     if (path === '/sitemap.xml') return serveSeoSitemap(request)
     if (path === '/robots.txt') return serveSeoRobots(request)
 
