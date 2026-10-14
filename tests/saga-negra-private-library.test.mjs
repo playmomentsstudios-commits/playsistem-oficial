@@ -83,3 +83,15 @@ test('Drive private media failures are diagnosable without exposing IDs or token
  assert.match(fn,/X-Academy-Media-Stage/)
  assert.match(worker,/errorHeaders\.set\('X-Academy-Media-Stage'/)
 })
+
+test('SAGA NEGRA can proxy pre-shared source files only after entitlement checks',()=>{
+ const fn=source('supabase/functions/academy-library-media/index.ts')
+ assert.match(fn,/const item=await authorizedItem\(db,ticket\.user_id,ticket\.item_id\)/)
+ assert.match(fn,/metadata\.status===404/)
+ assert.match(fn,/return await serveAlreadySharedDrive\(request,item\.drive_file_id,item\.mime_type\)/)
+ assert.match(fn,/drive\.usercontent\.google\.com\/download/)
+ assert.match(fn,/signature\.length!==32/)
+ assert.match(fn,/upstream\.status!==206/)
+ assert.match(fn,/Content-Range/)
+ assert.doesNotMatch(source('src/api/academyLibrary.ts'),/drive\.usercontent\.google\.com/)
+})
