@@ -72,3 +72,21 @@ test('Transcript is displayed by default, optional to hide, and errors are visib
  assert.match(component, /Mostrar transcrição/)
  assert.match(component, /\{loadError && <div role="alert"/)
 })
+
+test('Current spoken phrase adapts to narrow screens without fixed aspect ratio or clipping', () => {
+ const component=source('src/components/academy/AcademyAudiobookCaptions.tsx')
+ assert.doesNotMatch(component, /aspect-\[3\/1\]|max-h-52|text-balance/)
+ assert.match(component, /min-h-36 w-full min-w-0 flex-col/)
+ assert.match(component, /max-w-none break-words text-left/)
+ assert.match(component, /Acompanhe a narração/)
+})
+
+test('Transcript entries keep the time above text on mobile and alongside it on wider screens', () => {
+ const component=source('src/components/academy/AcademyAudiobookCaptions.tsx')
+ assert.match(component, /grid-cols-1 gap-1/)
+ assert.match(component, /sm:grid-cols-\[3\.5rem_minmax\(0,1fr\)\]/)
+ assert.match(component, /max-h-80 min-w-0/)
+ assert.match(component, /block w-full min-w-0 break-words text-left text-sm/)
+ assert.match(component, /data-active-caption=/)
+ assert.match(component, /onClick=\{\(\) => seekTo\(cue\.start\)\}/)
+})
