@@ -1,5 +1,5 @@
 import { useEffect,useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link,useLocation } from 'react-router-dom'
 import { settingsApi,type AppSettings } from '../../api/settings'
 import { AcademyAppSettingsPanel } from '../../components/admin/AcademyAppSettingsPanel'
 import { useToast } from '../../contexts/ToastContext'
@@ -51,6 +51,7 @@ const DEFAULTS:AppSettings={
 
 export function AdminSettings(){
   const toast=useToast()
+  const location=useLocation()
   const [settings,setSettings]=useState<AppSettings>(DEFAULTS)
   const [loading,setLoading]=useState(true)
   const [saving,setSaving]=useState(false)
@@ -63,6 +64,14 @@ export function AdminSettings(){
       .finally(()=>{if(active)setLoading(false)})
     return()=>{active=false}
   },[])
+
+  useEffect(()=>{
+    if(loading||location.hash!=='#academia-app')return
+    const frame=window.requestAnimationFrame(()=>{
+      document.getElementById('academia-app')?.scrollIntoView({behavior:'smooth',block:'start'})
+    })
+    return()=>window.cancelAnimationFrame(frame)
+  },[loading,location.hash])
 
   async function save(){
     try{
@@ -101,7 +110,7 @@ export function AdminSettings(){
     </div>
 
     <div className="grid lg:grid-cols-2 gap-5">
-      <AcademyAppSettingsPanel/>
+      <div className="scroll-mt-24 lg:col-span-2"><AcademyAppSettingsPanel/></div>
       <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
         <h2 className="font-semibold">Negócio</h2>
         <p className="text-xs text-gray-500 mt-1">Informações-base usadas nos módulos internos.</p>
