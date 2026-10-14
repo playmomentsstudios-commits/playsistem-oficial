@@ -45,7 +45,9 @@ export const academyDigitalApi={
   errorOrThrow(error)
  },
  async grantManual(publicationId:string,userId:string){
-  const {error}=await supabase.from('academy_publication_entitlements').upsert({publication_id:publicationId,user_id:userId,source:'manual',order_id:null,revoked_at:null},{onConflict:'user_id,publication_id',ignoreDuplicates:false})
-  errorOrThrow(error)
+  const {data:existing,error:lookupError}=await supabase.from('academy_publication_entitlements').select('id').eq('publication_id',publicationId).eq('user_id',userId).eq('source','manual').maybeSingle()
+  errorOrThrow(lookupError)
+  if(existing){const {error}=await supabase.from('academy_publication_entitlements').update({revoked_at:null}).eq('id',existing.id);errorOrThrow(error)}
+  else{const {error}=await supabase.from('academy_publication_entitlements').insert({publication_id:publicationId,user_id:userId,source:'manual',order_id:null});errorOrThrow(error)}
  },
 }
