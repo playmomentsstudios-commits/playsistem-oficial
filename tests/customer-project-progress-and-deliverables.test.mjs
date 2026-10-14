@@ -9,7 +9,7 @@ const portal=read('src/api/portal.ts')
 test('client projects show actual completed work and tasks without fabricated zero progress',()=>{
   assert.match(page,/projectProgress\(\{tasks\}\)/)
   assert.match(page,/Entregas concluídas/)
-  assert.match(page,/remaining\.length/)
+  assert.match(page,/projectTab==='execucao'/)
   assert.match(page,/Checklist de execução/)
   assert.match(page,/Links de visualização/)
   assert.match(page,/task\.client_visible/)
