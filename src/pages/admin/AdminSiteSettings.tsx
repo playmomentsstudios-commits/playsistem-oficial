@@ -123,7 +123,7 @@ export function AdminSiteSettings() {
 
       <div className={tab==='Home'||tab==='Identidade da Marca'||tab==='Aplicativo (PWA)'?'max-w-5xl':'max-w-2xl'}>
         {tab === 'Identidade da Marca' && <BrandIdentitySettings/>}
-        {tab === 'Aplicativo (PWA)' && <PwaSettings/>}
+        {tab === 'Aplicativo (PWA)' && <><PwaSettings/><div className="mt-5 rounded-2xl border border-[#DFA269]/20 bg-[#191716] p-4"><p className="text-sm font-semibold">Academia Sagamente</p><p className="mt-1 text-xs text-gray-400">O aplicativo da Academia tem ícone e configurações independentes.</p><Link className="mt-3 inline-flex min-h-10 items-center text-xs font-semibold text-[#DFA269]" to="/admin/configuracoes#academia-app">Configurar Academia →</Link></div></>}
 
         {tab === 'Geral' && (
           <div className="flex flex-col gap-4">
