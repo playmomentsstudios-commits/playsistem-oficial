@@ -88,7 +88,7 @@ async function serveAlreadySharedDrive(request:Request,driveFileId:string,mimeTy
   const mp3=(signature[0]===73&&signature[1]===68&&signature[2]===51)
     ||(signature[0]===255&&(signature[1]&224)===224)
   if(mimeType==='application/pdf'&&!pdf)return fail('drive_shared_mime')
-  if(mimeType==='audio/mpeg'&&!mp3)return fail('drive_shared_mime')
+  if(mimeType==='audio/mpeg'&&!mp3&&ct!=='audio/mpeg')return fail('drive_shared_mime')
   const out=headers()
   out.set('Content-Type',mimeType)
   out.set('Content-Disposition','inline')
