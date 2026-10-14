@@ -23,7 +23,9 @@ const releases:Record<string,ReleaseConfig>={
   sample:[
    'Descansar não é abandonar responsabilidades. É reconhecer que o corpo humano tem limites, que a vida não se resume ao emprego e que a dignidade também depende do tempo disponível para dormir, conviver, aprender, cuidar de si e participar da sociedade.',
    'Quando uma pessoa precisa escolher continuamente entre descansar e garantir a renda do mês, essa escolha não é inteiramente livre. Ela acontece dentro de condições materiais que precisam ser examinadas.',
-   'Na experiência histórica da população negra no Brasil, o direito ao descanso não pode ser separado das relações de trabalho, da distribuição da riqueza, do acesso à moradia, do deslocamento urbano e da divisão do cuidado doméstico.'
+   'Na experiência histórica da população negra no Brasil, o direito ao descanso não pode ser separado das relações de trabalho, da distribuição da riqueza, do acesso à moradia, do deslocamento urbano e da divisão do cuidado doméstico.',
+   'Mas também não pode ser reduzido a uma história única de sofrimento. Há trajetórias negras de autonomia, produção intelectual, organização comunitária, arte, empreendedorismo e reivindicação de direitos. Falar de descanso é perguntar quais condições tornam essas possibilidades sustentáveis.',
+   'Esta reflexão percorre dimensões históricas e contemporâneas. Não pretende afirmar que todas as pessoas negras vivem a mesma rotina, nem que o cansaço tenha uma única causa. A proposta é compreender por que o tempo é distribuído de maneira desigual e o que pode ser feito para ampliar a liberdade real de viver.'
   ],
   closing:'Viver não é apenas produzir. O tempo também faz parte da dignidade.',theme:'Tempo · Trabalho · Dignidade'
  },
@@ -36,7 +38,9 @@ const releases:Record<string,ReleaseConfig>={
   sample:[
    'Falar da história negra é falar de liberdade, trabalho, cultura e resistência. Mas também é falar da vida que acontece quando a porta de casa se fecha: das pessoas que se procuram, das amizades que sustentam dias difíceis, dos vínculos familiares que atravessam distâncias e das formas de carinho que nem sempre recebem atenção nos livros.',
    'O amor não é uma recompensa concedida depois que todos os problemas sociais são resolvidos. É uma dimensão da existência, vivida no presente, com suas alegrias, contradições e escolhas.',
-   'Existe um risco quando a narrativa sobre pessoas negras se limita à dor. A violência histórica é real e deve ser estudada com seriedade. Porém, ninguém pode ser reduzido àquilo que sofreu.'
+   'Existe um risco quando a narrativa sobre pessoas negras se limita à dor. A violência histórica é real e deve ser estudada com seriedade. Porém, ninguém pode ser reduzido àquilo que sofreu.',
+   'Gerações negras celebraram uniões, criaram filhos, cuidaram de idosos, formaram amizades, viveram paixões e construíram comunidades. Essas experiências não anulam a desigualdade; demonstram que a vida sempre foi maior do que ela.',
+   'Este percurso começa com uma pergunta: quais condições tornam possível amar e ser amado com liberdade? Não existe uma resposta única. As relações mudam conforme idade, gênero, território, religião, condições materiais e trajetórias pessoais. Reconhecer diferenças é parte do respeito.'
   ],
   closing:'O direito de amar é também o direito de ser visto por inteiro.',theme:'Afeto · Relações · Pertencimento'
  },
@@ -49,7 +53,9 @@ const releases:Record<string,ReleaseConfig>={
   sample:[
    'O que faz de alguém um pai? A biologia pode indicar uma origem. Um registro pode estabelecer uma responsabilidade legal. Mas a experiência cotidiana de uma criança é construída também por gestos repetidos: uma conversa, uma refeição, uma pergunta feita com atenção, a disposição de acompanhar um medo, a presença nos dias difíceis.',
    'Ser pai não é somente sustentar financeiramente uma casa. É reconhecer outra pessoa como sujeito de direitos, de sentimentos e de futuro.',
-   'Quando discutimos a paternidade negra no Brasil, essa afirmação aparentemente simples encontra uma história complexa. Não se trata de afirmar que homens negros sejam naturalmente mais ausentes, mais presentes ou mais capazes de cuidar.'
+   'Quando discutimos a paternidade negra no Brasil, essa afirmação aparentemente simples encontra uma história complexa. Não se trata de afirmar que homens negros sejam naturalmente mais ausentes, mais presentes ou mais capazes de cuidar.',
+   'Não existe destino afetivo inscrito na cor da pele. Trata-se de perguntar como uma sociedade marcada pela escravização, pela desigualdade racial e por modelos rígidos de masculinidade organizou as oportunidades de homens negros exercerem a paternidade — e como esses homens e suas famílias responderam, com experiências muito diferentes, a essas condições.',
+   'O centro desta reflexão é uma criança que precisa ser cuidada, mas também um adulto que precisa aprender a cuidar. O vínculo não nasce pronto. Ele se desenvolve quando o afeto encontra tempo, responsabilidade, segurança e disposição para mudar.'
   ],
   closing:'Presença que protege sem dominar. Cuidado que se confirma na rotina.',theme:'Paternidade · Cuidado · Reconstrução'
  },
@@ -62,7 +68,9 @@ const releases:Record<string,ReleaseConfig>={
   sample:[
    'A educação começa antes da escola. Ela nasce nas palavras que uma criança escuta, nas perguntas que aprende a fazer, nos saberes de quem a cria e nas histórias que encontra pelo caminho.',
    'Para a população negra brasileira, estudar sempre esteve ligado a uma questão maior: quem tem o direito de produzir conhecimento, ser reconhecido por ele e participar das decisões sobre o futuro?',
-   'A resposta não pode depender apenas da força de vontade de cada pessoa. O esforço individual importa, mas não substitui bibliotecas, professores valorizados, alimentação adequada, transporte, segurança e tempo para aprender.'
+   'A resposta não pode depender apenas da força de vontade de cada pessoa. O esforço individual importa, mas não substitui bibliotecas, professores valorizados, alimentação adequada, transporte, segurança e tempo para aprender.',
+   'Quando a sociedade celebra uma trajetória de superação, costuma enxergar o diploma e esquecer os obstáculos que precisaram ser vencidos. É justo admirar a conquista. É insuficiente transformar a exceção em regra.',
+   'A educação de qualidade não pode ser prêmio para quem resiste a todas as dificuldades; deve ser direito assegurado a quem nasce em qualquer território.'
   ],
   closing:'O conhecimento só abre portas de verdade quando o acesso também é um direito.',theme:'Educação · Conhecimento · Oportunidades'
  },
@@ -75,7 +83,9 @@ const releases:Record<string,ReleaseConfig>={
   sample:[
    'O que significa viver em liberdade quando a própria ideia de segurança é distribuída de maneira desigual? A pergunta não se limita aos tribunais. Ela atravessa a rua, a escola, a família, o trabalho, a maneira como uma pessoa é observada em uma loja e a confiança que sente ao procurar uma instituição pública.',
    'Uma sociedade justa precisa proteger quem sofre violência, investigar os fatos com seriedade e garantir que ninguém seja tratado como culpado antes da prova.',
-   'No Brasil, a discussão sobre justiça e população negra exige cuidado com duas simplificações. A primeira é imaginar que a história das pessoas negras se resume ao sofrimento. A segunda é supor que o fim jurídico da escravidão eliminou os efeitos sociais de séculos de exclusão.'
+   'No Brasil, a discussão sobre justiça e população negra exige cuidado com duas simplificações. A primeira é imaginar que a história das pessoas negras se resume ao sofrimento. A segunda é supor que o fim jurídico da escravidão eliminou os efeitos sociais de séculos de exclusão.',
+   'Entre essas duas ideias há vidas concretas: famílias que trabalham, estudam, organizam associações, disputam direitos e enfrentam obstáculos diferentes conforme o território e as oportunidades disponíveis.',
+   'Justiça não é sinônimo de impunidade, assim como rigor não é sinônimo de arbitrariedade. A proteção das vítimas e o respeito aos direitos de pessoas investigadas ou condenadas fazem parte da mesma obrigação pública: limitar a violência e impedir que o poder se transforme em abuso.'
   ],
   closing:'Segurança e direitos precisam caminhar juntos.',theme:'Justiça · Direitos · Liberdade'
  }
@@ -89,7 +99,7 @@ export function SagaNegraSeriesLanding({page,preview=false}:{page:SiteLandingPag
  if(!info)return null
  const advantages=part(page,'benefits'),topics=part(page,'content'),offers=part(page,'proof'),faq=part(page,'faq')
  const cover=page.hero_image_url||'/images/saga-negra-release'+info.release+'-cover.svg'
- const audio='/audio/saga-negra-release'+info.release+'-amostra.mp3'
+ const audio='/audio/saga-negra-release'+info.release+'-amostra.mp3?v=90s-20261014'
  const cta=safeHref(page.cta_href)
  return <main id="topo" className="min-h-screen overflow-hidden bg-[#0b0d10] text-[#f7efe4] selection:bg-[#B66D46] selection:text-white">
   {preview&&<div className="sticky top-0 z-50 border-b border-amber-500/30 bg-[#604122] px-4 py-2 text-center text-xs font-bold text-amber-100">PRÉVIA DO ADMINISTRADOR · Rascunho não publicado. <a className="underline" href="/admin/landings">Voltar às landings</a></div>}
@@ -143,7 +153,7 @@ export function SagaNegraSeriesLanding({page,preview=false}:{page:SiteLandingPag
      <p className="mt-auto pt-7 text-[11px] text-[#938980]">Trecho literal do PDF fornecido pelo autor. Obra integral disponível apenas após o lançamento.</p>
     </article>
     <article className="flex flex-col rounded-2xl border border-[#c79168]/20 bg-[#17191c] p-5 sm:p-7">
-     <div className="flex items-center justify-between gap-3"><span className="rounded-full border border-[#d29266]/30 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#e7b388]">Amostra para ouvir</span><span className="text-xs text-[#aaa098]">≈ 44 segundos</span></div>
+     <div className="flex items-center justify-between gap-3"><span className="rounded-full border border-[#d29266]/30 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#e7b388]">Amostra para ouvir</span><span className="text-xs text-[#aaa098]">≈ 1min30s</span></div>
      <h3 className="mt-5 font-serif text-2xl font-semibold text-[#f6e7d2]">A narração original</h3>
      <p className="mt-3 text-sm leading-7 text-[#bdb0a5]">Escute um trecho da obra. O player contém apenas a demonstração e não oferece acesso ao MP3 original do Drive.</p>
      <div className="my-8 rounded-xl border border-white/[.08] bg-[#0d0f12] p-4"><div className="mb-3 flex items-center gap-3 text-sm text-[#ead5c3]"><span aria-hidden="true" className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#ab6b40]/20 text-lg text-[#e3a877]">♫</span> Release {info.release} · Trecho do audiobook</div>
