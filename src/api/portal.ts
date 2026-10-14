@@ -241,6 +241,16 @@ export const portalApi = {
     const { error }=await supabase.rpc('admin_set_member_role',{p_user_id:userId,p_role:role})
     if(error) throw error
   },
+  createInternalProjectFromTemplate: async (templateId:string,form:{
+    title:string;description?:string|null;priority:string;status:string;start_date?:string|null;due_date?:string|null
+  }) => {
+    const {data,error}=await supabase.rpc('create_internal_project_from_template',{
+      p_template_id:templateId,p_title:form.title,p_description:form.description||null,
+      p_priority:form.priority,p_status:form.status,p_start_date:form.start_date||null,p_due_date:form.due_date||null,
+    })
+    if(error)throw error
+    return {id:data as string}
+  },
   projectFormTemplates: async () => {
     const {data,error}=await supabase.from('project_form_templates').select('*').eq('active',true).order('name')
     if(error)throw error
