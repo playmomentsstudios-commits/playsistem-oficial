@@ -21,6 +21,7 @@ test('Streaming requires auth to issue a media ticket and checks grants after is
  assert.match(fn,/\.eq\('active',true\)/)
  assert.match(fn,/Content-Range/)
  assert.match(fn,/status:206/)
+ assert.match(fn,/ticket:ticket\.token/)
 })
 
 test('Only owned e-books/audiobooks are shown in Minha Academia; existing courses remain',()=>{
@@ -48,7 +49,9 @@ test('Library media uses same-origin Worker bridge, preserving range and MIME',(
  assert.match(worker,/\['audio\/mpeg', 'application\/pdf'\]/)
  assert.match(worker,/Cache-Control': 'private, no-store/)
  assert.match(api,/return \{url:'\/app\/academia\/midia\?ticket='/)
- assert.match(api,/upstream\.origin!==origin\.origin/)
+ assert.match(api,/typeof data\.ticket==='string'/)
+ assert.doesNotMatch(api,/new URL\(data\.url\)/)
+ assert.doesNotMatch(api,/upstream\.origin!==origin\.origin/)
  assert.match(page,/fetch\(media\.url,\{method:'HEAD',cache:'no-store'\}\)/)
  assert.match(page,/receivedType!==owned\.mime_type/)
 })
