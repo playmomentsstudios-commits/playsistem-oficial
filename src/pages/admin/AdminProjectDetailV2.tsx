@@ -1148,7 +1148,7 @@ export function AdminProjectDetailV2(){
               </label>
               {stage?.client_visible&&task.client_visible&&<Link
                 to={'/admin/projetos/'+id+'/etapas/'+stage.id+'/tarefas/'+task.id}
-                title="Visualizar a prévia da tarefa para o cliente"
+                title="Prévia da tarefa para o cliente"
                 aria-label={'Visualizar prévia da tarefa '+task.title+' para o cliente'}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/15 text-[#DFA269] hover:border-[#A65A2A]/50 hover:bg-white/[.05] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#DFA269]"
               >
