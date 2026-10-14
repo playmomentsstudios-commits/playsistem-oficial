@@ -1,4 +1,5 @@
 import { BrandImage } from '../../components/BrandImage'
+import { SagaNegraBookLanding } from './SagaNegraBookLanding'
 import { useEffect,useState } from 'react'
 import { Link,useParams } from 'react-router-dom'
 import { siteContentApi,type SiteLandingPage,type LandingSection } from '../../services/siteContent'
@@ -11,12 +12,13 @@ function Section({section,ctaHref,ctaLabel}:{section:LandingSection;ctaHref:stri
  return <section className="px-5 py-12 sm:py-16 border-t border-white/[.05]"><div className="max-w-5xl mx-auto">{section.title&&<h2 className="text-2xl sm:text-3xl font-bold text-center">{section.title}</h2>}{section.text&&<p className="text-gray-400 leading-7 mt-3 max-w-3xl mx-auto text-center">{section.text}</p>}{section.items&&<div className={(isFaq?'max-w-3xl mx-auto ':'grid sm:grid-cols-2 '+(isProof?'lg:grid-cols-3 ':'lg:grid-cols-3 '))+'gap-4 mt-7'}>{section.items.map((item,i)=>isFaq?<details key={i} className="group rounded-2xl bg-[#141416] border border-white/10 p-5 mb-3"><summary className="font-semibold cursor-pointer list-none flex justify-between gap-3">{item.title}<span className="text-[#A65A2A] group-open:rotate-45 transition-transform">＋</span></summary>{item.description&&<p className="text-sm text-gray-400 leading-6 mt-3">{item.description}</p>}</details>:<div key={i} className={'p-5 rounded-2xl border '+(isProof?'bg-[#A65A2A]/[.045] border-[#A65A2A]/15':'bg-[#141416] border-white/10')}><div className={isProof?'text-[#A65A2A] text-lg':'text-[#A65A2A] text-sm'}>{isProof?'★':'✓'}</div><h3 className="font-semibold mt-2">{item.title}</h3>{item.description&&<p className="text-sm text-gray-400 leading-6 mt-2">{item.description}</p>}</div>)}</div>}</div></section>
 }
 
-export function LandingPage(){
+export function LandingPage({preview=false}:{preview?:boolean}){
  const {slug=''}=useParams(),[page,setPage]=useState<SiteLandingPage|null>(null),[loading,setLoading]=useState(true)
- useEffect(()=>{let active=true;siteContentApi.landingPage(slug).then(p=>{if(active)setPage(p)}).catch(()=>setPage(null)).finally(()=>setLoading(false));return()=>{active=false}},[slug])
- useSeo({title:page?.seo_title||page?.title||'Campanha',description:page?.seo_description||page?.subheadline||'Conheça esta solução da Sagamente.',image:page?.hero_image_url,canonicalPath:'/l/'+slug,canonicalUrl:page?.canonical_url,noindex:Boolean(page?.noindex)||(!loading&&!page)})
+ useEffect(()=>{let active=true;setLoading(true);siteContentApi.landingPage(slug,preview).then(p=>{if(active)setPage(p)}).catch(()=>{if(active)setPage(null)}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[slug,preview])
+ useSeo({title:page?.seo_title||page?.title||'Campanha',description:page?.seo_description||page?.subheadline||'Conheça esta solução da Sagamente.',image:page?.hero_image_url,canonicalPath:'/l/'+slug,canonicalUrl:page?.canonical_url,noindex:preview||Boolean(page?.noindex)||(!loading&&!page)})
  if(loading)return <main className="min-h-screen bg-[#0a0a0b] text-white flex items-center justify-center text-gray-400">Carregando...</main>
  if(!page)return <main className="min-h-screen bg-[#0a0a0b] text-white flex flex-col items-center justify-center px-5 text-center"><h1 className="text-3xl font-bold">Página não encontrada</h1><p className="text-gray-400 mt-3">Esta campanha pode ter sido encerrada ou o endereço está incorreto.</p><Link to="/" className="mt-6 px-5 py-3 rounded-xl bg-[#A65A2A] font-semibold">Voltar para a Sagamente</Link></main>
+ if(page.slug==='saga-negra-entre-fracasso-e-prosperidade')return <SagaNegraBookLanding page={page} preview={preview}/>
  return <main className="min-h-screen bg-[#0a0a0b] text-[#f0f0f2]">
   <header className="h-16 px-5 border-b border-white/[.06] flex items-center"><div className="max-w-6xl mx-auto w-full flex items-center justify-between gap-4"><BrandImage variant="dark" alt="Sagamente" className="h-9 w-auto"/><a href={page.cta_href} className="min-h-10 px-4 rounded-xl bg-[#A65A2A] text-white text-xs font-bold inline-flex items-center">{page.cta_label}</a></div></header>
   <article>
