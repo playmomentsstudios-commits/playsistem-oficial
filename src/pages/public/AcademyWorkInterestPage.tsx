@@ -111,13 +111,9 @@ export function AcademyWorkInterestPage(){
         {key==='combo'&&savings&&<span className="mt-2 inline-block rounded-full bg-[#8cf0b5] px-1.5 py-0.5 text-[10px] font-extrabold text-[#102c1d]" aria-label={savings.percentage+'% de desconto'}>−{savings.percentage}%</span>}
        </button>)}
      </div>
-     <div className="mt-4 rounded-xl border border-white/10 bg-white/[.03] p-3">
-      <div className="flex flex-wrap items-center justify-between gap-3"><span className="text-sm font-semibold">Total</span><strong className="text-2xl font-extrabold tabular-nums text-[#ffc59b]">{price?money(total):'—'}</strong></div>
-      {format==='combo'&&savings&&<div className="mt-2 flex flex-wrap justify-between gap-x-3 gap-y-1 text-xs text-[#e8b68d]">
-       <span>Separados: <del>{money(savings.separateCents)}</del></span>
-       <span className="font-bold">Economia de {money(savings.savingCents)}</span>
-      </div>}
-      <p className="mt-2 text-xs leading-6 text-[#d1b7a5]">Pix · InfinitePay. Confirme seu e-mail para acessar a obra após o pagamento.</p>
+     <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-3" aria-live="polite" aria-atomic="true">
+      <span className="text-sm text-gray-400">Subtotal</span>
+      <strong className="text-lg font-bold tabular-nums text-[#ffc59b]">{price?money(total):'—'}</strong>
      </div>
      {error&&<p role="alert" className="mt-4 rounded-xl border border-red-500/20 bg-red-900/20 px-4 py-3 text-xs text-red-200">{error}</p>}
      {!price?.checkout_enabled?<div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-600/10 p-4 text-xs leading-6 text-amber-200">
