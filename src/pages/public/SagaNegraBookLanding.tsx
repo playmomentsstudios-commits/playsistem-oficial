@@ -53,7 +53,7 @@ export function SagaNegraBookLanding({page,preview=false}:Props){
   </section>
   <section id="previas" aria-labelledby="previews-title" className="border-b border-white/[.07] bg-[#0c0e10] px-5 py-16 sm:px-8 sm:py-20">
     <div className="mx-auto max-w-6xl">
-      <p className="text-xs font-bold uppercase tracking-[.2em] text-[#D69058]">Experimente antes do lançamento</p>
+      <p className="text-xs font-bold uppercase tracking-[.2em] text-[#D69058]">Experimente gratuitamente</p>
       <h2 id="previews-title" className="mt-3 max-w-3xl font-serif text-3xl font-semibold leading-tight text-[#f8eee4] sm:text-4xl">Duas formas de conhecer a história.</h2>
       <p className="mt-3 max-w-3xl text-sm leading-7 text-[#bcb3aa]">Leia um trecho original do prólogo e escute aproximadamente 1 minuto e 30 segundos da narração. Amostras gratuitas e independentes dos arquivos completos.</p>
       <div className="mt-9 grid items-stretch gap-4 lg:grid-cols-2">
@@ -71,7 +71,7 @@ export function SagaNegraBookLanding({page,preview=false}:Props){
               </div>
             </details>
           </div>
-          <p className="mt-auto pt-6 text-[11px] text-[#999188]">Trecho literal da introdução do Release 00. A obra completa será oferecida separadamente no lançamento.</p>
+          <p className="mt-auto pt-6 text-[11px] text-[#999188]">Trecho de leitura do Release 00. A obra completa é liberada após a aquisição.</p>
         </article>
         <article className="flex flex-col rounded-2xl border border-[#c7906b]/25 bg-[#17181a] p-5 sm:p-7" aria-labelledby="preview-audio-title">
           <div className="flex flex-wrap items-center justify-between gap-3"><span className="rounded-md border border-[#b87449]/35 bg-[#b87449]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.15em] text-[#efb688]">Amostra do audiobook</span><span className="text-xs text-[#9f9993]">Cerca de 1min30s</span></div>
