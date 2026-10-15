@@ -71,3 +71,24 @@ for each row execute function public.academy_library_sync_landing_status();
 
 revoke all on function public.academy_library_create_landing_on_insert() from public,anon,authenticated;
 revoke all on function public.academy_library_sync_landing_status() from public,anon,authenticated;
+
+-- Public preview endpoint: NEVER returns Drive IDs, original filenames, grants or
+-- private media tickets. Draft pages are visible to active administrators only.
+create or replace function public.academy_public_library_landing(p_slug text)
+returns table(
+ title text,format text,description text,author_name text,
+ cover_url text,sample_text text,sample_audio_url text
+) language sql stable security definer set search_path='' as $$
+ select i.title,i.format,i.description,i.author_name,i.cover_url,i.sample_text,i.sample_audio_url
+ from public.academy_library_items i
+ join public.site_landing_pages p on p.id=i.landing_page_id
+ where p.slug=p_slug
+   and (
+     public.is_active_admin()
+     or (p.status='published' and (p.published_at is null or p.published_at<=now())
+         and i.status='published')
+   )
+ limit 1
+$$;
+revoke all on function public.academy_public_library_landing(text) from public;
+grant execute on function public.academy_public_library_landing(text) to anon,authenticated;
