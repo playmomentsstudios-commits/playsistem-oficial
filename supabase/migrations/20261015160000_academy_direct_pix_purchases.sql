@@ -147,3 +147,17 @@ grant execute on function public.academy_finalize_my_paid_works() to authenticat
 
 -- Administrative editing of prices is subject to active-admin RLS.
 -- No public SELECT grants of raw pricing / orders / protected media.
+
+-- A purchase UUID is an unguessable receipt reference. Anonymous callers may
+-- only see generic payment state and format, never a person's email/phone.
+create or replace function public.academy_public_purchase_status(p_purchase_id uuid)
+returns table(status text,release_code text,requested_format text,amount_cents integer)
+language sql stable security definer set search_path='' as $$
+ select p.status,w.release_code,p.requested_format,p.amount_cents
+ from public.academy_work_purchases p
+ join public.academy_library_works w on w.id=p.work_id
+ where p.id=p_purchase_id
+ limit 1;
+$$;
+revoke all on function public.academy_public_purchase_status(uuid) from public,anon,authenticated;
+grant execute on function public.academy_public_purchase_status(uuid) to anon,authenticated;
