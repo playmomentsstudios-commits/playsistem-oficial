@@ -27,8 +27,6 @@ export const DASHBOARD_WIDGETS = [
   { id:'quick-actions', label:'Acessos rápidos', description:'Funções utilizadas no dia a dia' },
   { id:'pending', label:'Precisa de atenção', description:'Alertas e retornos pendentes' },
   { id:'projects', label:'Em andamento', description:'Últimos projetos ativos' },
-  { id:'indicators', label:'Indicadores principais', description:'Números escolhidos por você' },
-  { id:'extra', label:'Mais indicadores', description:'Pedidos, CRM e oportunidades' },
 ] as const
 
 export const DASHBOARD_METRICS = [
@@ -52,7 +50,7 @@ export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayout = {
   // Uma ação principal de cada grupo do menu: Comercial, Operação, Financeiro,
   // Catálogo, Academia, Comunicação e Gestão.
   shortcuts:['clients','projects','payments','services','academy','messages','site'],
-  widgets:['quick-actions','pending','projects','indicators'],
+  widgets:['quick-actions','pending','projects'],
   metrics:['customers','activeProjects','pendingPayments','unread'],
 }
 
