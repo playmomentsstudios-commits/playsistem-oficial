@@ -127,3 +127,22 @@ revoke all on function public.academy_submit_work_interest(text,text,text,text,t
  from public,anon,authenticated;
 grant execute on function public.academy_submit_work_interest(text,text,text,text,text,boolean,text,text,text)
  to anon,authenticated;
+
+-- Canonical landing metadata must match the live purchase-intent experience.
+-- Preserve long-form written sections and all existing landing slugs.
+-- The Release 22 ebook alias remains noindex, pointing at the canonical landing.
+update public.site_landing_pages p
+set cta_label='Quero adquirir',
+    cta_href='/academia/interesse/'||w.release_code,
+    noindex=false,
+    seo_description=case when w.release_code='22'
+      then left(coalesce(nullif(w.description,''),w.title)||
+         '. Escolha e-book, audiobook ou combo e solicite as condições de compra.',300)
+      else left(regexp_replace(
+         coalesce(p.seo_description,w.title),
+         'Pré-lançamento[^.]*\\.',
+         'Escolha e-book, audiobook ou combo e peça as condições de compra.','gi'),300)
+    end,
+    updated_at=now()
+from public.academy_library_works w
+where w.landing_page_id=p.id and p.status='published';
