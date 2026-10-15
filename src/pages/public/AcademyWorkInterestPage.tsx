@@ -116,7 +116,7 @@ export function AcademyWorkInterestPage(){
      </div>
      {error&&<p role="alert" className="mt-4 rounded-xl border border-red-500/20 bg-red-900/20 px-4 py-3 text-xs text-red-200">{error}</p>}
      {!price?.checkout_enabled?<div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-600/10 p-4 text-xs leading-6 text-amber-200">
-      Pagamentos desta obra em configuração. O administrador precisa ativar o checkout após validar a conta InfinitePay.
+      Os pagamentos desta obra estarão disponíveis em breve.
      </div>:isAuthenticated?<div className="mt-6 space-y-3">
       <p className="text-sm text-[#d6c6b8]">Comprando como <strong>{user?.email}</strong>.</p>
       <button type="button" disabled={sending||total<=0} onClick={()=>void checkout().catch(()=>undefined)}

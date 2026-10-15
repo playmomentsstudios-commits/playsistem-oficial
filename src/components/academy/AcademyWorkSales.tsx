@@ -31,7 +31,7 @@ export function AcademyWorkOffers({
   <div className="mx-auto max-w-6xl">
    <p className="text-xs font-bold uppercase tracking-[.2em] text-[#D99664]">Escolha seu formato</p>
    <h2 className="mt-3 font-serif text-3xl font-semibold leading-tight text-[#fff3e6] sm:text-5xl">Uma obra. A experiência que combina com você.</h2>
-   <p className="mt-4 max-w-3xl text-sm leading-7 text-[#b9afa6]">Escolha a sua opção e informe o WhatsApp. Nossa equipe apresenta as condições de compra e orienta como acessar a obra na Academia Sagamente.</p>
+   <p className="mt-4 max-w-3xl text-sm leading-7 text-[#b9afa6]">Escolha seu formato, crie sua conta ou entre e pague com Pix na página segura da InfinitePay.</p>
    <div className={'mt-9 grid gap-4 '+(choices.length===3?'md:grid-cols-3':'sm:grid-cols-2')}>{choices.map((offer,i)=>
     <article key={offer.format} className={'flex flex-col rounded-2xl border p-6 '+(offer.format==='combo'?'border-[#B97042] bg-[#493021]/45':'border-white/10 bg-[#1c1e21]')}>
      <span className="text-3xl text-[#f0b88d]">{offer.icon}</span>
@@ -43,7 +43,7 @@ export function AcademyWorkOffers({
      </Link>
     </article>
    )}</div>
-   <p className="mt-5 text-xs leading-6 text-[#9e948b]">O envio do interesse não realiza cobrança nem libera os arquivos automaticamente. Você recebe orientações antes de decidir.</p>
+   <p className="mt-5 text-xs leading-6 text-[#9e948b]">Após a confirmação do pagamento e do seu e-mail, a obra fica disponível na Minha Academia.</p>
   </div>
  </section>
 }
