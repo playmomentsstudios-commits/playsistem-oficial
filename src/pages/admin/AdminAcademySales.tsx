@@ -17,6 +17,8 @@ const field='min-h-10 w-full rounded-lg border border-white/15 bg-[#101114] px-3
 export function AdminAcademySales(){
  const toast=useToast()
  const [prices,setPrices]=useState<Price[]>([])
+ const [gateway,setGateway]=useState<{infinitepay_handle:string;checkout_enabled:boolean}|null>(null)
+ const [savingGateway,setSavingGateway]=useState(false)
  const [works,setWorks]=useState<Work[]>([])
  const [orders,setOrders]=useState<Purchase[]>([])
  const [loading,setLoading]=useState(true)
@@ -26,13 +28,14 @@ export function AdminAcademySales(){
  async function load(){
   try{
    setLoading(true)
-   const [p,w,o]=await Promise.all([
+   const [p,w,o,g]=await Promise.all([
     supabase.from('academy_work_prices').select('work_id,ebook_cents,audiobook_cents,combo_cents,checkout_enabled'),
     supabase.from('academy_library_works').select('id,release_code,title').order('release_code'),
-    supabase.from('academy_work_purchases').select('id,work_id,requested_format,amount_cents,status,provider,created_at,buyer_email,provider_capture_method').order('created_at',{ascending:false}).limit(300)
+    supabase.from('academy_work_purchases').select('id,work_id,requested_format,amount_cents,status,provider,created_at,buyer_email,provider_capture_method').order('created_at',{ascending:false}).limit(300),
+    supabase.from('academy_infinitepay_settings').select('infinitepay_handle,checkout_enabled').eq('id',true).maybeSingle()
    ])
-   if(p.error)throw p.error;if(w.error)throw w.error;if(o.error)throw o.error
-   setPrices(p.data||[]);setWorks(w.data||[]);setOrders(o.data||[]);setError('')
+   if(p.error)throw p.error;if(w.error)throw w.error;if(o.error)throw o.error;if(g.error)throw g.error
+   setPrices(p.data||[]);setWorks(w.data||[]);setOrders(o.data||[]);setGateway(g.data||null);setError('')
   }catch(e){setError(e instanceof Error?e.message:'Não foi possível carregar as vendas.')}
   finally{setLoading(false)}
  }
@@ -45,6 +48,25 @@ export function AdminAcademySales(){
  }),[orders])
  function setPrice(id:string,field:keyof Price,value:number|boolean){
   setPrices(rows=>rows.map(p=>p.work_id===id?{...p,[field]:value}:p))
+ }
+ async function saveGateway(){
+  if(!gateway)return
+  const handle=gateway.infinitepay_handle.replace(/^\$/,'').trim()
+  if(!/^[a-zA-Z0-9._-]{3,80}$/.test(handle))return toast('Informe uma InfiniteTag válida (sem $).','error')
+  if(gateway.checkout_enabled&&!window.confirm(
+   'Confirma que a InfiniteTag recebe pagamentos na sua conta e que o Checkout Integrado está habilitado na InfinitePay? Não faça teste de pagamento sem revisar a conta recebedora.'
+  ))return
+  try{
+   setSavingGateway(true)
+   const {error}=await supabase.from('academy_infinitepay_settings').update({
+    infinitepay_handle:handle,checkout_enabled:gateway.checkout_enabled,
+    updated_at:new Date().toISOString()
+   }).eq('id',true)
+   if(error)throw error
+   toast('Configuração da InfinitePay atualizada.','success')
+   await load()
+  }catch(e){toast(e instanceof Error?e.message:'Falha ao salvar configuração.','error')}
+  finally{setSavingGateway(false)}
  }
  async function save(p:Price){
   if(![p.ebook_cents,p.audiobook_cents,p.combo_cents].every(v=>Number.isSafeInteger(v)&&v>=1&&v<=10000000))
@@ -78,13 +100,40 @@ export function AdminAcademySales(){
   ].map(([label,value])=><div key={label} className="rounded-xl border border-white/10 bg-[#161719] p-4">
    <p className="text-xs text-gray-400">{label}</p><strong className="mt-2 block text-xl font-bold">{value}</strong>
   </div>)}</div>
+  <div className="rounded-2xl border border-[#A65A2A]/25 bg-[#17191c] p-4 sm:p-5">
+   <div className="flex flex-wrap items-center justify-between gap-3">
+    <div><h2 className="text-sm font-bold">InfinitePay · Checkout Integrado</h2>
+     <p className="mt-1 max-w-xl text-[11px] leading-5 text-gray-400">Confira sua InfiniteTag. O recebimento é feito nessa conta, diretamente pela InfinitePay. O QR Code Pix aparece no checkout seguro do provedor.</p>
+    </div>
+    <a href="https://app.infinitepay.io/external-checkout" target="_blank" rel="noopener noreferrer"
+     className="text-xs font-semibold text-[#e3a775] underline">Configurar InfinitePay ↗</a>
+   </div>
+   {gateway&&<div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+    <label className="flex-1 text-xs text-gray-300">InfiniteTag (sem $)
+     <input className={field+' mt-2'} value={gateway.infinitepay_handle}
+      onChange={e=>setGateway(v=>v?{...v,infinitepay_handle:e.target.value}:v)} placeholder="sua-infinite-tag" autoCapitalize="none"/>
+    </label>
+    <label className="flex min-h-11 items-center gap-2 text-xs font-semibold">
+     <input type="checkbox" checked={gateway.checkout_enabled} className="h-4 w-4 accent-[#c77d4d]"
+      onChange={e=>setGateway(v=>v?{...v,checkout_enabled:e.target.checked}:v)}/>
+      {gateway.checkout_enabled?'Checkout global habilitado':'Checkout global desabilitado'}
+    </label>
+    <button type="button" disabled={savingGateway} onClick={()=>void saveGateway()}
+      className="min-h-11 rounded-xl bg-[#a9633d] px-5 text-xs font-bold text-white disabled:opacity-40">
+      {savingGateway?'Salvando...':'Salvar InfinitePay'}
+    </button>
+   </div>}
+   <p className="mt-3 text-[11px] leading-5 text-amber-200">
+    Duas ativações são necessárias: esta configuração global e o checkout de cada obra na aba Preços. Antes de habilitar pagamentos, valide a conta recebedora no painel InfinitePay.
+   </p>
+  </div>
   <div className="flex gap-2">{([['orders','Pedidos'],['prices','Preços e ativação']] as const).map(([key,label])=>
    <button type="button" aria-pressed={activeTab===key} key={key} onClick={()=>setActiveTab(key)}
     className={'min-h-10 rounded-xl px-4 text-xs font-bold '+(activeTab===key?'bg-[#b76e41] text-white':'border border-white/10 text-gray-300')}>{label}</button>)}</div>
   {error&&<p role="alert" className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200">{error}</p>}
   {loading&&<p role="status" className="p-10 text-center text-sm text-gray-400">Carregando vendas...</p>}
   {!loading&&activeTab==='prices'&&<div className="space-y-3">
-   <p className="text-xs leading-6 text-amber-200">A ativação de uma obra não configura sozinha as credenciais do checkout. É necessário habilitar o Checkout Integrado na InfinitePay e as variáveis seguras do backend; até lá, a página pública não faz cobranças.</p>
+   <p className="text-xs leading-6 text-amber-200">A ativação de uma obra exige que a InfinitePay também esteja habilitada acima. Confirme a conta recebedora antes de liberar vendas reais.</p>
    {works.map(w=>{
     const p=prices.find(p=>p.work_id===w.id)
     if(!p)return null
