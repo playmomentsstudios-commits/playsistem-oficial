@@ -57,7 +57,7 @@ Deno.serve(async request=>{
    userId=guest.user.id;userEmail=guestEmail
   }
   const {data:profile,error:profileError}=await database.from('profiles')
-   .select('role,status').eq('id',userId).maybeSingle()
+   .select('role,status,first_name,last_name,email,phone').eq('id',userId).maybeSingle()
   if(profileError||!profile||profile.role!=='customer'||profile.status!=='active')
    return reject('Esta conta não está habilitada para compras.',403)
   const {data:work,error:workError}=await database.from('academy_library_works')
@@ -96,7 +96,14 @@ Deno.serve(async request=>{
     body:JSON.stringify({
      handle,order_nsu:id,redirect_url:canonicalSite+'/academia/compra/'+id,
      webhook_url:env('SUPABASE_URL')+'/functions/v1/academy-infinitepay-webhook',
-     items:[{quantity:1,price:amount,description:work.title+' · '+formatNames[format]}]
+     items:[{quantity:1,price:amount,description:work.title+' · '+formatNames[format]}],
+     customer:{
+      name:[profile.first_name,profile.last_name].filter(Boolean).join(' ')||userEmail,
+      email:userEmail,
+      ...((profile.phone&&/^[0-9]{10,13}$/.test(String(profile.phone).replace(/[^0-9]/g,'')))?
+       {phone_number:(String(profile.phone).replace(/[^0-9]/g,'').startsWith('55')?'+':'+55')+
+        String(profile.phone).replace(/[^0-9]/g,'').replace(/^55/,'')}: {})
+     }
     })})
    const json=await post.json().catch(()=>({}))
    if(!post.ok)throw new Error(String(json?.message||json?.error||'O provedor de Pix não conseguiu gerar o checkout.'))
