@@ -7,13 +7,17 @@ export type LibraryItem={
  title:string
  slug:string
  mime_type:'application/pdf'|'audio/mpeg'
+ cover_url?:string|null
 }
 
 export const academyLibraryApi={
  async mine():Promise<LibraryItem[]>{
   const {data,error}=await supabase.rpc('academy_my_library')
   if(error)throw new Error('Não foi possível carregar seus e-books e audiobooks.')
-  return (data||[]) as LibraryItem[]
+  const {data:art,error:artError}=await supabase.rpc('academy_my_library_artwork')
+  if(artError)throw new Error('Não foi possível carregar as capas da sua biblioteca.')
+  const covers=new Map<string,string|null>((art||[]).map((row:any)=>[row.item_id,row.cover_url]))
+  return (data||[]).map((row:any)=>({...row,cover_url:covers.get(row.id)||null})) as LibraryItem[]
  },
  async mediaTicket(itemId:string):Promise<{url:string;fallbackUrl:string;mime_type:string;expires_at:string}>{
   const {data,error}=await supabase.functions.invoke('academy-library-media',{body:{item_id:itemId}})

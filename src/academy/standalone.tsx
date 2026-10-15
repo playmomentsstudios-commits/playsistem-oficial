@@ -53,12 +53,15 @@ function SectionTitle({eyebrow,title,href,action='Ver tudo'}:{eyebrow?:string;ti
   {href&&<Link to={href} className="academy-text-link">{action}<Icon name="chevron" size={14}/></Link>}
  </header>
 }
-function ContentArtwork({release,format}:{release:string;format:'audio'|'book'}) {
- const tone=Number.parseInt(release,10)%3
+function ContentArtwork({release,format,coverUrl}:{release:string;format:'audio'|'book';coverUrl?:string|null}) {
+ const legacy=/^\d{2}$/.test(release)
+ const tone=[...release].reduce((sum,c)=>sum+c.charCodeAt(0),0)%3
  return <div className={'academy-content-art academy-content-art-'+tone} aria-hidden="true">
-  <span className="academy-art-ring"/>
-  <span className="academy-art-grain">SAGA<br/>NEGRA</span>
-  <span className="academy-art-footer">{format==='audio'?<Icon name="headphones" size={22}/>:<Icon name="book" size={22}/>} <small>{release}</small></span>
+  {coverUrl?<img alt="" src={coverUrl} className="absolute inset-0 h-full w-full object-cover"/>:<>
+   <span className="academy-art-ring"/>
+   <span className="academy-art-grain">{legacy?<>SAGA<br/>NEGRA</>:'SAGAMENTE'}</span>
+   <span className="academy-art-footer">{format==='audio'?<Icon name="headphones" size={22}/>:<Icon name="book" size={22}/>} <small>{legacy?release:format==='audio'?'Áudio':'Livro'}</small></span>
+  </>}
  </div>
 }
 function RequireAccess() {
@@ -211,7 +214,7 @@ function AcademyShelf({condensed=false}:{condensed?:boolean}){
   {!busy&&!error&&releases.length===0&&<div className="academy-empty"><Icon name="library" size={27}/><h3>Sua biblioteca está esperando por você</h3><p>Os conteúdos liberados para sua conta aparecerão aqui.</p></div>}
   {!busy&&!error&&releases.length>0&&filtered.length===0&&<div className="academy-empty"><p>Nenhum título encontrado neste filtro.</p></div>}
   {resumable.map(({item,position})=><Link key={item.id} to={'/app/academia/biblioteca/'+item.id} className="academy-resume">
-    <ContentArtwork release={item.release_code} format="audio"/>
+    <ContentArtwork release={item.release_code} format="audio" coverUrl={item.cover_url}/>
     <span className="academy-resume-details"><span className="academy-eyebrow">Retomar audiobook · Continuar de onde parou</span><strong>{item.title}</strong><span className="academy-resume-meta"><Icon name="clock" size={14}/> {Math.floor(position/60)} min ouvidos</span></span>
     <span className="academy-resume-play"><Icon name="play" size={20}/></span>
    </Link>)}
@@ -221,9 +224,9 @@ function AcademyShelf({condensed=false}:{condensed?:boolean}){
     const kind=release.audiobook?'audio':'book'
     const target=primary?'/app/academia/biblioteca/'+primary.id:'/app/academia/biblioteca'
     return <article key={release.release_code} className="academy-media-card">
-     <Link to={target} className="academy-media-art-link" aria-label={'Abrir '+release.title}><ContentArtwork release={release.release_code} format={kind}/></Link>
+     <Link to={target} className="academy-media-art-link" aria-label={'Abrir '+release.title}><ContentArtwork release={release.release_code} format={kind} coverUrl={primary?.cover_url}/></Link>
      <div className="academy-media-body">
-      <span className="academy-eyebrow">SAGA NEGRA · RELEASE {release.release_code}</span>
+      <span className="academy-eyebrow">{/^\d{2}$/.test(release.release_code)?'SAGA NEGRA · RELEASE '+release.release_code:'BIBLIOTECA SAGAMENTE'}</span>
       <h3>{release.title}</h3>
       <p>{release.audiobook&&release.ebook?'Audiobook e e-book disponíveis':release.audiobook?'Audiobook disponível':'E-book disponível'}</p>
       <div className="academy-media-actions">

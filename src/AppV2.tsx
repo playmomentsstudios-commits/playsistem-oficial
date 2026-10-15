@@ -88,7 +88,7 @@ const AdminAutoAttendant = lazy(() => import('./pages/admin/AdminAutoAttendant')
 const AdminLandingPages = lazy(() => import('./pages/admin/AdminLandingPages').then(m => ({ default:m.AdminLandingPages })))
 const AdminResumes = lazy(() => import('./pages/admin/AdminResumes').then(m => ({ default:m.AdminResumes })))
 const AdminResumeEditor = lazy(() => import('./pages/admin/AdminResumeEditor').then(m => ({ default:m.AdminResumeEditor })))
-const AdminAcademy = lazy(() => import('./pages/admin/AdminAcademy').then(m => ({ default:m.AdminAcademy })))
+const AdminAcademyHub = lazy(() => import('./pages/admin/AdminAcademyHub').then(m => ({ default:m.AdminAcademyHub })))
 const AdminAcademyStudents = lazy(() => import('./pages/admin/AdminAcademyStudents').then(m => ({ default:m.AdminAcademyStudents })))
 const AdminAcademyManagement = lazy(() => import('./pages/admin/AdminAcademyManagement').then(m => ({ default:m.AdminAcademyManagement })))
 const AdminAcademyPrograms = lazy(() => import('./pages/admin/AdminAcademyPrograms').then(m => ({ default:m.AdminAcademyPrograms })))
@@ -228,7 +228,7 @@ export default function AppV2() {
                 <Route path="auditoria" element={<AdminPermissionGate adminOnly><AdminAudit /></AdminPermissionGate>} />
                 <Route path="relatorios" element={<AdminPermissionGate permission="reports.view"><AdminReports /></AdminPermissionGate>} />
                 <Route path="conversao" element={<AdminPermissionGate permission="reports.view"><AdminConversion /></AdminPermissionGate>} />
-                <Route path="academia" element={<AdminPermissionGate permission="academy.view"><AdminAcademy /></AdminPermissionGate>} />
+                <Route path="academia" element={<AdminPermissionGate permission="academy.view"><AdminAcademyHub /></AdminPermissionGate>} />
                 <Route path="academia/alunos" element={<AdminPermissionGate permission="academy.students.manage"><AdminAcademyStudents /></AdminPermissionGate>} />
                 <Route path="academia/programas" element={<AdminPermissionGate permission="academy.programs.manage"><AdminAcademyPrograms /></AdminPermissionGate>} />
                 <Route path="academia/certificados" element={<AdminPermissionGate permission="academy.documents.manage"><AdminAcademyCertificates /></AdminPermissionGate>} />

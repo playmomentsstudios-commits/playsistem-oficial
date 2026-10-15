@@ -85,7 +85,7 @@ export function AcademyLibraryItemPage(){
   </div>}
   {!loading&&item&&stream&&<section className="overflow-hidden rounded-2xl border border-white/10 bg-[#17181B]">
    <header className="border-b border-white/10 p-4 sm:p-5">
-    <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#E2A46C]">SAGA NEGRA · Release {item.release_code} · {item.format==='ebook'?'E-book':'Audiobook'}</p>
+    <p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#E2A46C]">{/^\d{2}$/.test(item.release_code)?'SAGA NEGRA · Release '+item.release_code:'Biblioteca Sagamente'} · {item.format==='ebook'?'E-book':'Audiobook'}</p>
     <h1 className="mt-2 text-xl font-bold text-white sm:text-2xl">{item.title}</h1>
     <p className="mt-1 text-xs text-gray-400">Disponível exclusivamente para sua conta na Academia.</p>
    </header>
