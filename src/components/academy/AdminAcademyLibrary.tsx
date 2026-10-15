@@ -105,7 +105,7 @@ export function AdminAcademyLibrary(){
   }
   try{
    setBusy(true)
-   const saved=await api.save({...current,release_code:releaseCode,slug:current.slug.trim()||librarySlugify(current.title)})
+   const saved=await api.save({...current,release_code:releaseCode,slug:current.slug.trim()||librarySlugify(current.title),mime_type:current.format==='ebook'?'application/pdf':'audio/mpeg'})
    toast(saved.landing_page_id?'Conteúdo salvo com landing vinculada.':'Conteúdo salvo.','success')
    setCurrent(null);setCurrentItem(null);await load()
   }catch(e:any){toast(e.message||'Não foi possível salvar o conteúdo.','error')}
