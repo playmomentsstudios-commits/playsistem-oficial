@@ -107,7 +107,7 @@ function AcademyLogin() {
     <form className="academy-login-form" onSubmit={event=>void submit(event)}>
      <label htmlFor="academy-login-email">E-mail</label>
      <div className="academy-input-wrap"><Icon name="mail" size={19}/>
-      <input id="academy-login-email" type="email" autoComplete="email" placeholder="seu@email.com" required value={email} onChange={event=>setEmail(event.target.value)}/>
+      <input id="academy-login-email" name="email" type="email" autoComplete="username" autoCapitalize="none" spellCheck={false} placeholder="seu@email.com" required value={email} onChange={event=>setEmail(event.target.value)}/>
      </div>
      <label htmlFor="academy-login-password">Senha</label>
      <div className="academy-input-wrap"><Icon name="lock" size={19}/>
@@ -118,7 +118,16 @@ function AcademyLogin() {
      <button type="submit" disabled={busy} className="academy-primary-button academy-login-submit">{busy?'Entrando…':'Entrar na Academia'}<Icon name="arrow" size={18}/></button>
      <a href="https://playsistem-oficial.playmomentsstudios.workers.dev/esqueci-senha" target="_blank" rel="noopener noreferrer" className="academy-forgot">Esqueci minha senha <span aria-hidden="true">↗</span></a>
     </form>
-    <p className="academy-login-footer"><Icon name="shield" size={14}/> Acesse com a sua conta Sagamente.</p>
+    <section className="academy-signup-panel" aria-labelledby="academy-signup-title">
+     <p className="academy-eyebrow">Novo por aqui?</p>
+     <h2 id="academy-signup-title">Comece gratuitamente na Academia</h2>
+     <p>Crie uma conta Sagamente, confirme seu e-mail e entre aqui para acessar cursos, e-books e audiobooks disponíveis.</p>
+     <a className="academy-signup-link" href="https://playsistem-oficial.playmomentsstudios.workers.dev/cadastro?next=%2Fapp%2Facademia" target="_blank" rel="noopener noreferrer">
+      Criar conta gratuita <Icon name="arrow" size={17}/>
+     </a>
+     <a className="academy-signup-explore" href="https://playsistem-oficial.playmomentsstudios.workers.dev/academia" target="_blank" rel="noopener noreferrer">Conhecer cursos antes de me cadastrar ↗</a>
+    </section>
+    <p className="academy-login-footer"><Icon name="shield" size={14}/> Sua conta é a mesma da Sagamente. Depois da confirmação, entre nesta Academia com o e-mail cadastrado.</p>
    </main>
   </div>
  </div>
