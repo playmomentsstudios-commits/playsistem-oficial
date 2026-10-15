@@ -54,7 +54,7 @@ export function AcademyAudioDock(){
      <button type="button" className="ac-audio-icon ac-audio-optional" aria-label="Audiobook anterior" title="Anterior" onClick={audio.previous} disabled={audio.loading}><Glyph name="back"/></button>
      <button type="button" className="ac-audio-icon ac-audio-primary" aria-label={audio.playing?'Pausar audiobook':'Reproduzir audiobook'} title={audio.playing?'Pausar':'Reproduzir'} onClick={toggle} disabled={audio.loading}><Glyph name={audio.playing?'pause':'play'}/></button>
      <button type="button" className="ac-audio-icon" aria-label="Próximo audiobook" title="Próximo" onClick={audio.next} disabled={audio.loading||audio.queue.length<2}><Glyph name="next"/></button>
-     <button type="button" className="ac-audio-icon ac-audio-optional" aria-label={expanded?'Ocultar playlist':'Abrir playlist'} aria-expanded={expanded} onClick={()=>setExpanded(v=>!v)}><Glyph name="list"/></button>
+     <button type="button" className="ac-audio-icon ac-audio-playlist" aria-label={expanded?'Ocultar playlist':'Abrir playlist'} aria-expanded={expanded} onClick={()=>setExpanded(v=>!v)}><Glyph name="list"/></button>
      <button type="button" className="ac-audio-icon ac-audio-collapse" aria-label="Recolher player para a lateral" title="Recolher" onClick={()=>{setCollapsed(true);setExpanded(false)}}><Glyph name="right"/></button>
     </div>
    </div>
