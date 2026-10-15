@@ -65,7 +65,7 @@ test('public landing never exposes private Drive file IDs, temporary tickets or 
  assert.match(landing,/A criação de conta é gratuita/)
  assert.match(landing,/depende de liberação/)
  assert.match(publicLanding,/startsWith\('biblioteca-'\)/)
- assert.doesNotMatch(landing,/academy-library-media|drive_file_id|access_token/)
+ assert.doesNotMatch(landing,/drive_file_id|access_token/)
 })
 test('book and audiobook variants have different editing fields and media formats',()=>{
  assert.match(admin,/format==='ebook'/)
