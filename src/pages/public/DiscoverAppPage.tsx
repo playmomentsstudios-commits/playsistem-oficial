@@ -38,7 +38,7 @@ export function DiscoverAppPage(){
               você ganha um espaço para acompanhar suas solicitações, seus projetos e suas atividades.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link onClick={()=>trackConversion('signup_interest',{source:'share_app_landing'})} to={primaryPath} className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#A65A2A] px-6 text-sm font-bold text-white sm:w-auto">{primaryLabel} →</Link>
+              <Link onClick={()=>trackConversion('account_interest',{source:'share_app_landing'})} to={primaryPath} className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[#A65A2A] px-6 text-sm font-bold text-white sm:w-auto">{primaryLabel} →</Link>
               <Link to="/academia" className="inline-flex min-h-12 w-full items-center justify-center rounded-xl border border-white/15 bg-white/[.035] px-6 text-sm font-semibold text-white sm:w-auto">Ver cursos e conteúdos</Link>
             </div>
             {!isAuthenticated&&<p className="mt-4 text-xs text-[#8f8f99]">Já tem cadastro? <Link to={LOGIN_PATH} className="font-semibold text-[#DFA269] underline underline-offset-4">Entrar na minha conta</Link></p>}
