@@ -39,7 +39,7 @@ export function AcademyWorkPurchaseStatusPage(){
      setCheckoutUrl(link)
    }catch{}
   }
-  if(value.status==='fulfilled'){
+  if(['fulfilled','failed','expired','refunded'].includes(value.status)){
    try{window.localStorage.removeItem('sagamente.academy.pending-purchase.'+value.release_code)}catch{}
   }
  },[id,isAuthenticated])
