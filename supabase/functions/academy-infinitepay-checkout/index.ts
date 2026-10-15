@@ -23,14 +23,17 @@ Deno.serve(async request=>{
  if(request.method==='OPTIONS')return new Response('ok',{headers})
  if(request.method!=='POST')return reject('Método não permitido.',405)
  try{
-  if(env('ACADEMY_DIRECT_CHECKOUT_ENABLED')!=='true')return reject('O checkout Pix está sendo preparado. Tente novamente mais tarde.',503)
-  const handle=env('INFINITEPAY_HANDLE').replace(/^\$/,'').trim()
+  const database=db()
+  const {data:settings,error:settingsError}=await database.from('academy_infinitepay_settings')
+   .select('infinitepay_handle,checkout_enabled').eq('id',true).maybeSingle()
+  if(settingsError)throw settingsError
+  if(settings?.checkout_enabled!==true)return reject('O checkout Pix está sendo preparado. Tente novamente mais tarde.',503)
+  const handle=(env('INFINITEPAY_HANDLE')||settings?.infinitepay_handle||'').replace(/^\$/,'').trim()
   if(!/^[a-zA-Z0-9._-]{3,80}$/.test(handle))return reject('Conta InfinitePay ainda não configurada.',503)
   const payload=await request.json()
   const release=String(payload?.release_code||'').trim()
   const format=payload?.requested_format
   if(!/^[0-9A-Za-z_-]{1,24}$/.test(release)||!validFormat(format))return reject('Obra ou formato inválido.')
-  const database=db()
   let userId=''
   let userEmail=''
   let verified=false
