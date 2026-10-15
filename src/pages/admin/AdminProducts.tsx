@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { useToast } from '../../contexts/ToastContext'
@@ -413,9 +414,12 @@ export function AdminProducts() {
           </p>
         </div>
 
-        <Button onClick={openCreate}>
-          + Novo produto
-        </Button>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {user?.role==='admin'&&<Link to="/admin/produtos-digitais" className="inline-flex min-h-10 items-center rounded-xl border border-[#DFA269]/25 px-3 text-xs font-semibold text-[#E8AF7B] hover:bg-[#A65A2A]/[.07]">E-books e audiobooks ↗</Link>}
+          <Button onClick={openCreate}>
+            + Novo produto
+          </Button>
+        </div>
       </div>
 
       <div className="mb-4">
