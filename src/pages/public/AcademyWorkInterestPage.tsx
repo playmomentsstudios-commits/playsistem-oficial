@@ -107,7 +107,7 @@ export function AcademyWorkInterestPage(){
         className={card+' '+(key==='combo'?'academy-format-combo '+(format===key?'academy-format-combo-selected':''):format===key?'border-[#ed9e63] bg-[#4b3227]':'border-white/10 bg-[#17191d] hover:border-white/30')}
         onClick={()=>choose(key)}>
         <strong className="block text-[11px] sm:text-sm">{label}{key==='combo'&&format===key&&<span aria-hidden="true" className="ml-1 text-[#b2ffd5]">✓</span>}</strong>
-        {price&&<span className={'mt-2 block whitespace-nowrap text-sm font-extrabold tabular-nums sm:text-lg '+(key==='combo'?'text-[#b2ffd5]':'text-[#f1b586]')}>{money(key==='ebook'?price.ebook_cents:key==='audiobook'?price.audiobook_cents:price.combo_cents)}</span>}
+        {price&&<span className={'mt-2 block whitespace-nowrap text-sm font-extrabold tabular-nums sm:text-lg '+(key==='combo'?'academy-combo-price text-[#b2ffd5]':'text-[#f1b586]')}>{money(key==='ebook'?price.ebook_cents:key==='audiobook'?price.audiobook_cents:price.combo_cents)}</span>}
         {key==='combo'&&savings&&<span className="mt-2 inline-block rounded-full bg-[#8cf0b5] px-1.5 py-0.5 text-[10px] font-extrabold text-[#102c1d]" aria-label={savings.percentage+'% de desconto'}>−{savings.percentage}%</span>}
        </button>)}
      </div>
