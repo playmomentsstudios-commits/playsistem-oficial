@@ -267,15 +267,91 @@ export function RegisterPage() {
           </>}
 
           {step===2&&<>
-            <div className="mb-1"><h2 className="font-semibold" style={{color:'#f0f0f2'}}>Endereço</h2><p className="text-xs mt-1" style={{color:'#6b6b78'}}>Digite o CEP para preencher boa parte automaticamente.</p></div>
-            <Input label="CEP" inputMode="numeric" autoComplete="postal-code" placeholder="00000-000" value={form.postalCode} onChange={e=>setForm(prev=>({...prev,postalCode:formatCep(e.target.value)}))} onBlur={()=>void lookupCep()} error={errors.postalCode} hint={loadingCep?'Buscando endereço...':'Preenchimento automático pelo CEP'} />
-            <Input label="Rua / Avenida" autoComplete="street-address" value={form.street} onChange={set('street')} error={errors.street} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><Input label="Número" value={form.addressNumber} onChange={set('addressNumber')} error={errors.addressNumber} /><Input label="Complemento (opcional)" value={form.addressComplement} onChange={set('addressComplement')} /></div>
-            <Input label="Bairro" value={form.neighborhood} onChange={set('neighborhood')} error={errors.neighborhood} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className="flex flex-col gap-2"><span className="text-xs font-semibold" style={{ color: '#9090a0' }}>Estado</span><select aria-invalid={Boolean(errors.state)} value={form.state} onChange={handleStateChange} className="w-full rounded-xl px-4" style={{ height: 48, background: '#141416', border: '1px solid rgba(255,255,255,.12)', color: '#f0f0f2' }}><option value="">Selecione</option>{states.map(state => <option key={state.id} value={state.sigla}>{state.nome} - {state.sigla}</option>)}</select>{errors.state && <span className="text-xs" style={{ color: '#ff6b7a' }}>{errors.state}</span>}</label>
-              <label className="flex flex-col gap-2"><span className="text-xs font-semibold" style={{ color: '#9090a0' }}>Cidade</span><select aria-invalid={Boolean(errors.city)} value={form.city} onChange={e => setForm(prev => ({ ...prev, city: e.target.value }))} disabled={!form.state || loadingCities} className="w-full rounded-xl px-4 disabled:opacity-50" style={{ height: 48, background: '#141416', border: '1px solid rgba(255,255,255,.12)', color: '#f0f0f2' }}><option value="">{loadingCities ? 'Carregando...' : 'Selecione'}</option>{cities.map(city => <option key={city.id} value={city.nome}>{city.nome}</option>)}</select>{errors.city && <span className="text-xs" style={{ color: '#ff6b7a' }}>{errors.city}</span>}</label>
+            <div className="mb-1">
+              <h2 className="font-semibold text-[#f0f0f2]">Seu endereço</h2>
+              <p className="mt-1 text-xs leading-relaxed text-[#a0a0a9]">O CEP localiza a cidade e o estado automaticamente. Você também pode informar seu endereço sem saber o CEP.</p>
             </div>
+            <section className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#141416] p-4 sm:p-5" aria-label="Localização e endereço">
+              <div>
+                <Input label="CEP" inputMode="numeric" autoComplete="postal-code" placeholder="00000-000" maxLength={9}
+                  value={form.postalCode} onChange={e=>{
+                    setForm(prev=>({...prev,postalCode:formatCep(e.target.value)}))
+                    setUnknownCep(false)
+                    setCepStatus('')
+                    setErrors(prev=>({...prev,postalCode:''}))
+                  }}
+                  error={errors.postalCode} hint={loadingCep?'Localizando CEP…':cepStatus||'Preenche estado, cidade, bairro e rua, quando disponíveis.'}/>
+                <label className="mt-2 inline-flex min-h-9 cursor-pointer items-center gap-2 text-xs text-gray-300">
+                  <input type="checkbox" className="h-4 w-4 accent-[#A65A2A]" checked={unknownCep}
+                    onChange={e=>{
+                      const checked=e.target.checked
+                      setUnknownCep(checked)
+                      if(checked){setForm(prev=>({...prev,postalCode:''}));setCepStatus('');setErrors(prev=>({...prev,postalCode:''}))}
+                    }}/>
+                  Não sei meu CEP
+                </label>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label className="flex min-w-0 flex-col gap-2">
+                  <span className="text-xs font-semibold text-[#a0a0a9]">Estado</span>
+                  <select value={form.state} onChange={handleStateChange} autoComplete="address-level1"
+                    aria-invalid={Boolean(errors.state)} className="min-h-12 w-full rounded-xl border border-white/15 bg-[#111113] px-3 text-sm text-white">
+                    <option value="">Selecione seu estado</option>
+                    {states.map(state=><option key={state.id} value={state.sigla}>{state.nome} ({state.sigla})</option>)}
+                    {form.state&&!states.some(state=>state.sigla===form.state)&&<option value={form.state}>{form.state}</option>}
+                  </select>
+                  {errors.state&&<span role="alert" className="text-xs text-[#ff6b7a]">{errors.state}</span>}
+                </label>
+                <label className="flex min-w-0 flex-col gap-2">
+                  <span className="text-xs font-semibold text-[#a0a0a9]">Cidade</span>
+                  {form.state&&!loadingCities&&cities.length===0?
+                    <input type="text" value={form.city} autoComplete="address-level2" placeholder="Digite sua cidade"
+                      onChange={e=>handleCityChange({target:{value:e.target.value}} as React.ChangeEvent<HTMLSelectElement>)}
+                      className="min-h-12 w-full rounded-xl border border-white/15 bg-[#111113] px-3 text-sm text-white"/>:
+                    <select value={form.city} onChange={handleCityChange} autoComplete="address-level2" disabled={!form.state||loadingCities}
+                      aria-invalid={Boolean(errors.city)}
+                      className="min-h-12 w-full rounded-xl border border-white/15 bg-[#111113] px-3 text-sm text-white disabled:opacity-50">
+                      <option value="">{loadingCities?'Buscando cidades…':'Selecione sua cidade'}</option>
+                      {cities.map(city=><option key={city.id} value={city.nome}>{city.nome}</option>)}
+                      {form.city&&!cities.some(city=>normalizePlace(city.nome)===normalizePlace(form.city))&&<option value={form.city}>{form.city}</option>}
+                    </select>}
+                  {errors.city&&<span role="alert" className="text-xs text-[#ff6b7a]">{errors.city}</span>}
+                </label>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <Input label="Número" value={withoutNumber?'S/N':form.addressNumber}
+                    onChange={set('addressNumber')} disabled={withoutNumber}
+                    autoComplete="address-line2" placeholder="Ex.: 125" error={errors.addressNumber}/>
+                  <label className="mt-2 inline-flex min-h-9 cursor-pointer items-center gap-2 text-xs text-gray-300">
+                    <input type="checkbox" className="h-4 w-4 accent-[#A65A2A]" checked={withoutNumber}
+                      onChange={e=>{
+                        setWithoutNumber(e.target.checked)
+                        setErrors(prev=>({...prev,addressNumber:''}))
+                      }}/>
+                    Sem número (S/N)
+                  </label>
+                </div>
+                <Input label="Bairro" autoComplete="address-level3" placeholder="Seu bairro"
+                  value={form.neighborhood} onChange={set('neighborhood')} error={errors.neighborhood}/>
+              </div>
+              <Input label="Rua / Avenida / Endereço" autoComplete="address-line1" placeholder="Nome da rua, avenida ou localidade"
+                value={form.street} onChange={set('street')} error={errors.street}/>
+              {loadingStreetCep&&<p role="status" className="text-xs text-[#b5a296]">Procurando CEPs para este endereço…</p>}
+              {cepSuggestions.length>0&&<section aria-label="Sugestões de CEP" className="rounded-xl border border-white/10 bg-[#101013] p-3">
+                <p className="mb-2 text-xs font-semibold text-[#d4c1b5]">Encontramos mais de um CEP. Escolha o correspondente:</p>
+                <div className="max-h-48 overflow-y-auto space-y-1">
+                  {cepSuggestions.map(item=><button key={item.cep} type="button" onClick={()=>chooseCep(item)}
+                    className="block min-h-11 w-full rounded-lg px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/10">
+                    <strong className="mr-2 text-[#e9a573]">{formatCep(item.cep)}</strong>
+                    {[item.logradouro,item.bairro,item.localidade].filter(Boolean).join(' · ')}
+                  </button>)}
+                </div>
+              </section>}
+              <Input label="Complemento (opcional)" autoComplete="address-line3" placeholder="Apartamento, lote, referência…"
+                value={form.addressComplement} onChange={set('addressComplement')}/>
+              <p className="text-[11px] leading-5 text-gray-500">Não existe um CEP principal garantido para todas as cidades. Se a busca não encontrar um CEP único, você poderá continuar sem ele informando seu endereço completo.</p>
+            </section>
           </>}
 
           {step===3&&<>
@@ -307,13 +383,27 @@ export function RegisterPage() {
 
           <div className="grid grid-cols-2 gap-3 mt-2">
             {step>1?<Button type="button" variant="secondary" fullWidth size="lg" onClick={previousStep}>Voltar</Button>:<div />}
-            {step<3?<Button type="button" fullWidth size="lg" onClick={nextStep}>Continuar</Button>:<Button type="submit" fullWidth loading={loading} size="lg">Criar conta</Button>}
+            {step<3?<Button type="button" fullWidth size="lg" onClick={nextStep}>Continuar</Button>:<Button type="submit" fullWidth loading={loading} disabled={!acceptedConditions || loading} size="lg">Criar conta</Button>}
           </div>
 
           <p className="text-xs text-center" style={{ color: '#6b6b78' }}>
             Etapa {step} de 3 · Seus dados ficam salvos enquanto você avança.
           </p>
-          {step===3&&<p className="text-xs text-center" style={{ color: '#6b6b78' }}>Ao criar uma conta, você concorda com os nossos termos de uso.</p>}
+          {step===3&&<section className="rounded-xl border border-white/10 bg-[#151517] p-4" aria-labelledby="conditions-title">
+            <h3 id="conditions-title" className="text-sm font-semibold text-gray-100">Condições essenciais do cadastro</h3>
+            <details className="my-3 rounded-lg bg-black/20 p-3 text-xs text-gray-400">
+              <summary className="cursor-pointer font-semibold text-[#e1b696]">Leia como sua conta funciona</summary>
+              <p className="mt-2 leading-relaxed">Seu nome, e-mail, telefone e endereço são utilizados para criar e identificar sua conta, permitir acesso à plataforma e administrar seus pedidos, projetos e treinamentos. A confirmação do e-mail é necessária para ativar o acesso. Avisos essenciais ficam no painel e no e-mail; WhatsApp e novidades comerciais dependem das autorizações opcionais acima, que podem ser alteradas nas configurações.</p>
+            </details>
+            <label className="flex cursor-pointer items-start gap-3">
+              <input type="checkbox" checked={acceptedConditions} onChange={e=>{
+                setAcceptedConditions(e.target.checked)
+                setErrors(prev=>({...prev,acceptedConditions:''}))
+              }} className="mt-1 h-4 w-4 shrink-0 accent-[#A65A2A]"/>
+              <span className="text-xs leading-5 text-gray-200">Li e aceito as condições essenciais de cadastro e uso da minha conta. <span className="text-gray-400">(Obrigatório)</span></span>
+            </label>
+            {errors.acceptedConditions&&<p role="alert" className="mt-2 text-xs text-[#ff6b7a]">{errors.acceptedConditions}</p>}
+          </section>}
         </form>
       </div>
     </div>
