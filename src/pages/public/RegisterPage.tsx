@@ -7,6 +7,7 @@ import { useToast } from '../../contexts/ToastContext'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { afterAuthPath, authLink, safeReturnPath } from '../../lib/navigation'
+import { EMAIL_FORMAT_HINT, isServerEmailFormatError, isValidSignupEmail, normalizeSignupEmail } from '../../lib/signupEmail'
 
 export function RegisterPage() {
   const [form, setForm] = useState({ name: '', lastName: '', email: '', phone: '', documentNumber: '', postalCode: '', street: '', addressNumber: '', addressComplement: '', neighborhood: '', city: '', state: '', password: '', confirm: '', whatsappUpdatesOptIn: false, marketingOptIn: false })
@@ -23,11 +24,15 @@ export function RegisterPage() {
   const [acceptedConditions,setAcceptedConditions]=useState(false)
   const [step, setStep] = useState(1)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [registrationError,setRegistrationError]=useState('')
   const { register, user, isLoading } = useAuth()
   const toast = useToast()
   const navigate = useNavigate()
   const location = useLocation()
   const next = safeReturnPath(new URLSearchParams(location.search).get('next'))
+  useEffect(()=>{
+    if(step===1&&errors.email){document.getElementById('register-email')?.focus()}
+  },[step,errors.email])
   useEffect(() => {
     fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome')
       .then(response => response.ok ? response.json() : Promise.reject())
@@ -150,7 +155,8 @@ export function RegisterPage() {
     const errs: Record<string, string> = {}
     if (!form.name) errs.name = 'Informe o nome'
     if (!form.lastName) errs.lastName = 'Informe o sobrenome'
-    if (!form.email) errs.email = 'Informe o e-mail'
+    if (!normalizeSignupEmail(form.email)) errs.email = 'Informe o e-mail'
+    else if (!isValidSignupEmail(form.email)) errs.email = EMAIL_FORMAT_HINT
     if (!form.phone.replace(/\D/g, '')) errs.phone = 'Informe o telefone'
     if (form.whatsappUpdatesOptIn && ![10,11].includes(form.phone.replace(/\D/g, '').length)) errs.phone = 'Informe um WhatsApp válido com DDD para receber os avisos'
     const document = form.documentNumber.replace(/\D/g, '')
@@ -181,6 +187,8 @@ export function RegisterPage() {
     const errs = stepErrors(step)
     if (Object.keys(errs).length) { setErrors(errs); return }
     setErrors({})
+    setRegistrationError('')
+    if(step===1)setForm(prev=>({...prev,email:normalizeSignupEmail(prev.email)}))
     setStep(current => Math.min(3, current + 1))
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -194,13 +202,23 @@ export function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const errs = validate()
-    if (Object.keys(errs).length) { setErrors(errs); return }
+    if (Object.keys(errs).length) {
+      setErrors(errs)
+      const invalidStep=stepErrors(1)
+        ? (Object.keys(stepErrors(1)).length?1:Object.keys(stepErrors(2)).length?2:3)
+        : 3
+      setStep(invalidStep)
+      setRegistrationError('Revise os campos destacados antes de concluir o cadastro.')
+      window.scrollTo({top:0,behavior:'smooth'})
+      return
+    }
+    setRegistrationError('')
     setLoading(true)
     try {
       const result = await register({
         name: form.name,
         lastName: form.lastName,
-        email: form.email,
+        email: normalizeSignupEmail(form.email),
         phone: form.phone,
         documentNumber: form.documentNumber,
         postalCode: form.postalCode,
@@ -224,8 +242,17 @@ export function RegisterPage() {
 
       toast(next === '/carrinho' ? 'Conta criada! Vamos continuar sua compra.' : 'Conta criada com sucesso!', 'success')
       navigate(afterAuthPath(next, 'customer'))
-    } catch (err: any) {
-      toast(err.message || 'Erro ao criar conta.', 'error')
+    } catch (err: unknown) {
+      if(isServerEmailFormatError(err)){
+        setErrors(prev=>({...prev,email:'O servidor não aceitou este e-mail. Verifique o endereço e tente novamente.'}))
+        setRegistrationError('Não foi possível validar o e-mail. Corrija o endereço na primeira etapa; seus outros dados foram preservados.')
+        setStep(1)
+        window.scrollTo({top:0,behavior:'smooth'})
+      }else{
+        const message=err instanceof Error?err.message:'Erro ao criar conta.'
+        setRegistrationError(message)
+        toast('Não foi possível concluir o cadastro. Confira o aviso no formulário.','error')
+      }
     } finally {
       setLoading(false)
     }
@@ -253,14 +280,19 @@ export function RegisterPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+          {registrationError&&<div role="alert" className="rounded-xl border border-red-400/30 bg-red-950/20 px-4 py-3 text-sm leading-6 text-red-200">{registrationError}</div>}
           {step===1&&<>
             <div className="mb-1"><h2 className="font-semibold" style={{color:'#f0f0f2'}}>Seus dados</h2><p className="text-xs mt-1" style={{color:'#6b6b78'}}>Informações básicas para identificar sua conta.</p></div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input label="Nome" autoComplete="given-name" placeholder="João" value={form.name} onChange={set('name')} error={errors.name} />
               <Input label="Sobrenome" autoComplete="family-name" placeholder="Silva" value={form.lastName} onChange={set('lastName')} error={errors.lastName} />
             </div>
-            <Input label="E-mail" type="email" autoComplete="email" placeholder="seu@email.com" value={form.email} onChange={set('email')} error={errors.email} />
+            <Input id="register-email" label="E-mail" type="email" inputMode="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} autoComplete="email" placeholder="seu@email.com" value={form.email} onChange={e=>{
+              setForm(prev=>({...prev,email:e.target.value}))
+              setErrors(prev=>({...prev,email:''}))
+              setRegistrationError('')
+            }} error={errors.email} />
             <Input label="Telefone" type="tel" inputMode="tel" autoComplete="tel" placeholder="(11) 99999-9999" value={form.phone} onChange={e=>setForm(prev=>({...prev,phone:formatPhone(e.target.value)}))} error={errors.phone} />
             <Input label="CPF/CNPJ" inputMode="numeric" placeholder="CPF ou CNPJ" value={form.documentNumber} onChange={e=>setForm(prev=>({...prev,documentNumber:formatDocument(e.target.value)}))} error={errors.documentNumber} />
           </>}
@@ -378,17 +410,7 @@ export function RegisterPage() {
               </label>
               <p className="mt-3 text-[11px] leading-relaxed text-gray-500">Nenhuma opção é obrigatória para criar a conta. O WhatsApp utiliza integração experimental, sujeita à disponibilidade do serviço; os avisos essenciais continuam acessíveis no painel.</p>
             </section>
-          </>}
-
-          <div className="grid grid-cols-2 gap-3 mt-2">
-            {step>1?<Button type="button" variant="secondary" fullWidth size="lg" onClick={previousStep}>Voltar</Button>:<div />}
-            {step<3?<Button type="button" fullWidth size="lg" onClick={nextStep}>Continuar</Button>:<Button type="submit" fullWidth loading={loading} disabled={!acceptedConditions || loading} size="lg">Criar conta</Button>}
-          </div>
-
-          <p className="text-xs text-center" style={{ color: '#6b6b78' }}>
-            Etapa {step} de 3 · Seus dados ficam salvos enquanto você avança.
-          </p>
-          {step===3&&<section className="rounded-xl border border-white/10 bg-[#151517] p-4" aria-labelledby="conditions-title">
+            <section className="rounded-xl border border-white/10 bg-[#151517] p-4" aria-labelledby="conditions-title">
             <h3 id="conditions-title" className="text-sm font-semibold text-gray-100">Condições essenciais do cadastro</h3>
             <details className="my-3 rounded-lg bg-black/20 p-3 text-xs text-gray-400">
               <summary className="cursor-pointer font-semibold text-[#e1b696]">Leia como sua conta funciona</summary>
@@ -402,7 +424,17 @@ export function RegisterPage() {
               <span className="text-xs leading-5 text-gray-200">Li e aceito as condições essenciais de cadastro e uso da minha conta. <span className="text-gray-400">(Obrigatório)</span></span>
             </label>
             {errors.acceptedConditions&&<p role="alert" className="mt-2 text-xs text-[#ff6b7a]">{errors.acceptedConditions}</p>}
-          </section>}
+          </section>
+          </>}
+
+          <div className="grid grid-cols-2 gap-3 mt-2"
+            {step>1?<Button type="button" variant="secondary" fullWidth size="lg" onClick={previousStep}>Voltar</Button>:<div />}
+            {step<3?<Button type="button" fullWidth size="lg" onClick={nextStep}>Continuar</Button>:<Button type="submit" fullWidth loading={loading} disabled={!acceptedConditions || loading} size="lg">Criar conta</Button>}
+          </div>
+
+          <p className="text-xs text-center" style={{ color: '#6b6b78' }}>
+            Etapa {step} de 3 · Seus dados ficam salvos enquanto você avança.
+          </p>
         </form>
       </div>
     </div>
