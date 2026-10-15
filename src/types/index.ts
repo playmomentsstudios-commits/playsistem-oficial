@@ -332,6 +332,7 @@ export type NotificationType =
   | 'order_created'
   | 'order_updated'
   | 'payment_confirmed'
+  | 'academy_purchase_ready'
   | 'payment_pending'
   | 'quote_received'
   | 'file_received'
