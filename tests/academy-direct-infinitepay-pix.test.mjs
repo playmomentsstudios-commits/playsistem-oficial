@@ -33,7 +33,7 @@ test('Provider amount, domain and ownership are validated exclusively in backend
 })
 test('Webhook never trusts client-paid flags and requires independent provider status check',()=>{
  has(webhook,['api.checkout.infinitepay.io/payment_check','verified?.paid!==true','amount!==order.amount_cents','provider_transaction_nsu','academy_fulfill_verified_purchase'])
- assert.ok(!webhook.includes('academy_library_grants').valueOf ? true : !webhook.includes('academy_library_grants'))
+ assert.ok(!webhook.includes('academy_library_grants'))
  has(sql,['academy_fulfill_verified_purchase','email_confirmed_at','lower(u.email)=lower(v_order.buyer_email)','paid_waiting_email','academy_library_grants(item_id,user_id,source,active)','source=','after update of email_confirmed_at','academy_finalize_my_paid_works'])
 })
 test('Receipt is read only, user grant is protected by email verification, and routes are guarded',()=>{
