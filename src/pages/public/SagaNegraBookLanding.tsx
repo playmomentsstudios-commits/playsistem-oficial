@@ -1,5 +1,4 @@
 import type { SiteLandingPage, LandingSection } from '../../services/siteContent'
-import { BrandImage } from '../../components/BrandImage'
 import {AcademyWorkHeader,AcademyWorkOffers,workInterestUrl} from '../../components/academy/AcademyWorkSales'
 
 type Props={page:SiteLandingPage;preview?:boolean}
