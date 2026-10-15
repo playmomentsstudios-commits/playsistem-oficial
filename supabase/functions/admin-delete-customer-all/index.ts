@@ -47,6 +47,11 @@ Deno.serve(async (req) => {
       conversationsResult,
       filesResult,
       receiptsResult,
+      academyResult,
+      rentalResult,
+      selectedWhatsappResult,
+      outsideMessagesResult,
+      outsideUploadsResult,
     ] = await Promise.all([
       ctx.db.from("projects").select("id,title").eq("customer_id",customerId),
       ctx.db.from("orders").select("id,order_number,total,payment_status").eq("customer_id",customerId),
@@ -55,7 +60,20 @@ Deno.serve(async (req) => {
       ctx.db.from("conversations").select("id").eq("customer_id",customerId),
       ctx.db.from("client_files").select("id,name,storage_provider,storage_path,drive_file_id").eq("customer_id",customerId),
       ctx.db.from("payment_receipts").select("id,storage_path").eq("customer_id",customerId),
+      ctx.db.rpc("admin_customer_academy_summary",{p_customer_id:customerId}),
+      ctx.db.from("product_rentals").select("id",{count:"exact",head:true}).eq("customer_id",customerId),
+      ctx.db.from("app_settings").select("id",{count:"exact",head:true}).eq("wa_bridge_single_customer_id",customerId),
+      ctx.db.from("messages").select("id,conversations!inner(customer_id)")
+        .eq("sender_id",customerId).neq("conversations.customer_id",customerId),
+      ctx.db.from("chat_drive_uploads").select("message_id,conversations!inner(customer_id)")
+        .eq("sender_id",customerId).neq("conversations.customer_id",customerId),
     ]);
+    // Failed queries must never be interpreted as a zero-row deletion preview.
+    for(const result of [projectsResult,ordersResult,paymentsResult,quotesResult,
+      conversationsResult,filesResult,receiptsResult,academyResult,rentalResult,
+      selectedWhatsappResult,outsideMessagesResult,outsideUploadsResult]){
+      if(result.error) throw result.error;
+    }
 
     const projects=projectsResult.data||[];
     const orders=ordersResult.data||[];
@@ -85,23 +103,40 @@ Deno.serve(async (req) => {
       messages:messages.length,
       files:clientFiles.length,
       receipts:receipts.length,
+      academy_students:Number(academyResult.data?.students||0),
+      academy_enrollments:Number(academyResult.data?.enrollments||0),
+      academy_attempts:Number(academyResult.data?.attempts||0),
+      academy_certificates:Number(academyResult.data?.certificates||0),
+      academy_program_enrollments:Number(academyResult.data?.program_enrollments||0),
+      academy_documents:Number(academyResult.data?.documents||0),
+      academic_signed_records:Number(academyResult.data?.signed_records||0),
+      active_rentals:Number(rentalResult.count||0),
+      selected_whatsapp:Number(selectedWhatsappResult.count||0),
+      shared_messages:(outsideMessagesResult.data||[]).length,
+      shared_uploads:(outsideUploadsResult.data||[]).length,
       paid_total:payments
         .filter((row:any)=>row.status==="paid")
         .reduce((sum:number,row:any)=>sum+Number(row.amount||0),0),
     };
 
     const operationalTotal =
-      summary.projects+summary.orders+summary.payments+summary.quotes+summary.conversations;
+      summary.projects+summary.orders+summary.payments+summary.quotes+summary.conversations
+      +summary.files+summary.receipts+summary.messages;
+    const academicTotal=summary.academy_students+summary.academy_enrollments
+      +summary.academy_attempts+summary.academy_certificates+summary.academy_program_enrollments
+      +summary.academy_documents+summary.academic_signed_records;
+    const mustForce=operationalTotal+academicTotal>0;
 
     if(action==="preview"){
-      return json({ok:true,customer,summary,requires_force:operationalTotal>0});
+      return json({ok:true,customer,summary,requires_force:mustForce,
+        has_protected_records:summary.academic_signed_records>0});
     }
 
-    if(action==="standard" && operationalTotal>0){
+    if(action==="standard" && mustForce){
       return json({
         ok:false,
         code:"CUSTOMER_HAS_HISTORY",
-        error:"Este cliente possui histórico operacional. Use a exclusão total somente se quiser remover também projetos, financeiro, arquivos e conversas.",
+        error:"Este cliente possui registros vinculados (incluindo dados acadêmicos). Revise o resumo e use a exclusão total para removê-los.",
         summary,
       },409);
     }
@@ -118,6 +153,29 @@ Deno.serve(async (req) => {
     if(!["standard","force"].includes(action)){
       throw new Error("Unsupported deletion action");
     }
+    // Preserve legally relevant signed academic records and active rental contracts.
+    // The operator must resolve these explicit blockers rather than receive a generic
+    // "Database error deleting user" after partial external deletion.
+    if(summary.academic_signed_records>0) return json({
+      ok:false,code:"ACADEMY_SIGNED_RECORDS",
+      error:"Há documentos assinados ou aceites acadêmicos vinculados. Para preservar o histórico legal, solicite revisão administrativa antes da exclusão.",
+      summary
+    },409);
+    if(summary.active_rentals>0) return json({
+      ok:false,code:"ACTIVE_RENTALS",
+      error:"Este cliente possui locações registradas. Finalize ou regularize as locações antes de excluir a conta.",
+      summary
+    },409);
+    if(summary.selected_whatsapp>0) return json({
+      ok:false,code:"WHATSAPP_DELIVERY_TARGET",
+      error:"O cliente está selecionado como destinatário de teste da Central WhatsApp. Troque o destinatário ou pause esse modo antes de excluir.",
+      summary
+    },409);
+    if(summary.shared_messages>0||summary.shared_uploads>0) return json({
+      ok:false,code:"SHARED_CONVERSATION_HISTORY",
+      error:"Há mensagens ou arquivos enviados por este cliente em conversas de terceiros. Revise esses vínculos antes de excluir o cadastro.",
+      summary
+    },409);
 
     if (customer.drive_folder_id) {
       const token = await getDriveAccessToken();
@@ -181,8 +239,21 @@ Deno.serve(async (req) => {
       if(error) throw error;
     }
 
+    // Cleanup is scoped to this customer and transactional inside the database.
+    // It is only invoked for the explicit force flow; an empty registration has
+    // no academic relations and continues through its simpler deletion path.
+    if(action==="force" && academicTotal>0){
+      const {error:cleanupError}=await ctx.db.rpc("admin_customer_cleanup_academy",{p_customer_id:customerId});
+      if(cleanupError) throw cleanupError;
+    }
+
     const { error: authDeleteError } = await ctx.db.auth.admin.deleteUser(customerId);
-    if (authDeleteError) throw authDeleteError;
+    if(authDeleteError){
+      if(/database error deleting user/i.test(authDeleteError.message||"")){
+        throw new Error("O banco ainda possui uma referência protegida a este cadastro. Nenhuma exclusão de outro usuário foi realizada. Revise os vínculos do perfil antes de tentar novamente.");
+      }
+      throw authDeleteError;
+    }
 
     return json({ok:true,summary});
   } catch (error) {
