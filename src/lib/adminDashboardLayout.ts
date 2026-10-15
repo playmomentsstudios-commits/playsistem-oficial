@@ -13,6 +13,7 @@ export const DASHBOARD_SHORTCUTS = [
   { id:'library', label:'E-books e áudios', description:'Cadastrar e editar', href:'/admin/academia?section=library', icon:'books' },
   { id:'site', label:'Configurar site', description:'Páginas, identidade e SEO', href:'/admin/site', icon:'globe' },
   { id:'projects', label:'Projetos', description:'Acompanhar execução', href:'/admin/projetos', icon:'folder' },
+  { id:'services', label:'Serviços', description:'Catálogo de serviços para clientes', href:'/admin/servicos', icon:'briefcase' },
   { id:'tasks', label:'Tarefas', description:'Produtividade', href:'/admin/produtividade', icon:'check' },
   { id:'crm', label:'CRM', description:'Contatos e retornos', href:'/admin/crm', icon:'users' },
   { id:'quotes', label:'Orçamentos', description:'Propostas comerciais', href:'/admin/orcamentos', icon:'file' },
@@ -48,9 +49,23 @@ export type DashboardLayout = {
 
 const METADATA_KEY = 'sagamente_admin_dashboard_v1'
 export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayout = {
-  shortcuts:['clients','course-access','library-access','library','site','projects'],
+  // Uma ação principal de cada grupo do menu: Comercial, Operação, Financeiro,
+  // Catálogo, Academia, Comunicação e Gestão.
+  shortcuts:['clients','projects','payments','services','academy','messages','site'],
   widgets:['quick-actions','pending','projects','indicators'],
   metrics:['customers','activeProjects','pendingPayments','unread'],
+}
+
+// Ajusta apenas as combinações padrão de versões anteriores, sem sobrescrever
+// seleções ou ordenações que a pessoa montou manualmente.
+const LEGACY_DEFAULT_SHORTCUTS = ['clients','course-access','library-access','library','site','projects']
+const LEGACY_DEFAULT_WITHOUT_PROJECTS = ['clients','course-access','library-access','library','site']
+
+function upgradeLegacyShortcuts(shortcuts:string[]):string[]{
+  const isLegacy=(values:string[])=>shortcuts.length===values.length&&shortcuts.every((id,i)=>id===values[i])
+  return isLegacy(LEGACY_DEFAULT_SHORTCUTS)||isLegacy(LEGACY_DEFAULT_WITHOUT_PROJECTS)
+    ? [...DEFAULT_DASHBOARD_LAYOUT.shortcuts]
+    : shortcuts
 }
 
 function normalizeIds(value:unknown, valid:readonly string[], fallback:string[]):string[]{
@@ -65,7 +80,7 @@ function normalizeIds(value:unknown, valid:readonly string[], fallback:string[])
 export function normalizeDashboardLayout(value:unknown):DashboardLayout{
   const row=(value&&typeof value==='object'&&!Array.isArray(value)?value:{}) as Record<string,unknown>
   return {
-    shortcuts:normalizeIds(row.shortcuts,DASHBOARD_SHORTCUTS.map(x=>x.id),DEFAULT_DASHBOARD_LAYOUT.shortcuts),
+    shortcuts:upgradeLegacyShortcuts(normalizeIds(row.shortcuts,DASHBOARD_SHORTCUTS.map(x=>x.id),DEFAULT_DASHBOARD_LAYOUT.shortcuts)),
     widgets:normalizeIds(row.widgets,DASHBOARD_WIDGETS.map(x=>x.id),DEFAULT_DASHBOARD_LAYOUT.widgets),
     metrics:normalizeIds(row.metrics,DASHBOARD_METRICS.map(x=>x.id),DEFAULT_DASHBOARD_LAYOUT.metrics),
   }
