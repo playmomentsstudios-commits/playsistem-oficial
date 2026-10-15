@@ -425,7 +425,7 @@ export function RegisterPage() {
           </section>
           </>}
 
-          <div className="grid grid-cols-2 gap-3 mt-2"
+          <div className="grid grid-cols-2 gap-3 mt-2">
             {step>1?<Button type="button" variant="secondary" fullWidth size="lg" onClick={previousStep}>Voltar</Button>:<div />}
             {step<3?<Button type="button" fullWidth size="lg" onClick={nextStep}>Continuar</Button>:<Button type="submit" fullWidth loading={loading} disabled={!acceptedConditions || loading} size="lg">Criar conta</Button>}
           </div>
