@@ -1,4 +1,4 @@
-import {createClient} from 'npm:@supabase/supabase-js@2'
+import {createClient} from 'npm:@supabase/supabase-js@2.117.1'
 const headers={'Content-Type':'application/json'}
 const json=(payload:unknown,status=200)=>new Response(JSON.stringify(payload),{status,headers})
 const env=(key:string)=>Deno.env.get(key)||''

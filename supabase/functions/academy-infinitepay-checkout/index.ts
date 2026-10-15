@@ -1,4 +1,4 @@
-import {createClient} from 'npm:@supabase/supabase-js@2'
+import {createClient} from 'npm:@supabase/supabase-js@2.117.1'
 
 const headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, apikey, x-client-info, content-type','Access-Control-Allow-Methods':'POST,OPTIONS'}
 const response=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...headers,'Content-Type':'application/json'}})
@@ -86,6 +86,9 @@ Deno.serve(async request=>{
    .select('id',{head:true,count:'exact'}).eq('user_id',userId).gte('created_at',new Date(Date.now()-60*60*1000).toISOString())
   if(countError)throw countError
   if((count||0)>=5)return reject('Limite temporário de tentativas atingido. Aguarde uma hora.',429)
+  const phone=String(profile.phone||'').replace(/[^0-9]/g,'')
+  const phoneNumber=/^[0-9]{10,11}$/.test(phone)?'+55'+phone:
+   /^55[0-9]{10,11}$/.test(phone)?'+'+phone:undefined
   const id=crypto.randomUUID()
   const {error:insertError}=await database.from('academy_work_purchases').insert({
    id,work_id:work.id,user_id:userId,buyer_email:userEmail,
@@ -103,9 +106,7 @@ Deno.serve(async request=>{
      customer:{
       name:[profile.first_name,profile.last_name].filter(Boolean).join(' ')||userEmail,
       email:userEmail,
-      ...((profile.phone&&/^[0-9]{10,13}$/.test(String(profile.phone).replace(/[^0-9]/g,'')))?
-       {phone_number:(String(profile.phone).replace(/[^0-9]/g,'').startsWith('55')?'+':'+55')+
-        String(profile.phone).replace(/[^0-9]/g,'').replace(/^55/,'')}: {})
+      ...(phoneNumber?{phone_number:phoneNumber}: {})
      }
     })})
    const json=await post.json().catch(()=>({}))
