@@ -6,12 +6,12 @@ import {useAuth} from '../../contexts/AuthContext'
 import {RegisterPage} from './RegisterPage'
 import {authLink} from '../../lib/navigation'
 import {academyComboSavings,formatAcademyMoney as money,type AcademyWorkPrice} from '../../lib/academyPricing'
-import {ComboDiscountBadge} from '../../components/academy/AcademyWorkSales'
+import './academyCheckout.css'
 
 type Format='ebook'|'audiobook'|'combo'
 type Work={release_code:string;title:string;description:string|null;cover_url:string|null;landing_slug:string;ebook_status:string|null;audiobook_status:string|null}
 type WorkPrice=AcademyWorkPrice
-const card='rounded-2xl border border-white/[.10] bg-[#17191d] p-4 text-left'
+const card='academy-format-option min-w-0 rounded-xl border px-1.5 py-4 text-center transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f1b586] sm:px-3'
 const checkoutKey=(release:string)=>'sagamente.academy.pending-purchase.'+release
 const isSafeCheckout=(value:string)=>{
  try{return new URL(value).protocol==='https:'&&['checkout.infinitepay.com.br','checkout.infinitepay.io','checkout.infinitepay.com'].includes(new URL(value).hostname)}
@@ -94,32 +94,30 @@ export function AcademyWorkInterestPage(){
     <aside className="space-y-4">
      <p className="text-xs font-bold uppercase tracking-[.19em] text-[#dd9c68]">SAGA NEGRA · Release {work.release_code}</p>
      <h1 className="font-serif text-3xl font-bold leading-tight sm:text-4xl">{work.title}</h1>
-     <p className="text-sm leading-7 text-gray-400">{work.description||'Conheça a obra em formato digital.'}</p>
      {work.cover_url&&<img src={work.cover_url} alt={'Capa de '+work.title} className="max-h-72 w-auto rounded-xl object-cover"/>}
      <Link to={'/l/'+encodeURIComponent(work.landing_slug)} className="inline-flex min-h-11 items-center text-xs font-semibold text-[#e9a77a] underline">← Voltar à apresentação</Link>
     </aside>
-    <section className="min-w-0 rounded-3xl border border-[#ba7446]/25 bg-[#17181b] p-5 sm:p-7">
+    <section className="min-w-0 rounded-3xl border border-[#ba7446]/25 bg-[#17181b] p-4 sm:p-7">
      <p className="text-xs font-bold uppercase tracking-widest text-[#e5a376]">Finalizar aquisição</p>
      <h2 className="mt-2 font-serif text-3xl font-bold">Escolha seu formato</h2>
-     <div className="mt-6 grid gap-2 sm:grid-cols-3" role="group" aria-label="Formato que deseja adquirir">
-      {([['ebook','E-book','Ler'],['audiobook','Audiobook','Ouvir'],['combo','Combo','Ler + ouvir']] as const)
-       .filter(([key])=>key==='ebook'?ebook:key==='audiobook'?audiobook:ebook&&audiobook).map(([key,label,detail])=>
+     <div className="mt-5 grid grid-cols-3 gap-1.5 sm:gap-2" role="group" aria-label="Formato que deseja adquirir">
+      {([['ebook','E-book'],['audiobook','Audiobook'],['combo','Combo']] as const)
+       .filter(([key])=>key==='ebook'?ebook:key==='audiobook'?audiobook:ebook&&audiobook).map(([key,label])=>
        <button type="button" aria-pressed={format===key} key={key}
-        className={card+' '+(format===key?'border-[#ed9e63] bg-[#4b3227]':'hover:border-white/30')}
+        className={card+' '+(key==='combo'?'academy-format-combo '+(format===key?'academy-format-combo-selected':''):format===key?'border-[#ed9e63] bg-[#4b3227]':'border-white/10 bg-[#17191d] hover:border-white/30')}
         onClick={()=>choose(key)}>
-        <strong className="block text-sm">{label}</strong>
-        {key==='combo'&&savings&&<span className="mt-2 block"><ComboDiscountBadge percentage={savings.percentage} compact/></span>}
-        <span className="mt-1 block text-xs text-gray-400">{detail}</span>
-        {price&&<span className="mt-3 block text-sm font-extrabold text-[#f1b586]">{money(key==='ebook'?price.ebook_cents:key==='audiobook'?price.audiobook_cents:price.combo_cents)}</span>}
+        <strong className="block text-[11px] sm:text-sm">{label}{key==='combo'&&format===key&&<span aria-hidden="true" className="ml-1 text-[#b2ffd5]">✓</span>}</strong>
+        {price&&<span className={'mt-2 block whitespace-nowrap text-sm font-extrabold tabular-nums sm:text-lg '+(key==='combo'?'text-[#b2ffd5]':'text-[#f1b586]')}>{money(key==='ebook'?price.ebook_cents:key==='audiobook'?price.audiobook_cents:price.combo_cents)}</span>}
+        {key==='combo'&&savings&&<span className="mt-2 inline-block rounded-full bg-[#8cf0b5] px-1.5 py-0.5 text-[10px] font-extrabold text-[#102c1d]" aria-label={savings.percentage+'% de desconto'}>−{savings.percentage}%</span>}
        </button>)}
      </div>
-     <div className="mt-5 rounded-2xl border border-[#b86c40]/30 bg-[#39271f] p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3"><span className="text-sm font-semibold">Total do pedido</span><strong className="text-2xl font-extrabold tabular-nums text-[#ffc59b]">{price?money(total):'—'}</strong></div>
+     <div className="mt-4 rounded-xl border border-white/10 bg-white/[.03] p-3">
+      <div className="flex flex-wrap items-center justify-between gap-3"><span className="text-sm font-semibold">Total</span><strong className="text-2xl font-extrabold tabular-nums text-[#ffc59b]">{price?money(total):'—'}</strong></div>
       {format==='combo'&&savings&&<div className="mt-2 flex flex-wrap justify-between gap-x-3 gap-y-1 text-xs text-[#e8b68d]">
        <span>Separados: <del>{money(savings.separateCents)}</del></span>
        <span className="font-bold">Economia de {money(savings.savingCents)}</span>
       </div>}
-      <p className="mt-2 text-xs leading-6 text-[#d1b7a5]">Pix na página segura da InfinitePay. A confirmação do pagamento libera o conteúdo automaticamente para sua conta após a verificação do e-mail.</p>
+      <p className="mt-2 text-xs leading-6 text-[#d1b7a5]">Pix · InfinitePay. Confirme seu e-mail para acessar a obra após o pagamento.</p>
      </div>
      {error&&<p role="alert" className="mt-4 rounded-xl border border-red-500/20 bg-red-900/20 px-4 py-3 text-xs text-red-200">{error}</p>}
      {!price?.checkout_enabled?<div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-600/10 p-4 text-xs leading-6 text-amber-200">
@@ -132,14 +130,12 @@ export function AcademyWorkInterestPage(){
       </button>
      </div>:<div className="mt-6">
       <h3 className="text-lg font-bold">Crie sua conta e pague</h3>
-      <p className="mt-2 text-xs leading-6 text-gray-400">Seu cadastro e sua compra são feitos neste mesmo fluxo. Após confirmar o pedido, você poderá pagar no checkout Pix; confirme seu e-mail para receber a obra na Minha Academia.</p>
       <p className="mt-2 text-xs">Já tem conta? <Link to={authLink('/login',returnPath)} className="font-bold text-[#e9a87b] underline">Entrar para pagar</Link></p>
       <div className="mt-5 rounded-2xl border border-white/10 bg-[#101114] p-3 sm:p-5">
        <RegisterPage embedded nextOverride={returnPath}
         onPurchaseRegistration={async(result,email)=>await checkout({guest_user_id:result.userId,guest_email:email})}/>
       </div>
      </div>}
-     <p className="mt-5 text-[11px] leading-5 text-gray-500">O botão abre o checkout seguro do provedor, com o QR Code Pix e a opção de copiar o código. O valor será cobrado somente quando você pagar. Sua biblioteca é atualizada após a confirmação do pagamento.</p>
     </section>
    </div>}
  </main>

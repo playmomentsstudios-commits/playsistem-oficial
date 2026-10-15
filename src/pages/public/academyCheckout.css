@@ -1,0 +1,17 @@
+.academy-format-combo {
+  border-color: #438b62;
+  background: #173124;
+  animation: academy-combo-glow 3s ease-in-out infinite;
+}
+.academy-format-combo:hover { background: #1d3c2b; }
+.academy-format-combo-selected {
+  border-color: #91efb8;
+  background: #204330;
+}
+@keyframes academy-combo-glow {
+  0%, 100% { box-shadow: 0 0 0 1px #70df9b30, 0 0 6px #47dc7f18; }
+  50% { box-shadow: 0 0 0 1px #93ffc16b, 0 0 14px #47dc7f45; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .academy-format-combo { animation: none; box-shadow: 0 0 0 1px #70df9b30; }
+}
