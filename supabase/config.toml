@@ -6,3 +6,13 @@ verify_jwt = false
 # Machine endpoint validates its dedicated bearer credential inside the handler.
 [functions.automation-notifications]
 verify_jwt = false
+
+# Checkout accepts signed-in customers OR a just-created, unconfirmed auth user
+# with validated ID/email ownership. The function performs explicit authentication.
+[functions.academy-infinitepay-checkout]
+verify_jwt = false
+
+# InfinitePay webhooks have no client JWT. The function checks the payment
+# server-to-server with the official InfinitePay payment_check endpoint.
+[functions.academy-infinitepay-webhook]
+verify_jwt = false
