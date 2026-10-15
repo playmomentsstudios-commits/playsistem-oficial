@@ -4,7 +4,7 @@ import {BrandImage} from '../BrandImage'
 const action='inline-flex min-h-11 items-center justify-center rounded-xl bg-[#B66B3C] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#cf8655]'
 
 export const workInterestUrl=(release:string,format?:'ebook'|'audiobook'|'combo')=>
- '/academia/interesse/'+encodeURIComponent(release)+(format?'?formato='+format:'')
+ '/academia/comprar/'+encodeURIComponent(release)+(format?'?formato='+format:'')
 
 export function AcademyWorkHeader({release}:{release:string}){
  return <header className="border-b border-white/10 bg-[#101114]/95">
