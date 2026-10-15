@@ -5,6 +5,8 @@ import { DigitalLiteracyCover } from '../../components/academy/DigitalLiteracyCo
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import { LoadingState } from '../../components/ui/AsyncState'
+import {formatAcademyMoney,type AcademyWorkPrice} from '../../lib/academyPricing'
+import './academyCatalog.css'
 
 type PublicWork={
  release_code:string;title:string;description:string|null;cover_url:string|null;landing_slug:string;
@@ -56,8 +58,9 @@ export function PublicAcademyPage(){
  const [works,setWorks]=useState<PublicWork[]>([])
  const [worksLoading,setWorksLoading]=useState(true)
  const [worksError,setWorksError]=useState('')
- const [workFilter,setWorkFilter]=useState<'all'|'ebook'|'audiobook'>('all')
+ const [workFilter,setWorkFilter]=useState<'all'|'ebook'|'audiobook'|'course'|'free'>('all')
  const [workQuery,setWorkQuery]=useState('')
+ const [prices,setPrices]=useState<AcademyWorkPrice[]>([])
  const [loading,setLoading]=useState(true)
 
  useEffect(()=>{
@@ -75,6 +78,16 @@ export function PublicAcademyPage(){
  },[])
  useEffect(()=>{
   let active=true
+  void (async()=>{
+   try{
+    const {data,error}=await supabase.rpc('academy_public_work_prices')
+    if(active&&!error)setPrices((data||[]) as AcademyWorkPrice[])
+   }catch{ /* Prices are optional: the catalogue and landings remain available. */ }
+  })()
+  return()=>{active=false}
+ },[])
+ useEffect(()=>{
+  let active=true
   loadPublicCourses()
    .then(rows=>{if(active)setCourses(rows)})
    .catch(error=>{
@@ -85,109 +98,91 @@ export function PublicAcademyPage(){
   return()=>{active=false}
  },[])
 
- function goToFreeCourses(){
-  document.getElementById('cursos-gratuitos')?.scrollIntoView({behavior:'smooth',block:'start'})
- }
+ const normalize=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim()
+ const term=normalize(workQuery)
+ const matches=(values:Array<string|null>)=>!term||values.some(value=>normalize(value||'').includes(term))
+ const filteredCourses=courses.filter(course=>
+  (workFilter==='all'||workFilter==='course'||(workFilter==='free'&&course.access_type==='free'))&&
+  matches([course.title,course.description,course.category]))
+ const filteredWorks=works.filter(work=>
+  (workFilter==='all'||(workFilter==='ebook'&&Boolean(work.ebook_status))||(workFilter==='audiobook'&&Boolean(work.audiobook_status)))&&
+  matches([work.title,work.description,work.release_code]))
+ const showWorks=workFilter==='all'||workFilter==='ebook'||workFilter==='audiobook'
+ const showCourses=workFilter==='all'||workFilter==='course'||workFilter==='free'
+ const busy=(showWorks&&worksLoading)||(showCourses&&loading)
+ const card='group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#151517] text-left transition-colors hover:border-[#d8925e]/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#dfa269]'
+ const artwork='aspect-[4/3] overflow-hidden border-b border-white/[.06] bg-[#101113] sm:aspect-[16/10]'
 
- return <PublicLayout><main>
-  <section className="px-4 sm:px-5 py-10 sm:py-14 md:py-20 text-center">
-   <div className="max-w-4xl mx-auto">
-    <p className="text-xs uppercase tracking-[.22em] font-bold text-[#A65A2A]">Academia Sagamente</p>
-    <h1 className="text-[2.35rem] sm:text-4xl md:text-6xl font-extrabold mt-4 leading-[1.02]">
-     Conhecimento para <span className="text-[#A65A2A]">fazer acontecer.</span>
-    </h1>
-    <p className="max-w-2xl mx-auto text-sm sm:text-base text-gray-400 mt-4 sm:mt-5 leading-relaxed">
-     Cursos, e-books e audiobooks para aprender, refletir e criar. Conheça as obras, experimente as prévias gratuitas e escolha como continuar.
-    </p>
-    <div className="flex flex-col sm:flex-row sm:flex-wrap justify-center gap-3 mt-6 sm:mt-7">
-     <button type="button" onClick={goToFreeCourses} className="w-full sm:w-auto min-h-12 px-6 py-3 rounded-xl bg-[#A65A2A] text-white text-sm font-bold">
-      Começar gratuitamente
-     </button>
-     {!isAuthenticated&&<Link to="/cadastro?next=%2Fapp%2Facademia" className="w-full sm:w-auto min-h-12 inline-flex items-center justify-center px-6 py-3 rounded-xl border border-white/10 text-sm font-bold text-gray-300">Criar conta</Link>}
+ return <PublicLayout><section className="mx-auto max-w-6xl px-4 pb-14 pt-6 sm:px-5 sm:pb-20 sm:pt-9" aria-labelledby="academy-title">
+  <div className="flex items-start justify-between gap-3">
+   <div>
+    <h1 id="academy-title" className="text-3xl font-bold tracking-tight sm:text-4xl">Academia</h1>
+    <p className="mt-1 text-sm text-gray-400">Leia. Ouça. Aprenda.</p>
+   </div>
+   <Link to={isAuthenticated?'/app/academia':'/login?next=%2Fapp%2Facademia'} className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-white/15 px-3 text-xs font-semibold text-gray-200 hover:bg-white/5 sm:px-4">
+    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="7" r="4"/><path d="M4 22v-3a8 8 0 0116 0v3"/></svg>
+    Minha Academia
+   </Link>
+  </div>
+  <div id="obras-digitais" className="mt-5 scroll-mt-24 sm:mt-6">
+   <span id="cursos-gratuitos" className="block scroll-mt-24"/>
+   <div className="relative">
+    <svg aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></svg>
+    <input value={workQuery} onChange={event=>setWorkQuery(event.target.value)} type="search" aria-label="Buscar conteúdo" placeholder="Buscar conteúdo" className="min-h-11 w-full rounded-xl border border-white/10 bg-[#17181a] py-2 pl-11 pr-4 text-sm outline-none focus:border-[#DFA269]"/>
+   </div>
+   <div className="mt-3 flex gap-2 overflow-x-auto pb-2" role="group" aria-label="Filtrar conteúdos">
+    {([['all','Todos'],['ebook','E-books'],['audiobook','Audiobooks'],['course','Cursos'],['free','Gratuitos']] as const).map(([key,label])=>
+     <button key={key} aria-pressed={workFilter===key} type="button" onClick={()=>setWorkFilter(key)} className={'min-h-11 shrink-0 rounded-full border px-4 text-xs font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#dfa269] '+(workFilter===key?'border-[#b96b3e] bg-[#b96b3e] text-white':'border-white/15 text-gray-300 hover:bg-white/5')}>{label}</button>)}
+   </div>
+  </div>
+  {busy&&<LoadingState label="Carregando conteúdos..."/>}
+  {showWorks&&worksError&&<p role="alert" className="my-3 rounded-xl border border-amber-500/20 p-3 text-xs text-amber-200">{worksError}</p>}
+  <div className="mt-3 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3" aria-busy={busy}>
+   {filteredCourses.map(course=><Link key={'course-'+course.id}
+    to={course.slug==='letramento-digital'?'/curso/letramento-digital':(isAuthenticated?'/app/academia/'+course.id:'/cadastro?next='+encodeURIComponent('/app/academia/'+course.id))}
+    className={card}>
+    <div className={artwork} aria-hidden="true">
+     {course.cover_url?<img src={course.cover_url} alt="" className="h-full w-full object-cover" loading="lazy"/>:
+      course.slug==='letramento-digital'?<DigitalLiteracyCover compact className="academy-catalog-course-cover rounded-none" style={{minHeight:0}}/>:
+      <div className="flex h-full items-center justify-center text-4xl text-[#dfa269]">▶</div>}
     </div>
-   </div>
-  </section>
-
-  <section id="obras-digitais" className="mx-auto max-w-6xl scroll-mt-24 px-4 pb-14 sm:px-5 sm:pb-20">
-   <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-    <div><p className="text-[10px] font-bold uppercase tracking-[.18em] text-[#DFA269]">Biblioteca digital</p>
-     <h2 className="mt-1 text-2xl font-bold">Conheça nossas obras</h2>
-     <p className="mt-2 max-w-2xl text-xs leading-6 text-gray-400">Uma apresentação para cada obra, com amostras de leitura e áudio quando disponíveis. Escolha como prefere ler ou ouvir e converse com a equipe sobre a compra.</p>
+    <div className="flex flex-1 flex-col p-3 sm:p-4">
+     <h2 className="text-xs font-bold leading-snug text-gray-100 sm:text-base">{course.slug==='letramento-digital'?'Letramento Digital':course.title}</h2>
+     <p className="mt-2 text-[10px] text-gray-400 sm:text-xs">Curso{course.estimated_minutes?' · '+course.estimated_minutes+' min':''}</p>
+     <div className="mt-auto flex items-center justify-between gap-2 pt-3">
+      {course.access_type==='free'?<span className="rounded-md bg-emerald-400/10 px-2 py-1 text-[10px] font-semibold text-emerald-300 sm:text-xs">Gratuito</span>:<span className="text-xs text-[#dfa269]">Conhecer curso</span>}
+      <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/20 text-gray-300 group-hover:border-[#dfa269] group-hover:text-[#dfa269]">→</span>
+     </div>
+     <span className="sr-only">Conhecer curso →</span>
     </div>
-    {isAuthenticated&&<Link to="/app/academia/biblioteca" className="text-xs font-bold text-[#DFA269]">Minha biblioteca →</Link>}
-   </div>
-   <div className="mb-5 flex flex-wrap items-center gap-2">
-    <input value={workQuery} onChange={event=>setWorkQuery(event.target.value)} type="search" aria-label="Buscar obras" placeholder="Buscar obras por título ou tema..." className="min-h-11 min-w-[180px] flex-1 rounded-xl border border-white/10 bg-[#151517] px-4 text-sm outline-none focus:border-[#DFA269]"/>
-    {([['all','Todos'],['ebook','E-books'],['audiobook','Audiobooks']] as const).map(([key,label])=>
-     <button key={key} aria-pressed={workFilter===key} type="button" onClick={()=>setWorkFilter(key)} className={'min-h-11 rounded-xl px-3 text-xs font-bold '+(workFilter===key?'bg-[#A65A2A] text-white':'border border-white/10 text-gray-300')}>{label}</button>)}
-   </div>
-   {worksLoading?<LoadingState label="Carregando obras digitais..."/>:
-    worksError?<div role="alert" className="rounded-xl border border-amber-500/20 p-4 text-sm text-amber-200">{worksError}</div>:
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{works.filter(work=>{
-     const term=workQuery.toLocaleLowerCase('pt-BR').trim()
-     return (!term||[work.title,work.description,work.release_code].some(v=>String(v||'').toLocaleLowerCase('pt-BR').includes(term)))&&
-      (workFilter==='all'||Boolean(workFilter==='ebook'?work.ebook_status:work.audiobook_status))
-    }).map(work=>{
-     const available=Boolean(work.ebook_status||work.audiobook_status)
-     return <article key={work.release_code} className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#151517]">
-      <div className="flex gap-4 p-4">
-       <div className="aspect-[3/4] w-24 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-[#542a23] via-[#a05230] to-[#19191c]">
-        {work.cover_url?<img src={work.cover_url} alt="" className="h-full w-full object-cover" loading="lazy"/>:<div className="flex h-full flex-col items-center justify-center px-2 text-center text-xs font-black tracking-tight text-white/90"><span>SAGA</span><span>NEGRA</span><span className="mt-3 text-base text-[#ffcfab]">{work.release_code}</span></div>}
-       </div>
-       <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-[#dda371]">Obra · {work.release_code}</p>
-        <h3 className="mt-2 text-sm font-bold leading-snug">{work.title}</h3>
-        <p className="mt-2 line-clamp-3 text-xs leading-5 text-gray-400">{work.description||'Uma reflexão da biblioteca digital Sagamente.'}</p>
-       </div>
+   </Link>)}
+   {filteredWorks.map(work=>{
+    const offer=prices.find(price=>price.release_code===work.release_code&&price.checkout_enabled)
+    const validPrices=[workFilter!=='audiobook'&&work.ebook_status&&offer?.ebook_cents,workFilter!=='ebook'&&work.audiobook_status&&offer?.audiobook_cents]
+     .filter((value):value is number=>typeof value==='number'&&Number.isSafeInteger(value)&&value>0)
+    const startPrice=validPrices.length?Math.min(...validPrices):null
+    return <Link key={'work-'+work.release_code} to={'/l/'+encodeURIComponent(work.landing_slug)} className={card}>
+     <div className={artwork}>
+      {work.cover_url?<img src={work.cover_url} alt="" className="h-full w-full object-contain" loading="lazy"/>:
+       <div aria-hidden="true" className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-[#542a23] via-[#a05230] to-[#19191c] text-center font-black tracking-tight text-white/90"><span>SAGA NEGRA</span><span className="mt-2 text-sm text-[#ffcfab]">{work.release_code}</span></div>}
+     </div>
+     <div className="flex flex-1 flex-col p-3 sm:p-4">
+      <h2 className="text-xs font-bold leading-snug text-gray-100 sm:text-base">{work.title}</h2>
+      <p className="mt-2 text-[10px] leading-5 text-gray-400 sm:text-xs">
+       {[work.ebook_status&&'E-book',work.audiobook_status&&'Audiobook'].filter(Boolean).join(' · ')||'Em preparação'}
+      </p>
+      <div className="mt-auto flex items-center justify-between gap-1 pt-3">
+       <span className="text-[10px] font-semibold leading-5 text-[#f0a36c] sm:text-xs">{startPrice!==null?'A partir de '+formatAcademyMoney(startPrice):'Conhecer obra'}</span>
+       <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/20 text-gray-300 group-hover:border-[#dfa269] group-hover:text-[#dfa269]">→</span>
       </div>
-      <div className="mt-auto border-t border-white/[.06] px-4 pb-4 pt-3">
-       <div className="mb-3 flex flex-wrap gap-2 text-[10px] font-semibold text-gray-400">
-        {work.ebook_status&&<span className="rounded-lg border border-white/10 px-2 py-1">E-book</span>}
-        {work.audiobook_status&&<span className="rounded-lg border border-white/10 px-2 py-1">Audiobook</span>}
-        {!available&&<span className="rounded-lg border border-white/10 px-2 py-1">Em preparação</span>}
-       </div>
-       <Link to={'/l/'+encodeURIComponent(work.landing_slug)} className="flex min-h-11 items-center justify-center rounded-xl bg-[#A65A2A] px-4 text-sm font-bold text-white">Conhecer obra →</Link>
-      </div>
-     </article>
-    })}</div>}
-   {!worksLoading&&!worksError&&works.length===0&&<p className="text-sm text-gray-400">Nenhuma obra pública disponível neste momento.</p>}
-  </section>
-
-  <section id="cursos-gratuitos" className="scroll-mt-24 px-4 sm:px-5 pb-16 sm:pb-20 max-w-6xl mx-auto">
-   <div className="flex items-end justify-between gap-4 mb-4 sm:mb-5">
-    <div>
-     <p className="text-[10px] uppercase tracking-[.18em] text-gray-600">Comece agora</p>
-     <h2 className="text-xl sm:text-2xl font-bold mt-1">Cursos gratuitos</h2>
-    </div>
-    {isAuthenticated&&<Link to="/app/academia" className="text-xs font-bold text-[#ff5364]">Minha Academia →</Link>}
-   </div>
-
-   {loading
-    ? <LoadingState label="Buscando cursos disponíveis..." />
-    : <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {courses.map(c=><Link
-       key={c.id}
-       to={c.slug==='letramento-digital'?'/curso/letramento-digital':(isAuthenticated?'/app/academia/'+c.id:'/cadastro?next=%2Fapp%2Facademia')}
-       className="pm-surface pm-surface-interactive overflow-hidden group rounded-2xl"
-      >
-       <div className="aspect-video bg-white/[.025] overflow-hidden">
-        {c.cover_url
-         ? <img src={c.cover_url} alt={`Capa do curso ${c.title}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
-         : c.slug==='letramento-digital'
-          ? <DigitalLiteracyCover compact className="rounded-none transition-transform duration-500 group-hover:scale-[1.02]"/>
-          : <div className="w-full h-full flex items-center justify-center text-4xl text-[#A65A2A]">▶</div>}
-       </div>
-       <div className="p-4 sm:p-5">
-        <div className="flex items-center justify-between">
-         <span className="text-[9px] uppercase tracking-wider text-emerald-300">Gratuito</span>
-         {c.estimated_minutes&&<span className="text-[10px] text-gray-600">{c.estimated_minutes} min</span>}
-        </div>
-        <h3 className="font-bold text-base sm:text-lg mt-2 group-hover:text-white leading-snug">{c.title}</h3>
-        <p className="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-3">{c.description}</p>
-        <p className="text-xs font-bold text-[#ff5364] mt-5">Conhecer curso →</p>
-       </div>
-      </Link>)}
-     </div>}
-  </section>
- </main></PublicLayout>
+      <span className="sr-only">Conhecer obra →</span>
+     </div>
+    </Link>
+   })}
+  </div>
+  {!busy&&filteredCourses.length+filteredWorks.length===0&&!(showWorks&&worksError)&&<div role="status" className="py-12 text-center">
+   <p className="text-sm text-gray-400">Nenhum conteúdo encontrado.</p>
+   {(workQuery||workFilter!=='all')&&<button type="button" onClick={()=>{setWorkQuery('');setWorkFilter('all')}} className="mt-3 min-h-11 rounded-xl px-4 text-xs font-semibold text-[#dfa269]">Limpar filtros</button>}
+  </div>}
+ </section></PublicLayout>
 }
