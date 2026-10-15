@@ -204,9 +204,7 @@ export function RegisterPage() {
     const errs = validate()
     if (Object.keys(errs).length) {
       setErrors(errs)
-      const invalidStep=stepErrors(1)
-        ? (Object.keys(stepErrors(1)).length?1:Object.keys(stepErrors(2)).length?2:3)
-        : 3
+      const invalidStep=Object.keys(stepErrors(1)).length?1:Object.keys(stepErrors(2)).length?2:3
       setStep(invalidStep)
       setRegistrationError('Revise os campos destacados antes de concluir o cadastro.')
       window.scrollTo({top:0,behavior:'smooth'})
