@@ -678,7 +678,23 @@ export async function ensureAcademyFolder(db: SupabaseClient, userId: string, co
 export async function ensureAcademyLibraryFolder(db: SupabaseClient, userId: string, releaseCode: string) {
   const code = releaseCode.trim().replace(/[^a-zA-Z0-9_-]/g, "-").slice(0,80);
   if (!code) throw new Error("Library release code required");
-  const { academyRootId } = await ensureAcademyFolderRoot(db,userId);
+  // Move any legacy Academy root out of the general PLAY MOMENTS folder:
+  // inherited public/domain sharing cannot be revoked on a child only.
+  const { rootFolderId } = await ensureDriveRoot(db,userId);
+  let academyRoot = await findDriveFolder("root","academy-root");
+  if (!academyRoot) {
+    const legacy = await findDriveFolder(rootFolderId,"academy-root");
+    academyRoot = legacy
+      ? await driveJson(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(legacy.id)}?addParents=root&removeParents=${encodeURIComponent(rootFolderId)}&fields=id,name,parents,appProperties`,{method:"PATCH"})
+      : await createDriveFolder("PLAY MOMENTS - ACADEMIA PRIVADA","root",{playMomentsKind:"academy-root"});
+  }
+  const acl = await driveJson(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(academyRoot.id)}/permissions?fields=permissions(id,type,role)`);
+  for (const permission of acl?.permissions||[]) {
+    if(permission.type==="anyone"||permission.type==="domain"){
+      await driveJson(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(academyRoot.id)}/permissions/${encodeURIComponent(permission.id)}`,{method:"DELETE"});
+    }
+  }
+  const academyRootId = academyRoot.id;
   let libraryRoot = await findDriveFolder(academyRootId,"academy-library-root");
   if (!libraryRoot) libraryRoot = await createDriveFolder("BIBLIOTECA DIGITAL",academyRootId,{
     playMomentsKind:"academy-library-root"
