@@ -63,15 +63,20 @@ test('Academy standalone CSS scans React views outside the Vite application root
  assert.match(read('.github/workflows/academia-pwa.yml'),/node scripts\/check-academia-css\.mjs/)
 })
 
-test('Customer and administrator Academies both expose the install screen link',()=>{
+test('Academia shows a compact top-level install notice to administrators and keeps the customer card',()=>{
  const component=read('src/components/academy/AcademyAppInstallCard.tsx')
  const customer=read('src/pages/customer/AcademyPage.tsx')
- const admin=read('src/pages/admin/AdminAcademy.tsx')
+ const hub=read('src/pages/admin/AdminAcademyHub.tsx')
+ const courses=read('src/pages/admin/AdminAcademy.tsx')
  assert.match(component,/https:\/\/academia-sagamente\.playmomentsstudios\.workers\.dev\//)
  assert.match(component,/Adicionar à Tela de Início/)
  assert.match(component,/Instalar aplicativo/)
+ assert.match(component,/if \(admin\)/)
+ assert.match(component,/aria-label="Aplicativo da Academia"/)
+ assert.match(component,/Configurar aplicativo/)
  assert.match(customer,/<AcademyAppInstallCard\/>/)
- assert.match(admin,/<AcademyAppInstallCard admin\/>/)
+ assert.match(hub,/<AcademyAppInstallCard admin\/>/)
+ assert.doesNotMatch(courses,/<AcademyAppInstallCard admin\/>/)
 })
 
 
