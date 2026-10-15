@@ -3,7 +3,7 @@ import {Link} from 'react-router-dom'
 import {useAuth} from '../../contexts/AuthContext'
 import {useToast} from '../../contexts/ToastContext'
 import {
-  DASHBOARD_SHORTCUTS,DASHBOARD_WIDGETS,DASHBOARD_METRICS,
+  DASHBOARD_SHORTCUTS,DASHBOARD_WIDGETS,
   DEFAULT_DASHBOARD_LAYOUT,loadDashboardLayout,saveDashboardLayout,normalizeDashboardLayout,
   type DashboardLayout,
 } from '../../lib/adminDashboardLayout'
@@ -77,14 +77,13 @@ export function AdminDashboardPreferencesPanel(){
   ][]=[
     ['shortcuts','Acessos rápidos',DASHBOARD_SHORTCUTS],
     ['widgets','Seções do painel',DASHBOARD_WIDGETS],
-    ['metrics','Indicadores',DASHBOARD_METRICS],
   ]
   const active=tabs.find(t=>t[0]===activeTab)||tabs[0]
 
   return <section id="painel" aria-label="Personalizar painel inicial" className="scroll-mt-24 rounded-2xl border border-[#A65A2A]/20 bg-[#141416] p-4 sm:p-5">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div><p className="text-[10px] font-semibold uppercase tracking-[.17em] text-[#DFA269]">Meu espaço de trabalho</p><h2 className="mt-1 text-lg font-bold">Personalizar painel inicial</h2>
-        <p className="mt-1 text-xs text-gray-400">Escolha o que aparece, oculte o que não utiliza e altere a ordem com as setas. A configuração é individual e acompanha sua conta.</p>
+        <p className="mt-1 text-xs text-gray-400">Escolha seus atalhos e seções de trabalho. A configuração é individual e acompanha sua conta. As contagens ficam no Dashboard separado.</p>
       </div>
       <Link to="/admin" className="inline-flex min-h-10 items-center rounded-xl border border-white/10 px-3 text-xs font-semibold text-[#DFA269]">Ver painel →</Link>
     </div>
@@ -102,6 +101,6 @@ export function AdminDashboardPreferencesPanel(){
       <button type="button" disabled={busy||loading} onClick={()=>void save()}
         className="min-h-11 rounded-xl bg-[#A65A2A] px-5 text-sm font-bold text-white disabled:opacity-50">{busy?'Salvando…':'Salvar meu painel'}</button>
     </div>
-    <p className="mt-3 text-[11px] text-gray-500">Os atalhos apenas abrem as áreas existentes. Liberações de cursos, e-books e audiobooks continuam exigindo a autorização própria de cada módulo.</p>
+    <p className="mt-3 text-[11px] text-gray-500">Os atalhos apenas abrem as áreas existentes. Todas as métricas e contagens ficam em Dashboard. Permissões e liberações continuam controladas por cada módulo.</p>
   </section>
 }

@@ -56,6 +56,7 @@ const OrderDetailPage = lazy(() => import('./pages/customer/OrderDetailPage').th
 const QuoteDetailPage = lazy(() => import('./pages/customer/QuoteDetailPage').then(m => ({ default:m.QuoteDetailPage })))
 const CustomerSettings = lazy(() => import('./pages/customer/CustomerSettings').then(m => ({ default:m.CustomerSettings })))
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard').then(m => ({ default:m.AdminDashboard })))
+const AdminMetricsDashboard = lazy(() => import('./pages/admin/AdminMetricsDashboard').then(m => ({ default:m.AdminMetricsDashboard })))
 const AdminCustomers = lazy(() => import('./pages/admin/AdminCustomers').then(m => ({ default:m.AdminCustomers })))
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts').then(m => ({ default:m.AdminProducts })))
 const AdminOrders = lazy(() => import('./pages/admin/AdminOrders').then(m => ({ default:m.AdminOrders })))
@@ -191,6 +192,7 @@ export default function AppV2() {
               {/* Admin panel */}
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<AdminDashboard />} />
+                <Route path="dashboard" element={<AdminPermissionGate adminOnly><AdminMetricsDashboard /></AdminPermissionGate>} />
                 <Route path="clientes" element={<AdminPermissionGate permission="customers.view"><AdminCustomers /></AdminPermissionGate>} />
                 <Route path="crm" element={<AdminPermissionGate permission={['customers.view','customers.manage']}><AdminCRM /></AdminPermissionGate>} />
                 <Route path="clientes/:id" element={<AdminPermissionGate permission="customers.view"><AdminCustomerDetailV2 /></AdminPermissionGate>} />

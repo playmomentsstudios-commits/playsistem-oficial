@@ -5,14 +5,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import { portalApi } from '../../api/portal'
 import { crmApi,type CrmCustomer } from '../../api/crm'
 import { rotulo,statusProjeto } from '../../lib/labels.ptBR'
-import { DASHBOARD_METRICS,DASHBOARD_SHORTCUTS,DEFAULT_DASHBOARD_LAYOUT,loadDashboardLayout,type DashboardLayout } from '../../lib/adminDashboardLayout'
+import { DASHBOARD_SHORTCUTS,DEFAULT_DASHBOARD_LAYOUT,loadDashboardLayout,type DashboardLayout } from '../../lib/adminDashboardLayout'
 
-function money(cents:number){
-  return ((cents||0)/100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})
-}
-function nameOf(customer:any){
-  return [customer?.first_name,customer?.last_name].filter(Boolean).join(' ')||customer?.email||'Cliente'
-}
 
 const SHORTCUT_ICON_PATHS:Record<string,string>={
   users:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8m12 8v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
@@ -36,7 +30,6 @@ export function AdminDashboard(){
   const {user}=useAuth()
   const [loading,setLoading]=useState(true)
   const [error,setError]=useState('')
-  const [showDetails,setShowDetails]=useState(false)
   const [layout,setLayout]=useState<DashboardLayout>(DEFAULT_DASHBOARD_LAYOUT)
   const [data,setData]=useState({
     customers:[] as any[],
@@ -115,13 +108,9 @@ export function AdminDashboard(){
 
   const activeLayout:DashboardLayout=user?.role==='admin'?layout:{
     shortcuts:[],
-    widgets:['indicators','pending','projects','extra'],
+    widgets:['pending','projects'],
     metrics:['activeProjects','openQuotes','pendingPayments','unread'],
   }
-  const cards=activeLayout.metrics.map(id=>{
-    const descriptor=DASHBOARD_METRICS.find(item=>item.id===id)
-    return descriptor?{...descriptor,value:metrics[id as keyof typeof metrics]}:null
-  }).filter((item):item is NonNullable<typeof item>=>item!==null)
   const shortcuts=activeLayout.shortcuts.map(id=>DASHBOARD_SHORTCUTS.find(item=>item.id===id))
     .filter((item):item is (typeof DASHBOARD_SHORTCUTS)[number]=>Boolean(item))
 
@@ -131,12 +120,12 @@ export function AdminDashboard(){
     {label:'Mensagens não lidas',value:metrics.unread,href:'/admin/conversas'},
   ].filter(item=>item.value>0)
 
-  if(loading)return <div aria-busy="true" aria-label="Carregando painel" className="space-y-4"><div className="pm-skeleton h-16 rounded-xl"/><div className="grid grid-cols-2 lg:grid-cols-4 gap-2">{Array.from({length:4}).map((_,i)=><div key={i} className="pm-skeleton h-24 rounded-xl"/>)}</div><div className="pm-skeleton h-48 rounded-xl"/></div>
+  if(loading)return <div aria-busy="true" aria-label="Carregando painel" className="space-y-4"><div className="pm-skeleton h-16 rounded-xl"/><div className="pm-skeleton h-24 rounded-xl"/><div className="pm-skeleton h-48 rounded-xl"/></div>
 
   return <div className="max-w-[1400px] space-y-4">
     <CompactPageHeader eyebrow="Visão geral" title="Seu espaço de trabalho" description="Acesse o que mais utiliza e acompanhe suas prioridades."
       actions={user?.role==='admin'
-        ?<Link to="/admin/configuracoes#painel" className="pm-compact-tap inline-flex items-center gap-2 rounded-lg border border-[#A65A2A]/40 bg-[#A65A2A]/15 px-3 text-xs font-semibold text-[#DFA269]">⚙ Personalizar painel</Link>
+        ?<div className="flex flex-wrap gap-2"><Link to="/admin/dashboard" className="pm-compact-tap inline-flex items-center rounded-lg border border-white/10 px-3 text-xs font-semibold text-gray-300">Ver métricas ↗</Link><Link to="/admin/configuracoes#painel" className="pm-compact-tap inline-flex items-center gap-2 rounded-lg border border-[#A65A2A]/40 bg-[#A65A2A]/15 px-3 text-xs font-semibold text-[#DFA269]">⚙ Personalizar painel</Link></div>
         :<Link to="/admin/projetos" className="pm-compact-tap rounded-lg bg-[#A65A2A] px-3 text-xs font-semibold text-white">Ver projetos →</Link>}/>
     {error&&<div role="status" className="rounded-xl border border-amber-500/20 p-3 text-sm text-amber-200">{error}</div>}
 
@@ -159,16 +148,6 @@ export function AdminDashboard(){
         </div>:<p className="py-3 text-sm text-gray-500">Nenhum atalho selecionado. Use Editar para incluir atalhos.</p>}
       </section>
 
-      if(widget==='indicators')return <section key={widget} aria-label="Indicadores principais">
-        <div className="mb-2 flex items-center justify-between gap-2"><h2 className="text-sm font-semibold">Indicadores</h2><Link to="/admin/configuracoes#painel" className="text-xs text-[#DFA269]">Configurar ↗</Link></div>
-        {cards.length>0?<div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
-          {cards.map(card=><Link key={card.id} to={card.href} className="pm-compact-card pm-compact-card-interactive flex min-h-[90px] flex-col justify-between gap-2">
-            <div className="flex items-start justify-between gap-2"><span className="text-xs text-gray-400">{card.label}</span><span aria-hidden="true" className="text-gray-600">↗</span></div>
-            <strong className="text-2xl font-semibold tracking-tight text-gray-100">{card.value}</strong>
-          </Link>)}
-        </div>:<p className="text-xs text-gray-500">Escolha os indicadores nas configurações.</p>}
-      </section>
-
       if(widget==='pending')return <section key={widget} className="pm-surface overflow-hidden" aria-label="Pendências">
         <div className="flex items-center justify-between border-b border-white/[.06] p-4"><h2 className="text-sm font-semibold">Precisa de atenção</h2><span className="text-xs text-gray-500">{pending.length} {pending.length===1?'tipo de pendência':'tipos de pendência'}</span></div>
         {pending.length===0?<p className="p-4 text-sm text-gray-400">Tudo em dia por aqui.</p>:<div className="divide-y divide-white/[.05]">{pending.map(item=><Link key={item.label} to={item.href} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/[.03]"><span className="text-sm text-gray-300">{item.label}</span><span className="text-xs font-semibold text-[#DFA269]">{item.value} →</span></Link>)}</div>}
@@ -179,18 +158,6 @@ export function AdminDashboard(){
         {latestProjects.length===0?<p className="p-4 text-sm text-gray-400">Nenhum projeto ativo.</p>:<div className="divide-y divide-white/[.05]">{latestProjects.slice(0,3).map((project:any)=><Link key={project.id} to={'/admin/projetos/'+project.id} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/[.03]"><span className="min-w-0 truncate text-sm text-gray-300">{project.title}</span><span className="shrink-0 text-[11px] text-gray-500">{rotulo(statusProjeto,String(project.status||'planning'))}</span></Link>)}</div>}
       </section>
 
-      if(widget==='extra')return <section key={widget} className="pm-surface overflow-hidden">
-        <button type="button" onClick={()=>setShowDetails(v=>!v)} aria-expanded={showDetails} className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-white/[.03]">
-          <span><strong className="block text-sm font-semibold">Mais indicadores</strong><span className="mt-1 block text-xs text-gray-500">Clientes, pedidos e oportunidades comerciais</span></span>
-          <span aria-hidden="true" className="text-gray-400">{showDetails?'−':'+'}</span>
-        </button>
-        {showDetails&&<div className="grid grid-cols-2 gap-3 border-t border-white/[.06] p-4 md:grid-cols-3">
-          <Link to="/admin/clientes" className="rounded-lg border border-white/[.07] p-3"><span className="block text-xs text-gray-500">Clientes</span><strong className="text-lg">{metrics.customers}</strong></Link>
-          <Link to="/admin/pedidos" className="rounded-lg border border-white/[.07] p-3"><span className="block text-xs text-gray-500">Pedidos ativos</span><strong className="text-lg">{metrics.openOrders}</strong></Link>
-          <Link to="/admin/crm" className="rounded-lg border border-white/[.07] p-3"><span className="block text-xs text-gray-500">Funil comercial</span><strong className="text-lg">{money(metrics.pipelineValue)}</strong></Link>
-          <div className="col-span-2 flex flex-wrap gap-3 pt-1 md:col-span-3"><Link to="/admin/crm" className="text-xs text-[#DFA269]">Abrir CRM →</Link><Link to="/admin/orcamentos" className="text-xs text-[#DFA269]">Orçamentos →</Link></div>
-        </div>}
-      </section>
       return null
     })}
   </div>
