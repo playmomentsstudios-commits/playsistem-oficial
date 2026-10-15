@@ -12,6 +12,16 @@
   0%, 100% { box-shadow: 0 0 0 1px #70df9b30, 0 0 6px #47dc7f18; }
   50% { box-shadow: 0 0 0 1px #93ffc16b, 0 0 14px #47dc7f45; }
 }
+.academy-combo-price {
+  transform-origin: center;
+  animation: academy-combo-price-pulse 2.4s ease-in-out infinite;
+}
+@keyframes academy-combo-price-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
 @media (prefers-reduced-motion: reduce) {
+  .academy-combo-price { animation: none; }
+
   .academy-format-combo { animation: none; box-shadow: 0 0 0 1px #70df9b30; }
 }
