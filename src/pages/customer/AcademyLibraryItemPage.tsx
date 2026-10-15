@@ -90,7 +90,7 @@ export function AcademyLibraryItemPage(){
     <p className="mt-1 text-xs text-gray-400">Disponível exclusivamente para sua conta na Academia.</p>
    </header>
    {item.format==='audiobook'?<div className="space-y-5 p-5 sm:p-7">
-    <AcademyAudiobookCaptions itemId={item.id} audioRef={audio.audioRef}>
+    {currentAudio?<AcademyAudiobookCaptions itemId={item.id} audioRef={audio.audioRef}>
      <div className="rounded-xl border border-white/10 bg-black/30 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
        <div className="min-w-0 flex-1">
@@ -128,7 +128,10 @@ export function AcademyLibraryItemPage(){
        <button type="button" onClick={audio.retry} className="ml-2 font-bold underline">Tentar novamente</button></p>}
       <p className="mt-3 text-xs text-gray-500">A posição é lembrada neste dispositivo. Para trocar de audiobook, use o miniplayer ou a playlist sem voltar à biblioteca.</p>
      </div>
-    </AcademyAudiobookCaptions>
+    </AcademyAudiobookCaptions>:<div className="rounded-xl border border-white/10 bg-black/30 p-5">
+     <p className="text-sm text-gray-300">Você está ouvindo outro audiobook na playlist. Para acompanhar as legendas desta obra, selecione-a no player.</p>
+     <button type="button" onClick={()=>void audio.playItem(item.id,true)} className="mt-4 min-h-11 rounded-xl bg-[#E99156] px-5 text-sm font-bold text-[#1b100b]">▶ Ouvir esta obra</button>
+    </div>}
    </div>:<div className="p-3 sm:p-5">
     <iframe title={'Leitor digital — '+item.title} src={stream} referrerPolicy="no-referrer" className="h-[74vh] min-h-[380px] w-full rounded-xl border border-white/10 bg-white"/>
     <p className="mt-3 text-xs text-gray-400">Leitura no navegador. Se o PDF não carregar, tente novamente para renovar o acesso temporário.</p>
