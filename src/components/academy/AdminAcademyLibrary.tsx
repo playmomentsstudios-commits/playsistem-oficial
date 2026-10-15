@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useState,type FormEvent} from 'react'
+import {useEffect,useMemo,useState,type FormEvent,type ReactNode} from 'react'
 import {Link} from 'react-router-dom'
 import {academyLibraryAdminApi as api,librarySlugify,type AdminLibraryItem,type LibraryFormat,type LibraryUser,type LibraryGrant} from '../../api/academyLibraryAdmin'
 import {siteContentApi,type SiteLandingPage} from '../../services/siteContent'
@@ -18,7 +18,7 @@ const EMPTY=(format:LibraryFormat):Editor=>({
 const FMT:{[key in LibraryFormat]:string}={ebook:'E-book',audiobook:'Audiobook'}
 const field='w-full min-h-11 rounded-xl border border-white/10 bg-[#0d0d0f] px-3 text-sm text-gray-100 outline-none focus:border-[#A65A2A]'
 const plain='min-h-10 rounded-xl border border-white/10 bg-white/[.025] px-3 py-2 text-xs font-semibold text-gray-200 hover:bg-white/[.06]'
-const input=(label:string,body:React.ReactNode,hint?:string)=>
+const input=(label:string,body:ReactNode,hint?:string)=>
  <label className="block"><span className="mb-1.5 block text-xs font-semibold text-gray-300">{label}</span>{body}{hint&&<span className="mt-1 block text-[11px] text-gray-500">{hint}</span>}</label>
 const labelOf=(u:LibraryUser)=>[u.first_name,u.last_name].filter(Boolean).join(' ')+' · '+u.email
 
