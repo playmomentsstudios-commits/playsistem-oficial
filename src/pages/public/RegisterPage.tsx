@@ -389,7 +389,7 @@ export function RegisterPage() {
             <Input label="Confirmar senha" type="password" autoComplete="new-password" placeholder="Repita a senha" value={form.confirm} onChange={set('confirm')} error={errors.confirm} />
             <section aria-labelledby="communication-preferences-title" className="rounded-2xl border border-white/10 bg-[#141416] p-4">
               <h3 id="communication-preferences-title" className="text-sm font-semibold text-white">Como deseja acompanhar sua experiência?</h3>
-              <p className="mt-1 text-xs leading-relaxed text-gray-400">Seu link de confirmação será enviado por e-mail, independentemente das opções abaixo.</p>
+              <p className="mt-1 text-xs leading-relaxed text-gray-400">Seu e-mail será usado para acessar e recuperar sua conta. Escolha abaixo se deseja receber mensagens adicionais.</p>
               <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 p-3">
                 <input type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-[#A65A2A]"
                   checked={form.whatsappUpdatesOptIn}
@@ -412,7 +412,7 @@ export function RegisterPage() {
             <h3 id="conditions-title" className="text-sm font-semibold text-gray-100">Condições essenciais do cadastro</h3>
             <details className="my-3 rounded-lg bg-black/20 p-3 text-xs text-gray-400">
               <summary className="cursor-pointer font-semibold text-[#e1b696]">Leia como sua conta funciona</summary>
-              <p className="mt-2 leading-relaxed">Seu nome, e-mail, telefone e endereço são utilizados para criar e identificar sua conta, permitir acesso à plataforma e administrar seus pedidos, projetos e treinamentos. A confirmação do e-mail é necessária para ativar o acesso. Avisos essenciais ficam no painel e no e-mail; WhatsApp e novidades comerciais dependem das autorizações opcionais acima, que podem ser alteradas nas configurações.</p>
+              <p className="mt-2 leading-relaxed">Seu nome, e-mail, telefone e endereço são utilizados para criar e identificar sua conta, permitir acesso à plataforma e administrar seus pedidos, projetos e treinamentos. Ao concluir o cadastro, o sistema informará se alguma etapa adicional de verificação é necessária. Avisos essenciais ficam no painel e no e-mail; WhatsApp e novidades comerciais dependem das autorizações opcionais acima, que podem ser alteradas nas configurações.</p>
             </details>
             <label className="flex cursor-pointer items-start gap-3">
               <input type="checkbox" checked={acceptedConditions} onChange={e=>{
