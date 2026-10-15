@@ -69,7 +69,7 @@ test('Administrator sees only private leads and can filter/convert them manually
  assert.match(admin,/whatsappUrl/)
  assert.match(admin,/Em contato/)
  assert.match(admin,/Convertido/)
- assert.match(admin,/Nenhum pagamento/)
+ assert.match(admin,/não cobra/)
  assert.match(admin,/não uma confirmação automática de pagamento/)
  assert.doesNotMatch(admin,/academy_library_grants/)
 })
