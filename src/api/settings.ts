@@ -9,6 +9,8 @@ export type UserPreferences={
   notify_project_updates:boolean
   notify_file_updates:boolean
   notify_commercial_updates:boolean
+  marketing_opt_in:boolean
+  marketing_opt_in_at:string|null
   wa_automatic_opt_in:boolean
   wa_opt_in_phone:string|null
   wa_opt_in_at:string|null
