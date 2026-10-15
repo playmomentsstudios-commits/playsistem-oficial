@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useState, type FormEvent } from 're
 import { Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { academyLibraryApi, type LibraryItem } from '../api/academyLibrary'
+import {AcademyAudioProvider,useAcademyAudio} from '../contexts/AcademyAudioContext'
 import { academyApi } from '../api/academy'
 import { readAcademyAppSettings, DEFAULT_ACADEMY_APP_SETTINGS, type AcademyAppSettings } from '../api/academyAppSettings'
 
@@ -167,6 +168,7 @@ function AcademyShell() {
 }
 
 function AcademyShelf({condensed=false}:{condensed?:boolean}){
+ const {playItem}=useAcademyAudio()
  const [items,setItems]=useState<LibraryItem[]>([])
  const [busy,setBusy]=useState(true)
  const [error,setError]=useState('')
@@ -213,7 +215,7 @@ function AcademyShelf({condensed=false}:{condensed?:boolean}){
   {error&&<p role="alert" className="academy-error">{error}</p>}
   {!busy&&!error&&releases.length===0&&<div className="academy-empty"><Icon name="library" size={27}/><h3>Sua biblioteca está esperando por você</h3><p>Os conteúdos liberados para sua conta aparecerão aqui.</p></div>}
   {!busy&&!error&&releases.length>0&&filtered.length===0&&<div className="academy-empty"><p>Nenhum título encontrado neste filtro.</p></div>}
-  {resumable.map(({item,position})=><Link key={item.id} to={'/app/academia/biblioteca/'+item.id} className="academy-resume">
+  {resumable.map(({item,position})=><Link key={item.id} to={'/app/academia/biblioteca/'+item.id} onClick={()=>{void playItem(item.id,true)}} className="academy-resume">
     <ContentArtwork release={item.release_code} format="audio" coverUrl={item.cover_url}/>
     <span className="academy-resume-details"><span className="academy-eyebrow">Retomar audiobook · Continuar de onde parou</span><strong>{item.title}</strong><span className="academy-resume-meta"><Icon name="clock" size={14}/> {Math.floor(position/60)} min ouvidos</span></span>
     <span className="academy-resume-play"><Icon name="play" size={20}/></span>
@@ -230,7 +232,7 @@ function AcademyShelf({condensed=false}:{condensed?:boolean}){
       <h3>{release.title}</h3>
       <p>{release.audiobook&&release.ebook?'Audiobook e e-book disponíveis':release.audiobook?'Audiobook disponível':'E-book disponível'}</p>
       <div className="academy-media-actions">
-       {release.audiobook&&<Link to={'/app/academia/biblioteca/'+release.audiobook.id} className="academy-media-play"><Icon name="play" size={16}/> Ouvir</Link>}
+       {release.audiobook&&<Link to={'/app/academia/biblioteca/'+release.audiobook.id} onClick={()=>{void playItem(release.audiobook!.id,true)}} className="academy-media-play"><Icon name="play" size={16}/> Ouvir</Link>}
        {release.ebook&&<Link to={'/app/academia/biblioteca/'+release.ebook.id} className="academy-media-read"><Icon name="book" size={16}/> Ler PDF</Link>}
       </div>
      </div>
@@ -313,7 +315,7 @@ function AcademyAccount(){
 }
 
 export function AcademyStandaloneApp(){
- return <Suspense fallback={<Loading/>}><Routes>
+ return <AcademyAudioProvider><Suspense fallback={<Loading/>}><Routes>
   <Route path="/login" element={<AcademyLogin/>}/>
   <Route path="/certificados/:code" element={<CertificateVerify/>}/>
   <Route element={<RequireAccess/>}>
@@ -328,5 +330,5 @@ export function AcademyStandaloneApp(){
     <Route path="*" element={<Navigate to="/app/academia" replace/>}/>
    </Route>
   </Route>
- </Routes></Suspense>
+ </Routes></Suspense></AcademyAudioProvider>
 }

@@ -88,15 +88,18 @@ test('Standalone Academy shows only functional catalog categories',()=>{
  assert.match(catalog,/standalone\?'Explore cursos e videoaulas disponíveis/)
 })
 
-test('Academy resumes owned audiobooks with the unchanged native player progress key',()=>{
+test('Academy resumes owned audiobooks through the persistent player and its original progress key',()=>{
  const app=read('src/academy/standalone.tsx')
  const reader=read('src/pages/customer/AcademyLibraryItemPage.tsx')
+ const player=read('src/contexts/AcademyAudioContext.tsx')
  assert.match(app,/resumable = useMemo/)
  assert.match(app,/sagamente\.library\.position\./)
  assert.match(app,/item\.format === 'audiobook'/)
  assert.match(app,/Retomar audiobook/)
- assert.match(reader,/sagamente\.library\.position\./)
- assert.match(reader,/onTimeUpdate=\{saveAudioPosition\}/)
+ assert.match(player,/sagamente\.library\.position\./)
+ assert.match(player,/onTimeUpdate=\{timeUpdate\}/)
+ assert.match(reader,/useAcademyAudio/)
+ assert.match(reader,/audioRef=\{audio\.audioRef\}/)
 })
 
 test('Certificate links have a valid in-app route, and password help goes to the real main site',()=>{
