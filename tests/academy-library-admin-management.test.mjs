@@ -50,8 +50,8 @@ test('new items create draft landing; legacy landing pages are untouched',()=>{
 })
 test('customer grants are per item, revocable and access is private',()=>{
  assert.match(api,/from\('academy_library_grants'\)/)
- assert.match(api,/onConflict:'item_id,user_id'/)
- assert.match(api,/active,source:'admin'/)
+ assert.match(api,/rpc\('academy_admin_set_library_access'/)
+ assert.match(api,/p_active:active/)
  assert.match(admin,/Liberar acesso/)
  assert.match(admin,/Revogar/)
  assert.match(admin,/A concessão é por formato/)

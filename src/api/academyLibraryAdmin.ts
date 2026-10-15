@@ -17,6 +17,23 @@ export type AdminLibraryItem={
 }
 export type LibraryUser={id:string;first_name:string;last_name:string;email:string}
 export type LibraryGrant={id:string;user_id:string;item_id:string;active:boolean;source:string;granted_at:string}
+export type LibraryGrantUpdate={changed_count:number;whatsapp_queued:boolean;notification_status:string}
+export function libraryAccessMessage(result:LibraryGrantUpdate,active:boolean){
+ if(!active)return 'Acesso revogado.'
+ if(!result.changed_count)return 'Esse acesso já estava liberado.'
+ if(result.whatsapp_queued)return 'Acesso liberado. WhatsApp na fila de envio.'
+ if(result.notification_status==='content_unavailable')return 'Acesso autorizado. O material ainda não está disponível para avisar o cliente.'
+ return 'Acesso liberado. Cliente sem autorização para WhatsApp.'
+}
+
+async function updateLibraryAccess(itemIds:string[],userId:string,active:boolean):Promise<LibraryGrantUpdate>{
+ if(!itemIds.length||!userId)throw new Error('Selecione um cliente e um formato.')
+ const {data,error}=await supabase.rpc('academy_admin_set_library_access',{
+  p_item_ids:itemIds,p_user_id:userId,p_active:active
+ })
+ if(error)throw error
+ return data as LibraryGrantUpdate
+}
 
 const slugify=(value:string)=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')
 export const librarySlugify=slugify
@@ -46,12 +63,7 @@ export const academyLibraryAdminApi={
   if(error)throw error
  },
  async setWorkGrant(itemIds:string[],userId:string,active:boolean){
-  if(!itemIds.length||!userId)throw new Error('Selecione um cliente e um formato.')
-  const {error}=await supabase.from('academy_library_grants').upsert(
-   itemIds.map(itemId=>({item_id:itemId,user_id:userId,active,source:'admin'})),
-   {onConflict:'item_id,user_id'}
-  )
-  if(error)throw error
+  return updateLibraryAccess(itemIds,userId,active)
  },
  async grantsForWork(itemIds:string[]):Promise<LibraryGrant[]>{
   if(!itemIds.length)return []
@@ -117,10 +129,7 @@ export const academyLibraryAdminApi={
   return (data||[]) as LibraryGrant[]
  },
  async grant(itemId:string,userId:string,active:boolean){
-  const {error}=await supabase.from('academy_library_grants').upsert(
-   {item_id:itemId,user_id:userId,active,source:'admin'},
-   {onConflict:'item_id,user_id'})
-  if(error)throw error
+  return updateLibraryAccess([itemId],userId,active)
  },
  async uploadOriginal(file:File,releaseCode:string,format:LibraryFormat,onProgress:(n:number)=>void){
   const mimeType=format==='ebook'?'application/pdf':'audio/mpeg'

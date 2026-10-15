@@ -72,7 +72,8 @@ const EVENT:Record<string,string>={
   project_stage:'Etapa',file_available:'Arquivo',file_received:'Arquivo',
   file_review_requested:'Revisão de arquivo',payment_confirmed_priority:'Pagamento confirmado',
   project_created_priority:'Novo projeto',project_completed_priority:'Projeto concluído',
-  academy_purchase_ready:'Compra liberada · Academia'
+  academy_purchase_ready:'Compra liberada · Academia',
+  academy_access_granted:'Liberação manual · Academia'
 }
 function localDate(value:string){
   return new Date(value).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})
