@@ -87,11 +87,19 @@ export function AdminAcademyLibrary(){
    else toast('A obra solicitada não está mais disponível na biblioteca.','warning')
   }else if(requestedFormat==='ebook'||requestedFormat==='audiobook'){
    begin(requestedFormat)
+   const groupCode=params.get('group')
+   const partner=groupCode&&items.find(item=>item.release_code===groupCode)
+   if(groupCode&&partner){
+    setGroup(groupCode)
+    setCurrent(value=>value?{...value,title:partner.title,
+      slug:librarySlugify(partner.title),release_code:groupCode}:value)
+   }
   }
   setParams(previous=>{
    const next=new URLSearchParams(previous)
    next.delete('item')
    next.delete('create')
+   next.delete('group')
    return next
   },{replace:true})
  },[loading,error,items,params,setParams])
