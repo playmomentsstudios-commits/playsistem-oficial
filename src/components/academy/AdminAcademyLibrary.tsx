@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useState,type FormEvent,type ReactNode} from 'react'
+import {useSearchParams} from 'react-router-dom'
 import {academyLibraryAdminApi as api,librarySlugify,type AdminLibraryItem,type LibraryFormat,type LibraryUser,type LibraryGrant} from '../../api/academyLibraryAdmin'
 import {siteContentApi,type SiteLandingPage} from '../../services/siteContent'
 import {useToast} from '../../contexts/ToastContext'
@@ -23,6 +24,7 @@ const labelOf=(u:LibraryUser)=>[u.first_name,u.last_name].filter(Boolean).join('
 
 export function AdminAcademyLibrary(){
  const toast=useToast()
+ const [params,setParams]=useSearchParams()
  const [items,setItems]=useState<AdminLibraryItem[]>([])
  const [landings,setLandings]=useState<SiteLandingPage[]>([])
  const [users,setUsers]=useState<LibraryUser[]>([])
@@ -73,6 +75,27 @@ export function AdminAcademyLibrary(){
    sample_audio_url:item.sample_audio_url||''
   });setProgress(null)
  }
+ // Product catalog deep links reuse the existing editor; no second file or grant is created.
+ useEffect(()=>{
+  if(loading||error)return
+  const itemId=params.get('item')
+  const requestedFormat=params.get('create')
+  if(!itemId&&requestedFormat!=='ebook'&&requestedFormat!=='audiobook')return
+  if(itemId){
+   const item=items.find(row=>row.id===itemId)
+   if(item)open(item)
+   else toast('A obra solicitada não está mais disponível na biblioteca.','warning')
+  }else if(requestedFormat==='ebook'||requestedFormat==='audiobook'){
+   begin(requestedFormat)
+  }
+  setParams(previous=>{
+   const next=new URLSearchParams(previous)
+   next.delete('item')
+   next.delete('create')
+   return next
+  },{replace:true})
+ },[loading,error,items,params,setParams])
+
  const update=(patch:Partial<Editor>)=>setCurrent(v=>v?{...v,...patch}:v)
  const release=()=>current?.id?current.release_code:group==='new'
   ?'obra-'+librarySlugify(current?.title||''):group
