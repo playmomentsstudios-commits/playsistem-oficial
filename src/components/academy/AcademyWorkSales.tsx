@@ -3,6 +3,7 @@ import {Link} from 'react-router-dom'
 import {BrandImage} from '../BrandImage'
 import {supabase} from '../../lib/supabase'
 import {academyComboSavings,formatAcademyMoney as money,type AcademyWorkPrice} from '../../lib/academyPricing'
+import './academyWorkSales.css'
 
 const action='inline-flex min-h-11 items-center justify-center rounded-xl bg-[#B66B3C] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#cf8655]'
 
@@ -17,13 +18,16 @@ export function ComboDiscountBadge({percentage,compact=false}:{percentage:string
 }
 
 export function AcademyWorkHeader({release}:{release:string}){
- return <header className="border-b border-white/10 bg-[#101114]/95">
-  <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-8">
-   <Link to="/academia" aria-label="Voltar à Academia Sagamente"><BrandImage variant="dark" alt="Sagamente" className="h-8 w-auto sm:h-9"/></Link>
+ return <header className="sticky top-0 z-40 border-b border-white/10 bg-[#101114]/95 shadow-lg shadow-black/10 backdrop-blur-md">
+  <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-8">
+   <Link to="/academia" aria-label="Voltar à Academia Sagamente" className="shrink-0">
+    <BrandImage variant="compact" alt="Sagamente" className="h-8 w-auto sm:hidden"/>
+    <BrandImage variant="dark" alt="Sagamente" className="hidden h-9 w-auto sm:block"/>
+   </Link>
    <nav aria-label="Navegação da obra" className="flex items-center gap-2 sm:gap-4">
-    <Link to="/academia#obras-digitais" className="inline-flex min-h-10 items-center rounded-xl px-2 text-xs font-semibold text-[#d3b29a] hover:text-white">← Todas as obras</Link>
+    <Link to="/academia#obras-digitais" aria-label="Todas as obras" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl px-2 text-xs font-semibold text-[#d3b29a] hover:text-white"><span className="sm:hidden" aria-hidden="true">←</span><span className="hidden sm:inline">← Todas as obras</span></Link>
     <a href="#previas" className="hidden text-xs font-semibold text-[#d3b29a] hover:text-white sm:inline">Amostras</a>
-    <Link to={workInterestUrl(release)} className={action}>Quero adquirir</Link>
+    <Link to={workInterestUrl(release)} className={'academy-purchase-cta whitespace-nowrap '+action}>Quero adquirir</Link>
    </nav>
   </div>
  </header>

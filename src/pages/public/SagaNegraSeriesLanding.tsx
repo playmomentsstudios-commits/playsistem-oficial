@@ -100,7 +100,7 @@ export function SagaNegraSeriesLanding({page,preview=false}:{page:SiteLandingPag
  const cover=page.hero_image_url||'/images/saga-negra-release'+info.release+'-cover.svg'
  const audio='/audio/saga-negra-release'+info.release+'-amostra.mp3?v=90s-20261014'
  const cta=workInterestUrl(info.release)
- return <main id="topo" className="min-h-screen overflow-hidden bg-[#0b0d10] text-[#f7efe4] selection:bg-[#B66D46] selection:text-white">
+ return <main id="topo" className="min-h-screen overflow-x-clip bg-[#0b0d10] text-[#f7efe4] selection:bg-[#B66D46] selection:text-white">
   {preview&&<div className="sticky top-0 z-50 border-b border-amber-500/30 bg-[#604122] px-4 py-2 text-center text-xs font-bold text-amber-100">PRÉVIA DO ADMINISTRADOR · Rascunho não publicado. <a className="underline" href="/admin/landings">Voltar às landings</a></div>}
   <AcademyWorkHeader release={info.release}/>
   <section className="relative border-b border-white/[.07]">

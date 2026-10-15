@@ -13,7 +13,7 @@ export function SagaNegraBookLanding({page,preview=false}:Props){
  const faqs=findSection(page,'faq')?.items||[]
  const primaryHref=workInterestUrl('00')
  const primaryLabel='Quero adquirir'
- return <main id="inicio" className="min-h-screen overflow-hidden bg-[#0a0b0d] text-[#f8eee4] selection:bg-[#BD6A36] selection:text-white">
+ return <main id="inicio" className="min-h-screen overflow-x-clip bg-[#0a0b0d] text-[#f8eee4] selection:bg-[#BD6A36] selection:text-white">
   {preview&&<div className="sticky top-0 z-50 border-b border-[#E7A06C]/30 bg-[#55351f] px-4 py-2 text-center text-xs font-semibold text-[#fff4e8]">PRÉVIA INTERNA · Esta página está em rascunho e não foi lançada ao público. <a href="/admin/landings" className="ml-2 underline">Voltar ao editor</a></div>}
   <AcademyWorkHeader release="00"/>
   <section className="relative isolate overflow-hidden border-b border-[#d6a477]/10">
