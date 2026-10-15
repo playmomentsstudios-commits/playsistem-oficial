@@ -23,6 +23,7 @@ const SHORTCUT_ICON_PATHS:Record<string,string>={
   folder:'M3 6h7l2 3h9v11H3V6Z',
   check:'M4 12l5 5L20 6M4 4h13',
   file:'M6 3h9l4 4v14H6zM15 3v5h4M9 13h7M9 17h7',
+  briefcase:'M3 7h18v13H3V7Zm5 0V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18M10 13v2h4v-2',
   wallet:'M3 7h17v13H3zM3 7V4h14M15 13h5v4h-5a2 2 0 0 1 0-4Z',
   chat:'M4 5h16v12H8l-4 3V5Z',
   settings:'M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8.5-3.5 2-1.5-2-3.5-2.4 1A8 8 0 0 0 16 6l-.4-3h-4L11 6a8 8 0 0 0-2 1L6.5 6l-2 3.5 2 1.5a8 8 0 0 0 0 2l-2 1.5 2 3.5L9 17a8 8 0 0 0 2 1l.5 3h4l.5-3a8 8 0 0 0 2-1l2.5 1 2-3.5-2-1.5a8 8 0 0 0 0-2Z',
