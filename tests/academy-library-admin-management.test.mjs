@@ -61,7 +61,7 @@ test('public landing never exposes private Drive file IDs, temporary tickets or 
  assert.match(db,/grant execute on function public\.academy_public_library_landing\(text\) to anon,authenticated/)
  assert.match(db,/i\.status='published'/)
  assert.doesNotMatch(db,/returns table\([\s\S]*?drive_file_id/)
- assert.match(landing,/academy_public_library_landing/)
+ assert.match(landing,/academy_public_work_landing/)
  assert.match(landing,/A criação de conta é gratuita/)
  assert.match(landing,/depende de liberação/)
  assert.match(publicLanding,/startsWith\('biblioteca-'\)/)
