@@ -3,7 +3,8 @@ import {Link,useSearchParams} from 'react-router-dom'
 import {useAuth} from '../../contexts/AuthContext'
 import {AdminAcademy} from './AdminAcademy'
 import {AcademyAppInstallCard} from '../../components/academy/AcademyAppInstallCard'
-import {AdminAcademyLibrary} from '../../components/academy/AdminAcademyLibrary'
+import {AdminAcademyWorks} from '../../components/academy/AdminAcademyWorks'
+// AdminAcademyLibrary remains the per-format editor inside AdminAcademyWorks.
 
 export function AdminAcademyHub(){
  const {user}=useAuth()
@@ -31,6 +32,6 @@ export function AdminAcademyHub(){
      className={'min-h-11 shrink-0 rounded-xl px-4 text-xs font-bold '+(section===key?'bg-[#A65A2A] text-white':'border border-white/10 bg-white/[.025] text-gray-300')}>{label}</button>)}
   </div>
   {isAdmin&&params.get('action')==='access'&&section==='library'&&<div className="mb-4 rounded-xl border border-[#A65A2A]/25 bg-[#A65A2A]/[.07] px-4 py-3 text-xs text-gray-300">Para liberar um e-book ou audiobook, encontre a obra e toque em <strong>Liberar clientes</strong>. A autorização continua vinculada à obra e ao usuário.</div>}
-  {section==='library'&&isAdmin?<AdminAcademyLibrary/>:<AdminAcademy/>}
+  {section==='library'&&isAdmin?<AdminAcademyWorks/>:<AdminAcademy/>}
  </div>
 }
