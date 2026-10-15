@@ -6,13 +6,24 @@ import commercialLandings from '../src/data/seoCommercialLandings.json'
 export const PUBLIC_SEO_ROUTES = new Set([
  '/', '/produtos', '/equipamentos', '/servicos', '/academia',
  '/curso/letramento-digital', '/quem-somos', '/studio', '/design', '/tech',
- '/contato', '/instalar',
+ '/contato', '/instalar', '/conheca-o-app',
  ...Object.keys(commercialLandings)
 ])
 
 const API_BASE = 'https://' + projectId + '.supabase.co/rest/v1'
 const PUBLIC_HEADERS = { apikey:publicAnonKey, Authorization:'Bearer '+publicAnonKey }
 const SEOMETA='title,description,noindex,published,path,canonical_url,og_image_url'
+const DEFAULT_SEO = {
+ '/conheca-o-app':{
+  path:'/conheca-o-app',
+  title:'Conheça o App Sagamente — Serviços, Cursos e Projetos',
+  description:'Conheça serviços, produtos, cursos, materiais digitais e um espaço para acompanhar projetos e pedidos na Sagamente. Cadastro gratuito.',
+  canonical_url:'https://playsistem-oficial.playmomentsstudios.workers.dev/conheca-o-app',
+  og_image_url:'https://playsistem-oficial.playmomentsstudios.workers.dev/pwa/icon-512.png',
+  published:true,noindex:false,
+ }
+}
+
 const toSafeText = s => String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')
 const safeAbsolute = raw => {
  try {const url=new URL(raw);return url.protocol==='https:'?url.href:null} catch{return null}
@@ -61,8 +72,8 @@ export async function seoPage(path){
  if(!PUBLIC_SEO_ROUTES.has(path))return null
  try{
   const list=await querySeo('select='+encodeURIComponent(SEOMETA)+'&path=eq.'+encodeURIComponent(path)+'&published=eq.true&limit=1')
-  return Array.isArray(list)?list[0]||null:null
- }catch{return null}
+  return Array.isArray(list)?list[0]||DEFAULT_SEO[path]||null:DEFAULT_SEO[path]||null
+ }catch{return DEFAULT_SEO[path]||null}
 }
 export async function serveSeoSitemap(request){
  const origin=new URL(request.url).origin
