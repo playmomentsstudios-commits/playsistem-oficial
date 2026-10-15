@@ -13,7 +13,7 @@ test('signup choices are independent, optional, and unchecked initially',()=>{
   assert.match(signup,/checked={form.marketingOptIn}/)
   assert.match(signup,/Quero receber avisos pelo WhatsApp/)
   assert.match(signup,/Quero conhecer novidades da Sagamente/)
-  assert.match(signup,/Seu link de confirmação será enviado por e-mail/)
+  assert.match(signup,/Seu e-mail será usado para acessar e recuperar sua conta/)
   assert.match(signup,/whatsappUpdatesOptIn: form.whatsappUpdatesOptIn/)
   assert.match(signup,/marketingOptIn: form.marketingOptIn/)
 })
