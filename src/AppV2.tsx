@@ -17,6 +17,7 @@ const HomePage = lazy(() => import('./pages/public/HomePage').then(m => ({ defau
 const InstallPage = lazy(() => import('./pages/public/InstallPage').then(m => ({ default:m.InstallPage })))
 const DiscoverAppPage = lazy(() => import('./pages/public/DiscoverAppPage').then(m => ({ default:m.DiscoverAppPage })))
 const PublicAcademyPage = lazy(() => import('./pages/public/PublicAcademyPage').then(m => ({ default:m.PublicAcademyPage })))
+const AcademyWorkInterestPage = lazy(() => import('./pages/public/AcademyWorkInterestPage').then(m => ({default:m.AcademyWorkInterestPage})))
 const PublicDigitalLiteracyPage = lazy(() => import('./pages/public/PublicDigitalLiteracyPage').then(m => ({ default:m.PublicDigitalLiteracyPage })))
 const LoginPage = lazy(() => import('./pages/public/LoginPage').then(m => ({ default:m.LoginPage })))
 const WhatsappConsentPage = lazy(() => import('./pages/public/WhatsappConsentPage').then(m => ({ default:m.WhatsappConsentPage })))
@@ -92,6 +93,7 @@ const AdminLandingPages = lazy(() => import('./pages/admin/AdminLandingPages').t
 const AdminResumes = lazy(() => import('./pages/admin/AdminResumes').then(m => ({ default:m.AdminResumes })))
 const AdminResumeEditor = lazy(() => import('./pages/admin/AdminResumeEditor').then(m => ({ default:m.AdminResumeEditor })))
 const AdminAcademyHub = lazy(() => import('./pages/admin/AdminAcademyHub').then(m => ({ default:m.AdminAcademyHub })))
+const AdminAcademyInterests = lazy(() => import('./pages/admin/AdminAcademyInterests').then(m => ({default:m.AdminAcademyInterests})))
 const AdminAcademyStudents = lazy(() => import('./pages/admin/AdminAcademyStudents').then(m => ({ default:m.AdminAcademyStudents })))
 const AdminAcademyManagement = lazy(() => import('./pages/admin/AdminAcademyManagement').then(m => ({ default:m.AdminAcademyManagement })))
 const AdminAcademyPrograms = lazy(() => import('./pages/admin/AdminAcademyPrograms').then(m => ({ default:m.AdminAcademyPrograms })))
@@ -133,6 +135,7 @@ export default function AppV2() {
               <Route path="/conheca-o-app" element={<DiscoverAppPage />} />
               <Route path="/abrir-app" element={<AppLaunchRoute />} />
               <Route path="/academia" element={<PublicAcademyPage />} />
+              <Route path="/academia/interesse/:release" element={<AcademyWorkInterestPage/>}/>
               <Route path="/curso/letramento-digital" element={<PublicDigitalLiteracyPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/whatsapp" element={<WhatsappConsentPage />} />
@@ -235,6 +238,7 @@ export default function AppV2() {
                 <Route path="relatorios" element={<AdminPermissionGate permission="reports.view"><AdminReports /></AdminPermissionGate>} />
                 <Route path="conversao" element={<AdminPermissionGate permission="reports.view"><AdminConversion /></AdminPermissionGate>} />
                 <Route path="academia" element={<AdminPermissionGate permission="academy.view"><AdminAcademyHub /></AdminPermissionGate>} />
+                <Route path="academia/interesses" element={<AdminPermissionGate adminOnly><AdminAcademyInterests/></AdminPermissionGate>}/>
                 <Route path="academia/alunos" element={<AdminPermissionGate permission="academy.students.manage"><AdminAcademyStudents /></AdminPermissionGate>} />
                 <Route path="academia/programas" element={<AdminPermissionGate permission="academy.programs.manage"><AdminAcademyPrograms /></AdminPermissionGate>} />
                 <Route path="academia/certificados" element={<AdminPermissionGate permission="academy.documents.manage"><AdminAcademyCertificates /></AdminPermissionGate>} />
