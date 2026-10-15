@@ -143,7 +143,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     if (error) {
-      throw new Error(error.message === 'Invalid login credentials' ? 'E-mail ou senha incorretos.' : error.message)
+      const message = error.message || 'Não foi possível acessar a conta.'
+      if (/email not confirmed/i.test(message)) {
+        throw new Error('Seu cadastro ainda aguarda a confirmação do e-mail. Consulte sua caixa de entrada e a pasta de spam.')
+      }
+      throw new Error(message === 'Invalid login credentials' ? 'E-mail ou senha incorretos.' : message)
     }
     if (!data.user || !data.session) throw new Error('Não foi possível iniciar a sessão.')
 
