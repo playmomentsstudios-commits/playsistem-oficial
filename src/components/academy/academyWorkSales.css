@@ -1,0 +1,30 @@
+.academy-purchase-cta {
+  background: linear-gradient(110deg, #a74b22, #b85b2f);
+  box-shadow: 0 0 0 1px #f4b17c45, 0 3px 16px #dc813030;
+  transform-origin: center;
+  animation: academy-purchase-nudge 8s ease-in-out 2s infinite;
+}
+.academy-purchase-cta:hover,
+.academy-purchase-cta:focus-visible {
+  animation-play-state: paused;
+  outline: 2px solid #ffd3ae;
+  outline-offset: 3px;
+}
+.academy-purchase-cta:active {
+  animation: none;
+  transform: none;
+}
+/* Two small hops and a brief nudge, followed by a long quiet interval. */
+@keyframes academy-purchase-nudge {
+  0%, 35%, 62%, 100% { transform: translate(0, 0) scale(1); }
+  40% { transform: translate(0, -4px) scale(1.035); }
+  44% { transform: translate(0, 0) scale(1); }
+  48% { transform: translate(0, -2px) scale(1.02); }
+  52% { transform: translate(0, 0) scale(1); }
+  54% { transform: translate(-1px, 0) rotate(-.5deg); }
+  56% { transform: translate(1px, 0) rotate(.5deg); }
+  58% { transform: translate(-1px, 0) rotate(-.5deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .academy-purchase-cta { animation: none; transform: none; }
+}
