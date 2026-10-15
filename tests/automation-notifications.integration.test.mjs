@@ -33,7 +33,7 @@ insert into public.app_settings values(true,true,30,now()-interval '1 hour','sel
 insert into public.whatsapp_bridge_state values(true,'${instance}','connected','connect',now(),'5564981294186');
 `
 async function make(){const db=new PGlite();await db.exec(fixture);
- for(const file of ['20261015145501_automation_notifications_v1.sql','20261015145753_automation_notifications_service_permissions.sql','20261015145909_automation_notifications_admin.sql']) await db.exec(readFileSync(new URL('../supabase/migrations/'+file,import.meta.url),'utf8'))
+ for(const file of ['20261015145605_automation_notifications_v1.sql','20261015145758_automation_notifications_service_permissions.sql','20261015150134_automation_notifications_admin.sql']) await db.exec(readFileSync(new URL('../supabase/migrations/'+file,import.meta.url),'utf8'))
  return db}
 const emit=(db,key='rkc:test:001',message='Mensagem')=>db.query('select public.automation_enqueue($1,$2,$3) as result',[key,'Check-in',message]).then(x=>x.rows[0].result)
 test('SQL seed, pause, activation, existing claim, receipt evidence and ACL',async()=>{
