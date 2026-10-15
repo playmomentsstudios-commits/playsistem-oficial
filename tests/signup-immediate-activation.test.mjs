@@ -31,8 +31,8 @@ test('notifications never claim an auto-activated email was verified, while rema
 
 test('auth redirects immediately if signup has session; otherwise shows pending instructions',()=>{
  assert.match(auth,/const \{ data, error \} = await supabase\.auth\.signUp/)
- assert.match(auth,/if \(!data\.session\) return \{ requiresEmailConfirmation: true \}/)
- assert.match(auth,/return \{ requiresEmailConfirmation: false \}/)
+ assert.match(auth,/if \(!data\.session\) return \{ requiresEmailConfirmation: true, userId: data\.user\.id \}/)
+ assert.match(auth,/return \{ requiresEmailConfirmation: false, userId: data\.user\.id \}/)
  assert.match(register,/if \(result\.requiresEmailConfirmation\)/)
  assert.match(register,/navigate\(afterAuthPath\(next, 'customer'\)\)/)
  assert.match(auth,/email not confirmed/i)

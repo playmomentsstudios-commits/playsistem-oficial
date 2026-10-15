@@ -9,7 +9,12 @@ import { Input } from '../../components/ui/Input'
 import { afterAuthPath, authLink, safeReturnPath } from '../../lib/navigation'
 import { EMAIL_FORMAT_HINT, isServerEmailFormatError, isValidSignupEmail, normalizeSignupEmail } from '../../lib/signupEmail'
 
-export function RegisterPage() {
+type PurchaseSignupResult={requiresEmailConfirmation:boolean;userId:string}
+export function RegisterPage({embedded=false,onPurchaseRegistration,nextOverride}:{
+ embedded?:boolean
+ onPurchaseRegistration?:(result:PurchaseSignupResult,email:string)=>Promise<void>
+ nextOverride?:string
+}={}) {
   const [form, setForm] = useState({ name: '', lastName: '', email: '', phone: '', documentNumber: '', postalCode: '', street: '', addressNumber: '', addressComplement: '', neighborhood: '', city: '', state: '', password: '', confirm: '', whatsappUpdatesOptIn: false, marketingOptIn: false })
   const [loading, setLoading] = useState(false)
   const [states, setStates] = useState<Array<{ id: number; sigla: string; nome: string }>>([])
@@ -29,7 +34,7 @@ export function RegisterPage() {
   const toast = useToast()
   const navigate = useNavigate()
   const location = useLocation()
-  const next = safeReturnPath(new URLSearchParams(location.search).get('next'))
+  const next = nextOverride || safeReturnPath(new URLSearchParams(location.search).get('next'))
   useEffect(()=>{
     if(step===1&&errors.email){document.getElementById('register-email')?.focus()}
   },[step,errors.email])
@@ -232,6 +237,11 @@ export function RegisterPage() {
         acceptedConditions,
       }, next)
 
+      if(onPurchaseRegistration){
+        await onPurchaseRegistration(result,normalizeSignupEmail(form.email))
+        return
+      }
+
       if (result.requiresEmailConfirmation) {
         toast(next === '/carrinho' ? 'Conta criada. Confirme seu e-mail e volte para finalizar sua compra.' : 'Conta criada. Confira seu e-mail para confirmar o cadastro.', 'success')
         navigate(authLink('/login', next))
@@ -256,14 +266,14 @@ export function RegisterPage() {
     }
   }
 
-  if (!isLoading && user) return <Navigate to={afterAuthPath(next, user.role)} replace />
+  if (!isLoading && user && !onPurchaseRegistration) return <Navigate to={afterAuthPath(next, user.role)} replace />
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ background: '#0a0a0b' }}>
+    <div className={embedded?'flex flex-col items-center justify-center px-1 py-4':'min-h-screen flex flex-col items-center justify-center p-6'} style={{ background: '#0a0a0b' }}>
       <div className="w-full max-w-md">
         <Link to="/"><BrandImage variant="dark" alt="Sagamente" style={{ height: 28, marginBottom: 32 }} /></Link>
 
-        <h1 className="text-2xl font-bold mb-2" style={{ color: '#f0f0f2' }}>Criar conta</h1>
+        <h1 className="text-2xl font-bold mb-2" style={{ color: '#f0f0f2' }}>{embedded?'Criar conta para finalizar a compra':'Criar conta'}</h1>
         <p className="text-sm mb-4" style={{ color: '#6b6b78' }}>
           Já tem conta? <Link to={authLink('/login', next)} style={{ color: '#A65A2A' }}>Entrar</Link>
         </p>

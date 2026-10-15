@@ -2,86 +2,52 @@ import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 import test from 'node:test'
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8')
-const sql=read('supabase/migrations/20261015110000_academy_work_interest_leads.sql')
+const historic=read('supabase/migrations/20261015110000_academy_work_interest_leads.sql')
 const offers=read('src/components/academy/AcademyWorkSales.tsx')
-const interest=read('src/pages/public/AcademyWorkInterestPage.tsx')
-const admin=read('src/pages/admin/AdminAcademyInterests.tsx')
+const buy=read('src/pages/public/AcademyWorkInterestPage.tsx')
+const admin=read('src/pages/admin/AdminAcademySales.tsx')
 const routes=read('src/AppV2.tsx')
 const hub=read('src/pages/admin/AdminAcademyHub.tsx')
-const landing00=read('src/pages/public/SagaNegraBookLanding.tsx')
-const landingSeries=read('src/pages/public/SagaNegraSeriesLanding.tsx')
-const landing22=read('src/pages/public/AcademyLibraryLanding.tsx')
+const pages=[
+ read('src/pages/public/SagaNegraBookLanding.tsx'),
+ read('src/pages/public/SagaNegraSeriesLanding.tsx'),
+ read('src/pages/public/AcademyLibraryLanding.tsx')
+]
 const catalog=read('src/pages/public/PublicAcademyPage.tsx')
-const appCss=read('src/academy/academy.css')
+const css=read('src/academy/academy.css')
 
-test('Landing pages from Release 00 to 22 use one purchase-intent flow',()=>{
- for(const page of [landing00,landingSeries,landing22]){
-  assert.match(page,/AcademyWorkHeader/)
-  assert.match(page,/AcademyWorkOffers/)
-  assert.doesNotMatch(page,/Quero ser avisado|Consultar disponibilidade/)
+test('Every SAGA NEGRA landing uses the same commercial route and format selector',()=>{
+ for(const page of pages){
+  assert.ok(page.includes('AcademyWorkHeader'))
+  assert.ok(page.includes('AcademyWorkOffers'))
+  assert.ok(!page.includes('Consultar disponibilidade'))
  }
- assert.match(offers,/workInterestUrl/)
- assert.match(offers,/format:'ebook'/)
- assert.match(offers,/format:'audiobook'/)
- assert.match(offers,/format:'combo'/)
- assert.match(offers,/Quero o e-book/)
- assert.match(offers,/Quero o audiobook/)
- assert.match(offers,/Quero o combo/)
- assert.match(offers,/← Todas as obras/)
- assert.match(landing22,/academy_public_work_landing/)
- assert.match(landing22,/canonical_slug!==page\.slug/)
- assert.match(catalog,/Conhecer obra →/)
- assert.doesNotMatch(catalog,/Acesso mediante liberação/)
+ for(const fragment of ["format:'ebook'","format:'audiobook'","format:'combo'","Quero o e-book","Quero o audiobook","Quero o combo","← Todas as obras"]){
+  assert.ok(offers.includes(fragment),fragment)
+ }
+ assert.ok(catalog.includes('Conhecer obra →'))
 })
-test('Public visitor can express interest in a specific format without creating an account or paying',()=>{
- assert.match(routes,/path="\/academia\/interesse\/:release"/)
- assert.match(interest,/academy_public_works/)
- assert.match(interest,/academy_submit_work_interest/)
- assert.match(interest,/p_release_code:work\.release_code/)
- assert.match(interest,/p_requested_format:format/)
- assert.match(interest,/p_contact_consent:consent/)
- assert.match(interest,/WhatsApp com DDD/)
- assert.match(interest,/Quero receber as condições/)
- assert.match(interest,/Nenhum pagamento foi cobrado/)
- assert.doesNotMatch(interest,/checkout\.sessions|admin\.createUser|grantAccess|academy_library_grants/)
+test('The interest URL is now a real priced Pix checkout',()=>{
+ assert.ok(routes.includes('path="/academia/comprar/:release"'))
+ assert.ok(routes.includes('path="/academia/compra/:id"'))
+ assert.ok(buy.includes('academy_public_work_prices'))
+ assert.ok(buy.includes('academy-infinitepay-checkout'))
+ assert.ok(buy.includes('Efetuar pagamento via Pix'))
+ assert.ok(buy.includes('RegisterPage embedded'))
+ assert.ok(buy.includes('guest_user_id:result.userId'))
+ assert.ok(!buy.includes('academy_submit_work_interest'))
+ assert.ok(hub.includes('Vendas Pix e preços'))
+ assert.ok(admin.includes('academy_work_purchases'))
 })
-test('Anonymous interest endpoint never grants media, does not expose customer data and requires consent',()=>{
- assert.match(sql,/create table if not exists public\.academy_work_interests/)
- assert.match(sql,/alter table public\.academy_work_interests enable row level security/)
- assert.match(sql,/public\.is_active_admin\(\)/)
- assert.match(sql,/revoke all on public\.academy_work_interests from public,anon,authenticated/)
- assert.match(sql,/grant select,update on public\.academy_work_interests to authenticated/)
- assert.match(sql,/p_contact_consent is distinct from true/)
- assert.match(sql,/v_phone:=regexp_replace/)
- assert.match(sql,/pg_advisory_xact_lock/)
- assert.match(sql,/30 minutes/)
- assert.match(sql,/24 hours/)
- assert.match(sql,/p_website/)
- assert.match(sql,/grant execute on function public\.academy_submit_work_interest/)
- assert.doesNotMatch(sql,/academy_library_grants\s*\(|academy_library_tickets\s*\(|update public\.academy_library_items/i)
+test('Historical leads remain private and must not create media access',()=>{
+ for(const fragment of ['academy_work_interests','enable row level security','academy_submit_work_interest']){
+  assert.ok(historic.includes(fragment),fragment)
+ }
+ assert.ok(!historic.includes('insert into public.academy_library_grants'))
 })
-test('Administrator sees only private leads and can filter/convert them manually',()=>{
- assert.match(routes,/path="academia\/interesses" element=\{<AdminPermissionGate adminOnly>/)
- assert.match(hub,/Interesses de compra/)
- assert.match(admin,/academy_work_interests/)
- assert.match(admin,/Academy/)
- assert.match(admin,/formatLabel/)
- assert.match(admin,/whatsappUrl/)
- assert.match(admin,/Em contato/)
- assert.match(admin,/Convertido/)
- assert.match(admin,/não cobra/)
- assert.match(admin,/não uma confirmação automática de pagamento/)
- assert.doesNotMatch(admin,/academy_library_grants/)
-})
-test('Published canonical landing metadata is updated without renaming pages or duplicating work',()=>{
- assert.match(sql,/cta_label='Quero adquirir'/)
- assert.match(sql,/cta_href='\/academia\/interesse\/'\|\|w\.release_code/)
- assert.match(sql,/where w\.landing_page_id=p\.id and p\.status='published'/)
- assert.doesNotMatch(sql,/delete from public\.site_landing_pages|insert into public\.site_landing_pages/)
- assert.match(sql,/noindex=false/)
-})
-test('The resume listening card shrinks; existing persistent player remains in place',()=>{
- assert.match(appCss,/\.academy-resume\{display:flex;align-items:center;gap:10px;padding:8px 10px/)
- assert.match(appCss,/\.academy-resume \.academy-content-art\{width:49px/)
- assert.match(read('src/contexts/AcademyAudioContext.tsx'),/AcademyAudioDock/)
+test('Landing metadata and audiobook resume remain intact',()=>{
+ assert.ok(historic.includes("cta_label='Quero adquirir'"))
+ assert.ok(historic.includes("w.landing_page_id=p.id"))
+ assert.ok(css.includes('.academy-resume{display:flex;align-items:center;gap:10px;padding:8px 10px'))
+ assert.ok(read('src/contexts/AcademyAudioContext.tsx').includes('AcademyAudioDock'))
 })

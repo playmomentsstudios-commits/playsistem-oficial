@@ -20,6 +20,7 @@ import { motivoStatusCliente,rotulo } from '../lib/labels.ptBR'
 
 interface RegisterResult {
   requiresEmailConfirmation: boolean
+  userId: string
 }
 
 interface AuthContextValue {
@@ -190,12 +191,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (error) throw new Error(error.message)
     if (!data.user) throw new Error('Não foi possível criar a conta.')
-    if (!data.session) return { requiresEmailConfirmation: true }
+    if (!data.session) return { requiresEmailConfirmation: true, userId: data.user.id }
 
     const appUser = await fetchProfile(data.user)
     setSession(data.session)
     setUser(appUser)
-    return { requiresEmailConfirmation: false }
+    return { requiresEmailConfirmation: false, userId: data.user.id }
   }, [])
 
   const refreshUser = useCallback(async () => {
