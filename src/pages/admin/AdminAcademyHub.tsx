@@ -9,7 +9,7 @@ export function AdminAcademyHub(){
  const isAdmin=user?.role==='admin'
  const [params,setParams]=useSearchParams()
  const requested=params.get('section')
- const [section,setSection]=useState<'library'|'courses'>(requested==='courses'?'courses':isAdmin?'library':'courses')
+ const [section,setSection]=useState<'library'|'courses'>(isAdmin?'library':'courses')
  useEffect(()=>{setSection(requested==='courses'?'courses':isAdmin?'library':'courses')},[isAdmin,requested])
  const tabs=([['library','E-books e audiobooks'],['courses','Cursos e aulas']] as const)
  return <div className="max-w-7xl mx-auto">
