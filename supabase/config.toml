@@ -2,3 +2,7 @@
 # POST authenticates the signed-in user and checks the active grant.
 [functions.academy-library-media]
 verify_jwt = false
+
+# Machine endpoint validates its dedicated bearer credential inside the handler.
+[functions.automation-notifications]
+verify_jwt = false
