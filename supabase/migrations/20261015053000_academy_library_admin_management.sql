@@ -1,0 +1,73 @@
+-- Academy library content management. No changes to existing SAGA NEGRA media/grants.
+alter table public.academy_library_items
+  add column if not exists description text,
+  add column if not exists author_name text,
+  add column if not exists cover_url text,
+  add column if not exists cover_drive_file_id text,
+  add column if not exists banner_url text,
+  add column if not exists sample_text text,
+  add column if not exists sample_audio_url text,
+  add column if not exists landing_page_id uuid references public.site_landing_pages(id) on delete set null;
+
+create index if not exists academy_library_items_landing_page_idx
+on public.academy_library_items(landing_page_id);
+
+-- Create a customisable draft landing for NEW library content only, not for the
+-- 12 existing releases whose hand-crafted landing pages must be preserved.
+create or replace function public.academy_library_create_landing_on_insert()
+returns trigger language plpgsql security definer set search_path='' as $$
+declare v_landing uuid;
+begin
+  if not public.is_active_admin() then
+    raise exception 'Admin access required' using errcode='42501';
+  end if;
+  insert into public.site_landing_pages (
+    title,slug,status,eyebrow,headline,subheadline,cta_label,cta_href,
+    hero_image_url,hero_image_drive_file_id,sections,seo_title,
+    seo_description,noindex,created_by,updated_by
+  ) values (
+    NEW.title||case when NEW.format='ebook' then ' · E-book' else ' · Audiobook' end,
+    'biblioteca-'||NEW.slug||'-'||left(replace(NEW.id::text,'-',''),8),
+    'draft',
+    case when NEW.format='ebook' then 'Academia Sagamente · E-book' else 'Academia Sagamente · Audiobook' end,
+    NEW.title,
+    coalesce(nullif(NEW.description,''),'Conheça este conteúdo digital da Academia Sagamente.'),
+    'Conhecer a Academia','/academia',
+    coalesce(NEW.banner_url,NEW.cover_url),NEW.cover_drive_file_id,
+    jsonb_build_array(jsonb_build_object('type','cta','title','Conheça a obra',
+      'text','Fale com a equipe Sagamente para saber sobre formatos e disponibilidade.')),
+    left(NEW.title||' | Academia Sagamente',180),
+    left(coalesce(nullif(NEW.description,''),NEW.title),300),
+    true,auth.uid(),auth.uid()
+  ) returning id into v_landing;
+  update public.academy_library_items set landing_page_id=v_landing where id=NEW.id;
+  return NEW;
+end $$;
+
+drop trigger if exists academy_library_auto_landing_create on public.academy_library_items;
+create trigger academy_library_auto_landing_create
+after insert on public.academy_library_items
+for each row execute function public.academy_library_create_landing_on_insert();
+
+-- Only a deliberate change in publication status publishes/pauses a linked
+-- landing. Editing the landing independently never republishes archived work.
+create or replace function public.academy_library_sync_landing_status()
+returns trigger language plpgsql security definer set search_path='' as $$
+begin
+  if NEW.landing_page_id is not null and NEW.status is distinct from OLD.status then
+    update public.site_landing_pages
+    set status=case when NEW.status='published' then 'published' else 'paused' end,
+        noindex=NEW.status<>'published',
+        published_at=case when NEW.status='published' then coalesce(published_at,now()) else published_at end,
+        updated_at=now()
+    where id=NEW.landing_page_id;
+  end if;
+  return NEW;
+end $$;
+drop trigger if exists academy_library_landing_status on public.academy_library_items;
+create trigger academy_library_landing_status
+after update of status on public.academy_library_items
+for each row execute function public.academy_library_sync_landing_status();
+
+revoke all on function public.academy_library_create_landing_on_insert() from public,anon,authenticated;
+revoke all on function public.academy_library_sync_landing_status() from public,anon,authenticated;
