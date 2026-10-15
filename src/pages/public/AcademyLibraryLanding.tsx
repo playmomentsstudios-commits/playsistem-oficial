@@ -37,6 +37,10 @@ export function AcademyLibraryLanding({page,preview=false}:{page:SiteLandingPage
  if(!preview&&detail?.canonical_slug&&detail.canonical_slug!==page.slug)
   return <Navigate to={'/l/'+encodeURIComponent(detail.canonical_slug)} replace/>
  const audio=safePublicSample(detail?.sample_audio_url)
+ const benefits=page.sections.find(section=>section.type==='benefits')?.items||[]
+ const topics=page.sections.find(section=>section.type==='content')?.items||[]
+ const faqs=page.sections.find(section=>section.type==='faq')?.items||[]
+ const sampleParts=(detail?.sample_text||'').split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean)
  return <main className="min-h-screen bg-[#0c0e10] text-[#f7eee4]">
   {preview&&<p className="border-b border-amber-500/30 bg-[#4e321f] px-4 py-3 text-center text-xs font-bold text-amber-100">PRÉVIA ADMINISTRATIVA · <Link to="/admin/academia" className="underline">Voltar ao painel</Link></p>}
   {detail&&<AcademyWorkHeader release={detail.release_code}/>}
@@ -69,7 +73,11 @@ export function AcademyLibraryLanding({page,preview=false}:{page:SiteLandingPage
     {(detail.sample_text||audio)&&<div className="mt-8 grid gap-4 md:grid-cols-2">
      {detail.sample_text&&<div className="rounded-2xl border border-white/10 bg-[#16191c] p-6">
       <p className="text-xs font-bold uppercase tracking-widest text-[#dca078]">Amostra do e-book</p>
-      <p className="mt-4 whitespace-pre-line font-serif text-base leading-8 text-[#eee0cf]">{detail.sample_text}</p>
+      <p className="mt-4 whitespace-pre-line font-serif text-base leading-8 text-[#eee0cf]">{sampleParts[0]}</p>
+      {sampleParts.length>1&&<details className="group mt-4 border-t border-white/10 pt-4">
+       <summary className="cursor-pointer text-xs font-bold text-[#efb78b]">Continuar lendo a amostra <span aria-hidden="true" className="inline-block transition-transform group-open:rotate-180">⌄</span></summary>
+       <div className="mt-4 space-y-4 font-serif text-base leading-8 text-[#eee0cf]">{sampleParts.slice(1).map((paragraph,i)=><p key={i}>{paragraph}</p>)}</div>
+      </details>}
      </div>}
      {audio&&<div className="rounded-2xl border border-white/10 bg-[#16191c] p-6">
       <p className="text-xs font-bold uppercase tracking-widest text-[#dca078]">Amostra do audiobook</p>
@@ -78,7 +86,35 @@ export function AcademyLibraryLanding({page,preview=false}:{page:SiteLandingPage
      </div>}
     </div>}
    </section>
+   {benefits.length>0&&<section id="temas" className="border-y border-white/10 bg-[#141619] px-5 py-16 sm:py-20">
+    <div className="mx-auto max-w-6xl">
+     <p className="text-xs font-bold uppercase tracking-widest text-[#dba276]">O que você encontrará</p>
+     <h2 className="mt-3 max-w-3xl font-serif text-3xl font-semibold sm:text-4xl">{page.sections.find(section=>section.type==='benefits')?.title||'Uma obra para olhar além do óbvio'}</h2>
+     <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{benefits.map((item,i)=>
+      <article key={i} className="rounded-2xl border border-white/10 bg-[#1b1d20] p-6">
+       <span className="font-serif text-3xl text-[#cb8e61]">{String(i+1).padStart(2,'0')}</span>
+       <h3 className="mt-3 text-base font-bold text-[#fae9d7]">{item.title}</h3>
+       <p className="mt-3 text-sm leading-7 text-[#bcb0a5]">{item.description}</p>
+      </article>)}</div>
+    </div>
+   </section>}
+   {topics.length>0&&<section className="mx-auto max-w-6xl px-5 py-16 sm:py-20">
+    <h2 className="font-serif text-3xl font-semibold">{page.sections.find(section=>section.type==='content')?.title||'O percurso da obra'}</h2>
+    <div className="mt-7 grid gap-3 sm:grid-cols-2">{topics.map((topic,i)=>
+     <article key={i} className="flex items-start gap-4 rounded-xl border border-white/10 bg-[#16181b] p-5">
+      <span className="font-serif text-2xl text-[#d39970]">{String(i+1).padStart(2,'0')}</span>
+      <div><h3 className="font-bold">{topic.title}</h3><p className="mt-2 text-sm leading-6 text-gray-400">{topic.description}</p></div>
+     </article>)}</div>
+   </section>}
    <AcademyWorkOffers release={detail.release_code} ebook={Boolean(detail.ebook_status)} audiobook={Boolean(detail.audiobook_status)}/>
+   {faqs.length>0&&<section className="mx-auto max-w-4xl px-5 py-16 sm:py-20">
+    <p className="text-xs font-bold uppercase tracking-widest text-[#cf956b]">Dúvidas frequentes</p>
+    <h2 className="mt-3 font-serif text-3xl font-semibold">Antes de escolher</h2>
+    <div className="mt-8 space-y-3">{faqs.map((item,i)=><details key={i} className="rounded-xl border border-white/10 bg-[#17191c] p-5">
+     <summary className="cursor-pointer text-sm font-bold">{item.title}</summary>
+     {item.description&&<p className="mt-3 text-sm leading-7 text-[#bcb2a8]">{item.description}</p>}
+    </details>)}</div>
+   </section>}
    <section className="mx-auto max-w-4xl px-5 py-16 text-center">
     <h2 className="font-serif text-3xl font-bold">Sua próxima leitura começa aqui</h2>
     <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-gray-400">Explore a biblioteca da Academia Sagamente e conheça outras obras da coleção.</p>
