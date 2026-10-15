@@ -28,7 +28,7 @@ test('Every SAGA NEGRA landing uses the same commercial route and format selecto
  assert.ok(catalog.includes('Conhecer obra →'))
 })
 test('The interest URL is now a real priced Pix checkout',()=>{
- assert.ok(routes.includes('path="/academia/interesse/:release"'))
+ assert.ok(routes.includes('path="/academia/comprar/:release"'))
  assert.ok(routes.includes('path="/academia/compra/:id"'))
  assert.ok(buy.includes('academy_public_work_prices'))
  assert.ok(buy.includes('academy-infinitepay-checkout'))
