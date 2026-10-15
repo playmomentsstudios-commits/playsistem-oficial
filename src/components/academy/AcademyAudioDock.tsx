@@ -32,7 +32,12 @@ export function AcademyAudioDock(){
   if(delta>65)setCollapsed(true)
   else if(delta< -65)setCollapsed(false)
  }
- const onTouchStart=(e:React.TouchEvent)=>{gestureX.current=e.changedTouches[0]?.clientX??null}
+ const onTouchStart=(e:React.TouchEvent)=>{
+  const target=e.target as HTMLElement
+  // Seeking, tapping playlist controls and scrolling should never close the dock.
+  if(target.closest('button,a,input,select,textarea')){gestureX.current=null;return}
+  gestureX.current=e.changedTouches[0]?.clientX??null
+ }
  const onTouchEnd=(e:React.TouchEvent)=>{
   const last=e.changedTouches[0]?.clientX
   if(gestureX.current!==null&&last!==undefined)swiping(last-gestureX.current)
