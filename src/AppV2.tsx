@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AppLaunchRoute, LegacyStandaloneLanding } from './components/AppLaunchRoute'
 import { AuthProvider } from './contexts/AuthContext'
+import {AcademyAudioProvider} from './contexts/AcademyAudioContext'
 import { CartProvider } from './contexts/CartContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { useAuth } from './contexts/AuthContext'
@@ -120,6 +121,7 @@ export default function AppV2() {
       <AuthProvider>
         <CartProvider>
           <ToastProvider>
+            <AcademyAudioProvider>
             <RouteSeo />
             <RouteFocus />
             <PublicViewTracker />
@@ -243,6 +245,7 @@ export default function AppV2() {
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
             </Suspense>
+            </AcademyAudioProvider>
           </ToastProvider>
         </CartProvider>
       </AuthProvider>
