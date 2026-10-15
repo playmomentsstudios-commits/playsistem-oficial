@@ -94,6 +94,7 @@ export function RegisterPage() {
     if (!form.lastName) errs.lastName = 'Informe o sobrenome'
     if (!form.email) errs.email = 'Informe o e-mail'
     if (!form.phone.replace(/\D/g, '')) errs.phone = 'Informe o telefone'
+    if (form.whatsappUpdatesOptIn && ![10,11].includes(form.phone.replace(/\D/g, '').length)) errs.phone = 'Informe um WhatsApp válido com DDD para receber os avisos'
     const document = form.documentNumber.replace(/\D/g, '')
     if (![11, 14].includes(document.length)) errs.documentNumber = 'Informe um CPF ou CNPJ válido'
     if (form.postalCode.replace(/\D/g, '').length !== 8) errs.postalCode = 'Informe um CEP válido'
