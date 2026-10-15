@@ -1,5 +1,6 @@
 import { BrandImage } from '../../components/BrandImage'
 import { useEffect, useState } from 'react'
+import { formatCep, lookupCep, lookupStreetCeps, normalizePlace, type CepSuggestion } from '../../lib/addressLookup'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
@@ -14,6 +15,12 @@ export function RegisterPage() {
   const [cities, setCities] = useState<Array<{ id: number; nome: string }>>([])
   const [loadingCities, setLoadingCities] = useState(false)
   const [loadingCep, setLoadingCep] = useState(false)
+  const [loadingStreetCep,setLoadingStreetCep]=useState(false)
+  const [cepSuggestions,setCepSuggestions]=useState<CepSuggestion[]>([])
+  const [cepStatus,setCepStatus]=useState('')
+  const [unknownCep,setUnknownCep]=useState(false)
+  const [withoutNumber,setWithoutNumber]=useState(false)
+  const [acceptedConditions,setAcceptedConditions]=useState(false)
   const [step, setStep] = useState(1)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const { register, user, isLoading } = useAuth()
@@ -21,8 +28,6 @@ export function RegisterPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const next = safeReturnPath(new URLSearchParams(location.search).get('next'))
-  if (!isLoading && user) return <Navigate to={afterAuthPath(next, user.role)} replace />
-
   useEffect(() => {
     fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome')
       .then(response => response.ok ? response.json() : Promise.reject())
@@ -30,11 +35,16 @@ export function RegisterPage() {
   }, [])
 
   useEffect(() => {
-    if (!form.state) { setCities([]); return }
+    if (!form.state) { setCities([]); setLoadingCities(false); return }
+    const controller=new AbortController()
+    setCities([])
     setLoadingCities(true)
-    fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/' + form.state + '/municipios?orderBy=nome')
-      .then(response => response.ok ? response.json() : Promise.reject())
-      .then(setCities).catch(() => setCities([])).finally(() => setLoadingCities(false))
+    fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/' + form.state + '/municipios?orderBy=nome',{signal:controller.signal})
+      .then(response => response.ok ? response.json() : Promise.reject(new Error('Falha ao listar cidades')))
+      .then((rows:Array<{id:number;nome:string}>)=>{if(!controller.signal.aborted)setCities(rows)})
+      .catch(()=>{if(!controller.signal.aborted)setCities([])})
+      .finally(()=>{if(!controller.signal.aborted)setLoadingCities(false)})
+    return ()=>controller.abort()
   }, [form.state])
 
   const digits = (value: string) => value.replace(/\D/g, '')
@@ -50,42 +60,91 @@ export function RegisterPage() {
     if (d.length <= 11) return d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')
     return d.replace(/(\d{2})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1/$2').replace(/(\d{4})(\d{1,2})$/,'$1-$2')
   }
-  const formatCep = (value: string) => {
-    const d = digits(value).slice(0,8)
-    return d.length > 5 ? d.slice(0,5) + '-' + d.slice(5) : d
-  }
-
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(prev => ({ ...prev, [k]: e.target.value }))
 
-  const lookupCep = async () => {
-    const cep = digits(form.postalCode)
-    if (cep.length !== 8) return
-    try {
+  useEffect(()=>{
+    const value=digits(form.postalCode)
+    if(value.length!==8){setLoadingCep(false);return}
+    const controller=new AbortController()
+    const timer=window.setTimeout(async()=>{
       setLoadingCep(true)
-      const response = await fetch('https://viacep.com.br/ws/' + cep + '/json/')
-      if (!response.ok) throw new Error()
-      const data = await response.json()
-      if (data.erro) throw new Error()
-      setForm(prev => ({
-        ...prev,
-        postalCode: formatCep(cep),
-        street: data.logradouro || prev.street,
-        neighborhood: data.bairro || prev.neighborhood,
-        state: data.uf || prev.state,
-        city: data.localidade || prev.city,
-      }))
-      setErrors(prev => ({...prev, postalCode: ''}))
-    } catch {
-      setErrors(prev => ({...prev, postalCode: 'CEP não encontrado. Preencha o endereço manualmente.'}))
-    } finally {
-      setLoadingCep(false)
+      setCepSuggestions([])
+      try{
+        const address=await lookupCep(value,controller.signal)
+        if(controller.signal.aborted)return
+        setForm(prev=>digits(prev.postalCode)===value?{
+          ...prev,postalCode:formatCep(value),state:address.uf,city:address.localidade,
+          street:address.logradouro||prev.street,neighborhood:address.bairro||prev.neighborhood,
+        }:prev)
+        setUnknownCep(false)
+        setCepStatus('CEP localizado. Confira os dados antes de continuar.')
+        setErrors(prev=>({...prev,postalCode:''}))
+      }catch(error){
+        if(controller.signal.aborted)return
+        setCepStatus('Não encontramos esse CEP. Confira os números ou selecione estado e cidade.')
+        setErrors(prev=>({...prev,postalCode:'CEP não localizado; revise ou marque “Não sei meu CEP”.'}))
+      }finally{if(!controller.signal.aborted)setLoadingCep(false)}
+    },350)
+    return ()=>{window.clearTimeout(timer);controller.abort()}
+  },[form.postalCode])
+
+  // For street-based search the postal service may return multiple CEPs.
+  // Never choose an arbitrary city's "main" CEP.
+  useEffect(()=>{
+    if(digits(form.postalCode).length===8||!form.state||!form.city||form.street.trim().length<3){
+      setLoadingStreetCep(false)
+      setCepSuggestions([])
+      return
     }
+    const controller=new AbortController()
+    const selectedState=form.state, selectedCity=form.city,selectedStreet=form.street
+    const timer=window.setTimeout(async()=>{
+      setLoadingStreetCep(true)
+      try{
+        const matches=await lookupStreetCeps(selectedState,selectedCity,selectedStreet,controller.signal)
+        if(controller.signal.aborted)return
+        const neighborhood=form.neighborhood.trim()
+        const inNeighborhood=neighborhood?matches.filter(item=>normalizePlace(item.bairro)===normalizePlace(neighborhood)):[]
+        const list=inNeighborhood.length?inNeighborhood:matches
+        if(list.length===1){
+          const selected=list[0]
+          setForm(prev=>prev.state===selectedState&&prev.city===selectedCity&&prev.street===selectedStreet&&digits(prev.postalCode).length!==8?{
+            ...prev,postalCode:formatCep(selected.cep),neighborhood:prev.neighborhood||selected.bairro
+          }:prev)
+          setUnknownCep(false)
+          setCepStatus('CEP sugerido pelo endereço. Confira se corresponde à sua localização.')
+          setErrors(prev=>({...prev,postalCode:''}))
+          setCepSuggestions([])
+        }else setCepSuggestions(list.slice(0,8))
+      }catch{if(!controller.signal.aborted)setCepSuggestions([])}
+      finally{if(!controller.signal.aborted)setLoadingStreetCep(false)}
+    },700)
+    return ()=>{window.clearTimeout(timer);controller.abort()}
+  },[form.state,form.city,form.street,form.neighborhood,form.postalCode])
+
+  const handleStateChange=(event:React.ChangeEvent<HTMLSelectElement>)=>{
+    const state=event.target.value
+    setForm(prev=>({...prev,state,city:'',postalCode:''}))
+    setCepSuggestions([])
+    setCepStatus('')
+    setErrors(prev=>({...prev,state:'',city:'',postalCode:''}))
   }
 
-  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const state = e.target.value
-    setForm(prev => ({ ...prev, state, city: '' }))
+  const handleCityChange=(event:React.ChangeEvent<HTMLSelectElement>)=>{
+    const city=event.target.value
+    setForm(prev=>({...prev,city,postalCode:''}))
+    setCepSuggestions([])
+    setCepStatus('')
+    setErrors(prev=>({...prev,city:'',postalCode:''}))
+  }
+
+  const chooseCep=(item:CepSuggestion)=>{
+    setForm(prev=>({...prev,postalCode:formatCep(item.cep),street:item.logradouro||prev.street,neighborhood:item.bairro||prev.neighborhood}))
+    setUnknownCep(false)
+    setCepSuggestions([])
+    setCepStatus('CEP selecionado. Confira os dados e continue.')
+    setErrors(prev=>({...prev,postalCode:''}))
   }
 
   const validate = () => {
@@ -97,14 +156,15 @@ export function RegisterPage() {
     if (form.whatsappUpdatesOptIn && ![10,11].includes(form.phone.replace(/\D/g, '').length)) errs.phone = 'Informe um WhatsApp válido com DDD para receber os avisos'
     const document = form.documentNumber.replace(/\D/g, '')
     if (![11, 14].includes(document.length)) errs.documentNumber = 'Informe um CPF ou CNPJ válido'
-    if (form.postalCode.replace(/\D/g, '').length !== 8) errs.postalCode = 'Informe um CEP válido'
+    if (!unknownCep && form.postalCode.replace(/\D/g, '').length !== 8) errs.postalCode = 'Informe o CEP ou marque “Não sei meu CEP”'
     if (!form.street.trim()) errs.street = 'Informe a rua ou avenida'
-    if (!form.addressNumber.trim()) errs.addressNumber = 'Informe o número'
+    if (!withoutNumber && !form.addressNumber.trim()) errs.addressNumber = 'Informe o número ou marque “Sem número”'
     if (!form.neighborhood.trim()) errs.neighborhood = 'Informe o bairro'
     if (!form.city.trim()) errs.city = 'Informe a cidade'
     if (form.state.trim().length !== 2) errs.state = 'Informe a UF'
     if (!form.password || form.password.length < 6) errs.password = 'Mínimo 6 caracteres'
     if (form.password !== form.confirm) errs.confirm = 'As senhas não coincidem'
+    if (!acceptedConditions) errs.acceptedConditions = 'Leia e aceite as condições essenciais do cadastro'
     return errs
   }
 
@@ -114,7 +174,7 @@ export function RegisterPage() {
       ? ['name','lastName','email','phone','documentNumber']
       : targetStep === 2
         ? ['postalCode','street','addressNumber','neighborhood','city','state']
-        : ['password','confirm']
+        : ['password','confirm','acceptedConditions']
     return Object.fromEntries(Object.entries(all).filter(([key]) => keys.includes(key)))
   }
 
@@ -146,7 +206,7 @@ export function RegisterPage() {
         documentNumber: form.documentNumber,
         postalCode: form.postalCode,
         street: form.street,
-        addressNumber: form.addressNumber,
+        addressNumber: withoutNumber ? 'S/N' : form.addressNumber,
         addressComplement: form.addressComplement,
         neighborhood: form.neighborhood,
         city: form.city,
@@ -154,6 +214,7 @@ export function RegisterPage() {
         password: form.password,
         whatsappUpdatesOptIn: form.whatsappUpdatesOptIn,
         marketingOptIn: form.marketingOptIn,
+        acceptedConditions,
       }, next)
 
       if (result.requiresEmailConfirmation) {
@@ -170,6 +231,8 @@ export function RegisterPage() {
       setLoading(false)
     }
   }
+
+  if (!isLoading && user) return <Navigate to={afterAuthPath(next, user.role)} replace />
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ background: '#0a0a0b' }}>
