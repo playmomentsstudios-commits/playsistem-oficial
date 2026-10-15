@@ -58,10 +58,37 @@
 .academy-login-copy>p:last-child{color:#a9a5a5;font-size:14px;line-height:1.7;max-width:310px}
 .academy-login-form{display:flex;flex-direction:column;margin-top:30px}
 .academy-login-form>label{font-size:12px;font-weight:600;color:#d0cccb;margin-bottom:9px}
-.academy-input-wrap{display:flex;align-items:center;gap:11px;min-width:0;padding:0 15px;border:1px solid rgba(255,255,255,.1);border-radius:13px;background:#19191b;color:#8e8c91;margin-bottom:20px}
-.academy-input-wrap:focus-within{border-color:rgba(233,145,86,.75);box-shadow:0 0 0 3px rgba(233,145,86,.075)}
-.academy-input-wrap input{height:51px;width:100%;min-width:0;flex:1;background:transparent;color:#fff;border:0;outline:0;font:inherit;font-size:14px}
-.academy-input-wrap input::placeholder{color:#727077}
+.academy-input-wrap{display:flex;align-items:center;gap:11px;min-width:0;padding:0 15px;border:1px solid rgba(255,255,255,.13);border-radius:13px;background:#19191b;color:#8e8c91;margin-bottom:20px;transition:border-color .2s ease,box-shadow .2s ease}
+.academy-input-wrap:focus-within{border-color:rgba(233,145,86,.76);box-shadow:0 0 0 3px rgba(233,145,86,.1)}
+/* The shared global input:focus + :focus-visible rules created a second,
+   rectangular outline INSIDE the rounded Academy input. Only the outer
+   container owns the visible focus indicator. Applies with autofill as well. */
+.academy-login .academy-input-wrap > input,
+.academy-login .academy-input-wrap > input:focus,
+.academy-login .academy-input-wrap > input:focus-visible{
+  display:block;flex:1 1 0%;min-width:0;width:100%;height:51px;margin:0;padding:0;
+  border:0 !important;outline:0 !important;outline-offset:0 !important;
+  border-radius:0;box-shadow:none !important;
+  background:transparent !important;color:#f7f4f0;
+  caret-color:#e99156;font:inherit;font-size:14px;
+  appearance:none;-webkit-appearance:none;
+}
+.academy-login .academy-input-wrap > input::placeholder{color:#838087;opacity:1}
+.academy-login .academy-input-wrap > input:-webkit-autofill,
+.academy-login .academy-input-wrap > input:-webkit-autofill:hover,
+.academy-login .academy-input-wrap > input:-webkit-autofill:focus{
+  -webkit-text-fill-color:#f7f4f0;
+  box-shadow:0 0 0 1000px #19191b inset !important;
+  -webkit-box-shadow:0 0 0 1000px #19191b inset !important;
+  transition:background-color 9999s ease-out 0s;
+}
+.academy-signup-panel{margin-top:24px;padding:20px;border:1px solid rgba(233,145,86,.22);border-radius:16px;background:rgba(233,145,86,.045)}
+.academy-signup-panel h2{color:var(--ac-cream);font-size:17px;line-height:1.3;font-weight:750;margin-top:7px}
+.academy-signup-panel>p:not(.academy-eyebrow){color:#aaa7a8;font-size:12px;line-height:1.6;margin-top:8px}
+.academy-signup-link{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:11px 14px;margin-top:15px;border:1px solid rgba(233,145,86,.4);border-radius:11px;color:#f6c29f;background:rgba(233,145,86,.1);font-size:13px;font-weight:750;text-align:center;text-decoration:none}
+.academy-signup-link:hover{background:rgba(233,145,86,.18)}
+.academy-signup-explore{display:block;min-height:42px;margin-top:6px;padding:12px 8px;color:#c3a48f;text-align:center;font-size:11px;font-weight:650;text-decoration:none}
+.academy-signup-explore:hover{text-decoration:underline}
 .academy-show-password{background:transparent;border:0;color:#d49a70;font-weight:600;font-size:11px;padding:10px 0}
 .academy-login-error{border-radius:10px;background:#301b1e;color:#ffc6c6;padding:11px;font-size:12px;margin-bottom:14px}
 .academy-primary-button{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:linear-gradient(110deg,#f19959,#d96b36);border:1px solid rgba(255,176,117,.25);color:#160d08;border-radius:13px;padding:14px 22px;min-height:49px;font-size:13px;font-weight:800;box-shadow:0 9px 25px rgba(184,85,31,.18)}
@@ -69,7 +96,7 @@
 .academy-primary-button:disabled{opacity:.55;cursor:wait}
 .academy-login-submit{width:100%;margin-top:4px}
 .academy-forgot{margin:18px auto 0;display:block;text-align:center;font-size:12px;font-weight:600;color:#e8a473}
-.academy-login-footer{display:flex;align-items:center;gap:7px;color:#8e8888;font-size:11px;margin-top:35px}
+.academy-login-footer{display:flex;align-items:flex-start;gap:7px;color:#8e8888;font-size:11px;line-height:1.5;margin-top:18px}
 
 /* App header and bottom navigation */
 .academy-shell{padding-bottom:env(safe-area-inset-bottom)}
