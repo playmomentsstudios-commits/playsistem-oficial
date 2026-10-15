@@ -1,5 +1,6 @@
 import { BrandImage } from '../../components/BrandImage'
 import { SagaNegraBookLanding } from './SagaNegraBookLanding'
+import { AcademyLibraryLanding } from './AcademyLibraryLanding'
 import { SagaNegraSeriesLanding, isSagaNegraSeriesLanding } from './SagaNegraSeriesLanding'
 import { useEffect,useState } from 'react'
 import { Link,useParams } from 'react-router-dom'
@@ -19,6 +20,7 @@ export function LandingPage({preview=false}:{preview?:boolean}){
  useSeo({title:page?.seo_title||page?.title||'Campanha',description:page?.seo_description||page?.subheadline||'Conheça esta solução da Sagamente.',image:page?.hero_image_url,canonicalPath:'/l/'+slug,canonicalUrl:page?.canonical_url,noindex:preview||Boolean(page?.noindex)||(!loading&&!page)})
  if(loading)return <main className="min-h-screen bg-[#0a0a0b] text-white flex items-center justify-center text-gray-400">Carregando...</main>
  if(!page)return <main className="min-h-screen bg-[#0a0a0b] text-white flex flex-col items-center justify-center px-5 text-center"><h1 className="text-3xl font-bold">Página não encontrada</h1><p className="text-gray-400 mt-3">Esta campanha pode ter sido encerrada ou o endereço está incorreto.</p><Link to="/" className="mt-6 px-5 py-3 rounded-xl bg-[#A65A2A] font-semibold">Voltar para a Sagamente</Link></main>
+ if(page.slug.startsWith('biblioteca-'))return <AcademyLibraryLanding page={page} preview={preview}/>
  if(page.slug==='saga-negra-entre-fracasso-e-prosperidade')return <SagaNegraBookLanding page={page} preview={preview}/>
  if(isSagaNegraSeriesLanding(page.slug))return <SagaNegraSeriesLanding page={page} preview={preview}/>
  return <main className="min-h-screen bg-[#0a0a0b] text-[#f0f0f2]">
