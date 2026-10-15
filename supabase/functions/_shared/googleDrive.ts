@@ -672,6 +672,24 @@ export async function ensureAcademyFolder(db: SupabaseClient, userId: string, co
 
 
 
+/** Keep owned library originals in the same private institutional Academia root.
+ * Never create public link permissions on complete PDF/MP3 files.
+ */
+export async function ensureAcademyLibraryFolder(db: SupabaseClient, userId: string, releaseCode: string) {
+  const code = releaseCode.trim().replace(/[^a-zA-Z0-9_-]/g, "-").slice(0,80);
+  if (!code) throw new Error("Library release code required");
+  const { academyRootId } = await ensureAcademyFolderRoot(db,userId);
+  let libraryRoot = await findDriveFolder(academyRootId,"academy-library-root");
+  if (!libraryRoot) libraryRoot = await createDriveFolder("BIBLIOTECA DIGITAL",academyRootId,{
+    playMomentsKind:"academy-library-root"
+  });
+  let collection = await findDriveFolder(libraryRoot.id,"academy-library-release",code);
+  if (!collection) collection = await createDriveFolder(code,libraryRoot.id,{
+    playMomentsKind:"academy-library-release",playMomentsEntityId:code
+  });
+  return {folderId:collection.id};
+}
+
 export async function ensureAcademyDocumentsFolder(db: SupabaseClient, userId: string, studentId: string, enrollmentId?: string) {
   const { academyRootId } = await ensureAcademyFolderRoot(db,userId);
   let documentsRoot = await findDriveFolder(academyRootId,"academy-documents-root");
