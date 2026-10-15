@@ -2,7 +2,6 @@ import {useEffect,useState,type FormEvent} from 'react'
 import {Link,useParams,useSearchParams} from 'react-router-dom'
 import {BrandImage} from '../../components/BrandImage'
 import {supabase} from '../../lib/supabase'
-import {workInterestUrl} from '../../components/academy/AcademyWorkSales'
 
 type Format='ebook'|'audiobook'|'combo'
 type Work={
