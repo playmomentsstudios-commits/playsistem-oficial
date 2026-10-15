@@ -40,7 +40,7 @@ test('library originals are confined to the private Drive and verified before be
 test('new items create draft landing; legacy landing pages are untouched',()=>{
  assert.match(db,/after insert on public\.academy_library_items/)
  assert.match(db,/for each row execute function public\.academy_library_create_landing_on_insert/)
- assert.match(db,/\b'draft'\b/)
+ assert.match(db,/'draft'/)
  assert.match(db,/landing_page_id uuid references public\.site_landing_pages/)
  assert.doesNotMatch(db,/update public\.academy_library_items\s+set landing_page_id.*where landing_page_id is null/)
  assert.match(db,/after update of status on public\.academy_library_items/)
