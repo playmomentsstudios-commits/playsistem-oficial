@@ -161,3 +161,10 @@ language sql stable security definer set search_path='' as $$
 $$;
 revoke all on function public.academy_public_purchase_status(uuid) from public,anon,authenticated;
 grant execute on function public.academy_public_purchase_status(uuid) to anon,authenticated;
+
+-- Existing, already-published landing links migrate to the real direct checkout.
+-- The legacy /academia/interesse/:release URL remains a compatible alias.
+update public.site_landing_pages page
+set cta_href='/academia/comprar/'||w.release_code,updated_at=now()
+from public.academy_library_works w
+where page.id=w.landing_page_id and page.status='published';
