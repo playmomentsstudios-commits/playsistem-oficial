@@ -50,7 +50,7 @@ test('No public RPC exposes PDFs, MP3 IDs, tickets or customer grants',()=>{
 })
 test('Public catalog resolves real landings without login; private library still needs grants',()=>{
  assert.match(catalog,/academy_public_works/)
- assert.match(catalog,/Ver obra/)
+ assert.match(catalog,/Conhecer obra/)
  assert.match(catalog,/encodeURIComponent\(work\.landing_slug\)/)
  assert.match(catalog,/Acesso mediante liberação/)
  assert.match(landing,/academy_public_work_landing/)
