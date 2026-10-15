@@ -1,4 +1,4 @@
-import { useEffect,useState } from 'react'
+import { useEffect,useRef,useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { Link } from 'react-router-dom'
@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
 import { CompactPageHeader } from '../../components/ui/CompactWorkspace'
 import { PushNotificationSettings } from '../../components/ui/PushNotificationSettings'
+import { SAGAMENTE_APP_INVITE_URL, SAGAMENTE_APP_INVITE_TITLE, SAGAMENTE_APP_INVITE_TEXT, sagamenteWhatsAppInviteUrl } from '../../lib/shareSagamenteApp'
 
 export function CustomerSettings(){
   const {user,updatePassword}=useAuth()
@@ -20,6 +21,7 @@ export function CustomerSettings(){
   const [password,setPassword]=useState('')
   const [confirmPassword,setConfirmPassword]=useState('')
   const [changingPassword,setChangingPassword]=useState(false)
+  const inviteInput=useRef<HTMLInputElement>(null)
 
   useEffect(()=>{
     if(!user?.id)return
@@ -75,6 +77,35 @@ export function CustomerSettings(){
     finally{setSaving(false)}
   }
 
+  async function copyInvite(){
+    try{
+      if(!navigator.clipboard?.writeText)throw new Error('Clipboard indisponível')
+      await navigator.clipboard.writeText(SAGAMENTE_APP_INVITE_URL)
+      toast('Link público da Sagamente copiado.','success')
+    }catch{
+      inviteInput.current?.focus()
+      inviteInput.current?.select()
+      toast('Selecione e copie o link exibido.','error')
+    }
+  }
+
+  async function shareInvite(){
+    if(typeof navigator.share!=='function'){
+      await copyInvite()
+      return
+    }
+    try{
+      await navigator.share({
+        title:SAGAMENTE_APP_INVITE_TITLE,
+        text:SAGAMENTE_APP_INVITE_TEXT,
+        url:SAGAMENTE_APP_INVITE_URL,
+      })
+    }catch(error){
+      if(error instanceof DOMException && error.name==='AbortError')return
+      await copyInvite()
+    }
+  }
+
   async function changePassword(e:React.FormEvent){
     e.preventDefault()
     if(password.length<8)return toast('Use uma senha com pelo menos 8 caracteres.','error')
@@ -117,6 +148,28 @@ export function CustomerSettings(){
     <CompactPageHeader eyebrow="Conta" title="Configurações" description="Experiência, notificações, privacidade e segurança." />
 
     <div className="grid gap-3 lg:grid-cols-2">
+      <section className="pm-compact-card lg:col-span-2" id="compartilhar" aria-labelledby="share-sagamente-title">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-[.14em] text-[#DFA269] font-semibold">Indique a Sagamente</p>
+            <h2 id="share-sagamente-title" className="mt-1 text-base font-semibold text-white">Compartilhar o aplicativo</h2>
+            <p className="mt-1 max-w-2xl text-xs leading-5 text-gray-400">Convide alguém para conhecer os serviços, produtos, cursos, materiais e as possibilidades da área do cliente — antes de fazer o cadastro.</p>
+          </div>
+          <Link to="/conheca-o-app" className="inline-flex min-h-10 items-center rounded-xl border border-white/10 px-3 text-xs font-semibold text-[#DFA269]">Ver apresentação →</Link>
+        </div>
+        <label htmlFor="sagamente-invite-link" className="mt-4 block text-[11px] font-semibold text-gray-400">Link público para convite</label>
+        <input ref={inviteInput} id="sagamente-invite-link" type="text" readOnly
+          value={SAGAMENTE_APP_INVITE_URL} onFocus={e=>e.currentTarget.select()}
+          className="mt-1 w-full min-h-11 rounded-xl border border-white/10 bg-black/40 px-3 text-xs text-gray-300"/>
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <button type="button" onClick={()=>void shareInvite()} className="min-h-11 rounded-xl bg-[#A65A2A] px-4 text-sm font-semibold text-white">Compartilhar</button>
+          <a href={sagamenteWhatsAppInviteUrl()} target="_blank" rel="noopener noreferrer"
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-white/10 bg-white/[.04] px-3 text-sm font-semibold text-gray-200">Enviar pelo WhatsApp</a>
+          <button type="button" onClick={()=>void copyInvite()} className="min-h-11 rounded-xl border border-white/10 bg-white/[.04] px-4 text-sm font-semibold text-gray-200">Copiar link</button>
+        </div>
+        <p className="mt-3 text-[11px] leading-5 text-gray-500">O convite contém apenas uma página pública da Sagamente. Não compartilha dados, projetos ou informações da sua conta.</p>
+      </section>
+
       <section className="pm-compact-card">
         <h2 className="font-semibold">Experiência do portal</h2>
         <p className="text-xs text-gray-500 mt-1">Preferências aplicadas quando você entrar na sua conta.</p>

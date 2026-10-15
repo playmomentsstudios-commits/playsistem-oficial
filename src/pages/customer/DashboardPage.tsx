@@ -76,6 +76,18 @@ export function DashboardPage(){
       <div className="flex flex-wrap items-center justify-between gap-2"><div><p className="text-[10px] uppercase tracking-[.16em] text-gray-600 font-semibold">Próxima ação</p><p className={"text-base font-semibold mt-1 "+nextAction.tone}>{nextAction.label}</p><p className="text-xs text-gray-500 mt-1">{nextAction.detail}</p></div><Link to={nextAction.href} className="pm-compact-tap rounded-lg bg-[#A65A2A] px-3 text-xs font-bold text-white">Continuar →</Link></div>
     </section>}
 
+    {!loading&&!loadError&&data.orders===0&&data.projects===0&&data.quotes===0&&data.payments===0&&
+      <section className="mb-3 rounded-2xl border border-[#A65A2A]/20 bg-[#A65A2A]/[.05] px-4 py-4 sm:px-5" aria-labelledby="empty-discover-title">
+        <p className="text-[10px] font-semibold uppercase tracking-[.14em] text-[#DFA269]">Explore a Sagamente</p>
+        <h2 id="empty-discover-title" className="mt-1 text-base font-semibold text-white">Enquanto não há pedidos ou projetos ativos, conheça o que está disponível.</h2>
+        <p className="mt-1 text-xs leading-5 text-gray-400">Explore serviços, produtos e cursos — ou compartilhe uma apresentação da plataforma com alguém.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link to="/servicos" className="inline-flex min-h-10 items-center rounded-xl bg-[#A65A2A] px-4 text-xs font-semibold text-white">Conhecer serviços</Link>
+          <Link to="/academia" className="inline-flex min-h-10 items-center rounded-xl border border-white/10 px-4 text-xs font-semibold text-gray-200">Explorar cursos</Link>
+          <Link to="/app/configuracoes#compartilhar" className="inline-flex min-h-10 items-center rounded-xl border border-white/10 px-4 text-xs font-semibold text-gray-200">Compartilhar o app</Link>
+        </div>
+      </section>}
+
     <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">{cards.map(([label,value,href,tone])=><Link key={String(label)} to={String(href)} className="pm-compact-card pm-compact-card-interactive flex min-h-[78px] flex-col justify-center"><p className={'text-xl font-bold '+tone}>{value}</p><p className="text-[11px] leading-4 text-gray-400">{label}</p></Link>)}</div>
 
     <CompactDisclosure title="Benefícios e Play Cash" summary={money(available)+' disponível'}>

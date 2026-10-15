@@ -14,6 +14,7 @@ const CustomerLayoutV2 = lazy(() => import('./layouts/CustomerLayoutV2').then(m 
 const AdminLayout = lazy(() => import('./layouts/AdminLayout').then(m => ({ default:m.AdminLayout })))
 const HomePage = lazy(() => import('./pages/public/HomePage').then(m => ({ default:m.HomePage })))
 const InstallPage = lazy(() => import('./pages/public/InstallPage').then(m => ({ default:m.InstallPage })))
+const DiscoverAppPage = lazy(() => import('./pages/public/DiscoverAppPage').then(m => ({ default:m.DiscoverAppPage })))
 const PublicAcademyPage = lazy(() => import('./pages/public/PublicAcademyPage').then(m => ({ default:m.PublicAcademyPage })))
 const PublicDigitalLiteracyPage = lazy(() => import('./pages/public/PublicDigitalLiteracyPage').then(m => ({ default:m.PublicDigitalLiteracyPage })))
 const LoginPage = lazy(() => import('./pages/public/LoginPage').then(m => ({ default:m.LoginPage })))
@@ -125,6 +126,7 @@ export default function AppV2() {
               {/* Public */}
               <Route path="/" element={<LegacyStandaloneLanding><HomePage /></LegacyStandaloneLanding>} />
               <Route path="/instalar" element={<LegacyStandaloneLanding><InstallPage /></LegacyStandaloneLanding>} />
+              <Route path="/conheca-o-app" element={<DiscoverAppPage />} />
               <Route path="/abrir-app" element={<AppLaunchRoute />} />
               <Route path="/academia" element={<PublicAcademyPage />} />
               <Route path="/curso/letramento-digital" element={<PublicDigitalLiteracyPage />} />
