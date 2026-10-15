@@ -63,6 +63,7 @@ export function CustomerSettings(){
         notify_project_updates:prefs.notify_project_updates,
         notify_file_updates:prefs.notify_file_updates,
         notify_commercial_updates:prefs.notify_commercial_updates,
+        marketing_opt_in:prefs.marketing_opt_in,
         wa_automatic_opt_in:prefs.wa_automatic_opt_in,
         profile_contact_visible_to_team:prefs.profile_contact_visible_to_team,
       })
@@ -152,6 +153,7 @@ export function CustomerSettings(){
           {option('Atualizações de projetos','Avisos relacionados ao andamento dos seus projetos.','notify_project_updates')}
           {option('Atualizações de arquivos','Avisos sobre novos arquivos, versões e aprovações.','notify_file_updates')}
           {option('Orçamentos e pedidos','Avisos relacionados a orçamento, pedido e fluxo comercial.','notify_commercial_updates')}
+          {option('Novidades e oportunidades','Quero receber novidades sobre cursos, conteúdos, produtos e ofertas.','marketing_opt_in')}
         </div>
       </section>
 
