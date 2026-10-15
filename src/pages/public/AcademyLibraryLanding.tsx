@@ -14,9 +14,13 @@ export function AcademyLibraryLanding({page,preview=false}:{page:SiteLandingPage
  useEffect(()=>{
   let mounted=true
   setLoading(true)
-  void supabase.rpc('academy_public_library_landing',{p_slug:page.slug}).then(({data,error})=>{
-   if(mounted)setDetail(!error&&Array.isArray(data)?data[0]||null:null)
-  }).finally(()=>{if(mounted)setLoading(false)})
+  void (async()=>{
+    try{
+      const {data,error}=await supabase.rpc('academy_public_library_landing',{p_slug:page.slug})
+      if(mounted)setDetail(!error&&Array.isArray(data)?data[0]||null:null)
+    }catch{if(mounted)setDetail(null)}
+    finally{if(mounted)setLoading(false)}
+  })()
   return ()=>{mounted=false}
  },[page.slug])
  const format=detail?.format==='audiobook'?'Audiobook':'E-book'
