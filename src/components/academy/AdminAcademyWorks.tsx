@@ -4,6 +4,7 @@ import {academyLibraryAdminApi as api,type AdminLibraryWork,type AdminLibraryIte
 import {siteContentApi,type SiteLandingPage} from '../../services/siteContent'
 import {useToast} from '../../contexts/ToastContext'
 import {AdminAcademyLibrary} from './AdminAcademyLibrary'
+import {AcademyAssistedSale} from './AcademyAssistedSale'
 
 const btn='inline-flex min-h-10 items-center justify-center rounded-xl border border-white/10 bg-white/[.025] px-3 py-2 text-xs font-semibold text-gray-200 hover:bg-white/[.07] disabled:opacity-40'
 const input='min-h-11 w-full rounded-xl border border-white/15 bg-[#101114] px-3 py-2 text-sm text-gray-100 outline-none focus:border-[#c47f4f]'
@@ -203,8 +204,11 @@ export function AdminAcademyWorks(){
       <option value="ebook">Somente e-book</option><option value="audiobook">Somente audiobook</option>
      </select>
     </label>
-    <button type="button" disabled={busy||!selectedCustomer} className="min-h-11 rounded-xl bg-[#A65A2A] px-5 text-xs font-bold text-white disabled:opacity-40" onClick={()=>void assign(selectedCustomer,true,accessScope)}>Liberar acesso</button>
-    <p className="text-[11px] leading-5 text-gray-500">A concessão é por formato. Pacote completo libera os dois registros existentes; revogar um formato não remove o outro. Publicar a landing não libera o conteúdo completo.</p>
+    <AcademyAssistedSale work={accessWork} customerId={selectedCustomer} format={accessScope==='both'?'combo':accessScope}
+     onCompleted={async()=>{
+      setGrants(await api.grantsForWork(workItems(accessWork).map(i=>i.id)))
+     }}/>
+    <p className="text-[11px] leading-5 text-gray-500">Todas as novas liberações passam pelo registro financeiro: cortesia justificada, dinheiro efetivamente recebido ou Pix confirmado. Revogar é uma operação separada, sem apagar o histórico da venda.</p>
     <h4 className="text-sm font-bold">Clientes com liberações</h4>
     <div className="max-h-80 space-y-2 overflow-y-auto">{customers.filter(u=>grants.some(g=>g.user_id===u.id)).map(u=>{
      const mine=grants.filter(g=>g.user_id===u.id&&g.active)
@@ -214,7 +218,11 @@ export function AdminAcademyWorks(){
        const item=workItems(accessWork).find(i=>i.format===format)
        if(!item)return null
        const has=mine.some(g=>g.item_id===item.id)
-       return <button type="button" key={format} disabled={busy} onClick={()=>void assign(u.id,!has,format)} className={btn}>{formats[format]} · {has?'Revogar':'Liberar'}</button>
+       return <button type="button" key={format} disabled={busy} onClick={()=>{
+        if(has){
+         if(window.confirm('Revogar este formato? O histórico financeiro será preservado.'))void assign(u.id,false,format)
+        }else{setSelectedCustomer(u.id);setAccessScope(format)}
+       }} className={btn}>{formats[format]} · {has?'Revogar':'Registrar liberação'}</button>
       })}</div>
      </div>
     })}</div>
