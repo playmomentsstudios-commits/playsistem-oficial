@@ -47,7 +47,7 @@ export function AdminAcademyLibrary(){
   // Find them for editing without changing their existing publication metadata.
   if(!/^\\d{2}$/.test(item.release_code))return undefined
   return landings.find(l=>l.slug.startsWith('saga-negra')&&
-    new RegExp('Release\\\\s*'+item.release_code+'\\\\b','i').test(l.title))
+    l.title.toLocaleLowerCase('pt-BR').includes('release '+item.release_code))
  }
  async function load(){
   setLoading(true)
