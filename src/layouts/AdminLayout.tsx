@@ -128,6 +128,7 @@ export function AdminLayout() {
 
       <nav className="flex-1 px-3 pt-4 overflow-y-auto pb-5">
         <Link to="/admin" onClick={()=>setSidebarOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-3 text-sm font-semibold transition-all" style={{background:isActive('/admin',true)?'rgba(166,90,42,0.14)':'transparent',color:isActive('/admin',true)?(collaboratorMode?'#81431E':'#DFA269'):(collaboratorMode?'#44444d':'#a0a0ad'),border:isActive('/admin',true)?'1px solid rgba(166,90,42,0.22)':'1px solid transparent'}}><span className="text-[#A65A2A]"><MenuIcon name="dashboard" /></span>Painel</Link>
+        {user?.role==='admin'&&<Link to="/admin/dashboard" onClick={()=>setSidebarOpen(false)} className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-3 text-sm font-semibold transition-all" style={{background:isActive('/admin/dashboard',true)?'rgba(166,90,42,0.14)':'transparent',color:isActive('/admin/dashboard',true)?'#DFA269':'#a0a0ad',border:isActive('/admin/dashboard',true)?'1px solid rgba(166,90,42,0.22)':'1px solid transparent'}}><span className="text-[#A65A2A]"><MenuIcon name="reports" /></span>Dashboard</Link>}
         {MENU_GROUPS.map(group=>{
           const visibleItems=group.items.filter((item:any)=>{
             if(user?.role==='admin')return true
