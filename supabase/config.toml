@@ -2,3 +2,8 @@
 # POST authenticates the signed-in user and checks the active grant.
 [functions.academy-library-media]
 verify_jwt = false
+
+# InfinitePay webhook has no user JWT; the function verifies all payment data
+# server-side via InfinitePay payment_check before granting any content.
+[functions.academy-infinitepay]
+verify_jwt = false
