@@ -15,7 +15,9 @@ begin
  -- INSERT occurs for automatically activated accounts when Confirm Email is disabled.
  -- UPDATE remains the existing path for email-confirmation-enabled projects.
  if new.email_confirmed_at is null or new.is_anonymous is true then return new; end if;
- if tg_op='UPDATE' and old.email_confirmed_at is not null then return new; end if;
+ if tg_op='UPDATE' then
+   if old.email_confirmed_at is not null then return new; end if;
+ end if;
  select * into v_profile from public.profiles p where p.id=new.id;
  if not found or v_profile.role <> 'customer' or v_profile.status <> 'active' then
     return new;
