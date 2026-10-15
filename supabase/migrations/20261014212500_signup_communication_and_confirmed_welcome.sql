@@ -141,10 +141,12 @@ for each row when (old.email_confirmed_at is null and new.email_confirmed_at is 
 execute function public.customer_welcome_after_email_confirmation();
 revoke all on function public.customer_welcome_after_email_confirmation() from public,anon,authenticated;
 
--- Reuse the existing QR bridge with the same consent, number, daily limits,
--- and explicit delivery-mode checks; allow ONLY confirmed-account welcome events.
-create or replace function public.wa_bridge_claim(p_instance uuid)
-returns jsonb language plpgsql security invoker set search_path='' as $$
+-- Reuse the production WhatsApp bridge without changing existing throttles.
+CREATE OR REPLACE FUNCTION public.wa_bridge_claim(p_instance uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SET search_path TO ''
+AS $function$
 declare cfg public.app_settings%rowtype; bridge public.whatsapp_bridge_state%rowtype;
  v_row public.whatsapp_message_outbox%rowtype;
  v_target text; v_attempt uuid; v_body text; v_used bigint;
@@ -168,7 +170,7 @@ begin
  if v_used>=cfg.wa_bridge_daily_limit then return null; end if;
  -- Anti-burst limits, applied to both tests and real recipients.
  if exists(select 1 from public.whatsapp_bridge_attempts
-    where claimed_at>now()-interval '2 minutes') then return null; end if;
+    where claimed_at>now()-interval '1 minute') then return null; end if;
  if (select count(*) from public.whatsapp_bridge_attempts
     where claimed_at>now()-interval '1 hour')>=10 then return null; end if;
  select o.* into v_row from public.whatsapp_message_outbox o
@@ -207,9 +209,7 @@ begin
       )
       and (cfg.wa_bridge_delivery_mode='consented_clients'
         or o.recipient_user_id=cfg.wa_bridge_single_customer_id)
-      and exists (
-        select 1 from public.customer_onboarding_events e where e.user_id=o.recipient_user_id
-      )
+      and exists (select 1 from public.customer_onboarding_events e where e.user_id=o.recipient_user_id)
     )
   )
  order by o.created_at,o.id limit 1 for update of o skip locked;
@@ -224,7 +224,6 @@ begin
  values(v_row.id,p_instance,v_target,cfg.wa_bridge_delivery_mode='self_test') returning id into v_attempt;
  return jsonb_build_object('attempt_id',v_attempt,'outbox_id',v_row.id,
   'phone',v_target,'message',v_body,'test_only',cfg.wa_bridge_delivery_mode='self_test');
-end $$;
+end $function$;
 revoke all on function public.wa_bridge_claim(uuid) from public,anon,authenticated;
 grant execute on function public.wa_bridge_claim(uuid) to service_role;
-
