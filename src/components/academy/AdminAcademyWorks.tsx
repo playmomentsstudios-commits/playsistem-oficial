@@ -46,19 +46,20 @@ export function AdminAcademyWorks(){
    [w.title,w.release_code,w.description,...rows.map(i=>i.title)].some(v=>String(v||'').toLocaleLowerCase('pt-BR').includes(query.toLocaleLowerCase('pt-BR')))
  }),[works,items,filter,query])
  const landing=(w:AdminLibraryWork)=>landings.find(p=>p.id===w.landing_page_id)
- function editor(id?:string,format?:LibraryFormat){
+ function editor(id?:string,format?:LibraryFormat,work?:AdminLibraryWork){
   setEditorMode(true);setAccessWork(null);setEditWork(null)
   setParams(previous=>{
    const next=new URLSearchParams(previous)
-   next.set('section','library');next.delete('item');next.delete('create')
+   next.set('section','library');next.delete('item');next.delete('create');next.delete('group')
    if(id)next.set('item',id)
    else if(format)next.set('create',format)
+   if(work)next.set('group',work.release_code)
    return next
   })
  }
  function closeEditor(){
   setEditorMode(false);setParams(previous=>{
-   const next=new URLSearchParams(previous);next.delete('item');next.delete('create')
+   const next=new URLSearchParams(previous);next.delete('item');next.delete('create');next.delete('group')
    return next
   },{replace:true})
   void load()
@@ -158,7 +159,7 @@ export function AdminAcademyWorks(){
         <select aria-label={'Status de '+formats[format]+' da obra '+w.title} className="min-h-10 min-w-0 flex-1 rounded-lg border border-white/10 bg-[#101114] px-2 text-[11px] text-gray-300" value={item.status} disabled={busy} onChange={e=>void status(item,e.target.value as AdminLibraryItem['status'])}>
          <option value="draft">Rascunho</option><option value="private_beta">Beta privado</option><option value="published">Publicado</option><option value="archived">Arquivado</option>
         </select>
-       </div>:<button type="button" className={btn} onClick={()=>editor(undefined,format)}>＋ Adicionar formato</button>}
+       </div>:<button type="button" className={btn} onClick={()=>editor(undefined,format,w)}>＋ Adicionar formato</button>}
       </div>
      })}</div>
      <div className="mt-4 flex flex-wrap gap-2 border-t border-white/[.08] pt-4">
