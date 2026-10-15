@@ -23,7 +23,7 @@ export function AdminAcademyHub(){
    <div className="flex flex-wrap gap-2">
     <Link to="/admin/academia/alunos" className="min-h-10 rounded-xl border border-white/10 px-3 py-2.5 text-xs font-semibold text-gray-300">Alunos</Link>
     {isAdmin&&<Link to="/admin/landings" className="min-h-10 rounded-xl border border-white/10 px-3 py-2.5 text-xs font-semibold text-gray-300">Landing pages</Link>}
-    {isAdmin&&<Link to="/admin/academia/interesses" className="min-h-10 rounded-xl border border-[#A65A2A]/30 bg-[#A65A2A]/10 px-3 py-2.5 text-xs font-bold text-[#ecb386]">Interesses de compra</Link>}
+    {isAdmin&&<Link to="/admin/academia/vendas" className="min-h-10 rounded-xl border border-[#A65A2A]/30 bg-[#A65A2A]/10 px-3 py-2.5 text-xs font-bold text-[#ecb386]">Vendas Pix e preços</Link>}
    </div>
   </header>
   <AcademyAppInstallCard admin/>
