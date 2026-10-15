@@ -1,6 +1,6 @@
 import {useEffect,useMemo,useState,type FormEvent,type ReactNode} from 'react'
 import {useSearchParams} from 'react-router-dom'
-import {academyLibraryAdminApi as api,librarySlugify,type AdminLibraryItem,type LibraryFormat,type LibraryUser,type LibraryGrant} from '../../api/academyLibraryAdmin'
+import {academyLibraryAdminApi as api,librarySlugify,libraryAccessMessage,type AdminLibraryItem,type LibraryFormat,type LibraryUser,type LibraryGrant} from '../../api/academyLibraryAdmin'
 import {siteContentApi,type SiteLandingPage} from '../../services/siteContent'
 import {useToast} from '../../contexts/ToastContext'
 
@@ -171,9 +171,9 @@ export function AdminAcademyLibrary(){
  async function setGrant(userId:string,active:boolean){
   if(!currentItem)return
   try{
-   setBusy(true);await api.grant(currentItem.id,userId,active)
+   setBusy(true);const result=await api.grant(currentItem.id,userId,active)
    setGrants(await api.grants(currentItem.id))
-   toast(active?'Acesso liberado ao cliente.':'Acesso revogado.','success')
+   toast(libraryAccessMessage(result,active),'success')
    setSelectedUser('')
   }catch(e:any){toast(e.message||'Não foi possível atualizar o acesso.','error')}
   finally{setBusy(false)}

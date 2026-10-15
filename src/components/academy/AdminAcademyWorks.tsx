@@ -1,6 +1,6 @@
 import {useEffect,useMemo,useState,type FormEvent} from 'react'
 import {Link,useSearchParams} from 'react-router-dom'
-import {academyLibraryAdminApi as api,type AdminLibraryWork,type AdminLibraryItem,type LibraryFormat,type LibraryUser,type LibraryGrant} from '../../api/academyLibraryAdmin'
+import {academyLibraryAdminApi as api,libraryAccessMessage,type AdminLibraryWork,type AdminLibraryItem,type LibraryFormat,type LibraryUser,type LibraryGrant} from '../../api/academyLibraryAdmin'
 import {siteContentApi,type SiteLandingPage} from '../../services/siteContent'
 import {useToast} from '../../contexts/ToastContext'
 import {AdminAcademyLibrary} from './AdminAcademyLibrary'
@@ -87,10 +87,10 @@ export function AdminAcademyWorks(){
   if(!targets.length)return toast('A obra ainda não possui esse formato cadastrado.','error')
   try{
    setBusy(true)
-   await api.setWorkGrant(targets,userId,active)
+   const result=await api.setWorkGrant(targets,userId,active)
    setGrants(await api.grantsForWork(workItems(accessWork).map(i=>i.id)))
    setSelectedCustomer('')
-   toast(active?'Acesso liberado ao cliente.':'Acesso revogado.','success')
+   toast(libraryAccessMessage(result,active),'success')
   }catch(e){toast(e instanceof Error?e.message:'Não foi possível atualizar o acesso.','error')}
   finally{setBusy(false)}
  }
