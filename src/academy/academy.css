@@ -148,14 +148,14 @@
 .academy-empty svg{margin:0 auto 13px;color:var(--ac-orange)}
 .academy-empty h3{color:#eee;font-weight:650;font-size:16px;margin-bottom:5px}
 .academy-empty p{font-size:12px}
-.academy-resume{display:flex;align-items:center;gap:16px;padding:12px;margin:0 0 16px;border:1px solid rgba(222,128,66,.32);background:linear-gradient(100deg,#241c1a,#171719);border-radius:17px;min-width:0}
-.academy-resume .academy-content-art{width:72px;min-width:72px;height:76px;flex:none;border-radius:11px}
+.academy-resume{display:flex;align-items:center;gap:10px;padding:8px 10px;margin:0 0 12px;border:1px solid rgba(222,128,66,.32);background:linear-gradient(100deg,#241c1a,#171719);border-radius:17px;min-width:0}
+.academy-resume .academy-content-art{width:49px;min-width:49px;height:53px;flex:none;border-radius:11px}
 .academy-resume .academy-art-grain{font-size:11px}
 .academy-resume .academy-art-footer{padding:8px}
-.academy-resume-details{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1}
-.academy-resume-details strong{font-size:14px;color:#fff;line-height:1.35;max-width:42ch}
+ .academy-resume-details{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.academy-resume-details strong{font-size:12px;color:#fff;line-height:1.35;max-width:42ch}
 .academy-resume-meta{display:flex;align-items:center;gap:5px;color:#a49e9d;font-size:11px}
-.academy-resume-play{display:grid;place-items:center;flex:none;border-radius:50%;width:39px;height:39px;background:var(--ac-orange);color:#20130e}
+.academy-resume-play{display:grid;place-items:center;flex:none;border-radius:50%;width:34px;height:34px;background:var(--ac-orange);color:#20130e}
 .academy-library-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
 .academy-media-card{min-width:0;display:flex;gap:14px;padding:11px;border:1px solid var(--ac-line);border-radius:18px;background:#151619;transition:border-color .18s ease,background-color .18s ease}
 .academy-media-card:hover{border-color:rgba(233,145,86,.3);background:#1b1b1d}
