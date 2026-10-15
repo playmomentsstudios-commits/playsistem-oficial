@@ -1,0 +1,15 @@
+/* Keep the existing course artwork readable inside a small catalogue card. */
+.academy-catalog-course-cover.pm-digital-cover--compact .pm-digital-cover__content {
+  padding: 12px;
+}
+.academy-catalog-course-cover.pm-digital-cover--compact .pm-digital-cover__content h3 {
+  font-size: clamp(1.2rem, 3vw, 2rem);
+  line-height: 1;
+}
+.academy-catalog-course-cover.pm-digital-cover--compact .pm-digital-cover__content > p,
+.academy-catalog-course-cover.pm-digital-cover--compact .pm-digital-cover__content > span,
+.academy-catalog-course-cover.pm-digital-cover--compact .pm-digital-cover__symbol,
+.academy-catalog-course-cover.pm-digital-cover--compact .pm-digital-cover__footer,
+.academy-catalog-course-cover.pm-digital-cover--compact .pm-digital-cover__chips {
+  display: none;
+}
