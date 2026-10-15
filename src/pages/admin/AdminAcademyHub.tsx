@@ -2,6 +2,7 @@ import {useEffect,useState} from 'react'
 import {Link,useSearchParams} from 'react-router-dom'
 import {useAuth} from '../../contexts/AuthContext'
 import {AdminAcademy} from './AdminAcademy'
+import {AcademyAppInstallCard} from '../../components/academy/AcademyAppInstallCard'
 import {AdminAcademyLibrary} from '../../components/academy/AdminAcademyLibrary'
 
 export function AdminAcademyHub(){
@@ -23,6 +24,7 @@ export function AdminAcademyHub(){
     {isAdmin&&<Link to="/admin/landings" className="min-h-10 rounded-xl border border-white/10 px-3 py-2.5 text-xs font-semibold text-gray-300">Landing pages</Link>}
    </div>
   </header>
+  <AcademyAppInstallCard admin/>
   <div className="mb-5 flex gap-2 overflow-x-auto border-b border-white/10 pb-3" aria-label="Seções da gestão de conteúdo">
    {tabs.filter(([key])=>key!=='library'||isAdmin).map(([key,label])=>
     <button type="button" key={key} aria-pressed={section===key} onClick={()=>{setSection(key);setParams(previous=>{const next=new URLSearchParams(previous);next.set('section',key);next.delete('action');return next})}}
