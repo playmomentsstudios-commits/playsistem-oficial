@@ -100,14 +100,19 @@ export function AdminMetricsDashboard(){
  useEffect(()=>{
   let active=true
   setViewsLoading(true);setViewsError('')
-  void supabase.rpc('public_view_summary',{p_days:period}).then(({data,error})=>{
-   if(!active)return
-   if(error)throw error
-   if(!data||typeof data!=='object')throw new Error('Resumo de visualizações não disponível.')
-   setViews(data as PublicViews)
-  }).catch(()=>{
-   if(active){setViews(null);setViewsError('As visualizações não puderam ser consultadas. Confira a permissão de relatórios.')}
-  }).finally(()=>{if(active)setViewsLoading(false)})
+  void (async()=>{
+   try{
+    const {data,error}=await supabase.rpc('public_view_summary',{p_days:period})
+    if(!active)return
+    if(error)throw error
+    if(!data||typeof data!=='object')throw new Error('Resumo de visualizações não disponível.')
+    setViews(data as PublicViews)
+   }catch{
+    if(active){setViews(null);setViewsError('As visualizações não puderam ser consultadas. Confira a permissão de relatórios.')}
+   }finally{
+    if(active)setViewsLoading(false)
+   }
+  })()
   return()=>{active=false}
  },[period])
 
@@ -156,7 +161,7 @@ export function AdminMetricsDashboard(){
    <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
     <Metric label={'Visualizações · '+period+' dias'} value={viewsLoading?null:views?.total_views??null} detail="Eventos públicos registrados."/>
     <Metric label="Visualizações hoje" value={viewsLoading?null:views?.today_views??null} detail="Dia local de Brasília."/>
-    <Metric label="Conteúdos com visitas" value={viewsLoading?null:top.length||0} detail="Até 20 conteúdos mais acessados."/>
+    <Metric label="Mais vistos listados" value={viewsLoading?null:top.length||0} detail="Até 20 conteúdos mais acessados."/>
    </div>
    {views&&<div className="grid gap-3 lg:grid-cols-2">
     <div className="rounded-xl border border-white/[.08] bg-[#161719] p-4">
