@@ -67,9 +67,17 @@ export function AdminSettings(){
   },[])
 
   useEffect(()=>{
-    if(loading||!['#academia-app','#painel'].includes(location.hash))return
+    if(loading||location.hash!=='#academia-app')return
     const frame=window.requestAnimationFrame(()=>{
-      document.getElementById(location.hash.slice(1))?.scrollIntoView({behavior:'smooth',block:'start'})
+      document.getElementById('academia-app')?.scrollIntoView({behavior:'smooth',block:'start'})
+    })
+    return()=>window.cancelAnimationFrame(frame)
+  },[loading,location.hash])
+
+  useEffect(()=>{
+    if(loading||location.hash!=='#painel')return
+    const frame=window.requestAnimationFrame(()=>{
+      document.getElementById('painel')?.scrollIntoView({behavior:'smooth',block:'start'})
     })
     return()=>window.cancelAnimationFrame(frame)
   },[loading,location.hash])
