@@ -5,7 +5,7 @@ import test from 'node:test'
 const signup=readFileSync(new URL('../src/pages/public/RegisterPage.tsx',import.meta.url),'utf8')
 const auth=readFileSync(new URL('../src/contexts/AuthContext.tsx',import.meta.url),'utf8')
 const prefs=readFileSync(new URL('../src/pages/customer/CustomerSettings.tsx',import.meta.url),'utf8')
-const migration=readFileSync(new URL('../supabase/migrations/20261014212500_signup_communication_and_confirmed_welcome.sql',import.meta.url),'utf8')
+const migration=readFileSync(new URL('../supabase/migrations/20261014215959_signup_communication_and_confirmed_welcome.sql',import.meta.url),'utf8')
 
 test('signup choices are independent, optional, and unchecked initially',()=>{
   assert.match(signup,/whatsappUpdatesOptIn: false, marketingOptIn: false/)
