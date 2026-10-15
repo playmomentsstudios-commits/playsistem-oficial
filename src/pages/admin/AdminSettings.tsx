@@ -2,6 +2,7 @@ import { useEffect,useState } from 'react'
 import { Link,useLocation } from 'react-router-dom'
 import { settingsApi,type AppSettings } from '../../api/settings'
 import { AcademyAppSettingsPanel } from '../../components/admin/AcademyAppSettingsPanel'
+import { AdminDashboardPreferencesPanel } from '../../components/admin/AdminDashboardPreferencesPanel'
 import { useToast } from '../../contexts/ToastContext'
 
 const DEFAULTS:AppSettings={
@@ -66,9 +67,9 @@ export function AdminSettings(){
   },[])
 
   useEffect(()=>{
-    if(loading||location.hash!=='#academia-app')return
+    if(loading||!['#academia-app','#painel'].includes(location.hash))return
     const frame=window.requestAnimationFrame(()=>{
-      document.getElementById('academia-app')?.scrollIntoView({behavior:'smooth',block:'start'})
+      document.getElementById(location.hash.slice(1))?.scrollIntoView({behavior:'smooth',block:'start'})
     })
     return()=>window.cancelAnimationFrame(frame)
   },[loading,location.hash])
@@ -110,6 +111,7 @@ export function AdminSettings(){
     </div>
 
     <div className="grid lg:grid-cols-2 gap-5">
+      <div className="lg:col-span-2"><AdminDashboardPreferencesPanel/></div>
       <div className="scroll-mt-24 lg:col-span-2"><AcademyAppSettingsPanel/></div>
       <section className="p-5 rounded-2xl bg-[#141416] border border-white/10">
         <h2 className="font-semibold">Negócio</h2>
