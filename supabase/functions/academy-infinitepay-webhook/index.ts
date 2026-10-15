@@ -26,7 +26,10 @@ Deno.serve(async request=>{
    return json({success:false,message:'Transaction conflict'},409)
   if(order.provider_invoice_slug&&order.provider_invoice_slug!==slug)
    return json({success:false,message:'Invoice conflict'},409)
-  const handle=env('INFINITEPAY_HANDLE').replace(/^\$/,'').trim()
+  const {data:settings,error:settingsError}=await database.from('academy_infinitepay_settings')
+   .select('infinitepay_handle').eq('id',true).maybeSingle()
+  if(settingsError)throw settingsError
+  const handle=(env('INFINITEPAY_HANDLE')||settings?.infinitepay_handle||'').replace(/^\$/,'').trim()
   if(!handle)throw new Error('InfinitePay configuration missing.')
   const check=await fetch('https://api.checkout.infinitepay.io/payment_check',{
    method:'POST',headers:{'Content-Type':'application/json'},
