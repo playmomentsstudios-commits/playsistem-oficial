@@ -5,7 +5,7 @@ grant usage on schema app_private to service_role;
 
 create table if not exists app_private.academy_purchase_messages(
  purchase_id uuid primary key references public.academy_work_purchases(id) on delete cascade,
- notification_id uuid not null unique references public.notifications(id) on delete cascade,
+ notification_id uuid unique references public.notifications(id) on delete set null,
  outbox_id uuid unique references public.whatsapp_message_outbox(id) on delete set null,
  created_at timestamptz not null default now()
 );

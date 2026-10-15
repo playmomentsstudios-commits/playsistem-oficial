@@ -82,6 +82,10 @@ test('Real fulfillment and email trigger enqueue one purchase welcome; retries a
   assert.match(row.message_body,/Pagamento confirmado/)
   assert.match(row.message_body,/O Direito de Descansar/)
   assert.match(row.message_body,/academia-sagamente.*app\/academia/)
+  await db.exec('delete from notifications')
+  await retry(db)
+  assert.equal(await count(db,'notifications'),0)
+  assert.equal(await count(db,'app_private.academy_purchase_messages'),1)
  }finally{await db.close()}
 })
 
