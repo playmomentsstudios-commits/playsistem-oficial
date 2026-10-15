@@ -1,5 +1,25 @@
 -- SAGA NEGRA direct checkout: priced works, verified payments and automatic private entitlement.
 -- Existing academy_work_interests are historical data only; nothing is deleted.
+-- InfiniteTag is a public merchant identifier (not a secret/API key).
+-- Admins can configure it without a Supabase secrets deployment. Disabled
+-- until the owner verifies the receiving account and integrated checkout.
+create table if not exists public.academy_infinitepay_settings(
+ id boolean primary key default true check(id=true),
+ infinitepay_handle text not null default '',
+ checkout_enabled boolean not null default false,
+ updated_at timestamptz not null default now()
+);
+alter table public.academy_infinitepay_settings enable row level security;
+drop policy if exists academy_infinitepay_settings_admin on public.academy_infinitepay_settings;
+create policy academy_infinitepay_settings_admin on public.academy_infinitepay_settings
+ for all to authenticated using(public.is_active_admin())
+ with check(public.is_active_admin());
+revoke all on public.academy_infinitepay_settings from public,anon,authenticated;
+grant select,update on public.academy_infinitepay_settings to authenticated;
+insert into public.academy_infinitepay_settings(id,infinitepay_handle,checkout_enabled)
+values(true,'felipecostasouza',false)
+on conflict(id) do nothing;
+
 create table if not exists public.academy_work_prices(
  work_id uuid primary key references public.academy_library_works(id) on delete cascade,
  ebook_cents integer not null default 99 check(ebook_cents between 1 and 10000000),
