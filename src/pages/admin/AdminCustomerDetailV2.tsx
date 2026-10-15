@@ -325,7 +325,7 @@ export function AdminCustomerDetailV2(){
           <div className="flex items-center justify-between gap-3">
             <div>
               <h3 className="text-sm font-semibold text-red-300">Excluir cliente</h3>
-              <p className="text-xs text-gray-500 mt-1">Exclusão permanente somente para cadastros sem histórico operacional. Clientes com pedidos, pagamentos, projetos, orçamentos ou conversas devem ser inativados ou bloqueados.</p>
+              <p className="text-xs text-gray-500 mt-1">Antes da exclusão, confira projetos, financeiro, conversas e também cursos, matrículas, avaliações e certificados. Registros protegidos não podem ser apagados automaticamente.</p>
             </div>
             <button type="button" onClick={()=>{setDeleteConfirmation('');setDeleteOpen(true)}} className="px-3 py-2 rounded-lg bg-red-500/10 text-red-400 text-xs shrink-0">Excluir</button>
           </div>
@@ -378,7 +378,7 @@ export function AdminCustomerDetailV2(){
         <div className="flex justify-between gap-4">
           <div>
             <h2 className="text-lg font-bold">Excluir cliente</h2>
-            <p className="text-sm text-gray-500 mt-1">Primeiro confira tudo que está ligado ao cliente. Projetos duplicados, financeiro, arquivos e conversas entram no resumo antes de qualquer exclusão.</p>
+            <p className="text-sm text-gray-500 mt-1">Confira todos os vínculos: projetos, financeiro, arquivos, conversas, matrículas, avaliações e certificados antes de excluir.</p>
           </div>
           <button type="button" disabled={deleting} onClick={()=>setDeleteOpen(false)} className="w-8 h-8 rounded-lg bg-white/5 text-gray-400">×</button>
         </div>
@@ -406,6 +406,12 @@ export function AdminCustomerDetailV2(){
               ['Conversas',deleteSummary.summary?.conversations||0,'●'],
               ['Mensagens',deleteSummary.summary?.messages||0,'◌'],
               ['Comprovantes',deleteSummary.summary?.receipts||0,'▧'],
+              ['Alunos',deleteSummary.summary?.academy_students||0,'✦'],
+              ['Matrículas',deleteSummary.summary?.academy_enrollments||0,'▤'],
+              ['Avaliações',deleteSummary.summary?.academy_attempts||0,'◉'],
+              ['Certificados',deleteSummary.summary?.academy_certificates||0,'✧'],
+              ['Documentos acadêmicos',deleteSummary.summary?.academy_documents||0,'▣'],
+              ['Aceites e assinaturas',deleteSummary.summary?.academic_signed_records||0,'✎'],
             ].map(([label,value,icon])=><div key={String(label)} className="p-3 rounded-xl bg-white/[0.04] border border-white/8">
               <div className="text-lg">{icon}</div>
               <p className="text-lg font-bold mt-1">{value}</p>
@@ -419,19 +425,20 @@ export function AdminCustomerDetailV2(){
           </div>
 
           {!deleteSummary.requires_force?<div className="mt-5">
-            <p className="text-xs text-gray-500">Este cadastro não tem histórico operacional. A exclusão simples pode ser usada.</p>
+            <p className="text-xs text-gray-500">Este cadastro não possui histórico operacional ou acadêmico. A exclusão simples pode ser utilizada.</p>
             <div className="flex justify-end gap-2 mt-3">
               <button type="button" onClick={()=>setDeleteSummary(null)} className="px-4 py-2 rounded-xl bg-white/5 text-sm">Voltar</button>
               <button type="button" disabled={deleting} onClick={deleteEmptyCustomer} className="px-4 py-2 rounded-xl bg-red-600 text-sm">{deleting?'Excluindo...':'Excluir cadastro'}</button>
             </div>
           </div>:<div className="mt-5 rounded-xl border border-red-500/20 bg-red-500/[0.05] p-4">
             <h3 className="text-sm font-semibold text-red-300">Excluir cliente + todos os dados vinculados</h3>
-            <p className="text-xs text-gray-500 mt-1">Remove os projetos desse cliente, pedidos, pagamentos, orçamentos, conversas, arquivos, comprovantes, pasta do Google Drive e a conta de acesso. Use principalmente para cadastros duplicados ou testes.</p>
+            <p className="text-xs text-gray-500 mt-1">A exclusão total também remove matrículas, avaliações e certificados da Academia vinculados à conta. Não use para clientes com histórico que precisa ser preservado. Documentos assinados exigem revisão administrativa.</p>
+            {deleteSummary.has_protected_records&&<p role="alert" className="mt-3 text-xs text-amber-300">Este cadastro possui documentos assinados ou aceites acadêmicos. A exclusão ficará bloqueada até a revisão desses registros.</p>}
             <p className="text-xs text-red-300 mt-4">Digite <b>EXCLUIR TUDO</b> para liberar a ação:</p>
             <input value={forcePhrase} onChange={e=>setForcePhrase(e.target.value)} placeholder="EXCLUIR TUDO" className="mt-2 w-full px-3 py-2.5 rounded-xl bg-black border border-red-500/20"/>
             <div className="flex justify-end gap-2 mt-4">
               <button type="button" disabled={deleting} onClick={()=>setDeleteSummary(null)} className="px-4 py-2 rounded-xl bg-white/5 text-sm">Voltar</button>
-              <button type="button" disabled={deleting||forcePhrase.trim().toUpperCase()!=='EXCLUIR TUDO'} onClick={deleteCustomerAll} className="px-4 py-2 rounded-xl bg-red-600 text-sm disabled:opacity-40">{deleting?'Excluindo tudo...':'Excluir tudo'}</button>
+              <button type="button" disabled={deleting||deleteSummary.has_protected_records||forcePhrase.trim().toUpperCase()!=='EXCLUIR TUDO'} onClick={deleteCustomerAll} className="px-4 py-2 rounded-xl bg-red-600 text-sm disabled:opacity-40">{deleting?'Excluindo tudo...':'Excluir tudo'}</button>
             </div>
           </div>}
         </div>}
