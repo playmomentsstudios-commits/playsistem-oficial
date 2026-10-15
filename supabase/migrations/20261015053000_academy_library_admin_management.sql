@@ -92,3 +92,18 @@ returns table(
 $$;
 revoke all on function public.academy_public_library_landing(text) from public;
 grant execute on function public.academy_public_library_landing(text) to anon,authenticated;
+
+-- Add cover artwork to the existing private library without changing the
+-- return signature of academy_my_library() or exposing original Drive IDs.
+create or replace function public.academy_my_library_artwork()
+returns table(item_id uuid,cover_url text)
+language sql stable security definer set search_path='' as $$
+ select i.id,i.cover_url
+ from public.academy_library_items i
+ join public.academy_library_grants g on g.item_id=i.id
+ join public.profiles p on p.id=g.user_id
+ where g.user_id=auth.uid() and g.active=true and p.status='active'
+ and i.status in ('private_beta','published')
+$$;
+revoke all on function public.academy_my_library_artwork() from public;
+grant execute on function public.academy_my_library_artwork() to authenticated;
