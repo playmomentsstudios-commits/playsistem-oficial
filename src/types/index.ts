@@ -59,6 +59,8 @@ export interface RegisterPayload {
   neighborhood: string
   city: string
   state: string
+  whatsappUpdatesOptIn?: boolean
+  marketingOptIn?: boolean
 }
 
 // ─── Category ─────────────────────────────────────────────────────────────────

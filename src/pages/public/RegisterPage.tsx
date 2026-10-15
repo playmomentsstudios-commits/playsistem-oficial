@@ -8,7 +8,7 @@ import { Input } from '../../components/ui/Input'
 import { afterAuthPath, authLink, safeReturnPath } from '../../lib/navigation'
 
 export function RegisterPage() {
-  const [form, setForm] = useState({ name: '', lastName: '', email: '', phone: '', documentNumber: '', postalCode: '', street: '', addressNumber: '', addressComplement: '', neighborhood: '', city: '', state: '', password: '', confirm: '' })
+  const [form, setForm] = useState({ name: '', lastName: '', email: '', phone: '', documentNumber: '', postalCode: '', street: '', addressNumber: '', addressComplement: '', neighborhood: '', city: '', state: '', password: '', confirm: '', whatsappUpdatesOptIn: false, marketingOptIn: false })
   const [loading, setLoading] = useState(false)
   const [states, setStates] = useState<Array<{ id: number; sigla: string; nome: string }>>([])
   const [cities, setCities] = useState<Array<{ id: number; nome: string }>>([])
@@ -94,6 +94,7 @@ export function RegisterPage() {
     if (!form.lastName) errs.lastName = 'Informe o sobrenome'
     if (!form.email) errs.email = 'Informe o e-mail'
     if (!form.phone.replace(/\D/g, '')) errs.phone = 'Informe o telefone'
+    if (form.whatsappUpdatesOptIn && ![10,11].includes(form.phone.replace(/\D/g, '').length)) errs.phone = 'Informe um WhatsApp válido com DDD para receber os avisos'
     const document = form.documentNumber.replace(/\D/g, '')
     if (![11, 14].includes(document.length)) errs.documentNumber = 'Informe um CPF ou CNPJ válido'
     if (form.postalCode.replace(/\D/g, '').length !== 8) errs.postalCode = 'Informe um CEP válido'
@@ -151,6 +152,8 @@ export function RegisterPage() {
         city: form.city,
         state: form.state,
         password: form.password,
+        whatsappUpdatesOptIn: form.whatsappUpdatesOptIn,
+        marketingOptIn: form.marketingOptIn,
       }, next)
 
       if (result.requiresEmailConfirmation) {
@@ -216,6 +219,27 @@ export function RegisterPage() {
             <div className="mb-1"><h2 className="font-semibold" style={{color:'#f0f0f2'}}>Criar acesso</h2><p className="text-xs mt-1" style={{color:'#6b6b78'}}>Último passo. Crie sua senha para acessar pedidos, pagamentos e projetos.</p></div>
             <Input label="Senha" type="password" autoComplete="new-password" placeholder="Mínimo 6 caracteres" value={form.password} onChange={set('password')} error={errors.password} />
             <Input label="Confirmar senha" type="password" autoComplete="new-password" placeholder="Repita a senha" value={form.confirm} onChange={set('confirm')} error={errors.confirm} />
+            <section aria-labelledby="communication-preferences-title" className="rounded-2xl border border-white/10 bg-[#141416] p-4">
+              <h3 id="communication-preferences-title" className="text-sm font-semibold text-white">Como deseja acompanhar sua experiência?</h3>
+              <p className="mt-1 text-xs leading-relaxed text-gray-400">Seu link de confirmação será enviado por e-mail, independentemente das opções abaixo.</p>
+              <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 p-3">
+                <input type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-[#A65A2A]"
+                  checked={form.whatsappUpdatesOptIn}
+                  onChange={e=>setForm(prev=>({...prev,whatsappUpdatesOptIn:e.target.checked}))}/>
+                <span className="text-sm text-gray-200">Quero receber avisos pelo WhatsApp.
+                  <span className="mt-1 block text-xs leading-relaxed text-gray-400">Atualizações da minha conta, pedidos, projetos, materiais e treinamentos no telefone informado. Posso cancelar quando quiser.</span>
+                </span>
+              </label>
+              <label className="mt-2 flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 p-3">
+                <input type="checkbox" className="mt-1 h-4 w-4 shrink-0 accent-[#A65A2A]"
+                  checked={form.marketingOptIn}
+                  onChange={e=>setForm(prev=>({...prev,marketingOptIn:e.target.checked}))}/>
+                <span className="text-sm text-gray-200">Quero conhecer novidades da Sagamente.
+                  <span className="mt-1 block text-xs leading-relaxed text-gray-400">Receber informações sobre novos cursos, conteúdos, produtos e ofertas. Opção independente dos avisos de serviço.</span>
+                </span>
+              </label>
+              <p className="mt-3 text-[11px] leading-relaxed text-gray-500">Nenhuma opção é obrigatória para criar a conta. O WhatsApp utiliza integração experimental, sujeita à disponibilidade do serviço; os avisos essenciais continuam acessíveis no painel.</p>
+            </section>
           </>}
 
           <div className="grid grid-cols-2 gap-3 mt-2">
