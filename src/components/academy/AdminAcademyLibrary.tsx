@@ -40,7 +40,15 @@ export function AdminAcademyLibrary(){
  const works=useMemo(()=>[...new Map(items.map(x=>[x.release_code,{code:x.release_code,title:x.title}])).values()], [items])
  const shown=useMemo(()=>items.filter(x=>(filter==='all'||x.format===filter)&&
   [x.title,x.author_name,x.release_code,x.slug].some(v=>String(v||'').toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR')))),[items,filter,search])
- const landingFor=(item:AdminLibraryItem)=>landings.find(l=>l.id===item.landing_page_id)
+ const landingFor=(item:AdminLibraryItem)=>{
+  const linked=landings.find(l=>l.id===item.landing_page_id)
+  if(linked)return linked
+  // Legacy SAGA NEGRA releases already have individually authored landings.
+  // Find them for editing without changing their existing publication metadata.
+  if(!/^\\d{2}$/.test(item.release_code))return undefined
+  return landings.find(l=>l.slug.startsWith('saga-negra')&&
+    new RegExp('Release\\\\s*'+item.release_code+'\\\\b','i').test(l.title))
+ }
  async function load(){
   setLoading(true)
   try{
@@ -180,7 +188,7 @@ export function AdminAcademyLibrary(){
       {land&&<a className={plain} href={'/admin/landings?edit='+encodeURIComponent(land.id)}>Editar landing</a>}
      </div>
      <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/[.07] pt-3">
-      <span className="text-[11px] text-gray-500">{land?'Página gerada · '+(land.status==='published'?'pública':'rascunho'):'Sem landing vinculada'}</span>
+      <span className="text-[11px] text-gray-500">{land?(item.landing_page_id?'Página gerada':'Página existente')+' · '+(land.status==='published'?'pública':'rascunho'):'Sem landing vinculada'}</span>
       <select aria-label={'Alterar status de '+item.title} disabled={busy} value={item.status}
        className="rounded-lg border border-white/10 bg-[#0d0d0f] px-2 py-2 text-[11px]"
        onChange={e=>void changeStatus(item,e.target.value as AdminLibraryItem['status'])}>
