@@ -52,7 +52,7 @@ test('Public catalog resolves real landings without login; private library still
  assert.match(catalog,/academy_public_works/)
  assert.match(catalog,/Conhecer obra/)
  assert.match(catalog,/encodeURIComponent\(work\.landing_slug\)/)
- assert.match(catalog,/Acesso mediante liberação/)
+ assert.doesNotMatch(catalog,/Acesso mediante liberação/)
  assert.match(landing,/academy_public_work_landing/)
  assert.match(landing,/Navigate to=/)
  assert.match(landing,/canonical_slug!==page\.slug/)
