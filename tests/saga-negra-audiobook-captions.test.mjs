@@ -15,14 +15,15 @@ test('Caption data is grant-scoped and only active admins may modify it', () => 
  assert.match(sql, /ON DELETE CASCADE/)
 })
 
-test('Audiobook has additive transcript component, without changing the original audio playback controls', () => {
- const page = source('src/pages/customer/AcademyLibraryItemPage.tsx')
- assert.match(page, /<AcademyAudiobookCaptions itemId=\{item\.id\} audioRef=\{audioRef\}>/)
- assert.match(page, /<audio ref=\{audioRef\} key=\{item\.id\} controls controlsList="nodownload"/)
- assert.match(page, /onTimeUpdate=\{saveAudioPosition\}/)
- assert.match(page, /onLoadedMetadata=\{restoreAudioPosition\}/)
- assert.match(page, /audioRef\.current\.playbackRate=next/)
- assert.match(page, /<iframe title=/)
+test('Audiobook captions follow the permanent audio source while the PDF reader remains protected',()=>{
+ const page=source('src/pages/customer/AcademyLibraryItemPage.tsx')
+ const provider=source('src/contexts/AcademyAudioContext.tsx')
+ assert.match(page,/<AcademyAudiobookCaptions itemId=\{item\.id\} audioRef=\{audio\.audioRef\}>/)
+ assert.match(provider,/<audio ref=\{audioRef\} src=\{source\|\|undefined\}/)
+ assert.match(provider,/onTimeUpdate=\{timeUpdate\}/)
+ assert.match(provider,/onLoadedMetadata=\{loaded\}/)
+ assert.match(provider,/el\.playbackRate=value/)
+ assert.match(page,/<iframe title=/)
 })
 
 test('Caption UI follows the native audio clock and allows click-to-seek', () => {
