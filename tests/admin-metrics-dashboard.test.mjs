@@ -22,7 +22,7 @@ test('Dedicated administrator analytics page is routed separately and restricts 
  const sidebar=read('src/layouts/AdminLayout.tsx')
  const page=read('src/pages/admin/AdminMetricsDashboard.tsx')
  assert.match(routes,/const AdminMetricsDashboard = lazy/)
- assert.match(routes,/<Route path="dashboard" element=\{<AdminPermissionGate adminOnly><AdminMetricsDashboard\/><\/AdminPermissionGate>\}/)
+ assert.ok(routes.includes('<Route path="dashboard" element={<AdminPermissionGate adminOnly><AdminMetricsDashboard /></AdminPermissionGate>} />'))
  assert.match(sidebar,/to="\/admin\/dashboard"/)
  for(const phrase of ['Clientes e operação','Academia e biblioteca','Audiência pública','Consumo de conteúdo','Ouvintes de audiobooks','Downloads de arquivos']){
   assert.ok(page.includes(phrase),'Metric section missing: '+phrase)
