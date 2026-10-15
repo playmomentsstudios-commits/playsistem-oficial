@@ -1,4 +1,4 @@
-import {useState} from 'react'
+import {useEffect,useState} from 'react'
 import {Link} from 'react-router-dom'
 import {useAuth} from '../../contexts/AuthContext'
 import {AdminAcademy} from './AdminAcademy'
@@ -8,6 +8,7 @@ export function AdminAcademyHub(){
  const {user}=useAuth()
  const isAdmin=user?.role==='admin'
  const [section,setSection]=useState<'library'|'courses'>(isAdmin?'library':'courses')
+ useEffect(()=>{if(isAdmin)setSection('library')},[isAdmin])
  const tabs=([['library','E-books e audiobooks'],['courses','Cursos e aulas']] as const)
  return <div className="max-w-7xl mx-auto">
   <header className="mb-5 flex flex-wrap items-start justify-between gap-3">
