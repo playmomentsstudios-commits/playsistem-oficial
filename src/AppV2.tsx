@@ -139,6 +139,7 @@ export default function AppV2() {
               <Route path="/abrir-app" element={<AppLaunchRoute />} />
               <Route path="/academia" element={<PublicAcademyPage />} />
               <Route path="/academia/interesse/:release" element={<AcademyWorkInterestPage/>}/>
+              <Route path="/academia/comprar/:release" element={<AcademyWorkInterestPage/>}/>
               <Route path="/academia/compra/:id" element={<AcademyWorkPurchaseStatusPage/>}/>
               <Route path="/curso/letramento-digital" element={<PublicDigitalLiteracyPage />} />
               <Route path="/login" element={<LoginPage />} />
