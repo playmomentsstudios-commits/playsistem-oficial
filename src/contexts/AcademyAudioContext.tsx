@@ -82,9 +82,10 @@ export function AcademyAudioProvider({children}:{children:ReactNode}){
  const queueRef=useRef<LibraryItem[]>([])
  const requestRef=useRef(0)
  const pendingAutoRef=useRef(false)
+ const pendingIdRef=useRef<string|null>(null)
  const autoplayRef=useRef(autoplay)
  const repeatRef=useRef(repeat)
- const playRef=useRef<(id:string,auto?:boolean)=>Promise<void>>(async()=>{})
+ const playRef=useRef<(id:string,auto?:boolean,force?:boolean)=>Promise<void>>(async()=>{})
  const visible=isAuthenticated&&(location.pathname.startsWith('/app')||location.pathname.startsWith('/conta'))
  useEffect(()=>{currentRef.current=current},[current])
  useEffect(()=>{queueRef.current=queue},[queue])
@@ -129,14 +130,20 @@ export function AcademyAudioProvider({children}:{children:ReactNode}){
    setPlaying(false);setError('Toque em reproduzir para continuar. O navegador bloqueou o início automático.')
   }
  },[])
- const playItem=useCallback(async(id:string,auto=true)=>{
+ const playItem=useCallback(async(id:string,auto=true,force=false)=>{
   if(!isAuthenticated)return
+  if(pendingIdRef.current===id&&!force){
+   if(auto)pendingAutoRef.current=true
+   return
+  }
   const existing=currentRef.current
-  if(existing?.id===id&&audioRef.current?.src&&audioRef.current.readyState>0){
+  if(!force&&existing?.id===id&&audioRef.current?.src&&audioRef.current.readyState>0){
    if(auto)void attemptPlay()
    return
   }
   const sequence=++requestRef.current
+  pendingIdRef.current=id
+  pendingAutoRef.current=auto
   setLoading(true);setError('');setPlaying(false);setSource('');setDuration(0);setPosition(0)
   audioRef.current?.pause()
   let owned=queueRef.current.find(row=>row.id===id)
@@ -152,11 +159,10 @@ export function AcademyAudioProvider({children}:{children:ReactNode}){
    currentRef.current=owned;setCurrent(owned)
    const url=await verifiedMediaUrl(owned.id,'audio/mpeg')
    if(requestRef.current!==sequence)return
-   pendingAutoRef.current=auto
    setSource(url)
   }catch(e){
    if(requestRef.current===sequence){setError(formatProblem(e));pendingAutoRef.current=false}
-  }finally{if(requestRef.current===sequence)setLoading(false)}
+  }finally{if(requestRef.current===sequence){pendingIdRef.current=null;setLoading(false)}}
  },[isAuthenticated,attemptPlay])
  playRef.current=playItem
  const shift=useCallback((direction:-1|1,auto=true)=>{
@@ -205,7 +211,7 @@ export function AcademyAudioProvider({children}:{children:ReactNode}){
   setRepeatValue(value)
   try{window.localStorage.setItem(LOOP_KEY,String(value))}catch{}
  },[])
- const retry=useCallback(()=>{if(currentRef.current)void playRef.current(currentRef.current.id,true)},[])
+ const retry=useCallback(()=>{if(currentRef.current)void playRef.current(currentRef.current.id,true,true)},[])
  const loaded=useCallback(()=>{
   const el=audioRef.current,item=currentRef.current
   if(!el||!item)return
