@@ -5,11 +5,12 @@ import {supabase} from '../../lib/supabase'
 import {useAuth} from '../../contexts/AuthContext'
 import {RegisterPage} from './RegisterPage'
 import {authLink} from '../../lib/navigation'
+import {academyComboSavings,formatAcademyMoney as money,type AcademyWorkPrice} from '../../lib/academyPricing'
+import {ComboDiscountBadge} from '../../components/academy/AcademyWorkSales'
 
 type Format='ebook'|'audiobook'|'combo'
 type Work={release_code:string;title:string;description:string|null;cover_url:string|null;landing_slug:string;ebook_status:string|null;audiobook_status:string|null}
-type WorkPrice={release_code:string;ebook_cents:number;audiobook_cents:number;combo_cents:number;checkout_enabled:boolean}
-const money=(cents:number)=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(cents/100)
+type WorkPrice=AcademyWorkPrice
 const card='rounded-2xl border border-white/[.10] bg-[#17191d] p-4 text-left'
 const checkoutKey=(release:string)=>'sagamente.academy.pending-purchase.'+release
 const isSafeCheckout=(value:string)=>{
@@ -54,6 +55,7 @@ export function AcademyWorkInterestPage(){
   if(format==='audiobook'&&!audiobook)setFormat(ebook?'ebook':'audiobook')
  },[work,ebook,audiobook,format])
  const total=price?(format==='ebook'?price.ebook_cents:format==='audiobook'?price.audiobook_cents:price.combo_cents):0
+ const savings=academyComboSavings(price)
  const returnPath='/academia/comprar/'+encodeURIComponent(release)+'?formato='+format
  function choose(option:Format){setFormat(option);setQuery({formato:option},{replace:true});setError('')}
  useEffect(()=>{
@@ -106,12 +108,17 @@ export function AcademyWorkInterestPage(){
         className={card+' '+(format===key?'border-[#ed9e63] bg-[#4b3227]':'hover:border-white/30')}
         onClick={()=>choose(key)}>
         <strong className="block text-sm">{label}</strong>
+        {key==='combo'&&savings&&<span className="mt-2 block"><ComboDiscountBadge percentage={savings.percentage} compact/></span>}
         <span className="mt-1 block text-xs text-gray-400">{detail}</span>
         {price&&<span className="mt-3 block text-sm font-extrabold text-[#f1b586]">{money(key==='ebook'?price.ebook_cents:key==='audiobook'?price.audiobook_cents:price.combo_cents)}</span>}
        </button>)}
      </div>
      <div className="mt-5 rounded-2xl border border-[#b86c40]/30 bg-[#39271f] p-5">
       <div className="flex flex-wrap items-center justify-between gap-3"><span className="text-sm font-semibold">Total do pedido</span><strong className="text-2xl font-extrabold tabular-nums text-[#ffc59b]">{price?money(total):'—'}</strong></div>
+      {format==='combo'&&savings&&<div className="mt-2 flex flex-wrap justify-between gap-x-3 gap-y-1 text-xs text-[#e8b68d]">
+       <span>Separados: <del>{money(savings.separateCents)}</del></span>
+       <span className="font-bold">Economia de {money(savings.savingCents)}</span>
+      </div>}
       <p className="mt-2 text-xs leading-6 text-[#d1b7a5]">Pix na página segura da InfinitePay. A confirmação do pagamento libera o conteúdo automaticamente para sua conta após a verificação do e-mail.</p>
      </div>
      {error&&<p role="alert" className="mt-4 rounded-xl border border-red-500/20 bg-red-900/20 px-4 py-3 text-xs text-red-200">{error}</p>}
