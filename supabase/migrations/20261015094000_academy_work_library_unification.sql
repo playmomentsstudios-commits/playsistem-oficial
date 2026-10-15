@@ -71,6 +71,21 @@ where i.release_code=w.release_code
   and (i.work_id is distinct from w.id
      or (i.landing_page_id is null and w.landing_page_id is not null));
 
+-- Avoid assigning a single landing as canonical to two different works.
+create unique index if not exists academy_library_works_canonical_landing_key
+on public.academy_library_works(landing_page_id) where landing_page_id is not null;
+
+-- The Ebook Release 22 URL stays reachable as an alias but should not be
+-- indexed as a competing second public offer for the same work.
+update public.site_landing_pages alias
+set noindex=true,canonical_url='https://playsistem-oficial.playmomentsstudios.workers.dev/l/'||canonical.slug,
+    updated_at=now()
+from public.academy_library_items e
+join public.academy_library_works w on w.id=e.work_id
+join public.site_landing_pages canonical on canonical.id=w.landing_page_id
+where e.release_code='22' and e.format='ebook'
+ and alias.id=e.landing_page_id and alias.id<>canonical.id;
+
 -- Admin inserts must create one work and ONE draft landing for the first format.
 -- Second-format inserts reuse the existing work and canonical landing.
 create or replace function public.academy_library_create_landing_on_insert()
