@@ -28,6 +28,7 @@ test('Real SQL fulfillment requires verified payment/email, delivers both combo 
   const fix=readFileSync(new URL('../supabase/migrations/20261015163012_academy_purchase_complete_formats.sql',import.meta.url),'utf8')
   await db.exec(fix)
   await db.exec(fix)
+  await db.exec(readFileSync(new URL('../supabase/migrations/20261015163243_academy_purchase_email_trigger_acl.sql',import.meta.url),'utf8'))
   await db.query('insert into auth.users(id,email) values($1,$2)',[user,'buyer@example.com'])
   await db.query('insert into academy_library_works(id,release_code) values($1,$2)',[work,'01'])
   await db.query('insert into academy_library_items(id,work_id,format,status) values($1,$2,$3,$4)',[ebook,work,'ebook','published'])
@@ -54,9 +55,10 @@ test('Real SQL fulfillment requires verified payment/email, delivers both combo 
    has_function_privilege('anon','academy_fulfill_verified_purchase(uuid)','execute') as anon_fulfill,
    has_function_privilege('authenticated','academy_fulfill_verified_purchase(uuid)','execute') as customer_fulfill,
    has_function_privilege('service_role','academy_fulfill_verified_purchase(uuid)','execute') as backend_fulfill,
+   has_function_privilege('anon','academy_complete_after_email_verification()','execute') as anon_trigger,
    has_table_privilege('authenticated','academy_work_purchases','update') as customer_update,
    (select checkout_enabled from academy_infinitepay_settings where id) as enabled`)).rows[0]
-  assert.deepEqual(acl,{anon_fulfill:false,customer_fulfill:false,backend_fulfill:true,customer_update:false,enabled:false})
+  assert.deepEqual(acl,{anon_fulfill:false,customer_fulfill:false,backend_fulfill:true,anon_trigger:false,customer_update:false,enabled:false})
   // A second paid order is delivered by the actual email-confirmation trigger.
   await db.query('update auth.users set email_confirmed_at=null where id=$1',[user])
   const second='30000000-0000-4000-8000-000000000002'
