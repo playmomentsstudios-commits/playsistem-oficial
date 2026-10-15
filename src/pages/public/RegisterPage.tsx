@@ -131,8 +131,7 @@ export function RegisterPage() {
     setErrors(prev=>({...prev,state:'',city:'',postalCode:''}))
   }
 
-  const handleCityChange=(event:React.ChangeEvent<HTMLSelectElement>)=>{
-    const city=event.target.value
+  const handleCityChange=(city:string)=>{
     setForm(prev=>({...prev,city,postalCode:''}))
     setCepSuggestions([])
     setCepStatus('')
@@ -306,9 +305,9 @@ export function RegisterPage() {
                   <span className="text-xs font-semibold text-[#a0a0a9]">Cidade</span>
                   {form.state&&!loadingCities&&cities.length===0?
                     <input type="text" value={form.city} autoComplete="address-level2" placeholder="Digite sua cidade"
-                      onChange={e=>handleCityChange({target:{value:e.target.value}} as React.ChangeEvent<HTMLSelectElement>)}
+                      onChange={e=>handleCityChange(e.target.value)}
                       className="min-h-12 w-full rounded-xl border border-white/15 bg-[#111113] px-3 text-sm text-white"/>:
-                    <select value={form.city} onChange={handleCityChange} autoComplete="address-level2" disabled={!form.state||loadingCities}
+                    <select value={form.city} onChange={e=>handleCityChange(e.target.value)} autoComplete="address-level2" disabled={!form.state||loadingCities}
                       aria-invalid={Boolean(errors.city)}
                       className="min-h-12 w-full rounded-xl border border-white/15 bg-[#111113] px-3 text-sm text-white disabled:opacity-50">
                       <option value="">{loadingCities?'Buscando cidades…':'Selecione sua cidade'}</option>
