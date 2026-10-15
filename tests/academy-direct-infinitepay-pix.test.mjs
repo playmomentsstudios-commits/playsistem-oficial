@@ -16,7 +16,7 @@ const has=(source,fragments)=>{for(const f of fragments)assert.ok(source.include
 
 test('Price defaults and feature flags prohibit unconfigured live charges',()=>{
  has(sql,['academy_work_prices','default 99','default 280','default 299','checkout_enabled boolean not null default false'])
- has(checkout,['ACADEMY_DIRECT_CHECKOUT_ENABLED','INFINITEPAY_HANDLE','price?.checkout_enabled'])
+ has(checkout,['academy_infinitepay_settings','INFINITEPAY_HANDLE','price?.checkout_enabled'])
  has(ui,['academy_public_work_prices','Efetuar pagamento via Pix','money(total)'])
  has(admin,['Preços e ativação','Ativar checkout'])
 })
