@@ -54,7 +54,7 @@ export function AcademyWorkInterestPage(){
   if(format==='audiobook'&&!audiobook)setFormat(ebook?'ebook':'audiobook')
  },[work,ebook,audiobook,format])
  const total=price?(format==='ebook'?price.ebook_cents:format==='audiobook'?price.audiobook_cents:price.combo_cents):0
- const returnPath='/academia/interesse/'+encodeURIComponent(release)+'?formato='+format
+ const returnPath='/academia/comprar/'+encodeURIComponent(release)+'?formato='+format
  function choose(option:Format){setFormat(option);setQuery({formato:option},{replace:true});setError('')}
  useEffect(()=>{
   if(!isAuthenticated||!work)return
