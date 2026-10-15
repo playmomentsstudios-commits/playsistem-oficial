@@ -47,7 +47,7 @@ export function AdminAcademyLibrary(){
   if(linked)return linked
   // Legacy SAGA NEGRA releases already have individually authored landings.
   // Find them for editing without changing their existing publication metadata.
-  if(!/^\\d{2}$/.test(item.release_code))return undefined
+  if(!/^\d{2}$/.test(item.release_code))return undefined
   return landings.find(l=>l.slug.startsWith('saga-negra')&&
     l.title.toLocaleLowerCase('pt-BR').includes('release '+item.release_code))
  }

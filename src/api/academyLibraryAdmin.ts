@@ -1,8 +1,13 @@
 import {supabase} from '../lib/supabase'
 
 export type LibraryFormat='ebook'|'audiobook'
+export type AdminLibraryWork={
+ id:string;release_code:string;title:string;slug:string;description:string|null;
+ cover_url:string|null;banner_url:string|null;landing_page_id:string|null;created_at:string;updated_at:string;
+}
+
 export type AdminLibraryItem={
- id:string;title:string;slug:string;release_code:string;format:LibraryFormat;
+ id:string;title:string;slug:string;release_code:string;work_id:string|null;format:LibraryFormat;
  drive_file_id:string;source_filename:string;mime_type:string;
  status:'draft'|'private_beta'|'published'|'archived';
  description:string|null;author_name:string|null;
@@ -26,6 +31,37 @@ async function uploadSession(body:Record<string,unknown>){
 }
 
 export const academyLibraryAdminApi={
+ async works():Promise<AdminLibraryWork[]>{
+  const {data,error}=await supabase.from('academy_library_works').select('*').order('release_code')
+  if(error)throw error
+  return (data||[]) as AdminLibraryWork[]
+ },
+ async updateWork(id:string,values:Pick<AdminLibraryWork,'title'|'description'|'cover_url'|'banner_url'|'landing_page_id'>){
+  if(!values.title.trim())throw new Error('Informe o título da obra.')
+  const {error}=await supabase.from('academy_library_works').update({
+   title:values.title.trim(),description:values.description?.trim()||null,
+   cover_url:values.cover_url||null,banner_url:values.banner_url||null,
+   landing_page_id:values.landing_page_id||null,updated_at:new Date().toISOString()
+  }).eq('id',id)
+  if(error)throw error
+ },
+ async setWorkGrant(itemIds:string[],userId:string,active:boolean){
+  if(!itemIds.length||!userId)throw new Error('Selecione um cliente e um formato.')
+  const {error}=await supabase.from('academy_library_grants').upsert(
+   itemIds.map(itemId=>({item_id:itemId,user_id:userId,active,source:'admin'})),
+   {onConflict:'item_id,user_id'}
+  )
+  if(error)throw error
+ },
+ async grantsForWork(itemIds:string[]):Promise<LibraryGrant[]>{
+  if(!itemIds.length)return []
+  const {data,error}=await supabase.from('academy_library_grants')
+   .select('id,user_id,item_id,active,source,granted_at').in('item_id',itemIds)
+   .order('granted_at',{ascending:false})
+  if(error)throw error
+  return (data||[]) as LibraryGrant[]
+ },
+
  async list():Promise<AdminLibraryItem[]>{
   const {data,error}=await supabase.from('academy_library_items').select('*').order('created_at',{ascending:false})
   if(error)throw error
