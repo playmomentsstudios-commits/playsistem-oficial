@@ -22,7 +22,7 @@ test('Audiobook captions follow the permanent audio source while the PDF reader 
  assert.match(provider,/<audio ref=\{audioRef\} src=\{source\|\|undefined\}/)
  assert.match(provider,/onTimeUpdate=\{timeUpdate\}/)
  assert.match(provider,/onLoadedMetadata=\{loaded\}/)
- assert.match(provider,/el\.playbackRate=value/)
+ assert.match(provider,/audioRef\.current\.playbackRate=value/)
  assert.match(page,/<iframe title=/)
 })
 
