@@ -244,7 +244,7 @@ export function AcademyAudioProvider({children}:{children:ReactNode}){
   if(autoplayRef.current)shift(1,true)
  },[shift])
  useEffect(()=>{
-  if(!('mediaSession' in navigator)||!current)return
+  if(!('mediaSession' in navigator)||typeof MediaMetadata==='undefined'||!current)return
   const session=navigator.mediaSession
   session.metadata=new MediaMetadata({
    title:current.title,artist:'Academia Sagamente',
@@ -261,7 +261,7 @@ export function AcademyAudioProvider({children}:{children:ReactNode}){
   for(const [action,handler] of Object.entries(handlers)){
    try{session.setActionHandler(action as MediaSessionAction,handler)}catch{}
   }
-  return()=>{for(const name of Object.keys(handlers)){try{session.setActionHandler(name as MediaSessionAction,null)}catch{}}}
+  return()=>{for(const name of Object.keys(handlers)){try{session.setActionHandler(name as MediaSessionAction,null)}catch{}};session.metadata=null}
  },[current,attemptPlay,previous,seek,shift])
  useEffect(()=>{
   if('mediaSession' in navigator)navigator.mediaSession.playbackState=playing?'playing':'paused'
