@@ -61,6 +61,7 @@ export interface RegisterPayload {
   state: string
   whatsappUpdatesOptIn?: boolean
   marketingOptIn?: boolean
+  acceptedConditions: boolean
 }
 
 // ─── Category ─────────────────────────────────────────────────────────────────

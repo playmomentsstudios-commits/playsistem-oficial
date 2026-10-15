@@ -154,6 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const register = useCallback(async (payload: RegisterPayload, next?: string | null): Promise<RegisterResult> => {
+    if (payload.acceptedConditions !== true) throw new Error('Aceite as condições essenciais do cadastro para continuar.')
     const siteUrl = (import.meta.env.VITE_SITE_URL || window.location.origin).replace(/\/$/, '')
     const query = next ? '?' + new URLSearchParams({ next }).toString() : ''
 
@@ -169,6 +170,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           signup_communication_version: '2026-10-v1',
           signup_whatsapp_updates_opt_in: payload.whatsappUpdatesOptIn === true,
           signup_marketing_opt_in: payload.marketingOptIn === true,
+          signup_conditions_version: '2026-10-v1',
+          signup_conditions_accepted: payload.acceptedConditions === true,
           document_number: payload.documentNumber.replace(/\D/g, ''),
           postal_code: payload.postalCode.replace(/\D/g, ''),
           street: payload.street.trim(),

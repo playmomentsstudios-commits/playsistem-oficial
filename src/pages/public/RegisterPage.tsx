@@ -1,5 +1,6 @@
 import { BrandImage } from '../../components/BrandImage'
 import { useEffect, useState } from 'react'
+import { formatCep, lookupCep, lookupStreetCeps, normalizePlace, type CepSuggestion } from '../../lib/addressLookup'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../contexts/ToastContext'
@@ -14,6 +15,12 @@ export function RegisterPage() {
   const [cities, setCities] = useState<Array<{ id: number; nome: string }>>([])
   const [loadingCities, setLoadingCities] = useState(false)
   const [loadingCep, setLoadingCep] = useState(false)
+  const [loadingStreetCep,setLoadingStreetCep]=useState(false)
+  const [cepSuggestions,setCepSuggestions]=useState<CepSuggestion[]>([])
+  const [cepStatus,setCepStatus]=useState('')
+  const [unknownCep,setUnknownCep]=useState(false)
+  const [withoutNumber,setWithoutNumber]=useState(false)
+  const [acceptedConditions,setAcceptedConditions]=useState(false)
   const [step, setStep] = useState(1)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const { register, user, isLoading } = useAuth()
@@ -21,8 +28,6 @@ export function RegisterPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const next = safeReturnPath(new URLSearchParams(location.search).get('next'))
-  if (!isLoading && user) return <Navigate to={afterAuthPath(next, user.role)} replace />
-
   useEffect(() => {
     fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome')
       .then(response => response.ok ? response.json() : Promise.reject())
@@ -30,11 +35,16 @@ export function RegisterPage() {
   }, [])
 
   useEffect(() => {
-    if (!form.state) { setCities([]); return }
+    if (!form.state) { setCities([]); setLoadingCities(false); return }
+    const controller=new AbortController()
+    setCities([])
     setLoadingCities(true)
-    fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/' + form.state + '/municipios?orderBy=nome')
-      .then(response => response.ok ? response.json() : Promise.reject())
-      .then(setCities).catch(() => setCities([])).finally(() => setLoadingCities(false))
+    fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/' + form.state + '/municipios?orderBy=nome',{signal:controller.signal})
+      .then(response => response.ok ? response.json() : Promise.reject(new Error('Falha ao listar cidades')))
+      .then((rows:Array<{id:number;nome:string}>)=>{if(!controller.signal.aborted)setCities(rows)})
+      .catch(()=>{if(!controller.signal.aborted)setCities([])})
+      .finally(()=>{if(!controller.signal.aborted)setLoadingCities(false)})
+    return ()=>controller.abort()
   }, [form.state])
 
   const digits = (value: string) => value.replace(/\D/g, '')
@@ -50,42 +60,90 @@ export function RegisterPage() {
     if (d.length <= 11) return d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2')
     return d.replace(/(\d{2})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1/$2').replace(/(\d{4})(\d{1,2})$/,'$1-$2')
   }
-  const formatCep = (value: string) => {
-    const d = digits(value).slice(0,8)
-    return d.length > 5 ? d.slice(0,5) + '-' + d.slice(5) : d
-  }
-
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(prev => ({ ...prev, [k]: e.target.value }))
 
-  const lookupCep = async () => {
-    const cep = digits(form.postalCode)
-    if (cep.length !== 8) return
-    try {
+  useEffect(()=>{
+    const value=digits(form.postalCode)
+    if(value.length!==8){setLoadingCep(false);return}
+    const controller=new AbortController()
+    const timer=window.setTimeout(async()=>{
       setLoadingCep(true)
-      const response = await fetch('https://viacep.com.br/ws/' + cep + '/json/')
-      if (!response.ok) throw new Error()
-      const data = await response.json()
-      if (data.erro) throw new Error()
-      setForm(prev => ({
-        ...prev,
-        postalCode: formatCep(cep),
-        street: data.logradouro || prev.street,
-        neighborhood: data.bairro || prev.neighborhood,
-        state: data.uf || prev.state,
-        city: data.localidade || prev.city,
-      }))
-      setErrors(prev => ({...prev, postalCode: ''}))
-    } catch {
-      setErrors(prev => ({...prev, postalCode: 'CEP não encontrado. Preencha o endereço manualmente.'}))
-    } finally {
-      setLoadingCep(false)
+      setCepSuggestions([])
+      try{
+        const address=await lookupCep(value,controller.signal)
+        if(controller.signal.aborted)return
+        setForm(prev=>digits(prev.postalCode)===value?{
+          ...prev,postalCode:formatCep(value),state:address.uf,city:address.localidade,
+          street:address.logradouro||prev.street,neighborhood:address.bairro||prev.neighborhood,
+        }:prev)
+        setUnknownCep(false)
+        setCepStatus('CEP localizado. Confira os dados antes de continuar.')
+        setErrors(prev=>({...prev,postalCode:''}))
+      }catch(error){
+        if(controller.signal.aborted)return
+        setCepStatus('Não encontramos esse CEP. Confira os números ou selecione estado e cidade.')
+        setErrors(prev=>({...prev,postalCode:'CEP não localizado; revise ou marque “Não sei meu CEP”.'}))
+      }finally{if(!controller.signal.aborted)setLoadingCep(false)}
+    },350)
+    return ()=>{window.clearTimeout(timer);controller.abort()}
+  },[form.postalCode])
+
+  // For street-based search the postal service may return multiple CEPs.
+  // Never choose an arbitrary city's "main" CEP.
+  useEffect(()=>{
+    if(digits(form.postalCode).length===8||!form.state||!form.city||form.street.trim().length<3){
+      setLoadingStreetCep(false)
+      setCepSuggestions([])
+      return
     }
+    const controller=new AbortController()
+    const selectedState=form.state, selectedCity=form.city,selectedStreet=form.street
+    const timer=window.setTimeout(async()=>{
+      setLoadingStreetCep(true)
+      try{
+        const matches=await lookupStreetCeps(selectedState,selectedCity,selectedStreet,controller.signal)
+        if(controller.signal.aborted)return
+        const neighborhood=form.neighborhood.trim()
+        const inNeighborhood=neighborhood?matches.filter(item=>normalizePlace(item.bairro)===normalizePlace(neighborhood)):[]
+        const list=inNeighborhood.length?inNeighborhood:matches
+        if(list.length===1){
+          const selected=list[0]
+          setForm(prev=>prev.state===selectedState&&prev.city===selectedCity&&prev.street===selectedStreet&&digits(prev.postalCode).length!==8?{
+            ...prev,postalCode:formatCep(selected.cep),neighborhood:prev.neighborhood||selected.bairro
+          }:prev)
+          setUnknownCep(false)
+          setCepStatus('CEP sugerido pelo endereço. Confira se corresponde à sua localização.')
+          setErrors(prev=>({...prev,postalCode:''}))
+          setCepSuggestions([])
+        }else setCepSuggestions(list.slice(0,8))
+      }catch{if(!controller.signal.aborted)setCepSuggestions([])}
+      finally{if(!controller.signal.aborted)setLoadingStreetCep(false)}
+    },700)
+    return ()=>{window.clearTimeout(timer);controller.abort()}
+  },[form.state,form.city,form.street,form.neighborhood,form.postalCode])
+
+  const handleStateChange=(event:React.ChangeEvent<HTMLSelectElement>)=>{
+    const state=event.target.value
+    setForm(prev=>({...prev,state,city:'',postalCode:''}))
+    setCepSuggestions([])
+    setCepStatus('')
+    setErrors(prev=>({...prev,state:'',city:'',postalCode:''}))
   }
 
-  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const state = e.target.value
-    setForm(prev => ({ ...prev, state, city: '' }))
+  const handleCityChange=(city:string)=>{
+    setForm(prev=>({...prev,city,postalCode:''}))
+    setCepSuggestions([])
+    setCepStatus('')
+    setErrors(prev=>({...prev,city:'',postalCode:''}))
+  }
+
+  const chooseCep=(item:CepSuggestion)=>{
+    setForm(prev=>({...prev,postalCode:formatCep(item.cep),street:item.logradouro||prev.street,neighborhood:item.bairro||prev.neighborhood}))
+    setUnknownCep(false)
+    setCepSuggestions([])
+    setCepStatus('CEP selecionado. Confira os dados e continue.')
+    setErrors(prev=>({...prev,postalCode:''}))
   }
 
   const validate = () => {
@@ -97,14 +155,15 @@ export function RegisterPage() {
     if (form.whatsappUpdatesOptIn && ![10,11].includes(form.phone.replace(/\D/g, '').length)) errs.phone = 'Informe um WhatsApp válido com DDD para receber os avisos'
     const document = form.documentNumber.replace(/\D/g, '')
     if (![11, 14].includes(document.length)) errs.documentNumber = 'Informe um CPF ou CNPJ válido'
-    if (form.postalCode.replace(/\D/g, '').length !== 8) errs.postalCode = 'Informe um CEP válido'
+    if (!unknownCep && form.postalCode.replace(/\D/g, '').length !== 8) errs.postalCode = 'Informe o CEP ou marque “Não sei meu CEP”'
     if (!form.street.trim()) errs.street = 'Informe a rua ou avenida'
-    if (!form.addressNumber.trim()) errs.addressNumber = 'Informe o número'
+    if (!withoutNumber && !form.addressNumber.trim()) errs.addressNumber = 'Informe o número ou marque “Sem número”'
     if (!form.neighborhood.trim()) errs.neighborhood = 'Informe o bairro'
     if (!form.city.trim()) errs.city = 'Informe a cidade'
     if (form.state.trim().length !== 2) errs.state = 'Informe a UF'
     if (!form.password || form.password.length < 6) errs.password = 'Mínimo 6 caracteres'
     if (form.password !== form.confirm) errs.confirm = 'As senhas não coincidem'
+    if (!acceptedConditions) errs.acceptedConditions = 'Leia e aceite as condições essenciais do cadastro'
     return errs
   }
 
@@ -114,7 +173,7 @@ export function RegisterPage() {
       ? ['name','lastName','email','phone','documentNumber']
       : targetStep === 2
         ? ['postalCode','street','addressNumber','neighborhood','city','state']
-        : ['password','confirm']
+        : ['password','confirm','acceptedConditions']
     return Object.fromEntries(Object.entries(all).filter(([key]) => keys.includes(key)))
   }
 
@@ -146,7 +205,7 @@ export function RegisterPage() {
         documentNumber: form.documentNumber,
         postalCode: form.postalCode,
         street: form.street,
-        addressNumber: form.addressNumber,
+        addressNumber: withoutNumber ? 'S/N' : form.addressNumber,
         addressComplement: form.addressComplement,
         neighborhood: form.neighborhood,
         city: form.city,
@@ -154,6 +213,7 @@ export function RegisterPage() {
         password: form.password,
         whatsappUpdatesOptIn: form.whatsappUpdatesOptIn,
         marketingOptIn: form.marketingOptIn,
+        acceptedConditions,
       }, next)
 
       if (result.requiresEmailConfirmation) {
@@ -170,6 +230,8 @@ export function RegisterPage() {
       setLoading(false)
     }
   }
+
+  if (!isLoading && user) return <Navigate to={afterAuthPath(next, user.role)} replace />
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6" style={{ background: '#0a0a0b' }}>
@@ -204,15 +266,91 @@ export function RegisterPage() {
           </>}
 
           {step===2&&<>
-            <div className="mb-1"><h2 className="font-semibold" style={{color:'#f0f0f2'}}>Endereço</h2><p className="text-xs mt-1" style={{color:'#6b6b78'}}>Digite o CEP para preencher boa parte automaticamente.</p></div>
-            <Input label="CEP" inputMode="numeric" autoComplete="postal-code" placeholder="00000-000" value={form.postalCode} onChange={e=>setForm(prev=>({...prev,postalCode:formatCep(e.target.value)}))} onBlur={()=>void lookupCep()} error={errors.postalCode} hint={loadingCep?'Buscando endereço...':'Preenchimento automático pelo CEP'} />
-            <Input label="Rua / Avenida" autoComplete="street-address" value={form.street} onChange={set('street')} error={errors.street} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><Input label="Número" value={form.addressNumber} onChange={set('addressNumber')} error={errors.addressNumber} /><Input label="Complemento (opcional)" value={form.addressComplement} onChange={set('addressComplement')} /></div>
-            <Input label="Bairro" value={form.neighborhood} onChange={set('neighborhood')} error={errors.neighborhood} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className="flex flex-col gap-2"><span className="text-xs font-semibold" style={{ color: '#9090a0' }}>Estado</span><select aria-invalid={Boolean(errors.state)} value={form.state} onChange={handleStateChange} className="w-full rounded-xl px-4" style={{ height: 48, background: '#141416', border: '1px solid rgba(255,255,255,.12)', color: '#f0f0f2' }}><option value="">Selecione</option>{states.map(state => <option key={state.id} value={state.sigla}>{state.nome} - {state.sigla}</option>)}</select>{errors.state && <span className="text-xs" style={{ color: '#ff6b7a' }}>{errors.state}</span>}</label>
-              <label className="flex flex-col gap-2"><span className="text-xs font-semibold" style={{ color: '#9090a0' }}>Cidade</span><select aria-invalid={Boolean(errors.city)} value={form.city} onChange={e => setForm(prev => ({ ...prev, city: e.target.value }))} disabled={!form.state || loadingCities} className="w-full rounded-xl px-4 disabled:opacity-50" style={{ height: 48, background: '#141416', border: '1px solid rgba(255,255,255,.12)', color: '#f0f0f2' }}><option value="">{loadingCities ? 'Carregando...' : 'Selecione'}</option>{cities.map(city => <option key={city.id} value={city.nome}>{city.nome}</option>)}</select>{errors.city && <span className="text-xs" style={{ color: '#ff6b7a' }}>{errors.city}</span>}</label>
+            <div className="mb-1">
+              <h2 className="font-semibold text-[#f0f0f2]">Seu endereço</h2>
+              <p className="mt-1 text-xs leading-relaxed text-[#a0a0a9]">O CEP localiza a cidade e o estado automaticamente. Você também pode informar seu endereço sem saber o CEP.</p>
             </div>
+            <section className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-[#141416] p-4 sm:p-5" aria-label="Localização e endereço">
+              <div>
+                <Input label="CEP" inputMode="numeric" autoComplete="postal-code" placeholder="00000-000" maxLength={9}
+                  value={form.postalCode} onChange={e=>{
+                    setForm(prev=>({...prev,postalCode:formatCep(e.target.value)}))
+                    setUnknownCep(false)
+                    setCepStatus('')
+                    setErrors(prev=>({...prev,postalCode:''}))
+                  }}
+                  error={errors.postalCode} hint={loadingCep?'Localizando CEP…':cepStatus||'Preenche estado, cidade, bairro e rua, quando disponíveis.'}/>
+                <label className="mt-2 inline-flex min-h-9 cursor-pointer items-center gap-2 text-xs text-gray-300">
+                  <input type="checkbox" className="h-4 w-4 accent-[#A65A2A]" checked={unknownCep}
+                    onChange={e=>{
+                      const checked=e.target.checked
+                      setUnknownCep(checked)
+                      if(checked){setForm(prev=>({...prev,postalCode:''}));setCepStatus('');setErrors(prev=>({...prev,postalCode:''}))}
+                    }}/>
+                  Não sei meu CEP
+                </label>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label className="flex min-w-0 flex-col gap-2">
+                  <span className="text-xs font-semibold text-[#a0a0a9]">Estado</span>
+                  <select value={form.state} onChange={handleStateChange} autoComplete="address-level1"
+                    aria-invalid={Boolean(errors.state)} className="min-h-12 w-full rounded-xl border border-white/15 bg-[#111113] px-3 text-sm text-white">
+                    <option value="">Selecione seu estado</option>
+                    {states.map(state=><option key={state.id} value={state.sigla}>{state.nome} ({state.sigla})</option>)}
+                    {form.state&&!states.some(state=>state.sigla===form.state)&&<option value={form.state}>{form.state}</option>}
+                  </select>
+                  {errors.state&&<span role="alert" className="text-xs text-[#ff6b7a]">{errors.state}</span>}
+                </label>
+                <label className="flex min-w-0 flex-col gap-2">
+                  <span className="text-xs font-semibold text-[#a0a0a9]">Cidade</span>
+                  {form.state&&!loadingCities&&cities.length===0?
+                    <input type="text" value={form.city} autoComplete="address-level2" placeholder="Digite sua cidade"
+                      onChange={e=>handleCityChange(e.target.value)}
+                      className="min-h-12 w-full rounded-xl border border-white/15 bg-[#111113] px-3 text-sm text-white"/>:
+                    <select value={form.city} onChange={e=>handleCityChange(e.target.value)} autoComplete="address-level2" disabled={!form.state||loadingCities}
+                      aria-invalid={Boolean(errors.city)}
+                      className="min-h-12 w-full rounded-xl border border-white/15 bg-[#111113] px-3 text-sm text-white disabled:opacity-50">
+                      <option value="">{loadingCities?'Buscando cidades…':'Selecione sua cidade'}</option>
+                      {cities.map(city=><option key={city.id} value={city.nome}>{city.nome}</option>)}
+                      {form.city&&!cities.some(city=>normalizePlace(city.nome)===normalizePlace(form.city))&&<option value={form.city}>{form.city}</option>}
+                    </select>}
+                  {errors.city&&<span role="alert" className="text-xs text-[#ff6b7a]">{errors.city}</span>}
+                </label>
+              </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <Input label="Número" value={withoutNumber?'S/N':form.addressNumber}
+                    onChange={set('addressNumber')} disabled={withoutNumber}
+                    autoComplete="address-line2" placeholder="Ex.: 125" error={errors.addressNumber}/>
+                  <label className="mt-2 inline-flex min-h-9 cursor-pointer items-center gap-2 text-xs text-gray-300">
+                    <input type="checkbox" className="h-4 w-4 accent-[#A65A2A]" checked={withoutNumber}
+                      onChange={e=>{
+                        setWithoutNumber(e.target.checked)
+                        setErrors(prev=>({...prev,addressNumber:''}))
+                      }}/>
+                    Sem número (S/N)
+                  </label>
+                </div>
+                <Input label="Bairro" autoComplete="address-level3" placeholder="Seu bairro"
+                  value={form.neighborhood} onChange={set('neighborhood')} error={errors.neighborhood}/>
+              </div>
+              <Input label="Rua / Avenida / Endereço" autoComplete="address-line1" placeholder="Nome da rua, avenida ou localidade"
+                value={form.street} onChange={set('street')} error={errors.street}/>
+              {loadingStreetCep&&<p role="status" className="text-xs text-[#b5a296]">Procurando CEPs para este endereço…</p>}
+              {cepSuggestions.length>0&&<section aria-label="Sugestões de CEP" className="rounded-xl border border-white/10 bg-[#101013] p-3">
+                <p className="mb-2 text-xs font-semibold text-[#d4c1b5]">Encontramos mais de um CEP. Escolha o correspondente:</p>
+                <div className="max-h-48 overflow-y-auto space-y-1">
+                  {cepSuggestions.map(item=><button key={item.cep} type="button" onClick={()=>chooseCep(item)}
+                    className="block min-h-11 w-full rounded-lg px-3 py-2 text-left text-xs text-gray-200 hover:bg-white/10">
+                    <strong className="mr-2 text-[#e9a573]">{formatCep(item.cep)}</strong>
+                    {[item.logradouro,item.bairro,item.localidade].filter(Boolean).join(' · ')}
+                  </button>)}
+                </div>
+              </section>}
+              <Input label="Complemento (opcional)" autoComplete="address-line3" placeholder="Apartamento, lote, referência…"
+                value={form.addressComplement} onChange={set('addressComplement')}/>
+              <p className="text-[11px] leading-5 text-gray-500">Não existe um CEP principal garantido para todas as cidades. Se a busca não encontrar um CEP único, você poderá continuar sem ele informando seu endereço completo.</p>
+            </section>
           </>}
 
           {step===3&&<>
@@ -244,13 +382,27 @@ export function RegisterPage() {
 
           <div className="grid grid-cols-2 gap-3 mt-2">
             {step>1?<Button type="button" variant="secondary" fullWidth size="lg" onClick={previousStep}>Voltar</Button>:<div />}
-            {step<3?<Button type="button" fullWidth size="lg" onClick={nextStep}>Continuar</Button>:<Button type="submit" fullWidth loading={loading} size="lg">Criar conta</Button>}
+            {step<3?<Button type="button" fullWidth size="lg" onClick={nextStep}>Continuar</Button>:<Button type="submit" fullWidth loading={loading} disabled={!acceptedConditions || loading} size="lg">Criar conta</Button>}
           </div>
 
           <p className="text-xs text-center" style={{ color: '#6b6b78' }}>
             Etapa {step} de 3 · Seus dados ficam salvos enquanto você avança.
           </p>
-          {step===3&&<p className="text-xs text-center" style={{ color: '#6b6b78' }}>Ao criar uma conta, você concorda com os nossos termos de uso.</p>}
+          {step===3&&<section className="rounded-xl border border-white/10 bg-[#151517] p-4" aria-labelledby="conditions-title">
+            <h3 id="conditions-title" className="text-sm font-semibold text-gray-100">Condições essenciais do cadastro</h3>
+            <details className="my-3 rounded-lg bg-black/20 p-3 text-xs text-gray-400">
+              <summary className="cursor-pointer font-semibold text-[#e1b696]">Leia como sua conta funciona</summary>
+              <p className="mt-2 leading-relaxed">Seu nome, e-mail, telefone e endereço são utilizados para criar e identificar sua conta, permitir acesso à plataforma e administrar seus pedidos, projetos e treinamentos. A confirmação do e-mail é necessária para ativar o acesso. Avisos essenciais ficam no painel e no e-mail; WhatsApp e novidades comerciais dependem das autorizações opcionais acima, que podem ser alteradas nas configurações.</p>
+            </details>
+            <label className="flex cursor-pointer items-start gap-3">
+              <input type="checkbox" checked={acceptedConditions} onChange={e=>{
+                setAcceptedConditions(e.target.checked)
+                setErrors(prev=>({...prev,acceptedConditions:''}))
+              }} className="mt-1 h-4 w-4 shrink-0 accent-[#A65A2A]"/>
+              <span className="text-xs leading-5 text-gray-200">Li e aceito as condições essenciais de cadastro e uso da minha conta. <span className="text-gray-400">(Obrigatório)</span></span>
+            </label>
+            {errors.acceptedConditions&&<p role="alert" className="mt-2 text-xs text-[#ff6b7a]">{errors.acceptedConditions}</p>}
+          </section>}
         </form>
       </div>
     </div>
