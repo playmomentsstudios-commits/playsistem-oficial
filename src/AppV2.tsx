@@ -59,6 +59,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard').then(m 
 const AdminMetricsDashboard = lazy(() => import('./pages/admin/AdminMetricsDashboard').then(m => ({ default:m.AdminMetricsDashboard })))
 const AdminCustomers = lazy(() => import('./pages/admin/AdminCustomers').then(m => ({ default:m.AdminCustomers })))
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts').then(m => ({ default:m.AdminProducts })))
+const AdminCatalogDigitalMedia = lazy(() => import('./pages/admin/AdminCatalogDigitalMedia').then(m => ({ default:m.AdminCatalogDigitalMedia })))
 const AdminOrders = lazy(() => import('./pages/admin/AdminOrders').then(m => ({ default:m.AdminOrders })))
 const AdminRentals = lazy(() => import('./pages/admin/AdminRentals').then(m => ({ default:m.AdminRentals })))
 const AdminConversations = lazy(() => import('./pages/admin/AdminConversations').then(m => ({ default:m.AdminConversations })))
@@ -197,6 +198,7 @@ export default function AppV2() {
                 <Route path="crm" element={<AdminPermissionGate permission={['customers.view','customers.manage']}><AdminCRM /></AdminPermissionGate>} />
                 <Route path="clientes/:id" element={<AdminPermissionGate permission="customers.view"><AdminCustomerDetailV2 /></AdminPermissionGate>} />
                 <Route path="produtos" element={<AdminPermissionGate permission={['catalog.view','catalog.manage']}><AdminProducts /></AdminPermissionGate>} />
+                <Route path="produtos-digitais" element={<AdminPermissionGate adminOnly><AdminCatalogDigitalMedia /></AdminPermissionGate>} />
                 <Route path="categorias" element={<AdminPermissionGate permission={['catalog.view','catalog.manage']}><AdminCategories /></AdminPermissionGate>} />
                 <Route path="servicos" element={<AdminPermissionGate permission={['catalog.view','catalog.manage']}><AdminServices /></AdminPermissionGate>} />
                 <Route path="pedidos" element={<AdminPermissionGate permission={['sales.view','sales.manage']}><AdminOrders /></AdminPermissionGate>} />
