@@ -35,6 +35,14 @@ export const academyLibraryAdminApi={
   must(Boolean(input.title.trim()),'Informe o título do conteúdo.')
   must(Boolean(input.drive_file_id),'Envie o arquivo PDF/MP3 antes de salvar.')
   must(Boolean(input.slug.trim()),'Informe uma URL para este conteúdo.')
+  // The full PDF/MP3 remains private. Never confuse a Drive link with a
+  // deliberately short, publicly playable audiobook demonstration.
+  if(input.sample_audio_url){
+   const sample=String(input.sample_audio_url).trim()
+   if(!/^https:\/\//i.test(sample)||/(drive\.google\.com|googleusercontent\.com|\/academy-library-media)/i.test(sample)){
+    throw new Error('A amostra deve ser um URL HTTPS público, diferente do arquivo completo do Drive.')
+   }
+  }
   const payload={
    title:input.title.trim(),slug:slugify(input.slug),release_code:input.release_code.trim(),
    format:input.format,drive_file_id:input.drive_file_id,source_filename:input.source_filename,
