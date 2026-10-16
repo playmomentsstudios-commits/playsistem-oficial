@@ -47,7 +47,7 @@ test('Saga SQL grants only preferences, not activation columns, to authenticated
 
 
 test('Saga database requires an active admin on all sensitive RLS operations', () => {
-  const sql = read('supabase/migrations/20261016174500_saga_active_admin_rls.sql')
+  const sql = read('supabase/migrations/20261016220127_saga_active_admin_rls.sql')
   for (const policy of [
     'sagamente_assistant_settings_admin_select',
     'sagamente_assistant_settings_admin_update',
