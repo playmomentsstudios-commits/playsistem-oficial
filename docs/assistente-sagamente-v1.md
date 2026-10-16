@@ -120,3 +120,19 @@ Ao retomar o trabalho em outra conversa/conta, **não assumir que o histórico n
 5. O banco v1 possui apenas os estados `pending` e `internal_sent`; indicação formal de falhas/reprocessamento exige modelagem posterior, não inventar erros na interface.
 
 **PR continua em rascunho. Não integrar no `main` sem revisão e homologação.**
+
+## Etapa 3 — verificação funcional de RLS e isolamento (16/10/2026)
+
+**Executado diretamente no Supabase Play, sem ativar o agente:**
+- Conferidas as seis triggers `sagamente_assistant_*` instaladas e habilitadas nas tabelas previstas. Isso prova existência/ligação dos gatilhos, **não** comprova ainda o funcionamento ponta a ponta de cada caso de negócio.
+- As tabelas `sagamente_assistant_settings` e `sagamente_assistant_events` mantêm RLS ativa.
+- Simulação de autenticação Postgres em transação com `SET LOCAL ROLE authenticated` e `request.jwt.claim.sub` equivalente a um perfil existente: perfil **admin** enxerga 1 linha de settings; perfil **customer** enxerga 0. Perfil `staff` não pôde ser simulado com usuário existente (nenhuma linha encontrada no teste).
+- Evento efêmero criado **apenas na tabela de eventos**, dentro de transação `BEGIN ... ROLLBACK` (nenhum dado de negócio modificado): simulação admin leu 1 evento; customer leu 0. Confirma visibilidade RLS, inclusive quando há um registro, sem gerar avisos.
+- Permissão SQL do papel `authenticated` para `enabled` e `whatsapp_notifications`: **negada** nos dois perfis. `digest_times` permanece campo concedido, mas somente RLS de admin permite escrita efetiva.
+- Atualização sem mudança de valor de `internal_notifications`, com `ROLLBACK`: admin conseguiu atualizar 1 linha; customer não atualizou nenhuma. Nenhuma preferência foi persistida.
+- Chamada de segurança `public.sagamente_assistant_tick()` com `enabled=false`: resultado `{status:disabled,internal_sent:0}`; fila permaneceu em 0 e nenhum envio foi executado.
+- Configuração final consultada: `enabled=false`, `whatsapp_notifications=false`, `digest_times={}`, `America/Sao_Paulo`; cron `sagamente-assistant-minute` inexistente. Os agendamentos legados foram preservados.
+
+**Limites da homologação:** não houve sessão real de navegador com login admin, teste real de staff (sem perfil apto), nem exercício dos seis gatilhos nos registros de origem. Evitamos modificar tabelas operacionais de clientes/projetos/compras em produção, mesmo com rollback, para não provocar outros fluxos ou integrações de terceiros. Esses testes devem ocorrer em ambiente isolado ou ser conduzidos com autorização explícita para os dados envolvidos.
+
+**Próximo checkpoint:** validar UI autenticada no preview (histórico, filtros, paginação, configurações e estados vazios), teste E2E negando cliente/staff, depois testar os seis gatilhos isoladamente com deduplicação e outbox WhatsApp. Não ativar cron, WhatsApp ou `main` por efeito desses testes.
