@@ -44,3 +44,22 @@ test('Saga SQL grants only preferences, not activation columns, to authenticated
   assert.doesNotMatch(migration, /grant update \([^)]*enabled/i)
   assert.doesNotMatch(migration, /grant update \([^)]*whatsapp_notifications/i)
 })
+
+test('Saga database requires an active admin on all sensitive RLS operations', () => {
+  const sql = read('supabase/migrations/20261016174500_saga_active_admin_rls.sql')
+  for (const policy of [
+    'sagamente_assistant_settings_admin_select',
+    'sagamente_assistant_settings_admin_update',
+    'sagamente_assistant_events_admin_select',
+  ]) {
+    const escaped = policy.replace(/[.*+?^${'}()|[\]\\]/g, '\\$&')
+    const block = sql.match(new RegExp('alter policy "' + escaped + '"[\\s\\S]*?;', 'i'))
+    assert.ok(block, 'missing RLS policy ' + policy)
+    assert.match(block[0], /p\\.role\\s*=\\s*'admin'\\s+and\\s+p\\.status\\s*=\\s*'active'/i)
+    assert.match(block[0], /p\\.id\\s*=\\s*\\(select auth\\.uid\\(\\)\\)/i)
+  }
+  const update = sql.match(/alter policy "sagamente_assistant_settings_admin_update"[\\s\\S]*?;/i)
+  assert.match(update[0], /with check\\s*\\(/i)
+  assert.equal((update[0].match(/p\\.status\\s*=\\s*'active'/gi) || []).length, 2)
+  assert.doesNotMatch(sql, /\\b(?:grant|create\\s+trigger|cron\\.schedule|set\\s+enabled|whatsapp_notifications\\s*=)\\b/i)
+})
