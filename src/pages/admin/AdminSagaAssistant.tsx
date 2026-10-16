@@ -39,7 +39,7 @@ const names: Record<string, string> = {
   academy_access_granted: 'Acesso à Academia',
   daily_digest: 'Relatório diário',
 }
-const validTime = /^([01]\\d|2[0-3]):[0-5]\\d$/
+const validTime = /^([01]\d|2[0-3]):[0-5]\d$/
 
 function dateTime(value: string | null) {
   if (!value) return '—'
@@ -56,7 +56,7 @@ function startOfNextDay(date: string): string {
   return new Date(new Date(date + 'T00:00:00-03:00').getTime() + 86400000).toISOString()
 }
 function internalLink(value: string): string | null {
-  return value?.startsWith('/') && !value.startsWith('//') && !value.includes('\\\\') ? value : null
+  return value?.startsWith('/') && !value.startsWith('//') && !value.includes('\\') ? value : null
 }
 function describeError(value: unknown): string {
   return value instanceof Error ? value.message : 'Não foi possível concluir a operação.'
