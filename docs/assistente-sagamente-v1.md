@@ -72,11 +72,11 @@ update public.sagamente_assistant_settings set enabled=false, updated_at=now() w
 4. Conectar a análise dos repositórios institucionais e das atividades do Supabase institucional **somente em leitura**, com autorização específica para ações que alterem dados.
 
 ## Identidade e comunicação — decisão de Felipe (16/10/2026)
-- O agente operacional **Assistente Sagamente** terá o nome de apresentação **Saga**. O usuário responsável e interlocutor é **Felipe**.
+- **Saga** é o nome de apresentação do assistente operacional **somente no Play Sistem** e nas mensagens originadas desse módulo. Sagamente continua sendo a empresa/marca; RKC e os demais aplicativos conservam identidade própria.
 - Nos conteúdos **gerados pelo próprio assistente**, identificar claramente a autoria: por exemplo, **"Saga | Relatório de atividades"**, **"Saga | Atualização de tarefa"**, **"Saga | Alerta operacional"**. Evitar assinar como "ChatGPT", "Robô" ou "Assistente Sagamente" quando a mensagem é da persona Saga.
-- Comunicação dirigida a Felipe: português brasileiro, tom masculino na **redação**, natural, direto, profissional e sintético, com descrição objetiva do fato, horário, providência e link interno quando aplicável. A escolha da voz audível depende das configurações do aplicativo, não do banco de dados.
+- Redação do assistente em português brasileiro, **primeira pessoa** ao relatar ações próprias: "Preparei seu resumo", "Não consegui enviar" e "Vou tentar novamente" somente quando uma nova tentativa estiver de fato programada. Não escrever "A Saga não conseguiu" como se outra pessoa estivesse narrando. Tom profissional, natural e breve; preservar fatos, horários, providências e links. Não atribuir sucessos não comprovados.
 - **Não renomear nem reescrever notificações legadas da Central WhatsApp** que não tenham sido produzidas pelo Saga. Não enviar disparos de teste ou produção a clientes sem fluxo validado, consentimento e autorização.
-- O fato de a Saga ser a identidade projetada da assistente nesta conversa **não implica conexão automática** entre uma sessão do ChatGPT e a execução no servidor. A implementação deve materializar essa identidade nos títulos, modelos e canais apropriados, quando estes forem desenvolvidos.
+- **Escopo estrito:** essa nomenclatura vale apenas para o módulo Saga/Play Sistem. Não define um apelido ou personalidade global do ChatGPT e **não deve ser propagada a outros chats** nem a notificações de outros fluxos. A identidade de produto não estabelece conexão automática entre uma conversa do ChatGPT e a execução no servidor.
 
 ## Handoff obrigatório — nova conversa ou outra conta
 Ao retomar o trabalho em outra conversa/conta, **não assumir que o histórico nem as conexões foram transferidos**. Primeiro:
@@ -148,3 +148,12 @@ Ao retomar o trabalho em outra conversa/conta, **não assumir que o histórico n
 - **Dívida de integração:** PR #491 prepara `saga_digest_schedules` de forma isolada; antes de qualquer merge/ativação, a equipe deverá consolidar a fonte da verdade de horários com `sagamente_assistant_settings.digest_times` para não introduzir duas configurações divergentes.
 - **Desligado:** não há cron novo, disparo WhatsApp, trigger adicional, call a `sagamente_assistant_tick` nem publicação do painel em produção por esta etapa.
 - Testar build, UI autenticada, isolamento admin/cliente e vazios no preview antes de mesclar. Não interpretar aprovação de CI como teste end-to-end de entrega WhatsApp.
+
+
+## Contrato de voz da Saga — 16/10/2026
+- **Emissor:** nome visível "Saga" somente em mensagens criadas pelo assistente no Play Sistem; cabeçalho "Saga | ..." opcional. **Voz:** primeira pessoa quando o assistente descreve ação própria; fatos de projeto podem ser objetivos em terceira pessoa.
+- **Fases da entrega:** "Preparei" para rascunho; "Coloquei na fila" apenas após enfileiramento confirmado; "Enviei" apenas após evidência de envio; "Entreguei" apenas após confirmação de entrega pelo provedor; "Não consegui enviar" para falhas confirmadas. Nunca afirmar entrega com base somente em fila.
+- **E-mail:** `eufedesigner@gmail.com` foi usado unicamente para localizar o cadastro de homologação já autorizado; os envios do projeto Saga são pelo WhatsApp. Não adicionar e-mail como canal sem novo pedido.
+- **Homologação:** o envio de teste foi realizado por fluxo legado isolado de automação e teve confirmação de entrega pela ponte; isso **não valida automaticamente** o futuro emissor próprio da Saga. Não reutilizar o nome da RKC como assinatura da Saga nem mudar `automation_enqueue` como solução definitiva.
+- **Segurança:** consentimento e vínculo de projeto checados novamente na entrega; duplicidade por destinatário/evento; logs de `queued`, `sent`, `delivered`, `failed`; pausas e limites existentes da Baileys preservados.
+- **Outras conversas:** manter suas configurações de personalidade independentes; a marca Saga é uma identidade implementada no software, não identidade universal do ChatGPT.
