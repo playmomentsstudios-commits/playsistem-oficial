@@ -20,6 +20,7 @@ export const DASHBOARD_SHORTCUTS = [
   { id:'payments', label:'Pagamentos', description:'Conferência financeira', href:'/admin/pagamentos', icon:'wallet' },
   { id:'files', label:'Arquivos', description:'Central de arquivos', href:'/admin/arquivos', icon:'folder' },
   { id:'messages', label:'Conversas', description:'Mensagens e suporte', href:'/admin/conversas', icon:'chat' },
+  { id:'saga', label:'Saga', description:'Eventos e relatórios', href:'/admin/saga', icon:'settings' },
   { id:'settings', label:'Configurações', description:'Preferências administrativas', href:'/admin/configuracoes', icon:'settings' },
 ] as const
 
@@ -49,7 +50,7 @@ const METADATA_KEY = 'sagamente_admin_dashboard_v1'
 export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayout = {
   // Uma ação principal de cada grupo do menu: Comercial, Operação, Financeiro,
   // Catálogo, Academia, Comunicação e Gestão.
-  shortcuts:['clients','projects','payments','services','academy','messages','site'],
+  shortcuts:['clients','projects','payments','services','academy','messages','site','saga'],
   widgets:['quick-actions','pending','projects'],
   metrics:['customers','activeProjects','pendingPayments','unread'],
 }
