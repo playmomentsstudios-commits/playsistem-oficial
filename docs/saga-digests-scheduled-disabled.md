@@ -64,3 +64,11 @@ from public.sagamente_assistant_settings where id=true;
 select * from public.saga_digest_due_slots('2026-10-17 10:00:00+00'::timestamptz);
 ```
 Com o agente desligado, o segundo SELECT retorna **zero linhas**.
+
+## Integração 490 → 491 (16/10/2026)
+A base de eventos e painel do PR #490 foi integrada na branch principal.
+Esta etapa do PR #491 acrescenta **apenas lógica de prévias, autorizações e ledger**.
+A migration 20261016220732_saga_digest_schedule_disabled.sql já foi aplicada ao
+Supabase Play, com zero linhas e RLS restrita a service_role.
+As checagens gerais devem ser reexecutadas após a integração do PR #490.
+Sem autorização de envio: Saga e WhatsApp permanecem desligados, sem cron novo.
