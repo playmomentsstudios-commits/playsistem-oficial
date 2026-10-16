@@ -16,6 +16,21 @@ export function sagaLocalParts(at) {
   return { day: `${parts.year}-${parts.month}-${parts.day}`, hour: Number(parts.hour), minute: Number(parts.minute) };
 }
 
+function sagaPreviousDay(day) {
+  const parsed = new Date(day + 'T00:00:00Z');
+  if (!Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0,10)!==day)
+    throw new TypeError('Invalid local day');
+  return new Date(parsed.getTime()-86400000).toISOString().slice(0,10);
+}
+function inDigestWindow(eventAt, runDay, hour) {
+  const p = sagaLocalParts(eventAt);
+  const minutes = p.hour*60+p.minute;
+  if (hour===7) return (p.day===sagaPreviousDay(runDay) && minutes>=19*60) ||
+    (p.day===runDay && minutes<7*60);
+  if (hour===13) return p.day===runDay && minutes>=7*60 && minutes<13*60;
+  return p.day===runDay && minutes>=13*60 && minutes<19*60;
+}
+
 export function sagaDueSlot(at) {
   const p = sagaLocalParts(at);
   return p.minute === 0 && SAGA_DIGEST_HOURS.includes(p.hour) ? p.hour : null;
@@ -34,7 +49,8 @@ export function buildSagaDigestPreview({ at, recipientId, events, eventAudience,
   const relevant = [];
   for (const e of events) {
     if (!e || typeof e.id !== 'string' || unique.has(e.id)) continue;
-    if (e.created_at && new Date(e.created_at) > new Date(at)) continue;
+    if (!e.created_at || !Number.isFinite(new Date(e.created_at).getTime()) ||
+        new Date(e.created_at)>new Date(at) || !inDigestWindow(e.created_at,p.day,hour)) continue;
     const grants = eventAudience.get(e.id);
     if (!(grants instanceof Set) || !grants.has(recipientId)) continue;
     unique.add(e.id);
