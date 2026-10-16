@@ -136,3 +136,15 @@ Ao retomar o trabalho em outra conversa/conta, **não assumir que o histórico n
 **Limites da homologação:** não houve sessão real de navegador com login admin, teste real de staff (sem perfil apto), nem exercício dos seis gatilhos nos registros de origem. Evitamos modificar tabelas operacionais de clientes/projetos/compras em produção, mesmo com rollback, para não provocar outros fluxos ou integrações de terceiros. Esses testes devem ocorrer em ambiente isolado ou ser conduzidos com autorização explícita para os dados envolvidos.
 
 **Próximo checkpoint:** validar UI autenticada no preview (histórico, filtros, paginação, configurações e estados vazios), teste E2E negando cliente/staff, depois testar os seis gatilhos isoladamente com deduplicação e outbox WhatsApp. Não ativar cron, WhatsApp ou `main` por efeito desses testes.
+
+
+## Etapa 4 — prévias internas dos resumos (revisão em PR #490)
+
+- Configuração de horários confirmada pelo responsável em 16/10/2026: `07:00`, `13:00`, `19:00` em `America/Sao_Paulo`. Foi salva no Supabase Play Sistem em `sagamente_assistant_settings.digest_times` enquanto `enabled=false` e `whatsapp_notifications=false`, sem execução de cron.
+- A nova aba **Prévia dos resumos** na rota administrativa existente `/admin/saga` exibe uma simulação **somente leitura** dos eventos internos capturados (sem enviar nem criar filas). Usa a sessão Supabase autenticada, valida perfil admin ativo e depende das policies RLS administrativas de `sagamente_assistant_events`.
+- Janelas locais: 07h (19h do dia anterior até 06h59), 13h (07h até 12h59), 19h (13h até 18h59). Deduplicação por ID, seleção por fontes internas conhecidas e exclusão do evento `daily_digest` para não resumir resumos.
+- Seleção por horário usa os registros já existentes; eventos capturados no Supabase eram **zero** na última consulta, portanto a interface deve exibir o estado vazio fielmente. Se houver muitos registros (>500 na consulta limitada de 48h), a prévia falha explicitamente em vez de ocultar o truncamento.
+- A consulta **não é** a implementação de envio para destinatários externos. Para clientes, permissões, consentimento e acesso de projeto devem ser verificados **por evento** no backend (trabalho independente em [PR #491](https://github.com/playmomentsstudios-commits/playsistem-oficial/pull/491)).
+- **Dívida de integração:** PR #491 prepara `saga_digest_schedules` de forma isolada; antes de qualquer merge/ativação, a equipe deverá consolidar a fonte da verdade de horários com `sagamente_assistant_settings.digest_times` para não introduzir duas configurações divergentes.
+- **Desligado:** não há cron novo, disparo WhatsApp, trigger adicional, call a `sagamente_assistant_tick` nem publicação do painel em produção por esta etapa.
+- Testar build, UI autenticada, isolamento admin/cliente e vazios no preview antes de mesclar. Não interpretar aprovação de CI como teste end-to-end de entrega WhatsApp.
