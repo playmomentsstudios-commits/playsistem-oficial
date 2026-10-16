@@ -1,5 +1,10 @@
 # Saga — resumos às 07h, 13h e 19h (preparação, sem envio)
 
+## Dependência de integração
+O PR #491 é intencionalmente **empilhado sobre a branch do PR #490**. O CI
+precisa validar o conjunto das duas alterações antes da homologação.
+Mesmo que os testes passem, ambos permanecem em rascunho e não há deploy.
+
 ## Fonte única de horários
 Os horários aprovados pelo responsável estão salvos em
 `public.sagamente_assistant_settings.digest_times` como
