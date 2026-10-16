@@ -1,9 +1,11 @@
 # Saga — resumos às 07h, 13h e 19h (preparação, sem envio)
 
 ## Dependência de integração
-O PR #491 é intencionalmente **empilhado sobre a branch do PR #490**. O CI
-precisa validar o conjunto das duas alterações antes da homologação.
-Mesmo que os testes passem, ambos permanecem em rascunho e não há deploy.
+O PR #491 **depende do PR #490**, mas usa a base `main` porque o workflow
+de CI atual só verifica pull requests direcionados a `main`.
+Os testes de cada PR separadamente **não substituem** uma validação do
+conjunto na integração. **Não fazer merge do #491 antes do #490**.
+Ambos permanecem em rascunho e não há deploy.
 
 ## Fonte única de horários
 Os horários aprovados pelo responsável estão salvos em
