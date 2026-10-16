@@ -122,13 +122,10 @@ begin
  v_hhmm:=to_char(v_local,'HH24:MI');
  v_hour:=extract(hour from v_local)::int;
  v_minute:=extract(minute from v_local)::int;
+ -- Only a configured daily slot may run, with a short retry window.
  if v_hour not in (7,13,19) or v_minute>=20 or
-    (lpad(v_hour::text,2,'0')||':00')<>all(cfg.digest_times) then
-   -- The clock config is authoritative; never infer additional hours.
-   if v_hour not in (7,13,19) or v_minute>=20 or
-       not ((lpad(v_hour::text,2,'0')||':00')=any(cfg.digest_times)) then
-     return jsonb_build_object('status','not_due');
-   end if;
+    not ((lpad(v_hour::text,2,'0')||':00')=any(cfg.digest_times)) then
+   return jsonb_build_object('status','not_due');
  end if;
  select * into f from public.automation_flows where event_key='saga_personal_ops';
  if not found or f.enabled is distinct from true or f.source<>'chatgpt'
