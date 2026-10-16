@@ -60,7 +60,7 @@ function internalLink(value: string): string | null {
   return value?.startsWith('/') && !value.startsWith('//') && !value.includes('\\') ? value : null
 }
 function describeError(value: unknown): string {
-  return value instanceof Error ? value.message : 'Não foi possível concluir a operação.'
+  return value instanceof Error ? value.message : 'Não consegui concluir esta operação.'
 }
 
 export function AdminSagaAssistant() {
@@ -153,7 +153,7 @@ export function AdminSagaAssistant() {
         .eq('id', true)
       if (error) throw error
       await loadConfig()
-      setSaved('Preferências salvas. O agente não foi ativado.')
+      setSaved('Salvei suas preferências. Não ativei os envios.')
     } catch (cause) {
       setConfigError(describeError(cause))
     } finally {
@@ -170,9 +170,9 @@ export function AdminSagaAssistant() {
   const last = Math.min(total, (page + 1) * PAGE_SIZE)
   return <div className="mx-auto max-w-5xl space-y-5 pb-10">
     <header className="space-y-1">
-      <p className="text-xs font-semibold text-[#DFA269]">Assistente Sagamente · Gestão</p>
+      <p className="text-xs font-semibold text-[#DFA269]">Play Sistem · Assistente operacional</p>
       <h1 className="text-2xl font-bold text-white">Saga</h1>
-      <p className="text-sm text-gray-400">Histórico completo de eventos, relatórios e preferências.</p>
+      <p className="text-sm text-gray-400">Sou a Saga, assistente deste sistema. Aqui acompanho eventos, resumos e preferências.</p>
     </header>
     <div className={card + ' flex flex-wrap items-center justify-between gap-3'}>
       <div>
@@ -185,7 +185,7 @@ export function AdminSagaAssistant() {
             config.enabled ? 'Agente ativo' : 'Agente desativado'}
         </span>
         <span className="rounded-lg border border-white/10 px-3 py-2 text-gray-400">
-          {config?.whatsapp_notifications ? 'WhatsApp configurado' : 'Saga sem envio WhatsApp'}
+          {config?.whatsapp_notifications ? 'WhatsApp configurado' : 'Ainda não envio WhatsApp pela Saga'}
         </span>
       </div>
     </div>
