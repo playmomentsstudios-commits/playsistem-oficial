@@ -42,7 +42,7 @@ export function SagaDigestPreviewPanel() {
         events:data as SagaAdminEvent[],
       })
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Não foi possível consultar a prévia.')
+      setError(cause instanceof Error ? cause.message : 'Não consegui consultar a prévia.')
     } finally {
       setLoading(false)
     }
@@ -84,14 +84,14 @@ export function SagaDigestPreviewPanel() {
       <h3 className="text-base font-semibold text-white">{preview.title}</h3>
       <p className="text-sm text-gray-400">{preview.count} evento{preview.count===1?'':'s'} neste período</p>
       {preview.lines.length===0
-        ? <p className="text-sm text-gray-400">Não há eventos registrados para esta prévia. A Saga permanece desativada.</p>
+        ? <p className="text-sm text-gray-400">Não encontrei eventos neste período. Ainda não estou ativa para envios.</p>
         : <ul className="space-y-2">{preview.lines.map((line,index)=>
           <li key={index} className="whitespace-pre-wrap rounded-lg bg-black/20 p-3 text-sm text-gray-200">{line}</li>
         )}</ul>}
       {preview.omitted>0 && <p className="text-xs text-amber-200">+{preview.omitted} eventos anteriores não exibidos nesta prévia.</p>}
       <p className="border-t border-white/10 pt-3 text-xs text-gray-500">
         Esta é uma visualização administrativa, não um comprovante de envio ou de entrega.
-        Nenhuma mensagem nova foi produzida.
+        Não enviei nenhuma mensagem.
       </p>
     </div>}
   </section>
