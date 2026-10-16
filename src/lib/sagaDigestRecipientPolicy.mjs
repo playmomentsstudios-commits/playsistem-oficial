@@ -26,7 +26,7 @@ export async function isAuthorizedSagaStageRecipient({db,eventId,recipientId}){
     const pref=await load(db,'user_preferences',
       'user_id,wa_automatic_opt_in,wa_opt_in_phone,wa_opt_in_at,notify_project_updates',
       {user_id:recipientId});
-    if(pref?.wa_automatic_opt_in!==true||pref?.notify_project_updates===false||
+    if(pref?.wa_automatic_opt_in!==true||pref?.notify_project_updates!==true||
        !pref?.wa_opt_in_at||!/^55[0-9]{10,11}$/.test(phone(pref.wa_opt_in_phone)))return false;
     const registered=phone(recipient.phone);
     const registeredE164=registered.startsWith('55')?registered:'55'+registered;
@@ -34,7 +34,7 @@ export async function isAuthorizedSagaStageRecipient({db,eventId,recipientId}){
     const stage=await load(db,'project_stages','id,project_id,client_visible',{id:event.source_id});
     if(!stage||!uuid.test(String(stage.project_id))||stage.client_visible!==true)return false;
     const project=await load(db,'projects','id,customer_id,project_type',{id:stage.project_id});
-    if(!project||project.project_type==='internal')return false;
+    if(!project||!project.project_type||project.project_type==='internal')return false;
     if(project.customer_id===recipientId)return true;
     const grant=await load(db,'project_customer_access','project_id,customer_id',
       {project_id:stage.project_id,customer_id:recipientId});
