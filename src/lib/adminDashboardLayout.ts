@@ -20,6 +20,7 @@ export const DASHBOARD_SHORTCUTS = [
   { id:'payments', label:'Pagamentos', description:'Conferência financeira', href:'/admin/pagamentos', icon:'wallet' },
   { id:'files', label:'Arquivos', description:'Central de arquivos', href:'/admin/arquivos', icon:'folder' },
   { id:'messages', label:'Conversas', description:'Mensagens e suporte', href:'/admin/conversas', icon:'chat' },
+  { id:'saga', label:'Saga', description:'Eventos e relatórios', href:'/admin/saga', icon:'settings' },
   { id:'settings', label:'Configurações', description:'Preferências administrativas', href:'/admin/configuracoes', icon:'settings' },
 ] as const
 
