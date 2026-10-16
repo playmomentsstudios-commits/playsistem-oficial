@@ -110,7 +110,7 @@ export function PublicAcademyPage(){
  const showWorks=workFilter==='all'||workFilter==='ebook'||workFilter==='audiobook'
  const showCourses=workFilter==='all'||workFilter==='course'||workFilter==='free'
  const busy=(showWorks&&worksLoading)||(showCourses&&loading)
- const card='group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#151517] text-left transition-colors hover:border-[#d8925e]/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#dfa269]'
+ const card='group flex min-w-0 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#151517] text-left transition-colors hover:border-[#d8925e]/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#dfa269]'
  const artwork='aspect-[4/3] overflow-hidden border-b border-white/[.06] bg-[#101113] sm:aspect-[16/10]'
 
  return <PublicLayout><section className="mx-auto max-w-6xl px-4 pb-14 pt-6 sm:px-5 sm:pb-20 sm:pt-9" aria-labelledby="academy-title">
@@ -137,7 +137,7 @@ export function PublicAcademyPage(){
   </div>
   {busy&&<LoadingState label="Carregando conteúdos..."/>}
   {showWorks&&worksError&&<p role="alert" className="my-3 rounded-xl border border-amber-500/20 p-3 text-xs text-amber-200">{worksError}</p>}
-  <div className="mt-3 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3" aria-busy={busy}>
+  <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5" aria-busy={busy}>
    {filteredCourses.map(course=><Link key={'course-'+course.id}
     to={course.slug==='letramento-digital'?'/curso/letramento-digital':(isAuthenticated?'/app/academia/'+course.id:'/cadastro?next='+encodeURIComponent('/app/academia/'+course.id))}
     className={card}>
@@ -146,10 +146,10 @@ export function PublicAcademyPage(){
       course.slug==='letramento-digital'?<DigitalLiteracyCover compact className="academy-catalog-course-cover rounded-none" style={{minHeight:0}}/>:
       <div className="flex h-full items-center justify-center text-4xl text-[#dfa269]">▶</div>}
     </div>
-    <div className="flex flex-1 flex-col p-3 sm:p-4">
-     <h2 className="text-xs font-bold leading-snug text-gray-100 sm:text-base">{course.slug==='letramento-digital'?'Letramento Digital':course.title}</h2>
+    <div className="flex flex-1 flex-col p-3">
+     <h2 className="text-xs font-bold leading-snug text-gray-100 sm:text-[13px]">{course.slug==='letramento-digital'?'Letramento Digital':course.title}</h2>
      <p className="mt-2 text-[10px] text-gray-400 sm:text-xs">Curso{course.estimated_minutes?' · '+course.estimated_minutes+' min':''}</p>
-     <div className="mt-auto flex items-center justify-between gap-2 pt-3">
+     <div className="mt-auto flex items-center justify-between gap-2 pt-2">
       {course.access_type==='free'?<span className="rounded-md bg-emerald-400/10 px-2 py-1 text-[10px] font-semibold text-emerald-300 sm:text-xs">Gratuito</span>:<span className="text-xs text-[#dfa269]">Conhecer curso</span>}
       <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/20 text-gray-300 group-hover:border-[#dfa269] group-hover:text-[#dfa269]">→</span>
      </div>
@@ -166,12 +166,12 @@ export function PublicAcademyPage(){
       {work.cover_url?<img src={work.cover_url} alt="" className="h-full w-full object-contain" loading="lazy"/>:
        <div aria-hidden="true" className="flex h-full flex-col items-center justify-center bg-gradient-to-br from-[#542a23] via-[#a05230] to-[#19191c] text-center font-black tracking-tight text-white/90"><span>SAGA NEGRA</span><span className="mt-2 text-sm text-[#ffcfab]">{work.release_code}</span></div>}
      </div>
-     <div className="flex flex-1 flex-col p-3 sm:p-4">
-      <h2 className="text-xs font-bold leading-snug text-gray-100 sm:text-base">{work.title}</h2>
+     <div className="flex flex-1 flex-col p-3">
+      <h2 className="text-xs font-bold leading-snug text-gray-100 sm:text-[13px]">{work.title}</h2>
       <p className="mt-2 text-[10px] leading-5 text-gray-400 sm:text-xs">
        {[work.ebook_status&&'E-book',work.audiobook_status&&'Audiobook'].filter(Boolean).join(' · ')||'Em preparação'}
       </p>
-      <div className="mt-auto flex items-center justify-between gap-1 pt-3">
+      <div className="mt-auto flex items-center justify-between gap-1 pt-2">
        <span className="text-[10px] font-semibold leading-5 text-[#f0a36c] sm:text-xs">{startPrice!==null?'A partir de '+formatAcademyMoney(startPrice):'Conhecer obra'}</span>
        <span aria-hidden="true" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/20 text-gray-300 group-hover:border-[#dfa269] group-hover:text-[#dfa269]">→</span>
       </div>
