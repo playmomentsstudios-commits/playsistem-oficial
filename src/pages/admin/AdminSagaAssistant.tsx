@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { SagaDigestPreviewPanel } from './SagaDigestPreviewPanel'
 import { supabase } from '../../lib/supabase'
 
-type View = 'events' | 'reports' | 'settings'
+type View = 'events' | 'reports' | 'preview' | 'settings'
 type EventRow = {
   id: string
   event_type: string
@@ -132,7 +133,7 @@ export function AdminSagaAssistant() {
   }, [view, page, kind, status, from, to])
 
   useEffect(() => { void loadConfig() }, [loadConfig])
-  useEffect(() => { if (view !== 'settings') void loadEvents() }, [view, loadEvents])
+  useEffect(() => { if (view === 'events' || view === 'reports') void loadEvents() }, [view, loadEvents])
 
   async function save() {
     if (!config) return
@@ -189,7 +190,7 @@ export function AdminSagaAssistant() {
       </div>
     </div>
     <nav className="flex flex-wrap gap-2" aria-label="Áreas da Saga">
-      {([['events','Eventos'],['reports','Relatórios diários'],['settings','Configurações']] as const).map(([id, label]) =>
+      {([['events','Eventos'],['reports','Relatórios diários'],['preview','Prévia dos resumos'],['settings','Configurações']] as const).map(([id, label]) =>
         <button key={id} type="button" aria-current={view === id ? 'page' : undefined}
           onClick={() => setTab(id)} className={'min-h-11 rounded-xl px-4 text-sm font-medium ' +
           (view === id ? 'bg-[#A65A2A] text-white' : 'border border-white/10 text-gray-300')}>
@@ -198,7 +199,7 @@ export function AdminSagaAssistant() {
     </nav>
     {configError && <p role="alert" className="rounded-xl border border-red-500/20 p-3 text-sm text-red-300">{configError}</p>}
 
-    {view === 'settings' ? <section className={card + ' space-y-5'}>
+    {view === 'preview' ? <SagaDigestPreviewPanel /> : view === 'settings' ? <section className={card + ' space-y-5'}>
       <div>
         <h2 className="text-base font-semibold text-white">Preferências</h2>
         <p className="mt-1 text-xs leading-relaxed text-gray-400">As configurações abaixo não ativam o processador, os gatilhos ou envios externos.</p>
