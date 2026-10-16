@@ -50,7 +50,7 @@ const METADATA_KEY = 'sagamente_admin_dashboard_v1'
 export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayout = {
   // Uma ação principal de cada grupo do menu: Comercial, Operação, Financeiro,
   // Catálogo, Academia, Comunicação e Gestão.
-  shortcuts:['clients','projects','payments','services','academy','messages','site','saga'],
+  shortcuts:['clients','projects','payments','services','academy','messages','site'],
   widgets:['quick-actions','pending','projects'],
   metrics:['customers','activeProjects','pendingPayments','unread'],
 }
