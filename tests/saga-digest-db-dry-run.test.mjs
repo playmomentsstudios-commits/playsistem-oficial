@@ -41,7 +41,7 @@ function db(tables){
  }};
 }
 test('existing Saga settings are the only schedule source in staging migration',()=>{
- const sql=readFileSync(new URL('../supabase/migrations/20261016190000_saga_digest_schedule_disabled.sql',import.meta.url),'utf8');
+ const sql=readFileSync(new URL('../supabase/migrations/20261016220732_saga_digest_schedule_disabled.sql',import.meta.url),'utf8');
  assert.doesNotMatch(sql,/create table if not exists public\.saga_digest_schedules/i);
  assert.doesNotMatch(sql,/from public\.saga_digest_schedules/i);
  assert.match(sql,/from public\.sagamente_assistant_settings s/i);
