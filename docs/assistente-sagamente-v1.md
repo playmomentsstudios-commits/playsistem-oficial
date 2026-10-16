@@ -94,3 +94,29 @@ Ao retomar o trabalho em outra conversa/conta, **não assumir que o histórico n
 - **Concluído**: base v1 Supabase, documentação e teste transacional reversível (1 evento, 1 aviso interno, 0 WhatsApp; rollback). PR #490 em rascunho.
 - **Ainda pendente**: a tela do histórico de eventos, configuração e horários, homologação ampliada, agendamento, ativação; integração institucional somente leitura; integração futura WhatsApp deduplicada.
 - **Garantia operacional**: `enabled=false` até aprovação e testes. Não confundir "migração instalada" com "agente em produção".
+
+
+## Etapa 2 — histórico paginado e controle de permissões (16/10/2026)
+
+### Implementado no PR #490
+- Painel `/admin/saga` atualizado para consulta **paginada no servidor** (25 itens), com contagem exata, ordenação por data e ID e navegação entre páginas. Não há mais corte arbitrário nos 100 registros recentes.
+- Filtros no servidor: tipo, status, período com limites por dia no fuso de Brasília, e relatórios diários isolados na própria aba. Detalhes incluem origem, mensagem, data de processamento, ID e link interno validado.
+- O painel informa o estado real obtido do banco; quando não é possível consultar, exibe indisponibilidade, sem indicar falsamente que o agente foi desativado.
+- Atalho `Saga` permanece configurável sem alterar o padrão aprovado de **sete** atalhos principais do dashboard (correção do teste `admin-dashboard-shortcuts`).
+- Novo teste `tests/saga-assistant-panel.test.mjs` confere paginação, isolamento admin, ausência de execução do processador no cliente e concessões de coluna.
+
+### Segurança no Supabase Play
+- Migration **aplicada e versionada**: `20261016173621_saga_restrict_settings_update_columns`.
+- O papel `authenticated` perdeu o `UPDATE` de toda a tabela `sagamente_assistant_settings`; somente as colunas `internal_notifications`, `digest_times` e `updated_at` podem ser atualizadas. A política RLS de admin permanece em vigor.
+- Verificação das concessões no banco: update em `enabled=false` (permissão negada), `whatsapp_notifications=false` (permissão negada), e permitido apenas para as três colunas de preferências. Isso impede que chamadas arbitrárias do navegador acionem flags sensíveis.
+- Configuração verificada após migração: `enabled=false`, `whatsapp_notifications=false`, `digest_times={}`, fila de eventos vazia.
+- Existem tarefas de cron legadas com nomes `sagamente-push-v1` e `play-rkc-checkin-test`; **não foram tocadas**. Não confundir com `sagamente-assistant-minute`, que não foi criado nesta etapa.
+
+### Pendências antes de ativar
+1. Validar a execução do CI **mais recente** e navegação autenticada no preview; não usar o status anterior como comprovação do commit atual.
+2. Testar a leitura com uma sessão autenticada admin e uma sessão de cliente/staff negada; as políticas foram examinadas, mas o teste de ponta a ponta por sessão ainda depende de homologação.
+3. Testar alterações reais de cada um dos seis gatilhos num ambiente isolado ou numa janela controlada, mantendo emissão para clientes desabilitada; conferir unicidade do evento e inexistência de duplicação no WhatsApp.
+4. Definir horários reais e destinatários internos com Felipe. Não configurar cron, não ativar `enabled` e não habilitar canais externos sem autorização expressa.
+5. O banco v1 possui apenas os estados `pending` e `internal_sent`; indicação formal de falhas/reprocessamento exige modelagem posterior, não inventar erros na interface.
+
+**PR continua em rascunho. Não integrar no `main` sem revisão e homologação.**
