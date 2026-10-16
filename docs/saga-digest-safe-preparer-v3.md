@@ -39,3 +39,11 @@ retornou `disabled`. O `ROLLBACK` deixou **zero** eventos de teste e
 Configurar cron **inativo**, validar o ciclo de disparo em um número de teste
 autorizado, revisar a rechecagem do consentimento na ponte, verificar comprovante
 de entrega, e só depois liberar clientes. A migração atual não executa isso.
+
+## Agendador registrado, mas INATIVO
+A migração `20261016223403_saga_digest_inactive_cron.sql` foi aplicada ao
+Supabase Play. O job `saga-digest-draft-preparer-minute` tem agenda
+`* * * * *`, comando `select public.saga_digest_prepare_tick();` e
+`active=false`. O próprio SQL verifica a condição inativa antes de confirmar
+a transação. `sagamente-push-v1` e a Central WhatsApp permanecem intocados.
+Não existe autorização para ativar o job nesta etapa.
