@@ -25,7 +25,7 @@ begin
  if hour_num not in (7,13,19) then
   return jsonb_build_object('status','not_due');
  end if;
- select count(*)::int,min(id) into admin_count,admin_id
+ select count(*)::int,min(id::text)::uuid into admin_count,admin_id
  from public.profiles where role='admin' and status='active';
  if admin_count<>1 then
   return jsonb_build_object('status','admin_scope_unavailable');
