@@ -3,8 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 
 const read = name => readFileSync(new URL('../supabase/migrations/'+name,import.meta.url),'utf8');
-const schema = read('20261017102000_saga_owner_brief_whatsapp.sql');
-const cron = read('20261017102100_saga_owner_brief_inactive_cron.sql');
+const schema = read('20261017125439_saga_owner_brief_whatsapp.sql');
 
 test('personal Saga flow is separate from RKC and disabled by default',()=>{
  assert.match(schema,/saga_owner_brief_settings[\s\S]*?enabled boolean not null default false/i);
@@ -51,9 +50,8 @@ test('internal notice and WhatsApp outbox are separate and truthful',()=>{
  assert.match(schema,/Minhas prioridades sugeridas/);
 });
 
-test('cron exists but must start off',()=>{
- assert.match(cron,/cron\.schedule\('saga-owner-brief-minute','\* \* \* \* \*'/);
- assert.match(cron,/cron\.alter_job\(job_id=>jid,active=>false\)/);
- assert.match(cron,/active=false/);
- assert.doesNotMatch(cron,/cron\.unschedule|wa_bridge_claim/i);
+test('existing Saga scheduler must remain separate from the new migration',()=>{
+ assert.doesNotMatch(schema,/cron\.schedule\s*\(/i);
+ assert.doesNotMatch(schema,/cron\.alter_job\s*\(/i);
+ assert.doesNotMatch(schema,/cron\.unschedule\s*\(/i);
 });
