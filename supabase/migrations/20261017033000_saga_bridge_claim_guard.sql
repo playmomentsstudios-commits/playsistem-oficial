@@ -39,7 +39,7 @@ begin
          join public.sagamente_assistant_settings settings on settings.id=true
          join public.profiles profile on profile.id=r.recipient_user_id
          join public.user_preferences prefs on prefs.user_id=profile.id
-         where r.id=(n.metadata->>'saga_run_id')::uuid
+         where r.id::text=n.metadata->>'saga_run_id'
            and r.outbox_id=o.id and r.notification_id=n.id
            and r.recipient_user_id=o.recipient_user_id
            and r.state='queued' and r.content->>'kind'='saga_operational_digest'
