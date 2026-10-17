@@ -143,8 +143,8 @@ begin
   or bridge_cfg.wa_bridge_delivery_mode<>'consented_clients'
   or bridge_cfg.wa_bridge_auto_started_at is null
   or bridge_cfg.wa_bridge_daily_limit<1
-  or bridge.status<>'connected' or bridge.requested_mode<>'connect'
-  or bridge.heartbeat_at<now()-interval '35 seconds'
+  or bridge.status is distinct from 'connected' or bridge.requested_mode is distinct from 'connect'
+  or bridge.heartbeat_at is null or bridge.heartbeat_at<now()-interval '35 seconds'
   or bridge.connected_phone is distinct from bridge_cfg.wa_bridge_sender_phone then
    return jsonb_build_object('status','waiting_bridge','created',v_created,'queued',0);
  end if;
