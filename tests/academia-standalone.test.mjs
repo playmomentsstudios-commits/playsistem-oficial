@@ -48,7 +48,7 @@ test('New worker never stores private media and validates tickets for GET/HEAD',
 test('Main platform remains unchanged, with separate manifest and deployment configs',()=>{
  const manifest=JSON.parse(read('public/manifest.webmanifest'))
  const main=JSON.parse(read('wrangler.jsonc'))
- assert.equal(main.name,'playsistem-oficial')
+ assert.equal(main.name,'site')
  assert.equal(manifest.short_name,'Sagamente')
  const nav=read('src/components/academy/AcademyNavigation.tsx')
  assert.match(nav,/import\.meta\.env\.MODE==='academy'/)
