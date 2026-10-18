@@ -20,7 +20,7 @@ export const DASHBOARD_SHORTCUTS = [
   { id:'payments', label:'Pagamentos', description:'Conferência financeira', href:'/admin/pagamentos', icon:'wallet' },
   { id:'files', label:'Arquivos', description:'Central de arquivos', href:'/admin/arquivos', icon:'folder' },
   { id:'messages', label:'Conversas', description:'Mensagens e suporte', href:'/admin/conversas', icon:'chat' },
-  { id:'saga', label:'Saga', description:'Eventos e relatórios', href:'/admin/saga', icon:'settings' },
+  { id:'saga', label:'Saga · Central Operacional', description:'Assistente, WhatsApp e atendimento', href:'/admin/whatsapp', icon:'chat' },
   { id:'settings', label:'Configurações', description:'Preferências administrativas', href:'/admin/configuracoes', icon:'settings' },
 ] as const
 
@@ -50,19 +50,20 @@ const METADATA_KEY = 'sagamente_admin_dashboard_v1'
 export const DEFAULT_DASHBOARD_LAYOUT: DashboardLayout = {
   // Uma ação principal de cada grupo do menu: Comercial, Operação, Financeiro,
   // Catálogo, Academia, Comunicação e Gestão.
-  shortcuts:['clients','projects','payments','services','academy','messages','site'],
+  shortcuts:['clients','projects','payments','services','academy','messages','site','saga'],
   widgets:['quick-actions','pending','projects'],
   metrics:['customers','activeProjects','pendingPayments','unread'],
 }
 
 // Ajusta apenas as combinações padrão de versões anteriores, sem sobrescrever
 // seleções ou ordenações que a pessoa montou manualmente.
+const PREVIOUS_DEFAULT_SHORTCUTS = ['clients','projects','payments','services','academy','messages','site']
 const LEGACY_DEFAULT_SHORTCUTS = ['clients','course-access','library-access','library','site','projects']
 const LEGACY_DEFAULT_WITHOUT_PROJECTS = ['clients','course-access','library-access','library','site']
 
 function upgradeLegacyShortcuts(shortcuts:string[]):string[]{
   const isLegacy=(values:string[])=>shortcuts.length===values.length&&shortcuts.every((id,i)=>id===values[i])
-  return isLegacy(LEGACY_DEFAULT_SHORTCUTS)||isLegacy(LEGACY_DEFAULT_WITHOUT_PROJECTS)
+  return isLegacy(PREVIOUS_DEFAULT_SHORTCUTS)||isLegacy(LEGACY_DEFAULT_SHORTCUTS)||isLegacy(LEGACY_DEFAULT_WITHOUT_PROJECTS)
     ? [...DEFAULT_DASHBOARD_LAYOUT.shortcuts]
     : shortcuts
 }

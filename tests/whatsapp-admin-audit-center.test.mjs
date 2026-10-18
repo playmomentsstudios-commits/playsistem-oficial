@@ -27,8 +27,9 @@ test('row level security blocks non-admin access and manual actions require admi
   assert.match(sql,/p_action not in \('opened','reported_sent'\)/)
 })
 test('the center is discoverable in admin and offers accurate filters and export',()=>{
-  assert.match(routes,/path="whatsapp".*AdminWhatsappCenter/)
-  assert.match(sidebar,/label:'Central WhatsApp'.*adminOnly:true/)
+  assert.match(routes,/path="whatsapp".*AdminSagaOperationsCenter/)
+  assert.match(sidebar,/label:'Saga · Central Operacional', href:'\/admin\/whatsapp'.*adminOnly:true/)
+  assert.match(readFileSync(new URL('../src/pages/admin/AdminSagaOperationsCenter.tsx',import.meta.url),'utf8'),/AdminWhatsappCenter/)
   assert.match(ui,/exportCsv\(filtered\)/)
   assert.match(ui,/wa_daily_dashboard/)
   assert.match(ui,/phone|destination_phone/)

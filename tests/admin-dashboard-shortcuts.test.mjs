@@ -16,8 +16,9 @@ test('Admin dashboard prioritizes one shortcut per primary sidebar group',()=>{
   ['academy','/admin/academia'], // Academia
   ['messages','/admin/conversas'], // Comunicação
   ['site','/admin/site'], // Gestão
+  ['saga','/admin/whatsapp'], // Central operacional de Comunicação
  ]
- assert.match(config,/shortcuts:\['clients','projects','payments','services','academy','messages','site'\]/)
+ assert.match(config,/shortcuts:\['clients','projects','payments','services','academy','messages','site','saga'\]/)
  for(const [id,route] of groups){
   assert.match(config,new RegExp("id:'"+id+"', label:'.*?', description:'.*?', href:'"+route+"'"))
   assert.ok(sidebar.includes("href:'"+route+"'"),'Missing sidebar route: '+route)
@@ -32,5 +33,5 @@ test('Legacy initial shortcut selections migrate without changing custom choices
  assert.match(config,/const LEGACY_DEFAULT_WITHOUT_PROJECTS = \['clients','course-access','library-access','library','site'\]/)
  assert.match(config,/shortcuts:upgradeLegacyShortcuts\(normalizeIds\(/)
  assert.match(config,/shortcuts\.every\(\(id,i\)=>id===values\[i\]\)/)
- assert.match(config,/return isLegacy\(LEGACY_DEFAULT_SHORTCUTS\)\|\|isLegacy\(LEGACY_DEFAULT_WITHOUT_PROJECTS\)/)
+ assert.match(config,/return isLegacy\(PREVIOUS_DEFAULT_SHORTCUTS\)\|\|isLegacy\(LEGACY_DEFAULT_SHORTCUTS\)\|\|isLegacy\(LEGACY_DEFAULT_WITHOUT_PROJECTS\)/)
 })

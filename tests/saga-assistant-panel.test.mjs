@@ -22,10 +22,10 @@ test('Saga admin history queries the server with pagination and filters', () => 
 test('Saga is visible only through admin-only route and menu', () => {
   const routes = read('src/AppV2.tsx')
   const menu = read('src/layouts/AdminLayout.tsx')
-  assert.match(routes, /path="saga" element=\{<AdminPermissionGate adminOnly><AdminSagaAssistant/)
-  assert.match(menu, /href:'\/admin\/saga'.*adminOnly:true/)
-  assert.match(read('src/lib/adminDashboardLayout.ts'), /id:'saga'.*href:'\/admin\/saga'/)
-  assert.match(read('src/lib/adminDashboardLayout.ts'), /shortcuts:\['clients','projects','payments','services','academy','messages','site'\]/)
+  assert.match(routes, /path="saga" element=\{<AdminPermissionGate adminOnly><Navigate to="\/admin\/whatsapp" replace \/>/)
+  assert.match(menu, /label:'Saga · Central Operacional', href:'\/admin\/whatsapp'.*adminOnly:true/)
+  assert.match(read('src/lib/adminDashboardLayout.ts'), /id:'saga'.*href:'\/admin\/whatsapp'/)
+  assert.match(read('src/lib/adminDashboardLayout.ts'), /shortcuts:\['clients','projects','payments','services','academy','messages','site','saga'\]/)
 })
 
 test('Saga UI cannot activate the server processor or WhatsApp', () => {

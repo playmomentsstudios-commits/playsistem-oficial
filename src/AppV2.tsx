@@ -89,8 +89,8 @@ const AdminConversion = lazy(() => import('./pages/admin/AdminConversion').then(
 const AdminAudit = lazy(() => import('./pages/admin/AdminAudit').then(m => ({ default:m.AdminAudit })))
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings').then(m => ({ default:m.AdminSettings })))
 const AdminAutomations = lazy(() => import('./pages/admin/AdminAutomations').then(m => ({ default:m.AdminAutomations })))
-const AdminSagaAssistant = lazy(() => import('./pages/admin/AdminSagaAssistant').then(m => ({ default:m.AdminSagaAssistant })))
-const AdminWhatsappCenter = lazy(() => import('./pages/admin/AdminWhatsappCenter').then(m => ({ default:m.AdminWhatsappCenter })))
+const AdminSagaOperationsCenter = lazy(() => import('./pages/admin/AdminSagaOperationsCenter').then(m => ({ default:m.AdminSagaOperationsCenter })))
+
 const AdminAutoAttendant = lazy(() => import('./pages/admin/AdminAutoAttendant').then(m => ({ default:m.AdminAutoAttendant })))
 const AdminLandingPages = lazy(() => import('./pages/admin/AdminLandingPages').then(m => ({ default:m.AdminLandingPages })))
 const AdminResumes = lazy(() => import('./pages/admin/AdminResumes').then(m => ({ default:m.AdminResumes })))
@@ -239,9 +239,9 @@ export default function AppV2() {
                 <Route path="curriculos/novo" element={<AdminPermissionGate permission="site.manage"><AdminResumeEditor /></AdminPermissionGate>} />
                 <Route path="curriculos/:id" element={<AdminPermissionGate permission="site.manage"><AdminResumeEditor /></AdminPermissionGate>} />
                 <Route path="configuracoes" element={<AdminPermissionGate adminOnly><AdminSettings /></AdminPermissionGate>} />
-                <Route path="whatsapp" element={<AdminPermissionGate adminOnly><AdminWhatsappCenter /></AdminPermissionGate>} />
+                <Route path="whatsapp" element={<AdminPermissionGate adminOnly><AdminSagaOperationsCenter /></AdminPermissionGate>} />
                 <Route path="automacoes" element={<AdminPermissionGate adminOnly><AdminAutomations /></AdminPermissionGate>} />
-                <Route path="saga" element={<AdminPermissionGate adminOnly><AdminSagaAssistant /></AdminPermissionGate>} />
+                <Route path="saga" element={<AdminPermissionGate adminOnly><Navigate to="/admin/whatsapp" replace /></AdminPermissionGate>} />
                 <Route path="auditoria" element={<AdminPermissionGate adminOnly><AdminAudit /></AdminPermissionGate>} />
                 <Route path="relatorios" element={<AdminPermissionGate permission="reports.view"><AdminReports /></AdminPermissionGate>} />
                 <Route path="conversao" element={<AdminPermissionGate permission="reports.view"><AdminConversion /></AdminPermissionGate>} />
