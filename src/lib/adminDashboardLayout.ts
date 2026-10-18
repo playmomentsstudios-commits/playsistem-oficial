@@ -80,7 +80,12 @@ function normalizeIds(value:unknown, valid:readonly string[], fallback:string[])
 export function normalizeDashboardLayout(value:unknown):DashboardLayout{
   const row=(value&&typeof value==='object'&&!Array.isArray(value)?value:{}) as Record<string,unknown>
   return {
-    shortcuts:upgradeLegacyShortcuts(normalizeIds(row.shortcuts,DASHBOARD_SHORTCUTS.map(x=>x.id),DEFAULT_DASHBOARD_LAYOUT.shortcuts)),
+    shortcuts:(()=>{
+      const selected=upgradeLegacyShortcuts(normalizeIds(row.shortcuts,DASHBOARD_SHORTCUTS.map(x=>x.id),DEFAULT_DASHBOARD_LAYOUT.shortcuts))
+      // Migração única para incluir a central nos painéis personalizados anteriores.
+      // Depois de salvar, o usuário pode removê-la normalmente pelo editor.
+      return row.shortcutsVersion===2 || selected.includes('saga') ? selected : [...selected,'saga']
+    })(),
     widgets:normalizeIds(row.widgets,DASHBOARD_WIDGETS.map(x=>x.id),DEFAULT_DASHBOARD_LAYOUT.widgets),
     metrics:normalizeIds(row.metrics,DASHBOARD_METRICS.map(x=>x.id),DEFAULT_DASHBOARD_LAYOUT.metrics),
   }
@@ -94,8 +99,8 @@ export async function loadDashboardLayout():Promise<DashboardLayout>{
 }
 
 export async function saveDashboardLayout(layout:DashboardLayout):Promise<DashboardLayout>{
-  const normalized=normalizeDashboardLayout(layout)
-  const {data,error}=await supabase.auth.updateUser({data:{[METADATA_KEY]:normalized}})
+  const normalized=normalizeDashboardLayout({...layout,shortcutsVersion:2})
+  const {data,error}=await supabase.auth.updateUser({data:{[METADATA_KEY]:{...normalized,shortcutsVersion:2}}})
   if(error)throw error
   if(!data.user)throw new Error('Não foi possível confirmar as preferências salvas.')
   window.dispatchEvent(new Event('sagamente:dashboard-layout-updated'))
