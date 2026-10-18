@@ -27,11 +27,12 @@ test('Admin dashboard prioritizes one shortcut per primary sidebar group',()=>{
  assert.doesNotMatch(config,/shortcuts:\[[^\]]*'course-access'[^\]]*'library-access'[^\]]*\],\s*widgets:/)
 })
 
-test('Legacy initial shortcut selections migrate without changing custom choices',()=>{
+test('Legacy initial shortcut selections migrate while adding the new Saga shortcut once',()=>{
  const config=read('src/lib/adminDashboardLayout.ts')
  assert.match(config,/const LEGACY_DEFAULT_SHORTCUTS = \['clients','course-access','library-access','library','site','projects'\]/)
  assert.match(config,/const LEGACY_DEFAULT_WITHOUT_PROJECTS = \['clients','course-access','library-access','library','site'\]/)
- assert.match(config,/shortcuts:upgradeLegacyShortcuts\(normalizeIds\(/)
+ assert.match(config,/const selected=upgradeLegacyShortcuts\(normalizeIds\(/)
+ assert.match(config,/row.shortcutsVersion===2 \|\| selected.includes\('saga'\)/)
  assert.match(config,/shortcuts\.every\(\(id,i\)=>id===values\[i\]\)/)
  assert.match(config,/return isLegacy\(PREVIOUS_DEFAULT_SHORTCUTS\)\|\|isLegacy\(LEGACY_DEFAULT_SHORTCUTS\)\|\|isLegacy\(LEGACY_DEFAULT_WITHOUT_PROJECTS\)/)
 })
