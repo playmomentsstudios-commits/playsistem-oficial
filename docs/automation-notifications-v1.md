@@ -99,10 +99,11 @@ com execução somente por service_role. Nenhuma chave service_role foi exposta.
 
 ## Continuidade
 
-Não existe chamada autônoma ChatGPT → API nem coleta automática de editais nesta
-versão. O check-in é manual pelo painel ou por um consumidor externo autenticado.
-Agendamento futuro deve ser executado pelo backend. A missão não autoriza inventar
-conteúdo ou tratar lembretes do ChatGPT como um webhook automático.
+O teste de agendamento foi ativado posteriormente pelo backend, de segunda a sábado,
+às 08h, 13h e 18h em America/Sao_Paulo. Ele envia check-ins com pendências reais
+registradas no projeto RKC. Detalhes em docs/rkc-checkin-schedule.md.
+As pesquisas da automação do ChatGPT continuam separadas; não há repasse automático
+do conteúdo gerado pelo ChatGPT nem coleta de editais pelo scheduler SQL.
 
 Pausar uma automação impede novos eventos; mensagens já na fila seguem o estado
 da fila existente. Não desligar a ponte global para pausar este módulo.
